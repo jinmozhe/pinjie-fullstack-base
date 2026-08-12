@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 工程骨架阶段，治理基线已建立 |
+| 当前阶段 | 工程骨架阶段，治理基线和完整项目骨架已入库 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -31,14 +31,14 @@
 
 | 范围 | 当前目标 | 计划 | 状态 | 依赖 |
 | --- | --- | --- | --- | --- |
-| 全栈 | 完成项目基线入库并初始化 GitHub Wiki | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 用户已明确授权 |
-| Backend | 将现有工程骨架纳入版本控制 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 现有未跟踪文件 |
-| Admin | 将现有工程骨架纳入版本控制 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 现有未跟踪文件 |
-| Web | 将现有工程骨架纳入版本控制 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 现有未跟踪文件 |
-| API Client | 将现有共享包骨架纳入版本控制 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 根 OpenAPI 占位契约 |
-| Database | 将现有 Alembic 骨架纳入版本控制 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 后端配置 |
-| Deployment | 修复根环境模板并纳入部署骨架 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | Compose 与工作流配置 |
-| Documentation | 纳入剩余文档并初始化 GitHub Wiki | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 主仓库完成推送 |
+| 全栈 | 当前无活动开发计划 | 无 | 无 | 无 |
+| Backend | 当前无活动开发计划 | 无 | 无 | 无 |
+| Admin | 当前无活动开发计划 | 无 | 无 | 无 |
+| Web | 当前无活动开发计划 | 无 | 无 | 无 |
+| API Client | 当前无活动开发计划 | 无 | 无 | 无 |
+| Database | 当前无活动开发计划 | 无 | 无 | 无 |
+| Deployment | 当前无活动开发计划 | 无 | 无 | 无 |
+| Documentation | 当前无活动开发计划 | 无 | 无 | 无 |
 
 ## 计划文档登记
 
@@ -50,7 +50,7 @@
 | `plans/2026-08-12_全项目索引与计划治理计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立总索引、计划治理和派生项目继承基线 |
 | `plans/2026-08-12_产品需求基线建设计划.md` | 已结束 | 已完成 | 全栈产品基线、文档 | 建立母版目标用户、能力范围、非目标和验收基线 |
 | `plans/2026-08-12_讨论结论知识沉淀规则计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立讨论结论向现有权威文档收敛的规则 |
-| `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 实施中 | 待填写 | 全仓库、GitHub Wiki | 修复环境模板、提交完整项目基线并初始化 Wiki |
+| `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 已结束 | 已完成 | 全仓库、GitHub Wiki | 修复环境模板、提交完整项目基线并初始化 Wiki |
 
 ## 当前系统状态
 
@@ -62,7 +62,7 @@
 | API Client | 已建立生成包和占位入口，尚无业务接口 | `packages/api-client/`、根 `openapi.json` |
 | Database | 已建立 Alembic 配置和目录，尚无版本迁移 | `apps/backend/alembic.ini`、`apps/backend/alembic/versions/` |
 | Deployment | 已有 Compose 与 GitHub Actions 模板，应用 Dockerfile 尚待补充 | `compose.yml`、`compose.prod.yml`、`.github/workflows/` |
-| Documentation | 已有产品需求基线、ADR、架构、蓝图、运维索引和全项目治理入口 | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、本索引 |
+| Documentation | 已有产品需求基线、ADR、架构、蓝图、运维索引、全项目治理入口和已同步的 GitHub Wiki | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、本索引、GitHub Wiki |
 
 ## 权威来源
 

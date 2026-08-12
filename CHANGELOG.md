@@ -14,6 +14,7 @@
 - 建立讨论结论知识沉淀规则，将已确认或有证据的长期结论路由到现有权威文档，不保存聊天原文，也不提前创建空的 Brainstorming 或 Research 目录。
 - 纳入 Backend、Admin、Web、共享包、Compose、GitHub Actions、ADR、架构、蓝图和运维文档的完整工程骨架。
 - 建立 GitHub Actions 骨架就绪门禁；源码、测试、锁文件或 Dockerfile 未齐备时明确跳过对应 CI/CD 步骤。
+- 初始化 GitHub Wiki，并从主仓库已推送提交完整同步 `docs/` 下 12 份受管文档和同步清单。
 
 ### Fixed
 
