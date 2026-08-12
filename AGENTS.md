@@ -95,6 +95,14 @@
 - `packages/api-client/src/` 由根契约生成，禁止手工修改。契约变化后按"后端实现、导出 `openapi.json`、运行 `pnpm generate-api`、前端适配"的顺序同步。
 - 全仓库只维护根目录 `pnpm-lock.yaml`。Python 锁文件归 `apps/backend/uv.lock`，两套依赖不得混用。
 
+## Git 提交与追溯
+
+- Git 历史是普通提交 Commit SHA、父提交、文件快照和逐行差异的权威来源；使用 `git log`、`git show`、`git diff` 和 `git blame` 查询。
+- 普通提交的 Commit SHA 不重复写入 `CHANGELOG.md`、`plans/*.md` 或 `.agents/agents-index.md`。这些文档分别记录已交付变化、实施背景与验证、当前事实与导航。
+- `git-sync` 完成后只在交付回复中报告提交 SHA 和推送结果，不得为了回写刚产生的 SHA 再创建后续提交。
+- 正式发布、生产部署、派生项目基线、安全审计、故障回滚和阶段性交接属于跨系统追溯场景，必须在对应记录中保存完整 40 位 Commit SHA 或受保护的不可变 Git Tag；部署、审计和回滚记录优先使用完整 SHA。
+- 创建或推送 Tag、发布 Release、部署和回滚仍需分别取得用户明确授权。
+
 ## 本地环境
 
 - Windows 本地开发采用纯 uv、pnpm、本机 PostgreSQL 和 Docker Desktop Redis，具体步骤以 `docs/operations/local-dev-environment.md` 为准。
