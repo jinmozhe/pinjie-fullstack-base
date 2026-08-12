@@ -250,6 +250,7 @@ pnpm 的严格模式保证 `admin` 的代码**无法**直接 `import axios`，
 | 启动所有前端开发服务器 | `pnpm dev` |
 | 构建所有子包 | `pnpm build` |
 | 全局代码检查 | `pnpm lint` |
+| 全仓库 Markdown 检查 | `pnpm lint:md` |
 | 全局类型检查 | `pnpm typecheck` |
 | 重新生成 API 客户端 | `pnpm generate-api` |
 

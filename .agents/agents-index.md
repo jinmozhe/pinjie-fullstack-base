@@ -52,6 +52,7 @@
 | `plans/2026-08-12_讨论结论知识沉淀规则计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立讨论结论向现有权威文档收敛的规则 |
 | `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 已结束 | 已完成，Wiki 后续停用 | 全仓库、GitHub Wiki 历史 | 修复环境模板、提交完整项目基线并记录当时的 Wiki 初始化过程 |
 | `plans/2026-08-12_GitHub Wiki停用与文档单一来源计划.md` | 已结束 | 已完成 | 全仓库文档治理、GitHub Wiki | 清空并关闭 Wiki，建立 `docs/` 单一来源规则 |
+| `plans/2026-08-12_Markdown格式规范统一计划.md` | 已结束 | 已完成 | 全仓库 Markdown、文档治理 | 统一 GFM 语法基线、markdownlint 格式规则和项目级检查命令 |
 
 ## 当前系统状态
 
@@ -76,9 +77,10 @@
 | 计划规范 | `plans/README.md` | 只维护规则和模板，不复制当前进度 |
 | 项目文档清单 | `docs/README.md` | 文档新增、移动、用途变化时同步 |
 | 项目文档内容 | `docs/` | 唯一文档来源；禁止创建或同步 GitHub Wiki 副本 |
+| Markdown 格式规则与检查 | 根 `.markdownlint.json`、`package.json` 的 `lint:md` | GFM 语法基线、统一具体写法及固定版本的全仓库命令行检查 |
 | OpenAPI 契约 | 根 `openapi.json` | 由后端导出，禁止手工修改 |
 | TypeScript API Client | `packages/api-client/src/` | 由根契约生成，禁止手工修改 |
-| Node.js 锁文件 | 根 `pnpm-lock.yaml` | 全仓库唯一，当前待生成 |
+| Node.js 锁文件 | 根 `pnpm-lock.yaml` | 全仓库唯一，必须随依赖变化同步提交 |
 | Python 锁文件 | `apps/backend/uv.lock` | 后端唯一，当前待生成 |
 | 数据库结构 | Backend Models 与 `apps/backend/alembic/versions/` | 结构变化必须通过 Alembic 迁移 |
 | 已交付变化 | `CHANGELOG.md` | 按版本或 `Unreleased` 记录用户可见和治理变化 |

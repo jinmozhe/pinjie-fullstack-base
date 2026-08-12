@@ -53,6 +53,18 @@
 - 即使历史 Wiki Git 远程仍可访问，`git-sync` 及其他交付流程也必须跳过 Wiki 检查和同步。
 - 只有用户未来明确改变本项决策时，才能重新评估 Wiki；普通提交、推送或文档同步授权不包含启用 Wiki。
 
+## Markdown 格式
+
+- 仓库 Markdown 语法以 GitHub Flavored Markdown 为基线，格式检查以根目录 `.markdownlint.json` 为准。
+- AI 新建或修改 Markdown 后必须运行根目录 `pnpm lint:md`，处理本次变更引入的全部告警，不得通过行内禁用注释绕过规则。
+- 标题使用 ATX `#` 语法；无序列表使用 `-`；有序列表按 `1. 2. 3.` 连续编号；嵌套列表使用 2 个空格缩进。
+- 分隔线使用 `---`；代码块使用三个反引号围栏并填写准确语言标识；强调和加粗分别使用 `*文本*` 与 `**文本**`。
+- 表格保留首尾管道并使用 `compact` 风格，不为中文视觉宽度补齐纵向空格。
+- 链接和图片统一使用行内语法 `[文本](https://example.com)` 与 `![替代文本](https://example.com/image.png)`；禁止引用式、折叠式、快捷式、尖括号自动链接及以 URL 自身作为链接文本的写法。
+- 中文段落不强制按固定字符数硬换行，不同章节允许出现同名子标题；其他 markdownlint 默认规则继续生效。
+- 项目级 `markdownlint-cli2` 必须在根 `package.json` 中固定具体版本并通过根 `pnpm-lock.yaml` 锁定；版本升级需同步验证 VS Code 插件使用的 markdownlint 规则兼容性。
+- 当前不设置 Markdown CI 门禁；是否接入 GitHub Actions 应根据多人协作和 Pull Request 质量门禁需求另行规划。
+
 ## 修改原则
 
 - 保留用户已有修改，禁止回退、覆盖或顺手整理任务范围外的内容。

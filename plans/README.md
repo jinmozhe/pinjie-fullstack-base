@@ -60,13 +60,13 @@ YYYY-MM-DD_功能简洁名称计划.md
 
 | 范围 | 是否涉及 | 工作内容 | 前置依赖 | 验证 |
 | --- | --- | --- | --- | --- |
-| Backend |  |  |  |  |
-| Admin |  |  |  |  |
-| Web |  |  |  |  |
-| API Client |  |  |  |  |
-| Database |  |  |  |  |
-| Deployment |  |  |  |  |
-| Documentation |  |  |  |  |
+| Backend | | | | |
+| Admin | | | | |
+| Web | | | | |
+| API Client | | | | |
+| Database | | | | |
+| Deployment | | | | |
+| Documentation | | | | |
 
 ## 确认与完成条件
 

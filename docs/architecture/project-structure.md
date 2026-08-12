@@ -206,6 +206,7 @@ pinjie-fullstack-base/
 pnpm workspace 模式下，所有 workspace 成员（`apps/*` 和 `packages/*`）的依赖统一由根目录的 pnpm 管理。`pnpm install` 执行后只会在根目录生成一份 `pnpm-lock.yaml`，其中锁定了所有应用的所有依赖版本。
 
 好处：
+
 - 一份锁文件，避免不同应用对同一库锁定不同版本
 - CI 只需要 `pnpm install` 一条命令，无需进入各子目录分别安装
 - `node_modules` 通过 symlink 共享，减少磁盘占用
@@ -251,6 +252,7 @@ Next.js 有三种输出模式：
 `openapi.json` 是后端脚本自动生成的**机器可读构建产物**，消费者是 `pnpm generate-api` 脚本（生成 `packages/api-client/src/`），不是给人阅读的文档。
 
 放根目录原因：
+
 - 路径最短，SDK 生成命令引用 `../../openapi.json` 而不是 `../../docs/openapi.json`
 - 和 `package.json`、`pnpm-workspace.yaml` 同级，语义上是根目录级别的全局产物
 - `docs/` 目录应只存放给人读的 Markdown 文档，不混入机器产物

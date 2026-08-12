@@ -244,6 +244,7 @@ uv add --dev package-name
 
 ```powershell
 pnpm lint
+pnpm lint:md
 pnpm typecheck
 pnpm build
 ```

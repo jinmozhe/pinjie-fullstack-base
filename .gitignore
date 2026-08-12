@@ -19,6 +19,7 @@ htmlcov/
 # Node.js / 前端
 # ============================================================
 node_modules/
+.pnpm-store/
 
 # Next.js（apps/web）
 .next/

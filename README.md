@@ -56,6 +56,7 @@ CHANGELOG.md            已交付能力和版本变化
 - 同一能力涉及 Backend、Admin 和 Web 时，在同一份计划中描述完整链路和联合验证
 - 已经存在的计划文档永久保留；删除、移动和重命名只能由用户人工处理
 - 修改文档后，同步更新 `docs/README.md` 中对应的索引记录
+- 新建或修改 Markdown 后，运行 `pnpm lint:md` 检查全仓库文档格式
 - 后端接口变更后，运行 `pnpm generate-api` 更新前端 SDK
 
 ## 母版边界
