@@ -1,0 +1,12 @@
+{
+  "name": "@pinjie/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "共享 ESLint 配置",
+  "main": "./index.js",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0"
+  }
+}

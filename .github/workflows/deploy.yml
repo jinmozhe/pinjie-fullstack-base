@@ -1,0 +1,69 @@
+name: CD - Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查容器构建文件是否就绪
+        id: readiness
+        shell: bash
+        run: |
+          if [[ -f apps/backend/Dockerfile && -f apps/web/Dockerfile && -f apps/admin/Dockerfile ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "三个应用的 Dockerfile 尚未齐备，跳过镜像发布和服务器更新。"
+          fi
+
+      - name: 登录 GHCR
+        if: steps.readiness.outputs.ready == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 构建并推送后端镜像
+        if: steps.readiness.outputs.ready == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/backend
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/pinjie-fullstack-backend:latest
+
+      - name: 构建并推送 Web 镜像
+        if: steps.readiness.outputs.ready == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/web
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/pinjie-fullstack-web:latest
+
+      - name: 构建并推送 Admin 镜像
+        if: steps.readiness.outputs.ready == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/admin
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/pinjie-fullstack-admin:latest
+
+      - name: SSH 触发服务器更新
+        if: steps.readiness.outputs.ready == 'true'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /path/to/deploy
+            docker compose -f compose.prod.yml pull
+            docker compose -f compose.prod.yml up -d --remove-orphans

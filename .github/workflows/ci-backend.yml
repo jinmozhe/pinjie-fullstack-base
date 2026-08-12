@@ -1,0 +1,53 @@
+name: CI - Backend
+
+on:
+  push:
+    paths:
+      - "apps/backend/**"
+  pull_request:
+    paths:
+      - "apps/backend/**"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查后端骨架是否就绪
+        id: readiness
+        shell: bash
+        run: |
+          if [[ -f uv.lock && -f app/main.py ]] && find tests -type f -name 'test_*.py' -print -quit | grep -q .; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "后端源码、测试或 uv.lock 尚未就绪，跳过依赖安装和质量检查。"
+          fi
+
+      - name: 安装 uv
+        if: steps.readiness.outputs.ready == 'true'
+        uses: astral-sh/setup-uv@v3
+
+      - name: 安装依赖
+        if: steps.readiness.outputs.ready == 'true'
+        run: uv sync
+
+      - name: Ruff 静态检查
+        if: steps.readiness.outputs.ready == 'true'
+        run: uv run ruff check .
+
+      - name: Mypy 类型检查
+        if: steps.readiness.outputs.ready == 'true'
+        run: uv run mypy app
+
+      - name: Pytest 测试
+        if: steps.readiness.outputs.ready == 'true'
+        run: uv run pytest tests/ -v
+        env:
+          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+          REDIS_URL: ${{ secrets.TEST_REDIS_URL }}

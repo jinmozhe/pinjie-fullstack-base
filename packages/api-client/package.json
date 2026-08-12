@@ -1,0 +1,17 @@
+{
+  "name": "@pinjie/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "根据 OpenAPI 规范自动生成的 TypeScript 请求 SDK",
+  "main": "./src/index.ts",
+  "scripts": {
+    "generate": "openapi-ts --input ../../openapi.json --output ./src --client axios"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "^0.46.0",
+    "typescript": "^5.0.0"
+  }
+}

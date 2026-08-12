@@ -1,0 +1,64 @@
+name: CI - Frontend
+
+on:
+  push:
+    paths:
+      - "apps/web/**"
+      - "apps/admin/**"
+      - "packages/**"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "apps/admin/**"
+      - "packages/**"
+
+jobs:
+  lint-typecheck-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 检查前端骨架是否就绪
+        id: readiness
+        shell: bash
+        run: |
+          if [[ -f pnpm-lock.yaml && -f apps/web/src/app/page.tsx && -f apps/admin/src/main.tsx ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "前端入口或 pnpm-lock.yaml 尚未就绪，跳过依赖安装和质量检查。"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.readiness.outputs.ready == 'true'
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        if: steps.readiness.outputs.ready == 'true'
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: 安装依赖
+        if: steps.readiness.outputs.ready == 'true'
+        run: pnpm install
+
+      - name: OpenAPI 契约漂移检查
+        if: steps.readiness.outputs.ready == 'true'
+        run: |
+          # 验证 openapi.json 与预期一致。
+          echo "TODO: 集成 openapi-diff 检查"
+
+      - name: Lint 检查
+        if: steps.readiness.outputs.ready == 'true'
+        run: pnpm lint
+
+      - name: 类型检查
+        if: steps.readiness.outputs.ready == 'true'
+        run: pnpm typecheck
+
+      - name: 构建验证
+        if: steps.readiness.outputs.ready == 'true'
+        run: pnpm build
