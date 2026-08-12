@@ -50,7 +50,8 @@
 | `plans/2026-08-12_全项目索引与计划治理计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立总索引、计划治理和派生项目继承基线 |
 | `plans/2026-08-12_产品需求基线建设计划.md` | 已结束 | 已完成 | 全栈产品基线、文档 | 建立母版目标用户、能力范围、非目标和验收基线 |
 | `plans/2026-08-12_讨论结论知识沉淀规则计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立讨论结论向现有权威文档收敛的规则 |
-| `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 已结束 | 已完成 | 全仓库、GitHub Wiki | 修复环境模板、提交完整项目基线并初始化 Wiki |
+| `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 已结束 | 已完成，Wiki 后续停用 | 全仓库、GitHub Wiki 历史 | 修复环境模板、提交完整项目基线并记录当时的 Wiki 初始化过程 |
+| `plans/2026-08-12_GitHub Wiki停用与文档单一来源计划.md` | 已结束 | 已完成 | 全仓库文档治理、GitHub Wiki | 清空并关闭 Wiki，建立 `docs/` 单一来源规则 |
 
 ## 当前系统状态
 
@@ -62,7 +63,7 @@
 | API Client | 已建立生成包和占位入口，尚无业务接口 | `packages/api-client/`、根 `openapi.json` |
 | Database | 已建立 Alembic 配置和目录，尚无版本迁移 | `apps/backend/alembic.ini`、`apps/backend/alembic/versions/` |
 | Deployment | 已有 Compose 与 GitHub Actions 模板，应用 Dockerfile 尚待补充 | `compose.yml`、`compose.prod.yml`、`.github/workflows/` |
-| Documentation | 已有产品需求基线、ADR、架构、蓝图、运维索引、全项目治理入口和已同步的 GitHub Wiki | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、本索引、GitHub Wiki |
+| Documentation | 已有产品需求基线、ADR、架构、蓝图、运维索引和全项目治理入口；只使用仓库 `docs/`，GitHub Wiki 已关闭 | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、本索引 |
 
 ## 权威来源
 
@@ -74,6 +75,7 @@
 | 实施计划 | `plans/*.md` | 面向整个 Monorepo；原文、路径和索引永久保留 |
 | 计划规范 | `plans/README.md` | 只维护规则和模板，不复制当前进度 |
 | 项目文档清单 | `docs/README.md` | 文档新增、移动、用途变化时同步 |
+| 项目文档内容 | `docs/` | 唯一文档来源；禁止创建或同步 GitHub Wiki 副本 |
 | OpenAPI 契约 | 根 `openapi.json` | 由后端导出，禁止手工修改 |
 | TypeScript API Client | `packages/api-client/src/` | 由根契约生成，禁止手工修改 |
 | Node.js 锁文件 | 根 `pnpm-lock.yaml` | 全仓库唯一，当前待生成 |

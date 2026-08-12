@@ -1,5 +1,6 @@
 # docs/ 文档索引
 
+> **文档来源**：`docs/` 是本仓库项目文档的唯一存储和发布来源。GitHub Wiki 已停用，禁止将本目录同步或复制到 Wiki。
 > **维护规则**：每次在 `docs/` 目录下新建或修改文档，必须同步更新本文件中对应的记录。
 > 索引只写"路径 + 一句话说明"，不写长正文。
 
@@ -23,6 +24,7 @@
 | [0002-Codex与Antigravity指令兼容决策.md](adr/0002-Codex与Antigravity指令兼容决策.md) | 统一 AGENTS.md 规则正文，并通过 Antigravity Workspace Rules 桥接加载 |
 | [0003-本地开发环境架构决策.md](adr/0003-本地开发环境架构决策.md) | 选择纯 uv、pnpm、本机 PostgreSQL 与 Docker Desktop Redis 的本地开发组合 |
 | [0004-全项目索引与计划生命周期决策.md](adr/0004-全项目索引与计划生命周期决策.md) | 建立全项目索引、全栈计划生命周期、永久计划登记和派生项目继承规则 |
+| [0005-GitHub Wiki停用与文档单一来源决策.md](adr/0005-GitHub%20Wiki停用与文档单一来源决策.md) | 停用 GitHub Wiki，以仓库 `docs/` 作为唯一项目文档来源 |
 
 ---
 
