@@ -21,11 +21,11 @@
     "@pinjie/eslint-config": "workspace:*",
     "@pinjie/typescript-config": "workspace:*",
     "@next/eslint-plugin-next": "16.3.0",
-    "@types/node": "^22.0.0",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "typescript": "^5.0.0",
-    "tailwindcss": "^3.4.0",
-    "eslint": "^9.0.0"
+    "typescript": "^7.0.2",
+    "tailwindcss": "^4.3.3",
+    "eslint": "^10.8.1"
   }
 }
