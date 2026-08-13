@@ -11,12 +11,15 @@
 - `src/pages/` 负责路由页面和页面级编排，`src/components/` 放跨页面组件，`src/hooks/` 放可复用行为，`src/stores/` 放客户端状态，`src/lib/` 放 HTTP 等基础设施。
 - 页面不得直接拼接底层请求和重复处理响应结构。HTTP 客户端统一处理认证头、响应解包、错误分类和登录失效。
 - 服务端数据、缓存和请求状态由 TanStack Query 管理。Zustand 只保存真正的客户端状态，禁止复制 Query 数据形成双份事实来源。
+- 临时弹窗、表单和草稿优先使用组件本地状态。Zustand 不保存 Token、Cookie 内容和其他敏感凭据；浏览器认证边界遵守 `docs/architecture/authentication-authorization.md`。
 - Web 与 Admin 禁止直接互相引用。共享类型和请求能力只能通过 `@pinjie/api-client` 等 `packages/` 公共包进入。
+- Feature 只能通过明确公共入口协作，不得导入其他 Feature 的内部组件、Hook、Store 或请求实现。完整边界见 `docs/architecture/module-boundaries.md`。
 
 ## API 与类型
 
 - 页面层优先消费 `@pinjie/api-client` 生成类型和解包后的业务数据，禁止手工复制 OpenAPI 已提供的 DTO。
 - API 契约变化时，先更新后端并导出根 `openapi.json`，再从根目录运行 `pnpm generate-api`，最后适配 Admin。
+- 破坏性契约变化必须在同一全栈计划中完成消费者迁移或建立有删除期限的受控迁移窗口，禁止在页面长期维护新旧响应分支。
 - `packages/api-client/src/` 是生成目录，禁止手工修改。
 - 避免 `any`、非空断言和无依据的类型转换；外部输入必须在边界处校验或收窄。
 
@@ -31,4 +34,5 @@
 
 - 从仓库根目录运行 `pnpm --filter @pinjie/admin typecheck`、`pnpm --filter @pinjie/admin lint` 和 `pnpm --filter @pinjie/admin build`。
 - 新增测试框架和 `test` 脚本后，功能改动必须运行相关单元测试；当前没有测试脚本时应明确说明该缺口。
+- 应用出现入口但缺少测试脚本或必要测试时属于 `partial`，仓库门禁必须失败，禁止退回空骨架规避检查。
 - 涉及页面和样式时检查桌面与移动端视口、关键流程、文字和横向溢出。浏览器验证只清理本次启动的服务、进程和标签。

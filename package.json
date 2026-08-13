@@ -6,16 +6,22 @@
     "generate-api": "cd packages/api-client && pnpm run generate",
     "dev": "turbo run dev --filter=./apps/*",
     "build": "turbo run build",
+    "check:boundaries": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/ci/check-module-boundaries.ps1",
+    "check:governance": "pnpm check:text && pnpm lint:md && pnpm check:workspace && pnpm check:boundaries && pnpm check:guards",
+    "check:guards": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/ci/test-governance-guards.ps1",
+    "check:text": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/ci/check-text-files.ps1",
+    "check:workspace": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/ci/check-workspace-state.ps1",
     "lint": "turbo run lint",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#**/node_modules/**\"",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "markdownlint-cli2": "0.22.0",
+    "markdownlint-cli2": "0.23.2",
     "turbo": "^2.0.0"
   },
   "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=9.0.0"
-  }
+    "node": ">=24.0.0",
+    "pnpm": ">=11.17.0 <12"
+  },
+  "packageManager": "pnpm@11.17.0"
 }

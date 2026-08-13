@@ -14,7 +14,7 @@
 
 ## 快速开始
 
-阅读 `docs/operations/local-dev-environment.md` 了解本地开发环境搭建方式。
+阅读 [本地开发环境手册](docs/operations/local-dev-environment.md)了解完整环境搭建方式；环境变量分层、VS Code 工作区和 Backend 启动顺序见[环境变量分层与 Backend 本地运行手册](docs/operations/environment-variables-and-backend-local-run.md)。
 
 母版的目标用户、适用场景、目标能力、非目标和完成验收标准见 [产品需求基线](docs/PROJECT_REQUIREMENTS.md)。
 
@@ -39,6 +39,7 @@ openapi.json            后端导出的 OpenAPI 规范（根目录，前端 SDK 
 compose.yml             本地开发用（仅 Redis 容器）
 compose.prod.yml        生产部署用（backend/web/admin 三容器）
 CHANGELOG.md            已交付能力和版本变化
+SECURITY.md             漏洞报告和安全响应规则
 ```
 
 ## 项目索引
@@ -58,6 +59,17 @@ CHANGELOG.md            已交付能力和版本变化
 - 修改文档后，同步更新 `docs/README.md` 中对应的索引记录
 - 新建或修改 Markdown 后，运行 `pnpm lint:md` 检查全仓库文档格式
 - 后端接口变更后，运行 `pnpm generate-api` 更新前端 SDK
+- 提交前运行 `pnpm check:governance` 和 `pnpm check:guards`，验证文本、三态完整性、模块边界和门禁正反例
+
+## 工程治理基线
+
+- 应用状态分为 `empty`、`partial` 和 `ready`。`partial` 必须失败，`empty` 只表示治理检查通过。
+- Backend 领域和 Frontend Feature 只通过公开入口协作，禁止跨模块导入内部实现。
+- 错误处理采用 Fail Closed，禁止吞错、假成功、弱默认值和静默降级。
+- 临时兼容只允许用于有负责人、删除日期、观测和删除测试的受控迁移窗口。
+- CI、镜像发布和生产部署相互分离。生产只接受完整镜像 digest，不使用可变标签。
+
+架构边界见 [模块与依赖边界](docs/architecture/module-boundaries.md)，发布和回滚步骤见 [发布与回滚手册](docs/operations/release-and-rollback.md)。
 
 ## 母版边界
 

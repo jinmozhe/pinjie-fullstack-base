@@ -25,6 +25,9 @@
 | [0003-本地开发环境架构决策.md](adr/0003-本地开发环境架构决策.md) | 选择纯 uv、pnpm、本机 PostgreSQL 与 Docker Desktop Redis 的本地开发组合 |
 | [0004-全项目索引与计划生命周期决策.md](adr/0004-全项目索引与计划生命周期决策.md) | 建立全项目索引、全栈计划生命周期、永久计划登记和派生项目继承规则 |
 | [0005-GitHub Wiki停用与文档单一来源决策.md](adr/0005-GitHub%20Wiki停用与文档单一来源决策.md) | 停用 GitHub Wiki，以仓库 `docs/` 作为唯一项目文档来源 |
+| [0006-模块化单体与领域依赖边界决策.md](adr/0006-模块化单体与领域依赖边界决策.md) | 采用模块化单体，明确领域所有权、公开协作端口和禁止的跨领域内部依赖 |
+| [0007-受控迁移兼容策略决策.md](adr/0007-受控迁移兼容策略决策.md) | 禁止永久和隐式兼容，仅允许有期限、可观测、可删除的迁移窗口 |
+| [0008-不可变发布与生产追溯决策.md](adr/0008-不可变发布与生产追溯决策.md) | 分离 CI、镜像发布和生产部署，以 Commit SHA、镜像 digest 和部署记录建立追溯链 |
 
 ---
 
@@ -35,6 +38,12 @@
 | 文件 | 说明 |
 | --- | --- |
 | [project-structure.md](architecture/project-structure.md) | 完整目录树 + 工程文件设计说明（全项目索引、全栈计划、AI 规则桥接、环境变量和锁文件等） |
+| [backend-engineering-standard.md](architecture/backend-engineering-standard.md) | Backend 配置、Router、事务、数据、外部调用、日志、探针、测试和质量门禁的具体实施标准 |
+| [module-boundaries.md](architecture/module-boundaries.md) | Backend 领域、Frontend Feature、共享包和机械依赖门禁的边界 |
+| [error-model.md](architecture/error-model.md) | 错误分类、HTTP 契约、分层处理和禁止吞错、假成功、静默降级的规则 |
+| [authentication-authorization.md](architecture/authentication-authorization.md) | 认证、端点权限、资源授权、浏览器凭据和审计职责边界 |
+| [testing-strategy.md](architecture/testing-strategy.md) | 单元、Service、Repository、API、E2E、架构、迁移和契约测试策略 |
+| [observability-reliability.md](architecture/observability-reliability.md) | 部署等级、健康探针、日志指标 Trace、SLO、容量和恢复演练基线 |
 | [全栈Monorepo架构规划原始方案.md](architecture/全栈Monorepo架构规划原始方案.md) | 从 pinjie-standard 迁移的完整原始规划方案，包含技术选型对比、电商领域设计、1Panel 部署规范 |
 
 ---
@@ -62,13 +71,17 @@
 | 文件 | 说明 |
 | --- | --- |
 | [local-dev-environment.md](operations/local-dev-environment.md) | Windows 本地开发手册：纯 uv、pnpm、本机 PostgreSQL、Docker Desktop Redis、质量检查与生产环境边界 |
+| [environment-variables-and-backend-local-run.md](operations/environment-variables-and-backend-local-run.md) | 根与三端环境变量职责、1Panel 部署关系、VS Code 工作区及 Backend 本地初始化、启动和检查步骤 |
+| [ai-assisted-development-workflow.md](operations/ai-assisted-development-workflow.md) | AI 助手规则发现、文档读取路由、常见任务、计划实施、验证交付和独立授权的完整开发指南 |
 | [uv使用指南.md](operations/uv使用指南.md) | uv 原理、纯 uv 环境方案、常用命令和 conda 对比 |
 | [pnpm使用指南.md](operations/pnpm使用指南.md) | pnpm 存储机制、workspace 共享包、Markdown 检查等常用命令和 npm 对比 |
+| [release-and-rollback.md](operations/release-and-rollback.md) | CI、镜像发布、生产部署和按固定 digest 回滚的操作边界 |
+| [database-backup-restore.md](operations/database-backup-restore.md) | 备份参数、恢复演练、生产恢复和数据库迁移保护步骤 |
+| [incident-response.md](operations/incident-response.md) | 事故分级、角色、止损、恢复验证、状态沟通和复盘步骤 |
 
 待补充文档（有需要时创建）：
 
 - `operations/1panel-production-runbook.md` - 1Panel 生产部署手册
-- `operations/database-backup-restore.md` - 数据库备份与恢复
 
 ---
 

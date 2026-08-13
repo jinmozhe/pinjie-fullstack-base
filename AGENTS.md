@@ -20,6 +20,7 @@
 - 本仓库是通用全栈 Monorepo 母版，技术栈为 FastAPI、Next.js、React、pnpm 和 Turborepo，可派生为 CMS、管理平台、电商等业务仓库。
 - 母版只保留跨业务可复用能力。具体业务领域进入 `docs/blueprints/` 或派生仓库，禁止把单一项目的业务假设写成母版硬约束。
 - `apps/backend`、`apps/admin`、`apps/web` 是独立应用，禁止相互直接引用。共享代码和配置只能通过 `packages/` 中的明确公共包提供。
+- Backend 采用模块化单体，领域与前端 Feature 只能通过公开入口协作。完整边界以 `docs/architecture/module-boundaries.md` 为准，可机械判断的违规必须由仓库门禁拒绝。
 
 ## 产品需求基线
 
@@ -46,6 +47,15 @@
 - 未决事项只保留在相关活动计划中并标明状态。临时推测、普通问答、完整聊天记录和没有长期参考价值的已否决方案不进入项目文档。
 - 只有独立调研周期较长、证据需要被多个计划复用且尚未达到正式决策条件时，才评估创建 `docs/research/`；不得提前创建空目录或占位文档。
 
+## 工程治理基线
+
+- 错误和依赖失败必须明确传播，禁止吞错、假成功、弱默认值和静默降级。允许的超时、有限重试、熔断、背压和只读状态必须具有契约、观测、恢复条件和测试，完整模型见 `docs/architecture/error-model.md`。
+- 禁止永久兼容、隐式兼容、自动猜测版本和无期限双轨。滚动升级需要临时兼容时，必须遵守 `docs/adr/0007-受控迁移兼容策略决策.md`，登记负责人、删除日期、观测和删除测试。
+- 认证、授权和审计按 `docs/architecture/authentication-authorization.md` 分层。客户端隐藏不能代替服务端授权，浏览器 Token 不得进入 `localStorage`、Zustand 或其他客户端可读持久化存储。
+- 后续源码实现必须按 `docs/architecture/testing-strategy.md` 建立与风险匹配的测试。Mock、SQLite、假数据、浏览器冒烟和跳过步骤不得替代明确要求的真实验证。
+- 仓库门禁采用 Fail Closed。应用只允许明确的 `empty` 或完整 `ready` 状态；`partial`、关键检查跳过、生成漂移和占位步骤必须失败。`empty` 只能表述为治理检查通过，不能表述为应用质量检查通过。
+- 安全开发以 `SECURITY.md`、`.github/CODEOWNERS` 和 Pull Request 模板为治理入口。生产工作流、权限模型、公开契约、数据库删除和安全配置属于高风险变更，必须具备专项计划、评审、验证和回滚边界。
+
 ## 项目文档来源
 
 - `docs/` 是本仓库项目文档的唯一存储和发布来源，完整清单由 `docs/README.md` 维护。
@@ -63,7 +73,7 @@
 - 链接和图片统一使用行内语法 `[文本](https://example.com)` 与 `![替代文本](https://example.com/image.png)`；禁止引用式、折叠式、快捷式、尖括号自动链接及以 URL 自身作为链接文本的写法。
 - 中文段落不强制按固定字符数硬换行，不同章节允许出现同名子标题；其他 markdownlint 默认规则继续生效。
 - 项目级 `markdownlint-cli2` 必须在根 `package.json` 中固定具体版本并通过根 `pnpm-lock.yaml` 锁定；版本升级需同步验证 VS Code 插件使用的 markdownlint 规则兼容性。
-- 当前不设置 Markdown CI 门禁；是否接入 GitHub Actions 应根据多人协作和 Pull Request 质量门禁需求另行规划。
+- Markdown 已纳入仓库治理 CI。修改 Markdown 后仍必须在本地运行 `pnpm lint:md`，CI 不能替代本地复读和文本卫生检查。
 
 ## 修改原则
 
@@ -93,7 +103,9 @@
 
 - 根目录 `openapi.json` 是后端导出的唯一 OpenAPI 契约，禁止手工修改。
 - `packages/api-client/src/` 由根契约生成，禁止手工修改。契约变化后按"后端实现、导出 `openapi.json`、运行 `pnpm generate-api`、前端适配"的顺序同步。
+- Backend 进入 `ready` 后，CI 必须重新导出 OpenAPI、重新生成客户端并检查无 Git 差异。Breaking Change 必须在同一全栈计划中完成消费者迁移或建立受控迁移窗口。
 - 全仓库只维护根目录 `pnpm-lock.yaml`。Python 锁文件归 `apps/backend/uv.lock`，两套依赖不得混用。
+- 依赖安装脚本采用显式白名单。新增需要构建脚本的依赖前必须评审来源与必要性，并更新根 `pnpm-workspace.yaml` 的 `allowBuilds`；禁止无范围放行全部安装脚本。
 
 ## Git 提交与追溯
 
@@ -102,6 +114,7 @@
 - `git-sync` 完成后只在交付回复中报告提交 SHA 和推送结果，不得为了回写刚产生的 SHA 再创建后续提交。
 - 正式发布、生产部署、派生项目基线、安全审计、故障回滚和阶段性交接属于跨系统追溯场景，必须在对应记录中保存完整 40 位 Commit SHA 或受保护的不可变 Git Tag；部署、审计和回滚记录优先使用完整 SHA。
 - 创建或推送 Tag、发布 Release、部署和回滚仍需分别取得用户明确授权。
+- 镜像发布和生产部署遵守 `docs/adr/0008-不可变发布与生产追溯决策.md`。生产只允许固定镜像 digest，禁止 `latest`、分支标签和缺失版本回退；CI、镜像发布、部署和回滚必须保持职责与授权分离。
 
 ## 本地环境
 
@@ -114,6 +127,7 @@
 
 - 按实际影响范围运行最小充分验证。跨应用契约变化必须同时验证后端契约、生成客户端和受影响前端。
 - 只运行仓库已配置的命令。尚未配置的检查项应明确写为缺口，禁止伪装成通过。
+- 治理和架构变更必须运行 `pnpm check:workspace` 与 `pnpm check:boundaries`。进入应用 `ready` 后继续运行对应应用的全部质量命令。
 - 交付前复读修改文件，检查 `git diff` 或等价差异，并清理本次验证产生的缓存和临时产物。
 - 最终回复说明修改内容、验证结果、未执行项和剩余风险。
 - 提交、推送、发布 GHCR、部署和生产变更是独立动作，分别需要用户明确授权；禁止因完成本地修改而自动执行。

@@ -2,7 +2,7 @@
 
 > 文档归属：`docs/architecture/project-structure.md`
 > 适用仓库：`pinjie-fullstack-base`
-> 最后更新：2026-08-12
+> 最后更新：2026-08-13
 
 ---
 
@@ -113,15 +113,33 @@ pinjie-fullstack-base/
 │   │   ├── 0001-全栈Monorepo架构决策.md
 │   │   ├── 0002-Codex与Antigravity指令兼容决策.md
 │   │   ├── 0003-本地开发环境架构决策.md
-│   │   └── 0004-全项目索引与计划生命周期决策.md
+│   │   ├── 0004-全项目索引与计划生命周期决策.md
+│   │   ├── 0005-GitHub Wiki停用与文档单一来源决策.md
+│   │   ├── 0006-模块化单体与领域依赖边界决策.md
+│   │   ├── 0007-受控迁移兼容策略决策.md
+│   │   └── 0008-不可变发布与生产追溯决策.md
 │   ├── architecture/
-│   │   └── project-structure.md      ← 本文件
+│   │   ├── project-structure.md        ← 本文件
+│   │   ├── backend-engineering-standard.md
+│   │   │                                ← Backend 具体实施标准与专题文档引用入口
+│   │   ├── module-boundaries.md
+│   │   ├── error-model.md
+│   │   ├── authentication-authorization.md
+│   │   ├── testing-strategy.md
+│   │   └── observability-reliability.md
 │   ├── blueprints/
 │   │   └── commerce/README.md
 │   └── operations/
 │       ├── local-dev-environment.md    ← Windows 本地开发主手册
+│       ├── environment-variables-and-backend-local-run.md
+│       │                                ← 环境变量分层与 Backend 本地运行手册
+│       ├── ai-assisted-development-workflow.md
+│       │                                ← AI 助手规则读取与完整开发链路指南
 │       ├── uv使用指南.md               ← Python 环境与依赖管理指南
-│       └── pnpm使用指南.md             ← 前端 workspace 包管理指南
+│       ├── pnpm使用指南.md             ← 前端 workspace 包管理指南
+│       ├── release-and-rollback.md
+│       ├── database-backup-restore.md
+│       └── incident-response.md
 │
 ├── plans/
 │   ├── README.md                       ← 全栈计划格式、状态、完成和保护规则
@@ -130,7 +148,14 @@ pinjie-fullstack-base/
 ├── .github/workflows/
 │   ├── ci-backend.yml
 │   ├── ci-frontend.yml
-│   └── deploy.yml
+│   ├── ci-governance.yml
+│   ├── security.yml
+│   ├── publish-images.yml
+│   └── deploy-production.yml
+├── scripts/ci/                         ← 三态、模块边界、文本和门禁自测脚本
+├── SECURITY.md                         ← 漏洞报告和安全响应规则
+├── .editorconfig                       ← 编辑器文本格式基线
+├── .gitattributes                      ← Git 文本换行与二进制属性
 │
 ├── openapi.json                       ← 后端导出的 OpenAPI 规范（根目录）
 ├── pnpm-workspace.yaml                ← Monorepo workspace 配置
@@ -138,7 +163,7 @@ pinjie-fullstack-base/
 ├── package.json                       ← 根 package（全局脚本）
 ├── compose.yml                        ← 本地开发用（仅 Redis）
 ├── compose.prod.yml                   ← 生产部署用（三容器）
-├── .env.example                       ← 部署层变量模板（IMAGE_TAG 等）
+├── .env.example                       ← 三个完整不可变镜像引用模板
 ├── .gitignore
 ├── CHANGELOG.md                        ← 已交付能力和版本变化
 └── README.md
@@ -184,26 +209,30 @@ pinjie-fullstack-base/
 
 计划文件直接放在 `plans/` 下，不创建 `active/`、`archive/` 或按应用拆分的子目录。稳定路径能够保证长期引用有效。已经存在的计划文档及其总索引记录永久保留，AI 不得删除、移动、重命名、替换或自动归档；相关文件操作只能由用户人工处理。
 
-### 为什么 `.env.example` 分三层
+### 为什么 `.env.example` 分四层
 
 | 层级 | 文件位置 | 存放内容 | 使用者 |
 | --- | --- | --- | --- |
-| 部署层 | 根目录 `.env.example` | `IMAGE_TAG`、`GITHUB_ORG` 等 CI/CD 变量 | `compose.prod.yml`、GitHub Actions |
+| 部署层 | 根目录 `.env.example` | `BACKEND_IMAGE`、`WEB_IMAGE`、`ADMIN_IMAGE` 的完整 digest 引用 | `compose.prod.yml`、生产部署工作流 |
 | 后端层 | `apps/backend/.env.example` | `DATABASE_URL`、`SECRET_KEY`、`REDIS_URL` | uvicorn 进程 |
 | Web 层 | `apps/web/.env.example` | `NEXT_PUBLIC_API_URL`、`BACKEND_URL` | Next.js 构建和运行时 |
 | Admin 层 | `apps/admin/.env.example` | `VITE_API_URL` | Vite 构建时注入 |
 
-三层内容完全不重叠，各层只声明自己运行需要的变量。分层原因：
+各层只声明自己负责的变量。生产 Compose 从根 `.env` 读取镜像引用，从 `apps/backend/.env` 向 Backend 容器注入运行配置。Web 与 Admin 的生产变量尚未接入 Compose，需要在阶段 B 结合 Dockerfile、构建参数和运行方式确认。根模板不保存 GitHub Environment 变量和 Secret，`DEPLOY_PATH`、部署开关与 SSH 凭据只在受保护的 `production` Environment 中配置。详细操作见[环境变量分层与 Backend 本地运行手册](../operations/environment-variables-and-backend-local-run.md)。分层原因：
 
 - 后端和前端的环境变量格式不同（Python `os.environ` vs Next.js `NEXT_PUBLIC_` 前缀 vs Vite `VITE_` 前缀）
 - 开发者进入某个应用目录工作时，能直接看到该应用需要哪些变量，不需要翻根目录的大文件
-- 生产部署时，容器各自加载自己的 `.env`，互不干扰
+- 生产部署时，部署镜像选择与应用运行配置具有独立边界，只有 Compose 明确声明的变量才进入对应容器
 
 ---
 
 ### 为什么 `pnpm-lock.yaml` 放根目录
 
 pnpm workspace 模式下，所有 workspace 成员（`apps/*` 和 `packages/*`）的依赖统一由根目录的 pnpm 管理。`pnpm install` 执行后只会在根目录生成一份 `pnpm-lock.yaml`，其中锁定了所有应用的所有依赖版本。
+
+当前运行基线为 Node.js 24 及以上受支持版本，根 `packageManager` 固定 pnpm 11.17.0，CI 与本地开发必须保持一致。版本升级需要同时验证锁文件、生成工具和三个应用构建。
+
+根 `pnpm-workspace.yaml` 通过 `allowBuilds` 显式批准 `esbuild` 和 `sharp` 的依赖构建脚本。新增条目需要评审包来源、脚本行为和构建必要性，未登记的依赖安装脚本默认不执行。
 
 好处：
 
@@ -307,11 +336,11 @@ Next.js 有三种输出模式：
 | 目录 | 当前文件 | 待补充文档 |
 | --- | --- | --- |
 | `docs/` | `PROJECT_REQUIREMENTS.md`、`README.md` | 产品文档达到至少三份且职责独立时再评估 `docs/product/` |
-| `docs/adr/` | `0001-全栈Monorepo架构决策.md`、`0002-Codex与Antigravity指令兼容决策.md`、`0003-本地开发环境架构决策.md`、`0004-全项目索引与计划生命周期决策.md` | 每次重大技术决策时新增 |
-| `docs/architecture/` | `project-structure.md`（本文件） | `authentication-protocol.md`、`api-data-contract.md` |
+| `docs/adr/` | `0001` 至 `0008` 架构决策记录 | 每次重大技术决策时新增 |
+| `docs/architecture/` | 项目结构、Backend 工程标准、模块边界、错误、认证授权、测试和可靠性文档 | 运行机制形成后就地更新对应文档 |
 | `docs/blueprints/commerce/` | `README.md` | `domain-model.md`、`checkout-workflow.md` |
 | `docs/blueprints/cms/` | 空（待补充） | 当 CMS 业务需要时创建 |
 | `docs/blueprints/blog/` | 空（待补充） | 当博客业务需要时创建 |
-| `docs/operations/` | `local-dev-environment.md`、`uv使用指南.md`、`pnpm使用指南.md` | `1panel-production-runbook.md`、`database-backup-restore.md` |
+| `docs/operations/` | AI 助手开发、本地环境、依赖管理、发布回滚、备份恢复和事故响应手册 | `1panel-production-runbook.md` |
 
 **空目录策略**：`blueprints/cms/`、`blueprints/blog/`、`blueprints/corporate-site/` 目前没有内容，Git 不追踪空目录，不会占用仓库空间，等实际需要时再建文件。不提前创建占位文件，避免维护空文档。

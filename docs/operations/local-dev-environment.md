@@ -5,6 +5,8 @@
 > 架构决策：[ADR 0003：本地开发环境架构决策](../adr/0003-本地开发环境架构决策.md)
 > 延伸阅读：[uv 使用指南](uv使用指南.md)；[pnpm 使用指南](pnpm使用指南.md)
 
+根与三端 `.env` 的职责、VS Code 工作区方式和 Backend 的标准启动顺序见[环境变量分层与 Backend 本地运行手册](environment-variables-and-backend-local-run.md)。
+
 ## 一、最终方案
 
 本地开发采用“本机应用进程 + 本机 PostgreSQL + Docker Desktop Redis”：
@@ -88,8 +90,8 @@ Windows 本机
 | --- | --- | --- |
 | Git | 当前稳定版本 | 版本控制 |
 | uv | 当前稳定版本 | Python、虚拟环境和后端依赖 |
-| Node.js | 20 或更高版本 | 前端运行时 |
-| pnpm | 9 或更高版本 | Monorepo 依赖管理 |
+| Node.js | 24 或更高版本 | 前端运行时，使用当前 Active LTS 或后续受支持版本 |
+| pnpm | 11.17.0 或更高的 11.x | Monorepo 依赖管理，与根 `packageManager` 保持一致 |
 | PostgreSQL | 主版本尽量与生产一致 | 本地数据库 |
 | Docker Desktop | 包含 Docker Compose | 本地 Redis |
 

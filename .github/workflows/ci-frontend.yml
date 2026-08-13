@@ -1,64 +1,109 @@
 name: CI - Frontend
 
 on:
-  push:
-    paths:
-      - "apps/web/**"
-      - "apps/admin/**"
-      - "packages/**"
   pull_request:
-    paths:
-      - "apps/web/**"
-      - "apps/admin/**"
-      - "packages/**"
+  push:
+
+permissions:
+  contents: read
 
 jobs:
-  lint-typecheck-build:
+  frontend-state:
+    name: Frontend state and boundaries
     runs-on: ubuntu-latest
-
+    outputs:
+      admin: ${{ steps.state.outputs.admin }}
+      web: ${{ steps.state.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: 检查前端骨架是否就绪
-        id: readiness
+      - name: Validate workspace state
+        id: state
+        shell: pwsh
+        run: ./scripts/ci/check-workspace-state.ps1 -GitHubOutputPath $env:GITHUB_OUTPUT
+
+      - name: Validate module boundaries
+        shell: pwsh
+        run: ./scripts/ci/check-module-boundaries.ps1
+
+      - name: Report empty applications
+        if: steps.state.outputs.web == 'empty' || steps.state.outputs.admin == 'empty'
         shell: bash
-        run: |
-          if [[ -f pnpm-lock.yaml && -f apps/web/src/app/page.tsx && -f apps/admin/src/main.tsx ]]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "前端入口或 pnpm-lock.yaml 尚未就绪，跳过依赖安装和质量检查。"
-          fi
+        run: echo "One or more frontend applications are explicit empty skeletons. Their application quality checks have not passed."
 
-      - uses: pnpm/action-setup@v4
-        if: steps.readiness.outputs.ready == 'true'
+  web-quality:
+    name: Web quality
+    needs: frontend-state
+    if: needs.frontend-state.outputs.web == 'ready'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
-          version: 9
+          version: 11.17.0
 
-      - uses: actions/setup-node@v4
-        if: steps.readiness.outputs.ready == 'true'
+      - name: Install Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: "24"
+          cache: pnpm
 
-      - name: 安装依赖
-        if: steps.readiness.outputs.ready == 'true'
-        run: pnpm install
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: OpenAPI 契约漂移检查
-        if: steps.readiness.outputs.ready == 'true'
-        run: |
-          # 验证 openapi.json 与预期一致。
-          echo "TODO: 集成 openapi-diff 检查"
+      - name: Lint Web
+        run: pnpm --filter @pinjie/web lint
 
-      - name: Lint 检查
-        if: steps.readiness.outputs.ready == 'true'
-        run: pnpm lint
+      - name: Typecheck Web
+        run: pnpm --filter @pinjie/web typecheck
 
-      - name: 类型检查
-        if: steps.readiness.outputs.ready == 'true'
-        run: pnpm typecheck
+      - name: Test Web
+        run: pnpm --filter @pinjie/web test
 
-      - name: 构建验证
-        if: steps.readiness.outputs.ready == 'true'
-        run: pnpm build
+      - name: Build Web
+        run: pnpm --filter @pinjie/web build
+
+      - name: Reject generated API Client drift
+        run: pnpm generate-api && git diff --exit-code -- packages/api-client/src
+
+  admin-quality:
+    name: Admin quality
+    needs: frontend-state
+    if: needs.frontend-state.outputs.admin == 'ready'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint Admin
+        run: pnpm --filter @pinjie/admin lint
+
+      - name: Typecheck Admin
+        run: pnpm --filter @pinjie/admin typecheck
+
+      - name: Test Admin
+        run: pnpm --filter @pinjie/admin test
+
+      - name: Build Admin
+        run: pnpm --filter @pinjie/admin build
+
+      - name: Reject generated API Client drift
+        run: pnpm generate-api && git diff --exit-code -- packages/api-client/src

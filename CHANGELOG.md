@@ -15,7 +15,15 @@
 - 建立 `BASE-*` 需求编号与全栈计划关联规则，区分目标能力、当前实现状态、实施过程和已交付事实。
 - 建立讨论结论知识沉淀规则，将已确认或有证据的长期结论路由到现有权威文档，不保存聊天原文，也不提前创建空的 Brainstorming 或 Research 目录。
 - 纳入 Backend、Admin、Web、共享包、Compose、GitHub Actions、ADR、架构、蓝图和运维文档的完整工程骨架。
-- 建立 GitHub Actions 骨架就绪门禁；源码、测试、锁文件或 Dockerfile 未齐备时明确跳过对应 CI/CD 步骤。
+- 建立 `empty`、`partial`、`ready` 三态工程完整性门禁；部分实现、契约不一致和跨模块内部依赖会直接失败，空骨架只报告治理检查结果。
+- 建立模块化单体、领域所有权、Fail Closed、认证授权分层、测试、可观测性和可靠性架构基线。
+- 建立受控迁移兼容和不可变发布 ADR，生产部署固定镜像 digest，禁止 `latest` 与缺失版本回退。
+- 增加 `SECURITY.md`、CODEOWNERS、Pull Request 风险模板、Dependabot、Gitleaks、Dependency Review、包管理器依赖审计、依赖文件扫描和 CodeQL 治理基线。
+- 分离 CI、镜像发布和生产部署工作流；发布生成 SBOM 与构建来源证明，部署要求受保护环境、明确开关和固定 digest。
+- 增加发布回滚、数据库备份恢复和事故响应手册，以及统一文本编码、换行和模块边界检查脚本。
+- 增加环境变量分层与 Backend 本地运行手册，明确根 `.env`、三端应用配置、1Panel 部署关系和 VS Code 下的后端启动顺序。
+- 建立 Backend 两层规则体系，以 `apps/backend/AGENTS.md` 承载宪法级红线和任务读取路由，以工程实施标准承载 FastAPI、事务、数据库、缓存、外部调用、日志、探针、测试和质量门禁的具体规范。
+- 增加 AI 助手开发与文档读取指南，区分 Codex、Antigravity 的自动规则发现和项目主动读取，并覆盖常见任务、计划确认、跨栈实施、验证交付与独立授权链路。
 - 初始化 GitHub Wiki，并从主仓库已推送提交完整同步 `docs/` 下 12 份受管文档和同步清单。
 
 ### Fixed
@@ -26,3 +34,7 @@
 ### Changed
 
 - 清空并关闭 GitHub Wiki，项目文档统一以仓库 `docs/` 为唯一来源，后续提交和文档同步流程跳过 Wiki。
+- 生产 Compose 改为强制接收 Backend、Web 和 Admin 的完整不可变镜像引用，缺失变量时立即失败。
+- 前端和治理 CI 运行基线升级到仍受官方支持的 Node.js 24，并固定 pnpm 11.17.0。
+- pnpm 依赖构建脚本改为显式白名单，仅批准当前构建所需的 `esbuild` 和 `sharp`。
+- 升级 Next.js 至 16.3.0、ProComponents 至 2.8.10、OpenAPI 生成器至 0.99.0、Markdown 检查器至 0.23.2，并通过精确 override 修复间接依赖漏洞；完整 Node.js 依赖审计无已知 High 或 Critical 漏洞。

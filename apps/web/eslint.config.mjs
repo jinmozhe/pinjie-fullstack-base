@@ -1,10 +1,15 @@
 import { pinjieConfig } from "@pinjie/eslint-config";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const compat = new FlatCompat();
+import nextPlugin from "@next/eslint-plugin-next";
 
 export default [
   ...pinjieConfig,
-  // Next.js 特定规则（Core Web Vitals 等）
-  ...compat.extends("next/core-web-vitals"),
+  {
+    plugins: {
+      "@next/next": nextPlugin,
+    },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
 ];

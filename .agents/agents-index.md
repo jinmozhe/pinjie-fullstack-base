@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 工程骨架阶段，治理基线和完整项目骨架已入库 |
+| 当前阶段 | 工程骨架阶段，阶段 A 工程治理与安全可靠性基线已完成，应用运行源码尚未实现 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -18,6 +18,7 @@
 | --- | --- | --- |
 | `AGENTS.md` | 生效 | 全仓库规则、任务读取顺序、计划保护和交付边界 |
 | `apps/backend/AGENTS.md` | 生效 | Backend 分层、事务、数据库、安全和验证规则 |
+| `docs/architecture/backend-engineering-standard.md` | 生效 | Backend 详细设计、实现、评审和质量门禁的工程实施标准 |
 | `apps/admin/AGENTS.md` | 生效 | Admin 架构、API、Ant Design、状态和验证规则 |
 | `apps/web/AGENTS.md` | 生效 | Web 架构、渲染、API、设计、SEO 和验证规则 |
 | `.agents/rules/` | 生效 | Antigravity 按范围加载各级 `AGENTS.md` 的桥接规则 |
@@ -25,6 +26,9 @@
 | `plans/README.md` | 生效 | 全栈计划创建、状态、模板、完成和永久保护规则 |
 | `docs/PROJECT_REQUIREMENTS.md` | 生效 | 母版目标用户、场景、目标能力、非目标、派生规则和验收基线 |
 | `docs/README.md` | 生效 | `docs/` 下全部项目文档的专项索引 |
+| `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则发现、按需读取、计划实施、验证交付和独立授权的操作指南 |
+| `SECURITY.md` | 生效 | 漏洞报告、安全响应目标和安全开发要求 |
+| `scripts/ci/` | 生效 | 三态完整性、模块边界、文本卫生和门禁正反例检查 |
 | `CHANGELOG.md` | 生效 | 已交付但尚未发布的能力和后续版本变化 |
 
 ## 当前开发计划
@@ -54,6 +58,9 @@
 | `plans/2026-08-12_GitHub Wiki停用与文档单一来源计划.md` | 已结束 | 已完成 | 全仓库文档治理、GitHub Wiki | 清空并关闭 Wiki，建立 `docs/` 单一来源规则 |
 | `plans/2026-08-12_Markdown格式规范统一计划.md` | 已结束 | 已完成 | 全仓库 Markdown、文档治理 | 统一 GFM 语法基线、markdownlint 格式规则和项目级检查命令 |
 | `plans/2026-08-12_Git提交追溯规则计划.md` | 已结束 | 已完成 | 全仓库 Git、文档治理 | 明确普通提交和跨系统场景的 Commit SHA 记录边界 |
+| `plans/2026-08-13_工程治理与安全可靠性基线计划.md` | 已结束 | 已完成 | 全栈治理、架构规则、质量门禁、安全供应链、发布与运维边界 | 建立业务开发前的模块化、失败关闭、受控兼容、不可变发布和全链路追溯基线 |
+| `plans/2026-08-13_Backend工程标准与规则分层计划.md` | 已结束 | 已完成 | Backend 规则、工程标准、文档治理 | 建立 Backend 宪法级规则入口、详细工程标准和专题文档读取路由 |
+| `plans/2026-08-13_AI助手开发与文档读取指南计划.md` | 已结束 | 已完成 | 全栈 AI 开发、文档治理 | 说明规则自动发现、按需读取、常见任务和完整开发交付链路 |
 
 ## 当前系统状态
 
@@ -64,8 +71,8 @@
 | Web | Next.js、React 和 TypeScript 配置骨架，尚无页面源码 | `apps/web/package.json`、`next.config.ts`、`tsconfig.json` |
 | API Client | 已建立生成包和占位入口，尚无业务接口 | `packages/api-client/`、根 `openapi.json` |
 | Database | 已建立 Alembic 配置和目录，尚无版本迁移 | `apps/backend/alembic.ini`、`apps/backend/alembic/versions/` |
-| Deployment | 已有 Compose 与 GitHub Actions 模板，应用 Dockerfile 尚待补充 | `compose.yml`、`compose.prod.yml`、`.github/workflows/` |
-| Documentation | 已有产品需求基线、ADR、架构、蓝图、运维索引和全项目治理入口；只使用仓库 `docs/`，GitHub Wiki 已关闭 | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、本索引 |
+| Deployment | CI、镜像发布和生产部署已分离，生产强制固定 digest；应用 Dockerfile、健康探针和远端环境保护尚待后续实现与配置 | `compose.prod.yml`、`.github/workflows/`、`docs/operations/release-and-rollback.md` |
+| Documentation | 产品需求、8 份 ADR、AI 助手开发指南、Backend 工程标准、专题架构、发布恢复运维和治理入口已建立；只使用仓库 `docs/`，GitHub Wiki 已关闭 | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、`SECURITY.md`、本索引 |
 
 ## 权威来源
 
@@ -78,6 +85,7 @@
 | 计划规范 | `plans/README.md` | 只维护规则和模板，不复制当前进度 |
 | 项目文档清单 | `docs/README.md` | 文档新增、移动、用途变化时同步 |
 | 项目文档内容 | `docs/` | 唯一文档来源；禁止创建或同步 GitHub Wiki 副本 |
+| Backend 工程实施标准 | `docs/architecture/backend-engineering-standard.md` | 保存 Backend 具体实现方式、禁止模式和门禁；专题架构语义继续由对应文档负责 |
 | Markdown 格式规则与检查 | 根 `.markdownlint.json`、`package.json` 的 `lint:md` | GFM 语法基线、统一具体写法及固定版本的全仓库命令行检查 |
 | Git 提交与追溯 | Git 历史、根 `AGENTS.md` | 普通提交由 Git 保存精确历史，跨系统记录保存完整 Commit SHA 或不可变 Tag |
 | OpenAPI 契约 | 根 `openapi.json` | 由后端导出，禁止手工修改 |
