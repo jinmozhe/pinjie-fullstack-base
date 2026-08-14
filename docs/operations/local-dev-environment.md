@@ -13,20 +13,20 @@
 
 ```text
 Windows 本机
-├── Backend：uv + Python 3.12 + 项目 .venv，端口 8000
+├── Backend：uv + 标准 CPython 3.14 + 项目 .venv，端口 8000
 ├── Web：pnpm + Next.js，端口 3000
 ├── Admin：pnpm + Vite，端口 3001
 └── PostgreSQL：本机服务，端口 5432
 
 Docker Desktop
-└── Redis 7：根目录 compose.yml，端口 6379
+└── Redis 8.10.0：根目录 compose.yml，端口 6379
 ```
 
 Anaconda 或 Miniconda 不属于本项目的前置依赖。日常后端命令统一使用 `uv sync` 和 `uv run`，不要在主流程中混用 Conda 环境。
 
 ## 二、本地与生产环境区别
 
-生产服务器由 1Panel 管理，代码仓库只负责应用镜像和业务配置：
+生产服务器为 Linux x86_64，由 1Panel 管理 Compose 和 OpenResty：
 
 ```text
 1Panel
@@ -34,22 +34,22 @@ Anaconda 或 Miniconda 不属于本项目的前置依赖。日常后端命令统
 │   ├── api.yourdomain.com   → 127.0.0.1:8000
 │   ├── admin.yourdomain.com → 127.0.0.1:3001
 │   └── www.yourdomain.com   → 127.0.0.1:3000
-├── PostgreSQL：应用商店托管，单实例、多数据库、独立用户
-├── Redis：应用商店托管，通过项目 key 前缀隔离
-└── Compose：backend、web、admin 三个应用容器
+├── PostgreSQL：`postgres:18.4-alpine` 容器，独立数据卷和用户
+├── Redis：`redis:8.10.0-alpine` 容器，独立 AOF 数据卷
+└── Compose：postgres、redis、backend、web、admin 容器
 ```
 
 | 维度 | 本地开发 | 生产环境 |
 | --- | --- | --- |
 | 应用运行方式 | Windows 本机进程 | Docker 应用容器 |
-| PostgreSQL | 本机安装，`localhost:5432` | 1Panel 托管实例 |
-| Redis | Docker Desktop，`localhost:6379` | 1Panel 托管实例 |
+| PostgreSQL | 本机安装，`localhost:5432` | Docker Compose `postgres:18.4-alpine` |
+| Redis | Docker Desktop，`localhost:6379` | Docker Compose `redis:8.10.0-alpine` |
 | HTTP 入口 | 直接访问 localhost | OpenResty 域名反向代理 |
 | TLS | 不启用 | 1Panel 自动管理证书 |
 | 环境变量 | 应用目录内本地文件 | 1Panel 或 Compose 注入 |
 | 数据用途 | 开发和自动化测试 | 真实业务数据 |
 
-生产环境 PostgreSQL 容器连接地址不能使用 `localhost`，应使用 1Panel 提供的宿主机地址或 Docker 网络地址。
+生产 Compose 内 PostgreSQL 使用服务名 `postgres`，Redis 使用服务名 `redis`；容器内连接地址不能使用 `localhost`。
 
 ## 三、方案对比
 
@@ -125,16 +125,18 @@ pnpm workspace 只在仓库根目录维护一份 `pnpm-lock.yaml`，不要进入
 
 ```powershell
 Set-Location apps/backend
-uv python install 3.12
-uv python pin 3.12
+uv python install 3.14
+uv python pin 3.14
 uv sync
 Set-Location ../..
 ```
 
-- `uv python pin 3.12` 负责生成或更新项目 Python 版本声明。
+- `uv python pin 3.14` 负责生成或更新项目 Python 版本声明；项目只使用常规 CPython 构建，不使用 free-threaded `3.14t`。
 - `uv sync` 默认创建 `apps/backend/.venv` 并同步项目依赖。
 - `uv run` 后续直接在该项目环境中运行命令，无需手动激活。
 - 如果当前 PowerShell 自动激活了 Conda base 环境，可以先执行 `conda deactivate`，或新开一个未激活 Conda 的 PowerShell。
+
+使用 `uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"` 确认实际解释器。生产由 Backend 容器携带 Python，1Panel 宿主机 Python 版本不参与本项目运行时选择。
 
 ### 3. 初始化本机 PostgreSQL
 

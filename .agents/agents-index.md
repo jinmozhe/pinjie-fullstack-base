@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 工程骨架阶段，阶段 A 工程治理与安全可靠性基线已完成，应用运行源码尚未实现 |
+| 当前阶段 | 阶段 B 应用运行与测试基础设施实施中，三端已达到工程 `ready`，业务领域仍未实现 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -30,19 +30,20 @@
 | `SECURITY.md` | 生效 | 漏洞报告、安全响应目标和安全开发要求 |
 | `scripts/ci/` | 生效 | 三态完整性、模块边界、文本卫生和门禁正反例检查 |
 | `CHANGELOG.md` | 生效 | 已交付但尚未发布的能力和后续版本变化 |
+| `docs/adr/0009-Python运行时基线决策.md` | 生效 | 标准 CPython 3.14、本地 uv、CI、容器补丁固定和标准库 UUID v7 的长期决策 |
 
 ## 当前开发计划
 
 | 范围 | 当前目标 | 计划 | 状态 | 依赖 |
 | --- | --- | --- | --- | --- |
-| 全栈 | 当前无活动开发计划 | 无 | 无 | 无 |
-| Backend | 当前无活动开发计划 | 无 | 无 | 无 |
-| Admin | 当前无活动开发计划 | 无 | 无 | 无 |
-| Web | 当前无活动开发计划 | 无 | 无 | 无 |
-| API Client | 当前无活动开发计划 | 无 | 无 | 无 |
-| Database | 当前无活动开发计划 | 无 | 无 | 无 |
-| Deployment | 当前无活动开发计划 | 无 | 无 | 无 |
-| Documentation | 当前无活动开发计划 | 无 | 无 | 无 |
+| 全栈 | 阶段 B 应用运行与测试基础设施 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Linux x86_64、PostgreSQL 18.4、Redis 8.10.0 |
+| Backend | 运行入口、Core、数据库、健康、测试和契约导出 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 阶段 A 基线、标准 CPython 3.14 |
+| Admin | 可运行管理端骨架、状态页、测试和镜像 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Backend 系统状态契约 |
+| Web | 可运行用户端骨架、状态入口、测试和镜像 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Backend 系统状态契约 |
+| API Client | 从 Backend OpenAPI 生成并由两端消费 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Backend OpenAPI |
+| Database | Alembic 运行环境和 PostgreSQL 测试隔离，不新增业务表 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 独立 PostgreSQL 18.4 `_test` 数据库 |
+| Deployment | 三个 Dockerfile、健康检查、Compose 和跨栈 E2E | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 三个应用 ready |
+| Documentation | 阶段 B 计划、目录结构与后续实施事实同步 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 实施与验证结果 |
 
 ## 计划文档登记
 
@@ -61,18 +62,19 @@
 | `plans/2026-08-13_工程治理与安全可靠性基线计划.md` | 已结束 | 已完成 | 全栈治理、架构规则、质量门禁、安全供应链、发布与运维边界 | 建立业务开发前的模块化、失败关闭、受控兼容、不可变发布和全链路追溯基线 |
 | `plans/2026-08-13_Backend工程标准与规则分层计划.md` | 已结束 | 已完成 | Backend 规则、工程标准、文档治理 | 建立 Backend 宪法级规则入口、详细工程标准和专题文档读取路由 |
 | `plans/2026-08-13_AI助手开发与文档读取指南计划.md` | 已结束 | 已完成 | 全栈 AI 开发、文档治理 | 说明规则自动发现、按需读取、常见任务和完整开发交付链路 |
+| `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 三端工程 `ready`，待 PostgreSQL、Docker 构建与跨栈 E2E 环境验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 实施三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
 
 ## 当前系统状态
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | 工程骨架，尚无运行源码和测试实现 | `apps/backend/pyproject.toml`、`alembic.ini` 及空的规划目录 |
-| Admin | Vite、React、TypeScript 和 Ant Design 配置骨架，尚无页面源码 | `apps/admin/package.json`、`vite.config.ts`、`tsconfig.json` |
-| Web | Next.js、React 和 TypeScript 配置骨架，尚无页面源码 | `apps/web/package.json`、`next.config.ts`、`tsconfig.json` |
-| API Client | 已建立生成包和占位入口，尚无业务接口 | `packages/api-client/`、根 `openapi.json` |
-| Database | 已建立 Alembic 配置和目录，尚无版本迁移 | `apps/backend/alembic.ini`、`apps/backend/alembic/versions/` |
-| Deployment | CI、镜像发布和生产部署已分离，生产强制固定 digest；应用 Dockerfile、健康探针和远端环境保护尚待后续实现与配置 | `compose.prod.yml`、`.github/workflows/`、`docs/operations/release-and-rollback.md` |
-| Documentation | 产品需求、8 份 ADR、AI 助手开发指南、Backend 工程标准、专题架构、发布恢复运维和治理入口已建立；只使用仓库 `docs/`，GitHub Wiki 已关闭 | `docs/PROJECT_REQUIREMENTS.md`、`docs/README.md`、`SECURITY.md`、本索引 |
+| Backend | 运行入口、Core、数据库会话、事务、健康探针、系统状态、测试和契约导出已实现 | `apps/backend/app/`、`apps/backend/tests/`、`apps/backend/uv.lock` |
+| Admin | Vite、React、Ant Design 系统状态页、MSW/RTL 测试和生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile` |
+| Web | Next.js App Router 系统状态页、同域 API 代理、Vitest/RTL 测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
+| API Client | 从真实 Backend OpenAPI 生成并由 Admin/Web 消费 | `packages/api-client/src/`、根 `openapi.json` |
+| Database | Alembic 异步环境、空库 revision 检查和隔离集成测试已实现；尚未完成本机 `_test` 实测 | `apps/backend/alembic/`、`apps/backend/tests/test_postgres_integration.py` |
+| Deployment | 三个 Dockerfile、生产 Compose 健康依赖、同域代理和独立 Playwright E2E Workflow 已实现；本机镜像构建受 Docker Hub 网络阻塞 | `compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
+| Documentation | 目录结构已按当前 191 个项目文件同步，阶段 B 架构、环境、容器、测试、计划与索引保持一致；阶段 B 仍待数据库、镜像构建和真实 E2E 环境验收 | `docs/architecture/project-structure.md`、`docs/README.md`、本计划、`CHANGELOG.md` |
 
 ## 权威来源
 
@@ -91,7 +93,8 @@
 | OpenAPI 契约 | 根 `openapi.json` | 由后端导出，禁止手工修改 |
 | TypeScript API Client | `packages/api-client/src/` | 由根契约生成，禁止手工修改 |
 | Node.js 锁文件 | 根 `pnpm-lock.yaml` | 全仓库唯一，必须随依赖变化同步提交 |
-| Python 锁文件 | `apps/backend/uv.lock` | 后端唯一，当前待生成 |
+| Python 锁文件 | `apps/backend/uv.lock` | 后端唯一，已生成并锁定 Windows AMD64 与 Linux x86_64 环境 |
+| Python 运行时 | `docs/adr/0009-Python运行时基线决策.md` | 标准 CPython 3.14；依赖由 `uv.lock` 锁定，生产补丁由固定基础镜像 digest 控制 |
 | 数据库结构 | Backend Models 与 `apps/backend/alembic/versions/` | 结构变化必须通过 Alembic 迁移 |
 | 已交付变化 | `CHANGELOG.md` | 按版本或 `Unreleased` 记录用户可见和治理变化 |
 

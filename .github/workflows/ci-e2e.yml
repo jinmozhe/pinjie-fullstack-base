@@ -1,0 +1,98 @@
+name: CI - Browser E2E
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-e2e:
+    name: Playwright browser E2E
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pinjie_e2e_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pinjie_e2e_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:8.10.0-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/pinjie_e2e_test
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/pinjie_e2e_test
+      ENVIRONMENT: test
+      API_DOCS_ENABLED: "false"
+      REDIS_MODE: disabled
+      E2E_BACKEND_URL: http://127.0.0.1:8000
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - name: Sync Backend dependencies
+        working-directory: apps/backend
+        run: uv sync --locked --python 3.14
+
+      - name: Verify Python runtime
+        working-directory: apps/backend
+        run: uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"
+
+      - name: Start Backend
+        working-directory: apps/backend
+        shell: bash
+        run: |
+          uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 > "$RUNNER_TEMP/backend.log" 2>&1 &
+          ready=0
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/health/live; then ready=1; break; fi
+            sleep 1
+          done
+          if [[ "$ready" != "1" ]]; then
+            cat "$RUNNER_TEMP/backend.log"
+            exit 1
+          fi
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 11.17.0
+
+      - name: Install Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install locked workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend applications
+        run: pnpm --filter @pinjie/admin build && pnpm --filter @pinjie/web build
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run browser E2E
+        run: pnpm test:e2e

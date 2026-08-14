@@ -1,0 +1,149 @@
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+from app.api_router import api_router
+from app.core.config import Settings, get_settings
+from app.core.context import current_request_id
+from app.core.error_codes import ErrorCode
+from app.core.exceptions import AppException
+from app.core.health import check_readiness
+from app.core.logging import configure_logging
+from app.core.middleware import request_context_middleware
+from app.core.resources import AppResources, create_resources
+from app.domains.system.router import readiness_response
+from app.domains.system.schemas import LiveStatus, ReadinessStatus
+
+
+def _error_response(*, request_id: str, code: str, message: str, details: Any = None, status_code: int) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={"code": code, "message": message, "details": details, "request_id": request_id},
+    )
+
+
+def _safe_validation_details(exc: RequestValidationError) -> list[dict[str, Any]]:
+    details: list[dict[str, Any]] = []
+    for error in exc.errors():
+        location = [str(item) if not isinstance(item, int) else item for item in error.get("loc", [])]
+        details.append(
+            {
+                "loc": location,
+                "msg": str(error.get("msg", "Invalid input")),
+                "type": str(error.get("type", "value_error")),
+            }
+        )
+    return details
+
+
+def _register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AppException)
+    async def app_exception_handler(_: Request, exc: AppException) -> JSONResponse:
+        return _error_response(
+            request_id=current_request_id(),
+            code=exc.code,
+            message=exc.message,
+            details=exc.details,
+            status_code=exc.status_code,
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def validation_exception_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
+        return _error_response(
+            request_id=current_request_id(),
+            code=ErrorCode.VALIDATION_ERROR,
+            message="Request validation failed",
+            details=_safe_validation_details(exc),
+            status_code=422,
+        )
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+        code = ErrorCode.NOT_FOUND if exc.status_code == 404 else f"HTTP_{exc.status_code}"
+        return _error_response(
+            request_id=current_request_id(),
+            code=code,
+            message=str(exc.detail) if isinstance(exc.detail, str) else "Request failed",
+            status_code=exc.status_code,
+        )
+
+    @app.exception_handler(Exception)
+    async def unknown_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+        from loguru import logger
+
+        logger.opt(exception=exc).error("unhandled application exception")
+        return _error_response(
+            request_id=current_request_id(),
+            code=ErrorCode.INTERNAL_ERROR,
+            message="Internal server error",
+            status_code=500,
+        )
+
+
+def create_app(settings: Settings | None = None) -> FastAPI:
+    app_settings = settings or get_settings()
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app_settings.validate_runtime()
+        configure_logging(app_settings)
+        resources: AppResources = create_resources(app_settings)
+        app.state.settings = app_settings
+        app.state.resources = resources
+        try:
+            yield
+        finally:
+            await resources.close()
+
+    app = FastAPI(
+        title=app_settings.project_name,
+        version=app_settings.release_version or "0.1.0",
+        docs_url=app_settings.docs_url,
+        redoc_url=app_settings.redoc_url,
+        lifespan=lifespan,
+    )
+    app.state.settings = app_settings
+    app.middleware("http")(request_context_middleware)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=app_settings.cors_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "HEAD", "OPTIONS"],
+        allow_headers=["Accept", "Content-Type", "X-Request-ID", "X-Trace-ID"],
+    )
+    if "*" not in app_settings.trusted_hosts:
+        app.add_middleware(TrustedHostMiddleware, allowed_hosts=app_settings.trusted_hosts)
+    _register_exception_handlers(app)
+
+    app.include_router(api_router, prefix=app_settings.api_v1_str)
+
+    @app.get("/health/live", response_model=LiveStatus, tags=["health"], summary="Liveness probe")
+    async def health_live() -> LiveStatus:
+        return LiveStatus(status="alive")
+
+    @app.get("/health/ready", response_model=ReadinessStatus, tags=["health"], summary="Readiness probe")
+    async def health_ready(request: Request) -> JSONResponse:
+        resources = getattr(request.app.state, "resources", None)
+        settings = getattr(request.app.state, "settings", None)
+        if resources is None or settings is None:
+            return readiness_response(status_code=503, status="unavailable", checks={"application": "unavailable"})
+        result = await check_readiness(resources, settings)
+        return readiness_response(
+            status_code=200 if result.ready else 503,
+            status="ready" if result.ready else "unavailable",
+            checks=result.checks,
+        )
+
+    return app
+
+
+app = create_app()
+
+__all__ = ["app", "create_app"]

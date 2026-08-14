@@ -17,12 +17,8 @@ pnpm install
 pnpm dev   # http://localhost:3001
 ```
 
-## 通用模块范围
+开发服务器会把同域 `/api/v1` 请求代理到 Backend。生产静态容器使用 Nginx 维持相同代理路径。
 
-母版只包含以下页面：
+## 阶段 B 范围
 
-- `pages/login/`：登录页
-- `pages/dashboard/`：数据大盘
-- `pages/system/`：RBAC 权限管理与系统日志
-
-业务扩展页面（如电商运营模块）通过派生仓库添加，不放入母版。
+当前首页是业务中立的系统状态页，只消费真实 Backend 状态。认证、权限、业务菜单和具体领域由派生仓库在后续阶段添加。

@@ -28,6 +28,7 @@
 | [0006-模块化单体与领域依赖边界决策.md](adr/0006-模块化单体与领域依赖边界决策.md) | 采用模块化单体，明确领域所有权、公开协作端口和禁止的跨领域内部依赖 |
 | [0007-受控迁移兼容策略决策.md](adr/0007-受控迁移兼容策略决策.md) | 禁止永久和隐式兼容，仅允许有期限、可观测、可删除的迁移窗口 |
 | [0008-不可变发布与生产追溯决策.md](adr/0008-不可变发布与生产追溯决策.md) | 分离 CI、镜像发布和生产部署，以 Commit SHA、镜像 digest 和部署记录建立追溯链 |
+| [0009-Python运行时基线决策.md](adr/0009-Python运行时基线决策.md) | 统一标准 CPython 3.14、本地 uv、CI、容器补丁固定和标准库 UUID v7 边界 |
 
 ---
 
@@ -76,6 +77,7 @@
 | [uv使用指南.md](operations/uv使用指南.md) | uv 原理、纯 uv 环境方案、常用命令和 conda 对比 |
 | [pnpm使用指南.md](operations/pnpm使用指南.md) | pnpm 存储机制、workspace 共享包、Markdown 检查等常用命令和 npm 对比 |
 | [release-and-rollback.md](operations/release-and-rollback.md) | CI、镜像发布、生产部署和按固定 digest 回滚的操作边界 |
+| [container-build-and-run.md](operations/container-build-and-run.md) | 三个应用镜像构建、生产 Compose 接线与健康验证 |
 | [database-backup-restore.md](operations/database-backup-restore.md) | 备份参数、恢复演练、生产恢复和数据库迁移保护步骤 |
 | [incident-response.md](operations/incident-response.md) | 事故分级、角色、止损、恢复验证、状态沟通和复盘步骤 |
 

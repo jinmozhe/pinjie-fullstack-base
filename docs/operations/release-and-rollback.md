@@ -50,7 +50,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 
 1. GitHub `production` Environment 必须配置所需评审者和受限分支。
 2. 在该 Environment 中设置 `PRODUCTION_DEPLOYMENT_ENABLED=true`、绝对路径 `DEPLOY_PATH` 和部署所需 SSH Secret。
-3. 确认部署目录的 `apps/backend/.env` 已配置生产运行变量且未进入仓库，根 `.env` 只保存 Compose 镜像引用。
+3. 确认部署目录的 `apps/backend/.env` 已配置生产运行变量且未进入仓库，根 `.env` 保存 Compose 镜像引用和 PostgreSQL 初始化变量。
 4. 工作流必须从 GHCR 解析 `sha-<commit>` 标签，并确认三个 manifest digest 与输入完全一致。
 5. 确认当前数据库 Revision、目标 Revision 和备份恢复点。
 6. 确认服务器 `compose.prod.yml` 与目标 Commit 中的文件哈希一致。

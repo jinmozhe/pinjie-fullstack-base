@@ -132,12 +132,14 @@ jobs:
             set -eu
             cd -- "$DEPLOY_PATH"
             test -f apps/backend/.env
+            test -f .env
             actual_compose_sha256="$(sha256sum compose.prod.yml | cut -d' ' -f1)"
             test "$actual_compose_sha256" = "$EXPECTED_COMPOSE_SHA256"
             umask 077
             image_env="$(mktemp .pinjie-deploy-images.XXXXXX)"
             trap 'rm -f "$image_env"' EXIT
-            printf 'BACKEND_IMAGE=%s\nWEB_IMAGE=%s\nADMIN_IMAGE=%s\n' "$BACKEND_IMAGE" "$WEB_IMAGE" "$ADMIN_IMAGE" > "$image_env"
+            grep -E '^(POSTGRES_USER|POSTGRES_PASSWORD|POSTGRES_DB)=' .env > "$image_env"
+            printf 'BACKEND_IMAGE=%s\nWEB_IMAGE=%s\nADMIN_IMAGE=%s\n' "$BACKEND_IMAGE" "$WEB_IMAGE" "$ADMIN_IMAGE" >> "$image_env"
             docker compose --env-file "$image_env" -f compose.prod.yml config --quiet
             docker compose --env-file "$image_env" -f compose.prod.yml pull
             docker compose --env-file "$image_env" -f compose.prod.yml up -d --remove-orphans --wait --wait-timeout 120

@@ -6,6 +6,11 @@
 
 ### Added
 
+- 完成阶段 B 运行基础设施：Backend FastAPI 入口、统一响应与错误处理、请求上下文、数据库会话与事务、Redis 生命周期、健康探针、系统状态接口、Alembic 环境、UUID v7 和基础测试。
+- 完成 Admin/Web 业务中立系统状态页、同域 API 代理、Vitest + RTL + jsdom + MSW 组件测试及覆盖率门禁。
+- 增加根 Playwright Test 与 axe 跨栈 E2E 配置，覆盖桌面和移动 Chromium、控制台错误、横向溢出和关键可访问性扫描。
+- 增加 Backend、Web、Admin 三个生产 Dockerfile、Nginx 同域代理、生产 Compose 健康依赖和 PostgreSQL 18.4/Redis 8.10.0 运行基线。
+- 增加 PostgreSQL 测试隔离约束、OpenAPI 原子导出、生成 API Client 和独立浏览器 E2E CI 工作流。
 - 增加仓库级 markdownlint 配置、VS Code 扩展建议和固定版本的 `pnpm lint:md` 命令，以 GFM 为语法基线统一 AI 与开发者的 Markdown 格式。
 - 建立 Git 提交追溯规则，区分普通提交的 Git 历史与发布、部署、派生、安全审计、回滚和交接等跨系统 SHA 记录。
 - 建立全项目索引，统一导航项目身份、三端开发目标、计划、系统状态、权威来源和派生项目入口。

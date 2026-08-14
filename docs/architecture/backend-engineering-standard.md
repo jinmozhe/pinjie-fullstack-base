@@ -4,7 +4,7 @@
 
 本文规定 `apps/backend` 在详细技术设计、实施、代码评审和验证阶段的具体工程标准，适用于 FastAPI、Pydantic、SQLAlchemy、Alembic、PostgreSQL、Redis、日志、外部调用和测试基础设施。
 
-当前 Backend 仍处于 `empty` 工程骨架阶段，尚无运行源码、测试、Alembic 运行环境和 `uv.lock`。本文描述后续实现必须达到的目标状态，不代表相关能力已经存在或验证通过。阶段 B 实施时必须以当前计划创建最小必要文件，并以实际代码、配置和测试更新本文中的待落地事实。
+阶段 B 已提供 Backend 运行源码、基础测试、Alembic 运行环境、OpenAPI 导出和 `uv.lock`。本文描述当前已落地的工程标准；PostgreSQL 集成测试、容器构建和真实跨栈 E2E 仍需在具备对应环境时完成。
 
 本文使用以下规范词：
 
@@ -30,9 +30,10 @@
 
 当前已声明的 Backend 技术基线：
 
-- Python 3.12、FastAPI、Pydantic v2 和 Pydantic Settings。
+- 标准 CPython 3.14、FastAPI、Pydantic v2 和 Pydantic Settings；禁止使用 free-threaded `3.14t`，版本和运行环境边界以 [Python 运行时基线决策](../adr/0009-Python运行时基线决策.md)为准。
 - PostgreSQL、SQLAlchemy 2 async、asyncpg 和 Alembic。
-- Redis、Loguru、PyJWT、pwdlib Argon2 和 uv。
+- Redis、Loguru 和 uv。认证、密码哈希和 Token 依赖留到阶段 C。
+- UUID v7 已确认由应用层统一生成；Python 3.14 使用标准库 `uuid.uuid7()`，阶段 B 不引入 `uuid-utils` 或其他 UUID v7 第三方运行依赖。
 - Ruff、Mypy、pytest、pytest-asyncio 和 httpx 当前作为开发依赖。
 
 依赖管理要求：
@@ -188,16 +189,17 @@ Service、Domain 和 Repository 禁止依赖 FastAPI `Request`、`Response`、`D
 
 ## 9. Model 与 PostgreSQL
 
-1. 默认内部主键使用 UUID v7。阶段 B 必须先确认兼容 Python 3.12 的统一实现，并禁止不同领域各自生成不同格式。
-2. 时间使用带时区类型，对应 PostgreSQL `TIMESTAMPTZ`；程序和数据库统一保存 UTC，展示层负责时区转换。
-3. 结构化数据使用 PostgreSQL JSONB。字段语义确定为对象或数组时增加相应检查约束，只在真实查询需要时增加 GIN 或表达式索引。
-4. 金额、比率和其他精确数值使用 `Decimal` 与按领域确认的 `Numeric(precision, scale)`，禁止 Float。单位和舍入规则属于公开业务契约。
-5. 有限状态使用命名稳定的 `CheckConstraint` 或经过迁移评审的 PostgreSQL Enum，选择时优先考虑变更成本和数据完整性。
-6. 唯一性、外键、非空、检查约束和级联行为必须由业务不变量驱动并显式声明。数据库外键不授予跨领域写权限。
-7. 新表和关键字段提供准确中文 comment；命名使用 snake_case，并为约束和索引使用稳定、可诊断的名称。
-8. 软删除、归档和物理删除表达不同语义，按领域明确选择。所有相关查询必须明确是否包含已删除或已归档数据。
-9. 禁止未经设计的级联物理删除核心可追溯数据；高风险记录优先状态化保留并受保留期与隐私要求约束。
-10. 新增 Model 必须进入 Alembic metadata 的明确导入链，并验证 Schema、ORM、数据库类型和 OpenAPI 语义一致。
+1. 默认内部主键使用 UUID v7。所有调用方必须经过 `app/core/identifiers.py` 的 `new_uuid7()`；该入口调用标准库 `uuid.uuid7()` 并返回 `uuid.UUID`。禁止在不同领域分散调用标准库生成函数或引入第三方 UUID v7 包。
+2. UUID 列使用 `sqlalchemy.Uuid(as_uuid=True)` 和 PostgreSQL 原生 `uuid` 类型，主键使用 Python 侧 `default=new_uuid7`；禁止依赖 PostgreSQL 18 `uuidv7()` 服务端默认值。实现必须验证类型、唯一性、排序、序列化和真实数据库往返。
+3. 时间使用带时区类型，对应 PostgreSQL `TIMESTAMPTZ`；程序和数据库统一保存 UTC，展示层负责时区转换。
+4. 结构化数据使用 PostgreSQL JSONB。字段语义确定为对象或数组时增加相应检查约束，只在真实查询需要时增加 GIN 或表达式索引。
+5. 金额、比率和其他精确数值使用 `Decimal` 与按领域确认的 `Numeric(precision, scale)`，禁止 Float。单位和舍入规则属于公开业务契约。
+6. 有限状态使用命名稳定的 `CheckConstraint` 或经过迁移评审的 PostgreSQL Enum，选择时优先考虑变更成本和数据完整性。
+7. 唯一性、外键、非空、检查约束和级联行为必须由业务不变量驱动并显式声明。数据库外键不授予跨领域写权限。
+8. 新表和关键字段提供准确中文 comment；命名使用 snake_case，并为约束和索引使用稳定、可诊断的名称。
+9. 软删除、归档和物理删除表达不同语义，按领域明确选择。所有相关查询必须明确是否包含已删除或已归档数据。
+10. 禁止未经设计的级联物理删除核心可追溯数据；高风险记录优先状态化保留并受保留期与隐私要求约束。
+11. 新增 Model 必须进入 Alembic metadata 的明确导入链，并验证 Schema、ORM、数据库类型和 OpenAPI 语义一致。
 
 ## 10. Alembic 与数据库演进
 
@@ -303,7 +305,7 @@ Service、Domain 和 Repository 禁止依赖 FastAPI `Request`、`Response`、`D
 
 ## 16. 质量门禁
 
-Backend 进入 `ready` 后，阶段 B 必须把缺失的依赖、脚本和测试补齐，使以下门禁能够从 `apps/backend` 执行：
+Backend 当前 `ready`，以下门禁从 `apps/backend` 执行：
 
 ```powershell
 uv sync --locked
@@ -328,11 +330,9 @@ git diff --exit-code -- openapi.json packages/api-client/src
 
 适用规则：
 
-1. 当前 `pyproject.toml` 尚未声明 import-linter，Backend 也缺少运行源码、测试、Alembic `env.py` 和 `uv.lock`，所以以上应用门禁当前不能表述为已配置或通过。
-2. 阶段 B 必须通过新计划补齐缺失能力，并让 `.github/workflows/ci-backend.yml` 与本地命令保持一致。
-3. 目录尚不存在时不得为了让命令成功而伪造空包或吞掉错误；按三态门禁保持 `empty`，进入实现后必须一次性达到 `ready`，禁止长期停留在 `partial`。
-4. 数据库不可用、测试跳过、工具未安装和替代验证必须分别报告，不能汇总为“测试通过”。
-5. 修改公开 API 时必须重新导出 OpenAPI 并生成客户端；生成后工作区存在差异表示契约尚未同步完成。
+1. 数据库不可用、测试跳过、工具未安装和替代验证必须分别报告，不能汇总为“测试通过”。
+2. 当前本机全量 pytest 因缺少 `TEST_DATABASE_URL` 按 fail closed 规则失败；非集成测试已通过。
+3. 修改公开 API 时必须重新导出 OpenAPI 并生成客户端；生成后工作区存在差异表示契约尚未同步完成。
 
 ## 17. 代码评审清单
 

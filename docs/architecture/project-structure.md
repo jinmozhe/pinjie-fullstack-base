@@ -2,171 +2,57 @@
 
 > 文档归属：`docs/architecture/project-structure.md`
 > 适用仓库：`pinjie-fullstack-base`
-> 最后更新：2026-08-13
+> 最后更新：2026-08-14
 
 ---
 
-## 一、完整目录树
+## 一、当前完整文件结构
+
+以下清单以 2026-08-14 当前工作区为准，共 191 个项目文件、41 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。
 
 ```text
-pinjie-fullstack-base/
-│
-├── AGENTS.md                           ← 全仓库 AI 规则正文
-├── .agents/
-│   ├── agents-index.md                 ← 全项目当前事实、任务导航和计划永久登记
-│   └── rules/                          ← Antigravity 规则桥接，不复制正文
-│       ├── 00-repository.md            ← Always On：引用根 AGENTS.md
-│       ├── 10-backend.md               ← Glob apps/backend/**
-│       ├── 20-admin.md                 ← Glob apps/admin/**
-│       └── 30-web.md                   ← Glob apps/web/**
-│
-├── apps/
-│   ├── backend/                       ← FastAPI 标准后端
-│   │   ├── AGENTS.md                  ← 后端专属 AI 规则正文
-│   │   ├── app/
-│   │   │   ├── api/                   ← 全局依赖注入辅助 (deps.py)
-│   │   │   ├── core/                  ← 跨领域基础设施
-│   │   │   │   └── (config, response, exceptions, middleware,
-│   │   │   │      audit, security, cache_keys, rate_limit)
-│   │   │   ├── db/
-│   │   │   │   ├── models/            ← SQLAlchemy 模型基类
-│   │   │   │   ├── session.py         ← async session 工厂
-│   │   │   │   └── base.py            ← 模型导入聚合（供 Alembic 使用）
-│   │   │   ├── domains/               ← 高内聚领域模块（通用母版范围）
-│   │   │   │   ├── auth/              ← 认证领域
-│   │   │   │   ├── users/             ← C 端用户领域
-│   │   │   │   ├── admin/             ← B 端 RBAC
-│   │   │   │   └── system/            ← 系统工具领域
-│   │   │   ├── services/              ← 跨领域编排 Workflows
-│   │   │   ├── utils/                 ← 通用工具函数
-│   │   │   └── api_router.py          ← 统一路由挂载入口
-│   │   ├── alembic/
-│   │   │   └── versions/              ← Alembic 迁移版本文件
-│   │   ├── scripts/                   ← 种子数据与维护脚本
-│   │   ├── tests/                     ← Pytest 自动化测试
-│   │   ├── alembic.ini                ← Alembic 迁移工具配置
-│   │   ├── pyproject.toml             ← Python 项目元数据、依赖、工具配置
-│   │   ├── uv.lock                    ← Python 依赖精确锁文件（待生成）
-│   │   ├── Dockerfile                 ← 多阶段构建（待补充）
-│   │   ├── .env.example               ← 后端环境变量模板
-│   │   └── README.md
-│   │
-│   ├── web/                           ← C 端用户前端（Next.js App Router）
-│   │   ├── AGENTS.md                  ← Web 专属 AI 规则正文
-│   │   ├── src/
-│   │   │   ├── app/
-│   │   │   │   ├── (auth)/            ← 认证路由组
-│   │   │   │   └── (user)/            ← 用户中心路由组
-│   │   │   ├── features/
-│   │   │   │   ├── auth/              ← 认证业务切片
-│   │   │   │   └── user/              ← 用户业务切片
-│   │   │   ├── components/            ← 跨领域公共 UI 原子组件
-│   │   │   ├── hooks/                 ← 通用工具 Hooks
-│   │   │   ├── stores/                ← Zustand 客户端状态
-│   │   │   ├── lib/                   ← 前端基础设施（http.ts 拦截解包）
-│   │   │   └── types/                 ← 本地补充类型定义
-│   │   ├── public/                    ← 静态资源
-│   │   ├── next.config.ts             ← Next.js 配置（locked: output standalone）
-│   │   ├── tailwind.config.ts         ← Tailwind CSS 配置（待补充）
-│   │   ├── tsconfig.json              ← 继承 @pinjie/typescript-config/nextjs
-│   │   ├── eslint.config.mjs          ← 继承 @pinjie/eslint-config + Next.js 规则
-│   │   ├── package.json               ← 前端依赖（包名 @pinjie/web）
-│   │   ├── Dockerfile                 ← standalone 模式生产镜像（待补充）
-│   │   ├── .env.example               ← Web 环境变量模板
-│   │   └── README.md
-│   │
-│   └── admin/                         ← B 端管理前端（Vite + React + Ant Design）
-│       ├── AGENTS.md                  ← Admin 专属 AI 规则正文
-│       ├── src/
-│       │   ├── pages/
-│       │   │   ├── login/
-│       │   │   ├── dashboard/
-│       │   │   └── system/
-│       │   ├── components/
-│       │   ├── hooks/
-│       │   ├── stores/
-│       │   └── lib/
-│       ├── vite.config.ts             ← Vite 配置（端口 3001，路径别名 @）
-│       ├── tsconfig.json              ← 继承 @pinjie/typescript-config/vite
-│       ├── eslint.config.mjs          ← 继承 @pinjie/eslint-config
-│       ├── package.json               ← 前端依赖（包名 @pinjie/admin）
-│       ├── Dockerfile                 ← 生产镜像（待补充）
-│       ├── .env.example               ← Admin 环境变量模板
-│       └── README.md
-│
-├── packages/
-│   ├── api-client/
-│   │   ├── src/index.ts               ← 自动生成入口（禁止手改）
-│   │   └── package.json              ← 包名 @pinjie/api-client
-│   ├── eslint-config/
-│   │   ├── index.js                   ← 共享 ESLint 规则定义
-│   │   └── package.json              ← 包名 @pinjie/eslint-config
-│   └── typescript-config/
-│       ├── base.json                  ← 通用基础配置（strict 等）
-│       ├── nextjs.json                ← Next.js 继承配置
-│       ├── vite.json                  ← Vite 继承配置
-│       └── package.json              ← 包名 @pinjie/typescript-config
-│
-├── docs/
-│   ├── PROJECT_REQUIREMENTS.md         ← 母版产品需求权威基线
-│   ├── adr/
-│   │   ├── 0001-全栈Monorepo架构决策.md
-│   │   ├── 0002-Codex与Antigravity指令兼容决策.md
-│   │   ├── 0003-本地开发环境架构决策.md
-│   │   ├── 0004-全项目索引与计划生命周期决策.md
-│   │   ├── 0005-GitHub Wiki停用与文档单一来源决策.md
-│   │   ├── 0006-模块化单体与领域依赖边界决策.md
-│   │   ├── 0007-受控迁移兼容策略决策.md
-│   │   └── 0008-不可变发布与生产追溯决策.md
-│   ├── architecture/
-│   │   ├── project-structure.md        ← 本文件
-│   │   ├── backend-engineering-standard.md
-│   │   │                                ← Backend 具体实施标准与专题文档引用入口
-│   │   ├── module-boundaries.md
-│   │   ├── error-model.md
-│   │   ├── authentication-authorization.md
-│   │   ├── testing-strategy.md
-│   │   └── observability-reliability.md
-│   ├── blueprints/
-│   │   └── commerce/README.md
-│   └── operations/
-│       ├── local-dev-environment.md    ← Windows 本地开发主手册
-│       ├── environment-variables-and-backend-local-run.md
-│       │                                ← 环境变量分层与 Backend 本地运行手册
-│       ├── ai-assisted-development-workflow.md
-│       │                                ← AI 助手规则读取与完整开发链路指南
-│       ├── uv使用指南.md               ← Python 环境与依赖管理指南
-│       ├── pnpm使用指南.md             ← 前端 workspace 包管理指南
-│       ├── release-and-rollback.md
-│       ├── database-backup-restore.md
-│       └── incident-response.md
-│
-├── plans/
-│   ├── README.md                       ← 全栈计划格式、状态、完成和保护规则
-│   └── YYYY-MM-DD_全栈目标计划.md       ← 面向整个 Monorepo 的实施计划
-│
-├── .github/workflows/
-│   ├── ci-backend.yml
-│   ├── ci-frontend.yml
-│   ├── ci-governance.yml
-│   ├── security.yml
-│   ├── publish-images.yml
-│   └── deploy-production.yml
-├── scripts/ci/                         ← 三态、模块边界、文本和门禁自测脚本
-├── SECURITY.md                         ← 漏洞报告和安全响应规则
-├── .editorconfig                       ← 编辑器文本格式基线
-├── .gitattributes                      ← Git 文本换行与二进制属性
-│
-├── openapi.json                       ← 后端导出的 OpenAPI 规范（根目录）
-├── pnpm-workspace.yaml                ← Monorepo workspace 配置
-├── pnpm-lock.yaml                     ← 全仓库唯一依赖锁文件（pnpm install 生成）
-├── package.json                       ← 根 package（全局脚本）
-├── compose.yml                        ← 本地开发用（仅 Redis）
-├── compose.prod.yml                   ← 生产部署用（三容器）
-├── .env.example                       ← 三个完整不可变镜像引用模板
-├── .gitignore
-├── CHANGELOG.md                        ← 已交付能力和版本变化
-└── README.md
+./ :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
+.agents/ :: agents-index.md
+.agents/rules/ :: .markdownlint.json, 00-repository.md, 10-backend.md, 20-admin.md, 30-web.md
+.github/ :: CODEOWNERS, dependabot.yml, pull_request_template.md
+.github/workflows/ :: ci-backend.yml, ci-e2e.yml, ci-frontend.yml, ci-governance.yml, deploy-production.yml, publish-images.yml, security.yml
+.vscode/ :: extensions.json
+apps/admin/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, index.html, nginx.conf, package.json, README.md, tsconfig.json, vite.config.ts
+apps/admin/src/ :: App.tsx, main.tsx, styles.css
+apps/admin/src/features/system/ :: api.ts, SystemStatusPage.test.tsx, SystemStatusPage.tsx
+apps/admin/src/test/ :: server.ts, setup.ts
+apps/backend/ :: .env.example, .importlinter, .python-version, AGENTS.md, alembic.ini, Dockerfile, pyproject.toml, README.md, uv.lock
+apps/backend/alembic/ :: env.py, script.py.mako
+apps/backend/alembic/versions/ :: README.md
+apps/backend/app/ :: __init__.py, api_router.py, main.py
+apps/backend/app/api/ :: __init__.py, dependencies.py
+apps/backend/app/core/ :: __init__.py, config.py, context.py, error_codes.py, exceptions.py, health.py, identifiers.py, logging.py, middleware.py, redis.py, resources.py, response.py
+apps/backend/app/db/ :: __init__.py, session.py, transaction.py
+apps/backend/app/db/models/ :: __init__.py, base.py
+apps/backend/app/domains/ :: __init__.py
+apps/backend/app/domains/system/ :: __init__.py, router.py, schemas.py
+apps/backend/scripts/ :: __init__.py, export_openapi.py
+apps/backend/tests/ :: __init__.py, conftest.py, test_api.py, test_config.py, test_identifiers.py, test_postgres_integration.py, test_transaction.py
+apps/web/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, next.config.ts, package.json, README.md, tsconfig.json, vitest.config.ts
+apps/web/src/app/ :: error.tsx, globals.css, layout.tsx, loading.tsx, not-found.tsx, page.tsx
+apps/web/src/app/api/v1/system/status/ :: route.ts
+apps/web/src/features/system/ :: SystemStatusCard.test.tsx, SystemStatusCard.tsx
+apps/web/src/lib/api/ :: client.ts, server.ts
+apps/web/src/test/ :: server.ts, setup.ts
+docs/ :: PROJECT_REQUIREMENTS.md, README.md
+docs/adr/ :: 0001-全栈Monorepo架构决策.md, 0002-Codex与Antigravity指令兼容决策.md, 0003-本地开发环境架构决策.md, 0004-全项目索引与计划生命周期决策.md, 0005-GitHub Wiki停用与文档单一来源决策.md, 0006-模块化单体与领域依赖边界决策.md, 0007-受控迁移兼容策略决策.md, 0008-不可变发布与生产追溯决策.md, 0009-Python运行时基线决策.md
+docs/architecture/ :: authentication-authorization.md, backend-engineering-standard.md, error-model.md, module-boundaries.md, observability-reliability.md, project-structure.md, testing-strategy.md, 全栈Monorepo架构规划原始方案.md
+docs/blueprints/commerce/ :: README.md
+docs/operations/ :: ai-assisted-development-workflow.md, container-build-and-run.md, database-backup-restore.md, environment-variables-and-backend-local-run.md, incident-response.md, local-dev-environment.md, pnpm使用指南.md, release-and-rollback.md, uv使用指南.md
+e2e/ :: system-status.spec.ts
+packages/api-client/ :: package.json
+packages/api-client/src/ :: client.gen.ts, index.ts, sdk.gen.ts, types.gen.ts
+packages/api-client/src/client/ :: client.gen.ts, index.ts, types.gen.ts, utils.gen.ts
+packages/api-client/src/core/ :: auth.gen.ts, bodySerializer.gen.ts, params.gen.ts, pathSerializer.gen.ts, queryKeySerializer.gen.ts, serverSentEvents.gen.ts, types.gen.ts, utils.gen.ts
+packages/eslint-config/ :: index.js, package.json
+packages/typescript-config/ :: base.json, nextjs.json, package.json, vite.json
+plans/ :: 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, README.md
+scripts/ci/ :: check-module-boundaries.ps1, check-text-files.ps1, check-workspace-state.ps1, test-governance-guards.ps1
 ```
 
 ---
@@ -213,12 +99,12 @@ pinjie-fullstack-base/
 
 | 层级 | 文件位置 | 存放内容 | 使用者 |
 | --- | --- | --- | --- |
-| 部署层 | 根目录 `.env.example` | `BACKEND_IMAGE`、`WEB_IMAGE`、`ADMIN_IMAGE` 的完整 digest 引用 | `compose.prod.yml`、生产部署工作流 |
-| 后端层 | `apps/backend/.env.example` | `DATABASE_URL`、`SECRET_KEY`、`REDIS_URL` | uvicorn 进程 |
-| Web 层 | `apps/web/.env.example` | `NEXT_PUBLIC_API_URL`、`BACKEND_URL` | Next.js 构建和运行时 |
-| Admin 层 | `apps/admin/.env.example` | `VITE_API_URL` | Vite 构建时注入 |
+| 部署层 | 根目录 `.env.example` | 三端完整 digest 引用和 PostgreSQL 初始化变量 | `compose.prod.yml`、生产部署工作流 |
+| 后端层 | `apps/backend/.env.example` | `DATABASE_URL`、`TEST_DATABASE_URL`、`REDIS_URL`、运行环境和 CORS | uvicorn 进程 |
+| Web 层 | `apps/web/.env.example` | `BACKEND_INTERNAL_URL` | Next.js 服务端运行时 |
+| Admin 层 | `apps/admin/.env.example` | 可选 `VITE_API_URL`，默认同域 `/api/v1` | Vite 开发代理或生产 Nginx |
 
-各层只声明自己负责的变量。生产 Compose 从根 `.env` 读取镜像引用，从 `apps/backend/.env` 向 Backend 容器注入运行配置。Web 与 Admin 的生产变量尚未接入 Compose，需要在阶段 B 结合 Dockerfile、构建参数和运行方式确认。根模板不保存 GitHub Environment 变量和 Secret，`DEPLOY_PATH`、部署开关与 SSH 凭据只在受保护的 `production` Environment 中配置。详细操作见[环境变量分层与 Backend 本地运行手册](../operations/environment-variables-and-backend-local-run.md)。分层原因：
+各层只声明自己负责的变量。生产 Compose 从根 `.env` 读取镜像引用和 PostgreSQL 初始化变量，从 `apps/backend/.env` 向 Backend 容器注入运行配置；Web 使用 `BACKEND_INTERNAL_URL`，Admin 使用同域代理。根模板不保存 GitHub Environment 变量和 Secret，`DEPLOY_PATH`、部署开关与 SSH 凭据只在受保护的 `production` Environment 中配置。详细操作见[环境变量分层与 Backend 本地运行手册](../operations/environment-variables-and-backend-local-run.md)。分层原因：
 
 - 后端和前端的环境变量格式不同（Python `os.environ` vs Next.js `NEXT_PUBLIC_` 前缀 vs Vite `VITE_` 前缀）
 - 开发者进入某个应用目录工作时，能直接看到该应用需要哪些变量，不需要翻根目录的大文件
@@ -257,7 +143,7 @@ apps/web/eslint.config.mjs
 
 apps/admin/eslint.config.mjs
   └── 引用 @pinjie/eslint-config（共享规则）
-  └── 追加 React 特定规则（待补充）
+  └── 补充浏览器与 Node.js 运行时全局变量
 ```
 
 类比 `tsconfig.json` 的继承关系：`packages/typescript-config` 定义基础，各应用继承后按需扩展。
@@ -290,13 +176,15 @@ Next.js 有三种输出模式：
 
 ## 三、关键边界规则
 
-### 母版通用范围
+### 当前实现与后续扩展边界
 
-| 应用 | 母版包含 | 派生仓库扩展 |
-| --- | --- | --- |
-| `backend/domains/` | auth、users、admin、system | products、orders、payment 等 |
-| `web/features/` | auth、user | products、cart、checkout 等 |
-| `admin/pages/` | login、dashboard、system | products、orders、promotions 等 |
+| 应用范围 | 阶段 B 当前实现 | 阶段 C 通用目标 | 派生仓库扩展 |
+| --- | --- | --- | --- |
+| `apps/backend/app/domains/` | `system` | 认证、用户、管理员、RBAC、审计和系统业务能力 | products、orders、payments 等具体业务领域 |
+| `apps/web/src/features/` | `system` | 登录、退出、当前用户、用户中心和受保护页面 | products、cart、checkout 等用户业务切片 |
+| `apps/admin/src/features/` | `system` | 管理员登录、受保护布局、用户与管理员管理、角色权限和通用系统管理 | products、orders、promotions 等运营业务切片 |
+
+阶段 C 仍需创建独立全栈计划并取得用户确认。表中的目标用于区分母版通用能力和派生业务边界，不代表对应目录或功能已经实现。
 
 ### 前端共享边界
 
@@ -331,16 +219,14 @@ Next.js 有三种输出模式：
 
 ## 五、docs/ 目录规划说明
 
-当前 `docs/` 只创建了有实际内容的文档，以下是各目录的扩展方向：
+当前 `docs/` 只创建有实际内容的文档，以下是各目录的当前职责和扩展条件：
 
-| 目录 | 当前文件 | 待补充文档 |
+| 目录 | 当前内容 | 扩展条件 |
 | --- | --- | --- |
-| `docs/` | `PROJECT_REQUIREMENTS.md`、`README.md` | 产品文档达到至少三份且职责独立时再评估 `docs/product/` |
-| `docs/adr/` | `0001` 至 `0008` 架构决策记录 | 每次重大技术决策时新增 |
-| `docs/architecture/` | 项目结构、Backend 工程标准、模块边界、错误、认证授权、测试和可靠性文档 | 运行机制形成后就地更新对应文档 |
-| `docs/blueprints/commerce/` | `README.md` | `domain-model.md`、`checkout-workflow.md` |
-| `docs/blueprints/cms/` | 空（待补充） | 当 CMS 业务需要时创建 |
-| `docs/blueprints/blog/` | 空（待补充） | 当博客业务需要时创建 |
-| `docs/operations/` | AI 助手开发、本地环境、依赖管理、发布回滚、备份恢复和事故响应手册 | `1panel-production-runbook.md` |
+| `docs/` | 产品需求基线和完整文档索引 | 产品文档达到至少三份且职责独立时再评估 `docs/product/` |
+| `docs/adr/` | `0001` 至 `0009` 架构决策记录 | 出现新的重大且长期技术取舍时新增 ADR |
+| `docs/architecture/` | 项目结构、Backend 工程标准、模块边界、错误、认证授权、测试、可靠性和原始规划 | 当前系统机制变化时就地更新对应文档 |
+| `docs/blueprints/commerce/` | Commerce 派生蓝图入口 | 真实派生需求确认后增加领域模型和业务流程设计 |
+| `docs/operations/` | AI 协作、本地环境、依赖、容器、发布回滚、备份恢复和事故响应手册 | 出现可执行的新运维流程时就地增加或更新手册 |
 
-**空目录策略**：`blueprints/cms/`、`blueprints/blog/`、`blueprints/corporate-site/` 目前没有内容，Git 不追踪空目录，不会占用仓库空间，等实际需要时再建文件。不提前创建占位文件，避免维护空文档。
+`docs/blueprints/cms/`、`docs/blueprints/blog/` 和 `docs/blueprints/corporate-site/` 当前均不存在。有实际需求时再创建对应文件，不提前维护空目录或占位文档。

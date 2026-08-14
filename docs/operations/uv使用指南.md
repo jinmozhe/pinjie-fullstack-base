@@ -50,7 +50,7 @@ uv run uvicorn app.main:app   # 实际使用 .venv 的 Python，conda activate �
 ### 模式 A：纯 conda（传统）
 
 ```powershell
-conda create -n fastapi_env python=3.12
+conda create -n fastapi_env python=3.14
 conda activate fastapi_env
 pip install -r requirements.txt
 python main.py
@@ -60,7 +60,7 @@ python main.py
 - 没有精确锁文件，`pip freeze` 不够可靠
 - 环境创建慢，依赖安装慢
 - 每次都要手动 `conda activate`
-- 不支持 `pyproject.toml` 的 dev-dependencies 分组
+- 不支持 `pyproject.toml` 的标准 `[dependency-groups]` 分组
 
 ### 模式 B：conda 环境 + uv 包管理（混合）
 
@@ -101,7 +101,7 @@ uv 采用「全局缓存 + 项目虚拟环境」两层设计。
 │
 ├── 全局缓存（所有项目共享，只存一份）
 │   ├── ~/.cache/uv/python/              ← Python 解释器
-│   │   ├── cpython-3.12.7/
+│   │   ├── cpython-3.14.x/
 │   │   └── cpython-3.11.9/
 │   └── ~/.cache/uv/packages/            ← 下载的包文件（wheel）
 │       ├── fastapi-0.115.0.whl
@@ -110,13 +110,13 @@ uv 采用「全局缓存 + 项目虚拟环境」两层设计。
 │
 ├── pinjie-fullstack-base/apps/backend/
 │   └── .venv/                           ← 项目私有虚拟环境
-│       └── lib/python3.12/site-packages/
+│       └── lib/python3.14/site-packages/
 │           ├── fastapi/    →  硬链接到全局缓存（不占额外空间）
 │           └── sqlalchemy/ →  硬链接到全局缓存
 │
 └── 另一个 FastAPI 项目/
     └── .venv/
-        └── lib/python3.12/site-packages/
+        └── lib/python3.14/site-packages/
             ├── fastapi/    →  同一份全局缓存（不重复下载）
             └── ...
 ```
@@ -143,8 +143,8 @@ uv sync
 
 uv 自动完成：
 
-1. 读取 `pyproject.toml` → `requires-python = ">=3.12"`
-2. 检查全局缓存是否有 Python 3.12，没有则自动下载
+1. 读取 `pyproject.toml` → `requires-python = ">=3.14,<3.15"`
+2. 检查全局缓存是否有标准 CPython 3.14，没有则自动下载
 3. 创建 `.venv/` 虚拟环境
 4. 安装所有依赖（缓存中有的包直接硬链接，无需下载）
 5. 生成 `uv.lock` 锁文件
@@ -206,25 +206,26 @@ uv sync
 ### 场景 5：本机有多个 Python 项目
 
 ```text
-项目 A：pinjie-fullstack-base  → Python 3.12，fastapi 0.115.0
+项目 A：pinjie-fullstack-base  → 标准 CPython 3.14，依赖版本由 uv.lock 决定
 项目 B：旧项目                 → Python 3.10，fastapi 0.110.0
 ```
 
 ```powershell
 # 两个项目各有独立的 .venv，互不干扰
 # 不需要切换任何环境，直接在对应目录运行 uv run 即可
-cd 项目A; uv run uvicorn ...   # 自动使用 Python 3.12 环境
+cd 项目A; uv run uvicorn ...   # 自动使用标准 CPython 3.14 环境
 cd 项目B; uv run uvicorn ...   # 自动使用 Python 3.10 环境
 ```
 
 ### 场景 6：切换 Python 版本
 
 ```powershell
-# 安装新版本 Python（存入全局缓存，不影响其他项目）
-uv python install 3.13
+# 安装项目要求的 Python（存入全局缓存，不影响其他项目）
+uv python install 3.14
 
-# 用新版本重建当前项目环境
-uv sync --python 3.13
+# 固定系列并重建当前项目环境
+uv python pin 3.14
+uv sync --python 3.14
 
 # 查看已安装的 Python 版本
 uv python list
@@ -235,10 +236,17 @@ uv python list
 ```yaml
 # .github/workflows/test.yml
 - name: Install uv
-  uses: astral-sh/setup-uv@v3
+  uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
 
-- name: Install dependencies
-  run: uv sync
+- name: Install CPython 3.14
+  run: uv python install 3.14
+
+- name: Sync locked dependencies
+  run: uv sync --locked --python 3.14
+  working-directory: apps/backend
+
+- name: Verify Python runtime
+  run: uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"
   working-directory: apps/backend
 
 - name: Run tests
@@ -246,7 +254,7 @@ uv python list
   working-directory: apps/backend
 ```
 
-无需配置 conda、Python 版本等复杂步骤，`uv sync` 自动处理一切。
+CI 必须显式使用标准 CPython 3.14，并在 `uv sync --locked` 前校验解释器版本。生产运行时由固定 digest 的 Backend 镜像提供，1Panel 宿主机 Python 不参与版本选择。
 
 ---
 

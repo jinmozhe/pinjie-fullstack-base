@@ -35,7 +35,7 @@ Backend 进入 `ready` 后，CI 必须：
 4. 检查 Breaking Change 并关联消费者迁移计划。
 5. 验证 Admin 和 Web 使用生成类型，没有复制 DTO。
 
-当前空骨架只验证占位契约与占位客户端保持一致，不把占位检查描述为完整契约测试。
+阶段 B 已从真实 FastAPI 应用导出系统状态契约，并由 `pnpm generate-api` 生成客户端；后续公开 API 变化继续遵循同一链路。
 
 ## 5. 架构和静态质量
 
@@ -46,6 +46,44 @@ Backend 进入 `ready` 后，CI 必须：
 
 ## 6. 前端验证
 
+### 6.1 固定测试栈
+
+Admin 与 Web 进入 `ready` 后统一采用以下测试栈：
+
+| 职责 | 工具 | 边界 |
+| --- | --- | --- |
+| 测试运行、断言与覆盖率 | Vitest、`@vitest/coverage-v8` | 纯 TypeScript 单元测试使用 `node` 环境，React 组件测试使用 `jsdom` 环境 |
+| React 组件行为 | React Testing Library、`@testing-library/jest-dom`、`@testing-library/user-event` | 按角色、标签、名称和可见文本验证用户可观察行为，不读取 React 组件实例或内部状态 |
+| HTTP 边界替身 | MSW 2 | 在单元和组件测试中拦截真实请求接口，集中表达加载、成功、空数据、业务失败和网络失败；未声明请求默认失败 |
+| 真实浏览器跨栈 E2E | Playwright Test | 启动真实 Backend、Admin、Web 和隔离 PostgreSQL 测试库，验证关键用户旅程与前后端契约 |
+| 自动化可访问性检查 | `@axe-core/playwright` | 在 Playwright 中扫描关键页面和关键状态；扫描结果不能替代键盘、焦点、语义和人工可用性检查 |
+
+Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测试基础设施。只有现有栈无法可靠覆盖且有明确风险证据时，才通过后续计划评估引入，禁止为同一层级长期维护两套等价测试框架。
+
+上述依赖已写入 Admin、Web 和根工作区的 `package.json` 与 `pnpm-lock.yaml`。当前版本以锁文件为准，升级必须重新执行单元、构建和 E2E 验证。
+
+### 6.2 单元与组件测试
+
+- 纯函数、数据转换、状态机、Reducer、Store 和不依赖 DOM 的 Hook 优先在 Vitest `node` 环境测试。
+- React Client Component、表单、路由交互、TanStack Query 状态和 DOM 行为使用 Vitest、React Testing Library 与 `jsdom`。
+- Web 的同步 Server Component 可以在 Vitest 中测试；异步 Server Component、流式渲染和跨 Server、Client 边界行为由 Playwright E2E 覆盖，禁止用脆弱 Mock 伪造框架运行时。
+- 交互使用 `user-event`，查询优先使用语义角色、可访问名称、标签和可见文本。只有缺少稳定语义入口时才使用 `data-testid`。
+- HTTP 行为通过共享 MSW Handler 描述，Handler 使用生成 API Client 的契约类型；禁止在各测试中分散替换 `fetch`、Axios 或 TanStack Query 内部实现。
+- 测试断言用户可观察结果和对外契约，避免快照整个页面、断言 CSS 类名、调用次数或无业务价值的实现顺序。
+- 覆盖率用于暴露空白，不替代关键成功、拒绝、失败、恢复和边界断言；生成代码、声明文件和无逻辑入口胶水可以按计划明确排除。
+
+### 6.3 Playwright 跨栈 E2E
+
+- E2E 默认针对生产构建运行：Web 使用 `next build` 与 `next start`，Admin 使用 `vite build` 与 `vite preview` 或生产等价静态服务器。
+- 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
+- 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
+- Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
+- Pull Request 默认运行标准 Playwright Chromium。Firefox 与 WebKit 进入定时或发布验证；派生项目明确支持 Safari 时，WebKit 必须进入发布门禁。
+- CI 失败保留首个失败重试的 Trace、必要截图和 HTML Report。重试只用于采集诊断信息，初次失败仍按不稳定测试处理，禁止依靠重试把套件标记为健康。
+- 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
+
+### 6.4 UI 与可访问性验收
+
 涉及 UI 时至少验证：
 
 - 桌面和移动端关键视口。
@@ -54,7 +92,11 @@ Backend 进入 `ready` 后，CI 必须：
 - 长文本、窄屏、横向溢出和遮挡。
 - 关键浏览器流程和控制台错误。
 
+关键页面和关键状态必须运行 axe 自动扫描。自动扫描未发现问题只能说明已配置规则没有命中，不能宣称符合完整 WCAG；键盘操作、焦点顺序、动态反馈、语义和实际可理解性仍需组件断言与浏览器验证。
+
 浏览器冒烟不能替代已经配置的单元、组件或 E2E 测试。兜底验证必须明确标为未完整通过。
+
+官方依据：[Next.js Vitest 指南](https://nextjs.org/docs/app/guides/testing/vitest)、[Next.js Playwright 指南](https://nextjs.org/docs/app/guides/testing/playwright)、[Playwright 最佳实践](https://playwright.dev/docs/best-practices)、[Testing Library 原则](https://testing-library.com/docs/guiding-principles)、[Vitest Browser Mode](https://vitest.dev/guide/browser/)和 [MSW 文档](https://mswjs.io/docs/)。
 
 ## 7. 跳过和不稳定测试
 

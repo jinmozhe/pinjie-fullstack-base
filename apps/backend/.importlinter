@@ -1,0 +1,17 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:layered-backend]
+name = Backend layers point inward
+type = layers
+layers =
+    app.api
+    app.domains
+    app.db
+    app.core
+
+[importlinter:contract:core-is-independent]
+name = Core does not import application layers
+type = forbidden
+source_modules = app.core
+forbidden_modules = app.api, app.domains, app.db

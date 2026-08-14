@@ -1,0 +1,27 @@
+FROM node:24-alpine AS build
+
+WORKDIR /workspace
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/admin/package.json apps/admin/package.json
+COPY packages packages
+RUN pnpm install --frozen-lockfile
+COPY apps/web apps/web
+RUN pnpm --filter @pinjie/web build
+
+FROM node:24-alpine AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000
+
+RUN addgroup --system --gid 10001 app \
+    && adduser --system --uid 10001 --ingroup app app
+COPY --from=build --chown=app:app /workspace/apps/web/.next/standalone ./
+COPY --from=build --chown=app:app /workspace/apps/web/.next/static ./apps/web/.next/static
+USER app
+EXPOSE 3000
+HEALTHCHECK --interval=10s --timeout=3s --start-period=15s --retries=6 CMD ["node", "-e", "fetch('http://127.0.0.1:3000/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+CMD ["node", "apps/web/server.js"]

@@ -4,7 +4,7 @@
 
 本文说明仓库根目录与 Backend、Web、Admin 三个应用目录中的环境变量文件分别由谁读取，并给出 Windows、PowerShell 和 VS Code 工作区下初始化、迁移、启动及检查 Backend 的标准步骤。
 
-当前仓库仍处于 `empty` 工程骨架阶段，尚无 `apps/backend/app/main.py`、Alembic 运行环境和后端锁文件。本文中的 Backend 启动、迁移与测试命令需要等阶段 B 补齐运行源码后才能成功执行；当前不能把这些命令记为已验证通过。
+阶段 B 已提供 Backend 运行入口、Alembic 环境、锁文件和基础测试。本文描述当前可执行的本地流程。
 
 ## 2. 工作区与应用目录
 
@@ -28,8 +28,8 @@ E:\fastapi\pinjie-fullstack-base\apps\backend
 
 | 层级 | 模板 | 本地真实文件 | 读取者 | 主要职责 |
 | --- | --- | --- | --- | --- |
-| 部署层 | 根 `.env.example` | 根 `.env` | Docker Compose、生产部署脚本 | 选择 Backend、Web、Admin 的不可变镜像 digest |
-| Backend | `apps/backend/.env.example` | `apps/backend/.env` | Backend 配置系统、Backend 容器 | 数据库、Redis、JWT 密钥、运行环境和 CORS |
+| 部署层 | 根 `.env.example` | 根 `.env` | Docker Compose、生产部署脚本 | 选择三端不可变镜像 digest 并初始化 PostgreSQL 容器 |
+| Backend | `apps/backend/.env.example` | `apps/backend/.env` | Backend 配置系统、Backend 容器 | 数据库、Redis、运行环境和 CORS |
 | Web | `apps/web/.env.example` | `apps/web/.env.local` | Next.js 开发、构建及服务端运行过程 | 服务端 Backend 地址和浏览器公开 API 地址 |
 | Admin | `apps/admin/.env.example` | `apps/admin/.env.local` | Vite 开发与构建过程 | 浏览器公开 API 地址 |
 
@@ -37,19 +37,22 @@ E:\fastapi\pinjie-fullstack-base\apps\backend
 
 ### 3.1 根目录 `.env`
 
-根 `.env` 是部署控制文件，不是某个应用容器的运行配置。当前只保存三张镜像的完整不可变引用：
+根 `.env` 是部署控制文件，不是某个应用容器的通用运行配置。当前保存三张镜像的完整不可变引用和 PostgreSQL 初始化变量：
 
 ```dotenv
 BACKEND_IMAGE=ghcr.io/example/backend@sha256:<64位十六进制摘要>
 WEB_IMAGE=ghcr.io/example/web@sha256:<64位十六进制摘要>
 ADMIN_IMAGE=ghcr.io/example/admin@sha256:<64位十六进制摘要>
+POSTGRES_USER=pinjie_fullstack
+POSTGRES_PASSWORD=<生产密钥>
+POSTGRES_DB=pinjie_fullstack_prod
 ```
 
-`compose.prod.yml` 使用这些变量决定本次部署启动哪三个镜像。根 `.env` 中的值不会自动进入容器；只有 Compose 通过 `environment` 或 `env_file` 明确声明的变量才会进入容器。
+`compose.prod.yml` 使用这些变量决定本次部署启动哪三个镜像并初始化 PostgreSQL。根 `.env` 中的值不会自动进入应用容器；只有 Compose 通过 `environment` 或 `env_file` 明确声明的变量才会进入容器。
 
 本地 `compose.yml` 只启动 Redis，并不引用上述镜像变量，因此普通本地开发不需要创建根 `.env`。
 
-生产部署工作流使用临时 `--env-file` 完成镜像校验、拉取和启动。三个容器全部验证成功后，才把临时文件原子替换为根 `.env`。该文件因此也是当前生产部署版本集合的本地记录，可用于追溯和回滚。
+生产部署工作流使用临时 `--env-file` 完成镜像校验、拉取和启动。应用服务验证成功后，才把临时文件原子替换为根 `.env`。该文件因此也是当前生产部署版本集合的本地记录，可用于追溯和回滚。
 
 ### 3.2 Backend `.env`
 
@@ -57,7 +60,6 @@ ADMIN_IMAGE=ghcr.io/example/admin@sha256:<64位十六进制摘要>
 
 - `DATABASE_URL`
 - `REDIS_URL`
-- `SECRET_KEY`
 - `ENVIRONMENT`
 - `BACKEND_CORS_ORIGINS`
 
@@ -75,17 +77,17 @@ env_file:
 Web 使用 Next.js：
 
 - `BACKEND_URL` 供 Next.js 服务端使用，不应暴露给浏览器。
-- `NEXT_PUBLIC_API_URL` 会进入浏览器可读产物，只能填写公开地址，禁止保存密钥。
+- Web 浏览器使用同域 `/api/v1`，只有 `BACKEND_INTERNAL_URL` 由服务端读取，不进入浏览器公开变量。
 
-`NEXT_PUBLIC_*` 通常在构建阶段固化。服务端变量是否可以在容器运行时注入，取决于后续实现的读取位置和 Dockerfile。当前生产 Compose 尚未给 Web 配置 `env_file` 或 `environment`，阶段 B 必须结合 Web Dockerfile 和运行方式确定生产接线，不能假定 `apps/web/.env.local` 已自动进入容器。
+Web 生产容器通过 Compose 的 `BACKEND_INTERNAL_URL=http://backend:8000` 连接 Backend，浏览器仍访问同域 `/api/v1`。
 
 ### 3.4 Admin `.env.local`
 
 Admin 使用 Vite，`VITE_*` 变量会进入浏览器可读的静态 JavaScript，主要在构建阶段生效。修改已构建容器中的 `.env.local` 通常不能改变现有静态产物。
 
-生产环境优先评估使用同域相对路径，例如 `/api/v1`，再由 1Panel OpenResty 转发到 Backend，从而减少同一镜像因环境域名不同而重复构建。最终方案需要在阶段 B 的 Admin Dockerfile 和反向代理设计中确认。
+Admin 使用同域相对路径 `/api/v1`，开发服务器和生产 Nginx 都代理到 Backend。
 
-当前生产 Compose 尚未给 Admin 配置 `env_file` 或 `environment`，不能把 Admin `.env.local` 表述为生产容器运行时配置。
+Admin 生产镜像不依赖运行时公开 API 环境变量，代理目标由容器网络中的 `backend` 服务名确定。
 
 ## 4. 本地首次初始化
 
@@ -118,10 +120,12 @@ Set-Location apps\backend
 首次初始化或 Python 基线变化时执行：
 
 ```powershell
-uv python install 3.12
-uv python pin 3.12
+uv python install 3.14
+uv python pin 3.14
 uv sync
 ```
+
+本项目只使用标准 CPython 3.14，不使用 free-threaded `3.14t`。执行 `uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"` 确认解释器；生产 Backend 容器自带已固定的 Python 运行时，1Panel 宿主机 Python 下拉选项不参与版本选择。
 
 `uv sync` 在 `apps/backend/.venv` 创建项目虚拟环境并同步依赖。后续统一通过 `uv run` 执行命令，不要求手动激活 `.venv`。
 
@@ -140,11 +144,11 @@ DATABASE_URL=postgresql+asyncpg://pinjie_fullstack:<本地密码>@localhost:5432
 REDIS_URL=redis://localhost:6379/0
 ```
 
-必须把模板中的 `SECRET_KEY` 改为仅供本地使用的随机值。不得在命令输出、截图、Issue、聊天记录或 Git 中暴露真实值。
+真实数据库密码只写入被 Git 忽略的 `.env`，不得在命令输出、截图、Issue、聊天记录或 Git 中暴露。
 
 ## 5. Backend 启动顺序
 
-当阶段 B 已补齐 `app/main.py`、Alembic 环境和 `uv.lock` 后，在 Backend 目录执行：
+在 Backend 目录执行：
 
 ```powershell
 uv sync --locked
@@ -164,7 +168,7 @@ uv run uvicorn app.main:app --reload --port 8000
 http://localhost:8000
 ```
 
-健康检查路径必须以阶段 B 实际实现的路由为准，当前不预设或伪造 `/health` 已存在。
+运维探针为 `/health/live` 和 `/health/ready`，业务中立状态接口为 `/api/v1/system/status`。
 
 ### 是否需要手动激活虚拟环境
 
@@ -225,20 +229,20 @@ E:\fastapi\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
 
 | 文件 | 作用 |
 | --- | --- |
-| 根 `.env` | 保存本次部署的三个不可变镜像引用 |
+| 根 `.env` | 保存本次部署的三个不可变镜像引用和 PostgreSQL 初始化变量 |
 | `.deployment-version` | 保存完整 Commit SHA 与 Compose 文件哈希 |
 | `apps/backend/.env` | 保存 Backend 生产运行配置和秘密 |
 
 1Panel 负责 OpenResty、服务器资源和容器管理。使用 1Panel 页面启动 Compose 时，环境变量的解析和容器注入仍遵守 Docker Compose 规则，面板不会让根 `.env` 自动成为三个容器的运行环境。
 
-Web 和 Admin 的生产构建变量及运行变量必须在阶段 B 中明确选择构建参数、Compose `environment`、专用 `env_file` 或相对 API 路径。方案落地前禁止依赖未声明的自动注入。
+Web 和 Admin 的生产接线已经固定为同域 `/api/v1` 代理与 Web 的 `BACKEND_INTERNAL_URL`，禁止依赖未声明的自动注入。
 
 ## 9. 常见误区
 
 - 在仓库根目录直接运行 Backend 的 `uv` 命令，导致项目和虚拟环境定位错误。
 - 每次启动前手动激活 `.venv`，随后又使用系统 Python 或 Conda 命令，形成环境混用。
-- 把根 `.env` 当作 Backend 密钥文件，混入数据库密码或 JWT 密钥。
+- 把根 `.env` 当作 Backend 密钥文件，混入数据库密码。
 - 认为根 `.env` 中的变量会自动进入所有容器。
 - 认为修改 Vite 容器旁的 `.env.local` 可以改变已构建的 Admin 静态文件。
 - 把 `NEXT_PUBLIC_*`、`VITE_*` 当作安全变量，它们对浏览器用户可见。
-- 当前仍处于空骨架阶段，却把无法执行的启动、迁移或测试命令记录为已经通过。
+- 没有数据库凭据时，仍然把 PostgreSQL 集成测试或跨栈 E2E 记录为已经通过。

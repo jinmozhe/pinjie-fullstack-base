@@ -20,7 +20,7 @@
 
 ## 固定技术栈与目录
 
-- 后端采用 Python 3.12、FastAPI、Pydantic v2、Pydantic Settings、SQLAlchemy 2 async、asyncpg、Alembic、PostgreSQL、Redis、Loguru 和 uv。
+- 后端采用标准 CPython 3.14、FastAPI、Pydantic v2、Pydantic Settings、SQLAlchemy 2 async、asyncpg、Alembic、PostgreSQL、Redis、Loguru 和 uv。禁止使用 free-threaded `3.14t`；完整版本边界以 [Python 运行时基线决策](../../docs/adr/0009-Python运行时基线决策.md)为准。
 - 当前依赖声明以 `apps/backend/pyproject.toml` 为准，精确安装版本以待生成的 `apps/backend/uv.lock` 为准。新增或改变运行依赖必须进入已确认计划，禁止把开发依赖当作生产运行能力。
 - 新增实现遵守 `app/api`、`app/core`、`app/db`、`app/domains`、`app/services` 的规划边界；目录尚未落地时，按 `docs/architecture/project-structure.md` 和当前计划创建最小必要结构。
 - `app/core` 和 `app/db` 不得反向依赖领域、应用编排或传输层。Python 包目录包含 `__init__.py`，禁止通过导入副作用启动数据库连接、后台任务或外部客户端。
@@ -44,7 +44,7 @@
 - 使用 `AsyncSession` 和 SQLAlchemy 2.x 查询风格。异步关联显式加载，避免隐式懒加载、`MissingGreenlet` 和 N+1。
 - 表结构变化必须新增 Alembic revision；已进入共享环境的 revision 禁止改写。生产和应用启动禁止使用 `create_all()` 建表或修复结构。
 - 自动生成迁移必须人工审查类型、默认值、约束、索引、注释、数据回填和锁表风险。不可逆迁移必须先验证备份、恢复和数据校验，并取得相应授权。
-- 业务主键默认 UUID v7，使用前先在阶段 B 确认兼容 Python 3.12 的项目实现；时间字段使用带时区时间并统一存储 UTC；结构化扩展数据优先 PostgreSQL JSONB；金额使用 `Decimal` 和明确精度，禁止 Float。
+- 业务主键默认 UUID v7，统一通过 `app/core/identifiers.py` 在应用层调用标准库 `uuid.uuid7()` 并返回 `uuid.UUID`；Model 使用 `sqlalchemy.Uuid(as_uuid=True)` 和 `default=new_uuid7`。禁止引入 UUID v7 第三方运行依赖、由调用方绕过统一入口或依赖 PostgreSQL 18 `uuidv7()` 服务端默认值。时间字段使用带时区时间并统一存储 UTC；结构化扩展数据优先 PostgreSQL JSONB；金额使用 `Decimal` 和明确精度，禁止 Float。
 - Redis 只承载缓存、限流、会话、锁、队列或短期状态，不得成为核心业务数据的唯一权威来源。Key 必须有项目、环境、领域、用途和版本命名空间，临时数据必须有 TTL。
 
 ## API、安全与可观测性

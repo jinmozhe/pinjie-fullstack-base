@@ -12,11 +12,14 @@
     "check:text": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/ci/check-text-files.ps1",
     "check:workspace": "powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File scripts/ci/check-workspace-state.ps1",
     "lint": "turbo run lint",
-    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#**/node_modules/**\"",
-    "typecheck": "turbo run typecheck"
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#**/node_modules/**\" \"#**/.venv/**\" \"#**/coverage/**\" \"#**/.next/**\"",
+    "typecheck": "turbo run typecheck",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "markdownlint-cli2": "0.23.2",
+    "@playwright/test": "^1.55.0",
     "turbo": "^2.0.0"
   },
   "engines": {

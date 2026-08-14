@@ -12,9 +12,10 @@ FastAPI 标准后端，基于 `pinjie-standard` 骨架。
 ## 本地启动
 
 ```powershell
-uv python install 3.12
-uv python pin 3.12
+uv python install 3.14
+uv python pin 3.14
 uv sync
+uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"
 uv run alembic upgrade head
 uv run uvicorn app.main:app --reload --port 8000
 ```
@@ -25,13 +26,8 @@ uv run uvicorn app.main:app --reload --port 8000
 
 复制 `apps/backend/.env.example` 为 `apps/backend/.env` 并填入本地配置。真实 `.env` 不得提交到仓库。
 
-## 通用领域范围
+## 阶段 B 范围
 
-母版只包含以下领域：
+当前只提供业务中立的运行基础设施：配置、请求上下文、统一错误响应、数据库会话与事务、Redis 生命周期、Alembic、健康探针和 `system` 状态接口。
 
-- `domains/auth/`：认证（登录、Token 刷新、密码重置）
-- `domains/users/`：C 端用户（个人中心、账号基础能力）
-- `domains/admin/`：B 端 RBAC（管理员、角色、菜单、权限）
-- `domains/system/`：系统工具（健康检查、日志、配置）
-
-业务领域（如电商、CMS）通过派生仓库添加，不放入母版。
+认证、用户、管理员、RBAC、审计和具体业务领域属于后续独立阶段，派生仓库按计划添加。
