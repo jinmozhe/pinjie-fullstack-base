@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetSystemStatusApiV1SystemStatusGetData, GetSystemStatusApiV1SystemStatusGetResponses, HealthLiveHealthLiveGetData, HealthLiveHealthLiveGetResponses, HealthReadyHealthReadyGetData, HealthReadyHealthReadyGetResponses } from './types.gen';
+import type { AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, ChangePasswordApiV1AdminAuthPasswordPostData, ChangePasswordApiV1AdminAuthPasswordPostErrors, ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostData, ChangePasswordApiV1UsersMePasswordPostErrors, ChangePasswordApiV1UsersMePasswordPostResponses, ConfirmApiV1AdminAuthConfirmPostData, ConfirmApiV1AdminAuthConfirmPostErrors, ConfirmApiV1AdminAuthConfirmPostResponses, CreateAdminApiV1AdminAdminsPostData, CreateAdminApiV1AdminAdminsPostErrors, CreateAdminApiV1AdminAdminsPostResponses, CreateRoleApiV1AdminRolesPostData, CreateRoleApiV1AdminRolesPostErrors, CreateRoleApiV1AdminRolesPostResponses, DeleteAccountApiV1UsersMeDeleteData, DeleteAccountApiV1UsersMeDeleteErrors, DeleteAccountApiV1UsersMeDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteData, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, GetAdminApiV1AdminAdminsAdminIdGetData, GetAdminApiV1AdminAdminsAdminIdGetErrors, GetAdminApiV1AdminAdminsAdminIdGetResponses, GetMeApiV1AdminAuthMeGetData, GetMeApiV1AdminAuthMeGetErrors, GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1UsersMeGetData, GetMeApiV1UsersMeGetErrors, GetMeApiV1UsersMeGetResponses, GetRoleApiV1AdminRolesRoleIdGetData, GetRoleApiV1AdminRolesRoleIdGetErrors, GetRoleApiV1AdminRolesRoleIdGetResponses, GetSystemStatusApiV1SystemStatusGetData, GetSystemStatusApiV1SystemStatusGetResponses, GetUserApiV1AdminUsersUserIdGetData, GetUserApiV1AdminUsersUserIdGetErrors, GetUserApiV1AdminUsersUserIdGetResponses, HealthLiveHealthLiveGetData, HealthLiveHealthLiveGetResponses, HealthReadyHealthReadyGetData, HealthReadyHealthReadyGetResponses, ListAdminsApiV1AdminAdminsGetData, ListAdminsApiV1AdminAdminsGetErrors, ListAdminsApiV1AdminAdminsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetData, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetData, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListPermissionsApiV1AdminPermissionsGetData, ListPermissionsApiV1AdminPermissionsGetErrors, ListPermissionsApiV1AdminPermissionsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetData, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRolesApiV1AdminRolesGetData, ListRolesApiV1AdminRolesGetErrors, ListRolesApiV1AdminRolesGetResponses, ListSessionsApiV1UsersMeSessionsGetData, ListSessionsApiV1UsersMeSessionsGetErrors, ListSessionsApiV1UsersMeSessionsGetResponses, ListUsersApiV1AdminUsersGetData, ListUsersApiV1AdminUsersGetErrors, ListUsersApiV1AdminUsersGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetData, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, LoginApiV1AdminAuthLoginPostData, LoginApiV1AdminAuthLoginPostErrors, LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostErrors, LoginApiV1AuthLoginPostResponses, LogoutApiV1AdminAuthLogoutPostData, LogoutApiV1AdminAuthLogoutPostErrors, LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostErrors, LogoutApiV1AuthLogoutPostResponses, RefreshApiV1AdminAuthRefreshPostData, RefreshApiV1AdminAuthRefreshPostErrors, RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostErrors, RefreshApiV1AuthRefreshPostResponses, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostErrors, RegisterApiV1AuthRegisterPostResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchData, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchData, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateMeApiV1UsersMePatchData, UpdateMeApiV1UsersMePatchErrors, UpdateMeApiV1UsersMePatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchData, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchData, UpdateUserApiV1AdminUsersUserIdPatchErrors, UpdateUserApiV1AdminUsersUserIdPatchResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -17,6 +17,478 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
      */
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
+
+/**
+ * Register a browser user account
+ */
+export const registerApiV1AuthRegisterPost = <ThrowOnError extends boolean = false>(options: Options<RegisterApiV1AuthRegisterPostData, ThrowOnError>): RequestResult<RegisterApiV1AuthRegisterPostResponses, RegisterApiV1AuthRegisterPostErrors, ThrowOnError> => (options.client ?? client).post<RegisterApiV1AuthRegisterPostResponses, RegisterApiV1AuthRegisterPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/auth/register',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Sign in a browser user
+ */
+export const loginApiV1AuthLoginPost = <ThrowOnError extends boolean = false>(options: Options<LoginApiV1AuthLoginPostData, ThrowOnError>): RequestResult<LoginApiV1AuthLoginPostResponses, LoginApiV1AuthLoginPostErrors, ThrowOnError> => (options.client ?? client).post<LoginApiV1AuthLoginPostResponses, LoginApiV1AuthLoginPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Rotate the browser refresh token
+ */
+export const refreshApiV1AuthRefreshPost = <ThrowOnError extends boolean = false>(options?: Options<RefreshApiV1AuthRefreshPostData, ThrowOnError>): RequestResult<RefreshApiV1AuthRefreshPostResponses, RefreshApiV1AuthRefreshPostErrors, ThrowOnError> => (options?.client ?? client).post<RefreshApiV1AuthRefreshPostResponses, RefreshApiV1AuthRefreshPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/auth/refresh',
+    ...options
+});
+
+/**
+ * Sign out the current browser session
+ */
+export const logoutApiV1AuthLogoutPost = <ThrowOnError extends boolean = false>(options?: Options<LogoutApiV1AuthLogoutPostData, ThrowOnError>): RequestResult<LogoutApiV1AuthLogoutPostResponses, LogoutApiV1AuthLogoutPostErrors, ThrowOnError> => (options?.client ?? client).post<LogoutApiV1AuthLogoutPostResponses, LogoutApiV1AuthLogoutPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/auth/logout',
+    ...options
+});
+
+/**
+ * Delete and anonymize the current user account
+ */
+export const deleteAccountApiV1UsersMeDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAccountApiV1UsersMeDeleteData, ThrowOnError>): RequestResult<DeleteAccountApiV1UsersMeDeleteResponses, DeleteAccountApiV1UsersMeDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAccountApiV1UsersMeDeleteResponses, DeleteAccountApiV1UsersMeDeleteErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get the current user
+ */
+export const getMeApiV1UsersMeGet = <ThrowOnError extends boolean = false>(options?: Options<GetMeApiV1UsersMeGetData, ThrowOnError>): RequestResult<GetMeApiV1UsersMeGetResponses, GetMeApiV1UsersMeGetErrors, ThrowOnError> => (options?.client ?? client).get<GetMeApiV1UsersMeGetResponses, GetMeApiV1UsersMeGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me',
+    ...options
+});
+
+/**
+ * Update the current user profile
+ */
+export const updateMeApiV1UsersMePatch = <ThrowOnError extends boolean = false>(options: Options<UpdateMeApiV1UsersMePatchData, ThrowOnError>): RequestResult<UpdateMeApiV1UsersMePatchResponses, UpdateMeApiV1UsersMePatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateMeApiV1UsersMePatchResponses, UpdateMeApiV1UsersMePatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Change the current user password
+ */
+export const changePasswordApiV1UsersMePasswordPost = <ThrowOnError extends boolean = false>(options: Options<ChangePasswordApiV1UsersMePasswordPostData, ThrowOnError>): RequestResult<ChangePasswordApiV1UsersMePasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostErrors, ThrowOnError> => (options.client ?? client).post<ChangePasswordApiV1UsersMePasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me/password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List current user sessions
+ */
+export const listSessionsApiV1UsersMeSessionsGet = <ThrowOnError extends boolean = false>(options?: Options<ListSessionsApiV1UsersMeSessionsGetData, ThrowOnError>): RequestResult<ListSessionsApiV1UsersMeSessionsGetResponses, ListSessionsApiV1UsersMeSessionsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListSessionsApiV1UsersMeSessionsGetResponses, ListSessionsApiV1UsersMeSessionsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me/sessions',
+    ...options
+});
+
+/**
+ * Revoke a current user session
+ */
+export const revokeSessionApiV1UsersMeSessionsSessionIdDelete = <ThrowOnError extends boolean = false>(options: Options<RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData, ThrowOnError>): RequestResult<RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me/sessions/{session_id}',
+    ...options
+});
+
+/**
+ * Revoke all other current user sessions
+ */
+export const revokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPost = <ThrowOnError extends boolean = false>(options?: Options<RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData, ThrowOnError>): RequestResult<RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, ThrowOnError> => (options?.client ?? client).post<RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/users/me/sessions/revoke-others',
+    ...options
+});
+
+/**
+ * Sign in an administrator
+ */
+export const loginApiV1AdminAuthLoginPost = <ThrowOnError extends boolean = false>(options: Options<LoginApiV1AdminAuthLoginPostData, ThrowOnError>): RequestResult<LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AdminAuthLoginPostErrors, ThrowOnError> => (options.client ?? client).post<LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AdminAuthLoginPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Rotate administrator refresh token
+ */
+export const refreshApiV1AdminAuthRefreshPost = <ThrowOnError extends boolean = false>(options?: Options<RefreshApiV1AdminAuthRefreshPostData, ThrowOnError>): RequestResult<RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AdminAuthRefreshPostErrors, ThrowOnError> => (options?.client ?? client).post<RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AdminAuthRefreshPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/auth/refresh',
+    ...options
+});
+
+/**
+ * Sign out the current administrator session
+ */
+export const logoutApiV1AdminAuthLogoutPost = <ThrowOnError extends boolean = false>(options?: Options<LogoutApiV1AdminAuthLogoutPostData, ThrowOnError>): RequestResult<LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AdminAuthLogoutPostErrors, ThrowOnError> => (options?.client ?? client).post<LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AdminAuthLogoutPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/auth/logout',
+    ...options
+});
+
+/**
+ * Get the current administrator
+ */
+export const getMeApiV1AdminAuthMeGet = <ThrowOnError extends boolean = false>(options?: Options<GetMeApiV1AdminAuthMeGetData, ThrowOnError>): RequestResult<GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1AdminAuthMeGetErrors, ThrowOnError> => (options?.client ?? client).get<GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1AdminAuthMeGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/auth/me',
+    ...options
+});
+
+/**
+ * Change administrator password
+ */
+export const changePasswordApiV1AdminAuthPasswordPost = <ThrowOnError extends boolean = false>(options: Options<ChangePasswordApiV1AdminAuthPasswordPostData, ThrowOnError>): RequestResult<ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1AdminAuthPasswordPostErrors, ThrowOnError> => (options.client ?? client).post<ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1AdminAuthPasswordPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/auth/password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Confirm a sensitive administrator action
+ */
+export const confirmApiV1AdminAuthConfirmPost = <ThrowOnError extends boolean = false>(options: Options<ConfirmApiV1AdminAuthConfirmPostData, ThrowOnError>): RequestResult<ConfirmApiV1AdminAuthConfirmPostResponses, ConfirmApiV1AdminAuthConfirmPostErrors, ThrowOnError> => (options.client ?? client).post<ConfirmApiV1AdminAuthConfirmPostResponses, ConfirmApiV1AdminAuthConfirmPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/auth/confirm',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List users
+ */
+export const listUsersApiV1AdminUsersGet = <ThrowOnError extends boolean = false>(options?: Options<ListUsersApiV1AdminUsersGetData, ThrowOnError>): RequestResult<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users',
+    ...options
+});
+
+/**
+ * Get a user
+ */
+export const getUserApiV1AdminUsersUserIdGet = <ThrowOnError extends boolean = false>(options: Options<GetUserApiV1AdminUsersUserIdGetData, ThrowOnError>): RequestResult<GetUserApiV1AdminUsersUserIdGetResponses, GetUserApiV1AdminUsersUserIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetUserApiV1AdminUsersUserIdGetResponses, GetUserApiV1AdminUsersUserIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}',
+    ...options
+});
+
+/**
+ * Update a user
+ */
+export const updateUserApiV1AdminUsersUserIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateUserApiV1AdminUsersUserIdPatchData, ThrowOnError>): RequestResult<UpdateUserApiV1AdminUsersUserIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserApiV1AdminUsersUserIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Change a user status
+ */
+export const setUserStatusApiV1AdminUsersUserIdStatusPatch = <ThrowOnError extends boolean = false>(options: Options<SetUserStatusApiV1AdminUsersUserIdStatusPatchData, ThrowOnError>): RequestResult<SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, ThrowOnError> => (options.client ?? client).patch<SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}/status',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset a user password
+ */
+export const resetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPut = <ThrowOnError extends boolean = false>(options: Options<ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData, ThrowOnError>): RequestResult<ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ThrowOnError> => (options.client ?? client).put<ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}/credentials/password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List user sessions
+ */
+export const listUserSessionsApiV1AdminUsersUserIdSessionsGet = <ThrowOnError extends boolean = false>(options: Options<ListUserSessionsApiV1AdminUsersUserIdSessionsGetData, ThrowOnError>): RequestResult<ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ThrowOnError> => (options.client ?? client).get<ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}/sessions',
+    ...options
+});
+
+/**
+ * Revoke a user session
+ */
+export const revokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDelete = <ThrowOnError extends boolean = false>(options: Options<RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData, ThrowOnError>): RequestResult<RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}/sessions/{session_id}',
+    ...options
+});
+
+/**
+ * Revoke all user sessions
+ */
+export const revokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPost = <ThrowOnError extends boolean = false>(options: Options<RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData, ThrowOnError>): RequestResult<RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, ThrowOnError> => (options.client ?? client).post<RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}/sessions/revoke-all',
+    ...options
+});
+
+/**
+ * List administrators
+ */
+export const listAdminsApiV1AdminAdminsGet = <ThrowOnError extends boolean = false>(options?: Options<ListAdminsApiV1AdminAdminsGetData, ThrowOnError>): RequestResult<ListAdminsApiV1AdminAdminsGetResponses, ListAdminsApiV1AdminAdminsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminsApiV1AdminAdminsGetResponses, ListAdminsApiV1AdminAdminsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins',
+    ...options
+});
+
+/**
+ * Create an administrator
+ */
+export const createAdminApiV1AdminAdminsPost = <ThrowOnError extends boolean = false>(options: Options<CreateAdminApiV1AdminAdminsPostData, ThrowOnError>): RequestResult<CreateAdminApiV1AdminAdminsPostResponses, CreateAdminApiV1AdminAdminsPostErrors, ThrowOnError> => (options.client ?? client).post<CreateAdminApiV1AdminAdminsPostResponses, CreateAdminApiV1AdminAdminsPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get an administrator
+ */
+export const getAdminApiV1AdminAdminsAdminIdGet = <ThrowOnError extends boolean = false>(options: Options<GetAdminApiV1AdminAdminsAdminIdGetData, ThrowOnError>): RequestResult<GetAdminApiV1AdminAdminsAdminIdGetResponses, GetAdminApiV1AdminAdminsAdminIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetAdminApiV1AdminAdminsAdminIdGetResponses, GetAdminApiV1AdminAdminsAdminIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}',
+    ...options
+});
+
+/**
+ * Update an administrator
+ */
+export const updateAdminApiV1AdminAdminsAdminIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateAdminApiV1AdminAdminsAdminIdPatchData, ThrowOnError>): RequestResult<UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Change an administrator status
+ */
+export const setAdminStatusApiV1AdminAdminsAdminIdStatusPatch = <ThrowOnError extends boolean = false>(options: Options<SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData, ThrowOnError>): RequestResult<SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, ThrowOnError> => (options.client ?? client).patch<SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}/status',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset an administrator password
+ */
+export const resetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPut = <ThrowOnError extends boolean = false>(options: Options<ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData, ThrowOnError>): RequestResult<ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ThrowOnError> => (options.client ?? client).put<ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}/credentials/password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Assign administrator roles
+ */
+export const assignAdminRolesApiV1AdminAdminsAdminIdRolesPut = <ThrowOnError extends boolean = false>(options: Options<AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData, ThrowOnError>): RequestResult<AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, ThrowOnError> => (options.client ?? client).put<AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}/roles',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List administrator sessions
+ */
+export const listAdminSessionsApiV1AdminAdminsAdminIdSessionsGet = <ThrowOnError extends boolean = false>(options: Options<ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData, ThrowOnError>): RequestResult<ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ThrowOnError> => (options.client ?? client).get<ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}/sessions',
+    ...options
+});
+
+/**
+ * Revoke all administrator sessions
+ */
+export const revokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPost = <ThrowOnError extends boolean = false>(options: Options<RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData, ThrowOnError>): RequestResult<RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, ThrowOnError> => (options.client ?? client).post<RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/admins/{admin_id}/sessions/revoke-all',
+    ...options
+});
+
+/**
+ * List roles
+ */
+export const listRolesApiV1AdminRolesGet = <ThrowOnError extends boolean = false>(options?: Options<ListRolesApiV1AdminRolesGetData, ThrowOnError>): RequestResult<ListRolesApiV1AdminRolesGetResponses, ListRolesApiV1AdminRolesGetErrors, ThrowOnError> => (options?.client ?? client).get<ListRolesApiV1AdminRolesGetResponses, ListRolesApiV1AdminRolesGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles',
+    ...options
+});
+
+/**
+ * Create a role
+ */
+export const createRoleApiV1AdminRolesPost = <ThrowOnError extends boolean = false>(options: Options<CreateRoleApiV1AdminRolesPostData, ThrowOnError>): RequestResult<CreateRoleApiV1AdminRolesPostResponses, CreateRoleApiV1AdminRolesPostErrors, ThrowOnError> => (options.client ?? client).post<CreateRoleApiV1AdminRolesPostResponses, CreateRoleApiV1AdminRolesPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete an unused role
+ */
+export const deleteRoleApiV1AdminRolesRoleIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteRoleApiV1AdminRolesRoleIdDeleteData, ThrowOnError>): RequestResult<DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles/{role_id}',
+    ...options
+});
+
+/**
+ * Get a role
+ */
+export const getRoleApiV1AdminRolesRoleIdGet = <ThrowOnError extends boolean = false>(options: Options<GetRoleApiV1AdminRolesRoleIdGetData, ThrowOnError>): RequestResult<GetRoleApiV1AdminRolesRoleIdGetResponses, GetRoleApiV1AdminRolesRoleIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetRoleApiV1AdminRolesRoleIdGetResponses, GetRoleApiV1AdminRolesRoleIdGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles/{role_id}',
+    ...options
+});
+
+/**
+ * Update a role
+ */
+export const updateRoleApiV1AdminRolesRoleIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateRoleApiV1AdminRolesRoleIdPatchData, ThrowOnError>): RequestResult<UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles/{role_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Assign role permissions
+ */
+export const assignRolePermissionsApiV1AdminRolesRoleIdPermissionsPut = <ThrowOnError extends boolean = false>(options: Options<AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData, ThrowOnError>): RequestResult<AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, ThrowOnError> => (options.client ?? client).put<AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles/{role_id}/permissions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List the source-controlled permission catalog
+ */
+export const listPermissionsApiV1AdminPermissionsGet = <ThrowOnError extends boolean = false>(options?: Options<ListPermissionsApiV1AdminPermissionsGetData, ThrowOnError>): RequestResult<ListPermissionsApiV1AdminPermissionsGetResponses, ListPermissionsApiV1AdminPermissionsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListPermissionsApiV1AdminPermissionsGetResponses, ListPermissionsApiV1AdminPermissionsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/permissions',
+    ...options
+});
+
+/**
+ * List authentication security events
+ */
+export const listLoginEventsApiV1AdminSecurityLoginEventsGet = <ThrowOnError extends boolean = false>(options?: Options<ListLoginEventsApiV1AdminSecurityLoginEventsGetData, ThrowOnError>): RequestResult<ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/security/login-events',
+    ...options
+});
+
+/**
+ * List administrator audit events
+ */
+export const listAuditEventsApiV1AdminSecurityAuditEventsGet = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsApiV1AdminSecurityAuditEventsGetData, ThrowOnError>): RequestResult<ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/security/audit-events',
+    ...options
+});
+
+/**
+ * List optional request metadata logs
+ */
+export const listRequestLogsApiV1AdminSystemRequestLogsGet = <ThrowOnError extends boolean = false>(options?: Options<ListRequestLogsApiV1AdminSystemRequestLogsGetData, ThrowOnError>): RequestResult<ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/system/request-logs',
+    ...options
+});
 
 /**
  * Get public system status

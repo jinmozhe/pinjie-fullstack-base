@@ -1,6 +1,8 @@
+import "@ant-design/v5-patch-for-react-19";
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup } from "@testing-library/react";
+import { message } from "antd";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { setupServer } from "msw/node";
 
@@ -22,8 +24,24 @@ Object.defineProperty(window, "matchMedia", {
   }),
 });
 
+class TestResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(window, "ResizeObserver", { writable: true, value: TestResizeObserver });
+Object.defineProperty(globalThis, "ResizeObserver", { writable: true, value: TestResizeObserver });
+
+const getComputedStyle = window.getComputedStyle.bind(window);
+Object.defineProperty(window, "getComputedStyle", {
+  writable: true,
+  value: (element: Parameters<typeof getComputedStyle>[0]) => getComputedStyle(element),
+});
+
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
+  message.destroy();
   cleanup();
   server.resetHandlers();
 });

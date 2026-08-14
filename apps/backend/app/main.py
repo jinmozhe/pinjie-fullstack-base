@@ -12,6 +12,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from app.api_router import api_router
 from app.core.config import Settings, get_settings
 from app.core.context import current_request_id
+from app.core.cookies import ADMIN_COOKIES, WEB_COOKIES, clear_auth_cookies
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
 from app.core.health import check_readiness
@@ -45,14 +46,21 @@ def _safe_validation_details(exc: RequestValidationError) -> list[dict[str, Any]
 
 def _register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppException)
-    async def app_exception_handler(_: Request, exc: AppException) -> JSONResponse:
-        return _error_response(
+    async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
+        response = _error_response(
             request_id=current_request_id(),
             code=exc.code,
             message=exc.message,
             details=exc.details,
             status_code=exc.status_code,
         )
+        response.headers.update(exc.headers)
+        clear_profile = getattr(request.state, "clear_auth_profile", None)
+        if clear_profile == "web":
+            clear_auth_cookies(response, names=WEB_COOKIES, settings=request.app.state.settings)
+        elif clear_profile == "admin":
+            clear_auth_cookies(response, names=ADMIN_COOKIES, settings=request.app.state.settings)
+        return response
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(_: Request, exc: RequestValidationError) -> JSONResponse:
@@ -114,9 +122,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=app_settings.cors_origins,
-        allow_credentials=False,
-        allow_methods=["GET", "HEAD", "OPTIONS"],
-        allow_headers=["Accept", "Content-Type", "X-Request-ID", "X-Trace-ID"],
+        allow_credentials=True,
+        allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=[
+            "Accept",
+            "Content-Type",
+            "X-Admin-Confirmation",
+            "X-CSRF-Token",
+            "X-Request-ID",
+            "X-Trace-ID",
+        ],
     )
     if "*" not in app_settings.trusted_hosts:
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=app_settings.trusted_hosts)

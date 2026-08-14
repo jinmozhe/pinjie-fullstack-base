@@ -4,7 +4,7 @@
 
 本文说明仓库根目录与 Backend、Web、Admin 三个应用目录中的环境变量文件分别由谁读取，并给出 Windows、PowerShell 和 VS Code 工作区下初始化、迁移、启动及检查 Backend 的标准步骤。
 
-阶段 B 已提供 Backend 运行入口、Alembic 环境、锁文件和基础测试。本文描述当前可执行的本地流程。
+阶段 B 已提供运行基础设施，阶段 C 已提供认证、用户、管理员、RBAC、安全事件、审计和请求元数据能力。本文描述当前可执行的本地流程。
 
 ## 2. 工作区与应用目录
 
@@ -29,7 +29,7 @@ E:\fastapi\pinjie-fullstack-base\apps\backend
 | 层级 | 模板 | 本地真实文件 | 读取者 | 主要职责 |
 | --- | --- | --- | --- | --- |
 | 部署层 | 根 `.env.example` | 根 `.env` | Docker Compose、生产部署脚本 | 选择三端不可变镜像 digest 并初始化 PostgreSQL 容器 |
-| Backend | `apps/backend/.env.example` | `apps/backend/.env` | Backend 配置系统、Backend 容器 | 数据库、Redis、运行环境和 CORS |
+| Backend | `apps/backend/.env.example` | `apps/backend/.env` | Backend 配置系统、Backend 容器与运维脚本 | 数据库、Redis、认证 Secret、Cookie、安全边界和日志保留 |
 | Web | `apps/web/.env.example` | `apps/web/.env.local` | Next.js 开发、构建及服务端运行过程 | 服务端 Backend 地址和浏览器公开 API 地址 |
 | Admin | `apps/admin/.env.example` | `apps/admin/.env.local` | Vite 开发与构建过程 | 浏览器公开 API 地址 |
 
@@ -62,6 +62,10 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `REDIS_URL`
 - `ENVIRONMENT`
 - `BACKEND_CORS_ORIGINS`
+- `WEB_JWT_SECRET` 与 `ADMIN_JWT_SECRET`
+- `WEB_TOKEN_HMAC_KEY` 与 `ADMIN_TOKEN_HMAC_KEY`
+- `AUTH_COOKIE_SECURE`、注册模式、Token 与 Session 期限
+- 请求元数据模式及安全日志保留期
 
 生产 `compose.prod.yml` 当前明确通过以下配置把该文件注入 Backend 容器：
 
@@ -138,13 +142,16 @@ Copy-Item .env.example .env
 至少核对：
 
 ```dotenv
-ENVIRONMENT=development
+ENVIRONMENT=local
 DEBUG=true
 DATABASE_URL=postgresql+asyncpg://pinjie_fullstack:<本地密码>@localhost:5432/pinjie_fullstack_dev
 REDIS_URL=redis://localhost:6379/0
+REDIS_MODE=required
 ```
 
-真实数据库密码只写入被 Git 忽略的 `.env`，不得在命令输出、截图、Issue、聊天记录或 Git 中暴露。
+还必须为 `WEB_JWT_SECRET`、`ADMIN_JWT_SECRET`、`WEB_TOKEN_HMAC_KEY` 和 `ADMIN_TOKEN_HMAC_KEY` 设置四个彼此不同、至少 32 个 UTF-8 字节的随机值。生产值由 Secret 管理系统生成和注入；本地值也不能沿用模板、写入截图、Issue、聊天记录或 Git。
+
+生产环境还必须设置 `AUTH_COOKIE_SECURE=true`、明确的 `TRUSTED_HOSTS`、`BACKEND_CORS_ORIGINS`、`TRUSTED_PROXY_CIDRS` 和 `RELEASE_VERSION`。配置系统发现弱 Secret、通配域名、安全 Cookie 关闭或关键依赖缺失时拒绝启动。
 
 ## 5. Backend 启动顺序
 
@@ -153,6 +160,7 @@ REDIS_URL=redis://localhost:6379/0
 ```powershell
 uv sync --locked
 uv run alembic upgrade head
+uv run python -m scripts.sync_permissions --apply --confirm-database pinjie_fullstack_dev
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
@@ -160,7 +168,8 @@ uv run uvicorn app.main:app --reload --port 8000
 
 1. `uv sync --locked` 按锁文件还原精确依赖，锁文件与声明不一致时立即失败。
 2. `uv run alembic upgrade head` 把本地开发数据库升级到当前迁移版本。
-3. `uv run uvicorn ...` 使用 Backend 项目 `.venv` 启动 FastAPI 开发服务。
+3. 权限同步脚本把源码权限目录写入数据库。日常核对使用 `--check`，只有明确需要同步时才使用 `--apply`。
+4. `uv run uvicorn ...` 使用 Backend 项目 `.venv` 启动 FastAPI 开发服务。
 
 启动后访问：
 
@@ -169,6 +178,14 @@ http://localhost:8000
 ```
 
 运维探针为 `/health/live` 和 `/health/ready`，业务中立状态接口为 `/api/v1/system/status`。
+
+首次创建超级管理员时，在 Backend 目录交互执行：
+
+```powershell
+uv run python -m scripts.create_initial_admin --username initial-admin --confirm-database pinjie_fullstack_dev
+```
+
+脚本不提供默认密码，交互输入不会回显。账号已经存在时默认拒绝；显式重置必须同时提供 `--reset-existing` 与 `--confirm-reset`，并会递增凭据版本、撤销已有会话。命令中的数据库名必须与 `DATABASE_URL` 完全一致。
 
 ### 是否需要手动激活虚拟环境
 
@@ -186,18 +203,53 @@ http://localhost:8000
 
 ```powershell
 uv run ruff check .
+uv run ruff format --check .
 uv run mypy app
+uv run lint-imports
+uv run python -m compileall -q app scripts tests
+uv run python -c "from app.main import app; print('APP_IMPORT_OK', len(app.openapi().get('paths', {})))"
 uv run pytest tests/ -v
 ```
 
 涉及数据库的测试必须连接名称以 `_test` 结尾的独立测试数据库。禁止使用开发数据库或生产数据库充当自动化测试数据库。
 
-当前骨架缺少运行源码、测试、`uv.lock` 和 Alembic 运行环境，因此上述检查尚不适用。当前可执行的仓库治理检查仍从全栈根目录运行：
+涉及迁移时还需在隔离 `_test` 数据库执行两次升级与一致性检查：
+
+```powershell
+uv run alembic upgrade head
+uv run alembic upgrade head
+uv run alembic check
+```
+
+全仓库治理检查从根目录运行：
 
 ```powershell
 Set-Location E:\fastapi\pinjie-fullstack-base
 pnpm check:governance
 ```
+
+### 6.1 权限、日志和请求元数据工具
+
+以下命令都先校验运行配置与数据库名，`--confirm-database` 必须与 `DATABASE_URL` 中的数据库名完全一致：
+
+```powershell
+# 权限目录检查，存在漂移时退出码非零
+uv run python -m scripts.sync_permissions --check --confirm-database pinjie_fullstack_dev
+
+# 查看超过保留期的记录数量，不删除数据
+uv run python -m scripts.cleanup_security_logs --confirm-database pinjie_fullstack_dev
+
+# 经审批后应用保留期清理
+uv run python -m scripts.cleanup_security_logs --apply --confirm-database pinjie_fullstack_dev
+```
+
+`REQUEST_LOG_MODE=disabled` 是默认值。启用 `metadata` 后，必须单独运行消费者：
+
+```powershell
+uv run python -m scripts.consume_request_logs
+```
+
+本地排查可以增加 `--once`、`--batch-size` 或 `--reclaim-idle-ms`。该 Worker 只持久化白名单元数据，不能保存请求体、响应体、Cookie、Authorization 或 Token。
 
 ## 7. VS Code 配置
 
@@ -237,6 +289,8 @@ E:\fastapi\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
 
 Web 和 Admin 的生产接线已经固定为同域 `/api/v1` 代理与 Web 的 `BACKEND_INTERNAL_URL`，禁止依赖未声明的自动注入。
 
+应用启动不会自动执行 Alembic、同步权限或创建管理员。生产发布必须在启动新版本前执行受控迁移与权限同步；初始管理员只通过一次性显式命令创建。启用请求元数据时，Compose 还需开启 `request-logs` Profile 运行独立消费者。
+
 ## 9. 常见误区
 
 - 在仓库根目录直接运行 Backend 的 `uv` 命令，导致项目和虚拟环境定位错误。
@@ -245,4 +299,6 @@ Web 和 Admin 的生产接线已经固定为同域 `/api/v1` 代理与 Web 的 `
 - 认为根 `.env` 中的变量会自动进入所有容器。
 - 认为修改 Vite 容器旁的 `.env.local` 可以改变已构建的 Admin 静态文件。
 - 把 `NEXT_PUBLIC_*`、`VITE_*` 当作安全变量，它们对浏览器用户可见。
+- 复用 C/B JWT Secret 或 Token HMAC Key，或者把模板值直接带入生产。
+- 只启动 Backend 请求进程，却忘记在 `REQUEST_LOG_MODE=metadata` 时运行请求日志消费者。
 - 没有数据库凭据时，仍然把 PostgreSQL 集成测试或跨栈 E2E 记录为已经通过。

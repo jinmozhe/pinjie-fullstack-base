@@ -11,9 +11,11 @@ class AppException(Exception):
         code: ErrorCode | str,
         message: str,
         details: Any = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
         self.code = str(code)
         self.message = message
         self.details = details
+        self.headers = headers or {}

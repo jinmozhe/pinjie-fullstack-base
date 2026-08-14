@@ -1,6 +1,8 @@
 import { getSystemStatusApiV1SystemStatusGet } from "@pinjie/api-client";
 import type { SystemStatus } from "@pinjie/api-client";
+import type { UserPrincipalOut } from "@pinjie/api-client";
 import { createClient } from "@pinjie/api-client/client";
+import { cookies } from "next/headers";
 
 export async function fetchInitialSystemStatus(): Promise<SystemStatus> {
   const baseURL = process.env.BACKEND_INTERNAL_URL;
@@ -14,4 +16,23 @@ export async function fetchInitialSystemStatus(): Promise<SystemStatus> {
   } catch {
     return { status: "unavailable" };
   }
+}
+
+export class ServerAuthError extends Error {
+  constructor(public readonly status: number) {
+    super("Server authentication request failed");
+  }
+}
+
+export async function fetchCurrentUser(): Promise<UserPrincipalOut> {
+  const baseURL = process.env.BACKEND_INTERNAL_URL;
+  if (!baseURL) throw new ServerAuthError(503);
+  const cookieStore = await cookies();
+  const response = await fetch(new URL("/api/v1/users/me", baseURL), {
+    cache: "no-store",
+    headers: { accept: "application/json", cookie: cookieStore.toString() },
+  });
+  if (!response.ok) throw new ServerAuthError(response.status);
+  const payload = (await response.json()) as { data: UserPrincipalOut };
+  return payload.data;
 }

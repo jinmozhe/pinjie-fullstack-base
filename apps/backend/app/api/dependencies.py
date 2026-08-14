@@ -1,14 +1,466 @@
-from collections.abc import AsyncIterator
+import hmac
+import json
+from collections.abc import AsyncIterator, Awaitable, Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Annotated, cast
 
-from fastapi import Request
+from fastapi import Cookie, Depends, Header, Request
+from jwt import InvalidTokenError
+from redis.exceptions import RedisError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache_keys import cache_keys
+from app.core.config import Settings
+from app.core.cookies import ADMIN_COOKIES, WEB_COOKIES
+from app.core.error_codes import ErrorCode
+from app.core.exceptions import AppException
+from app.core.request_metadata import request_metadata
+from app.core.resources import AppResources
+from app.core.security import decode_access_token, token_digest
+from app.db.models import Admin, AdminSession, User, UserSession
+from app.db.repositories import SessionRepository
 from app.db.session import session_scope
+from app.domains.admin.permissions import PERMISSION_CODES, PermissionCode
+from app.domains.admin.schemas import ConfirmationAction
+from app.services.accounts import AdminAccountService, UserAccountService
+from app.services.admin_management import AdminManagementService
+from app.services.authentication import AdminAuthService, WebAuthService
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentUser:
+    user: User
+    login_session: UserSession
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentAdmin:
+    admin: Admin
+    login_session: AdminSession
+    permissions: frozenset[str]
+
+
+def get_resources(request: Request) -> AppResources:
+    resources = getattr(request.app.state, "resources", None)
+    if resources is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Service is not ready",
+        )
+    return cast(AppResources, resources)
+
+
+def get_request_settings(request: Request) -> Settings:
+    settings = getattr(request.app.state, "settings", None)
+    if settings is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Service is not ready",
+        )
+    return cast(Settings, settings)
 
 
 async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
-    resources = getattr(request.app.state, "resources", None)
-    if resources is None:
-        raise RuntimeError("application resources are not initialized")
+    resources = get_resources(request)
     async with session_scope(resources.session_factory) as session:
         yield session
+
+
+DatabaseSession = Annotated[AsyncSession, Depends(get_db_session)]
+
+
+def get_web_auth_service(request: Request, session: DatabaseSession) -> WebAuthService:
+    resources = get_resources(request)
+    return WebAuthService(
+        session=session,
+        session_factory=resources.session_factory,
+        redis=resources.redis,
+        settings=get_request_settings(request),
+        password_manager=resources.password_manager,
+        metadata=request_metadata(request),
+    )
+
+
+def get_admin_auth_service(request: Request, session: DatabaseSession) -> AdminAuthService:
+    resources = get_resources(request)
+    return AdminAuthService(
+        session=session,
+        session_factory=resources.session_factory,
+        redis=resources.redis,
+        settings=get_request_settings(request),
+        password_manager=resources.password_manager,
+        metadata=request_metadata(request),
+    )
+
+
+def get_user_account_service(request: Request, session: DatabaseSession) -> UserAccountService:
+    resources = get_resources(request)
+    return UserAccountService(
+        session=session,
+        settings=get_request_settings(request),
+        password_manager=resources.password_manager,
+        metadata=request_metadata(request),
+    )
+
+
+def get_admin_account_service(request: Request, session: DatabaseSession) -> AdminAccountService:
+    resources = get_resources(request)
+    return AdminAccountService(
+        session=session,
+        session_factory=resources.session_factory,
+        redis=resources.redis,
+        settings=get_request_settings(request),
+        password_manager=resources.password_manager,
+        metadata=request_metadata(request),
+    )
+
+
+WebAuthServiceDependency = Annotated[WebAuthService, Depends(get_web_auth_service)]
+AdminAuthServiceDependency = Annotated[AdminAuthService, Depends(get_admin_auth_service)]
+UserAccountServiceDependency = Annotated[UserAccountService, Depends(get_user_account_service)]
+AdminAccountServiceDependency = Annotated[AdminAccountService, Depends(get_admin_account_service)]
+
+
+def require_browser_origin(request: Request) -> None:
+    settings = get_request_settings(request)
+    origin = request.headers.get("origin")
+    allowed = {item.rstrip("/") for item in settings.cors_origins}
+    if origin is None or origin.rstrip("/") not in allowed:
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="Request origin is not allowed")
+
+
+def _csrf_pair(request: Request, *, cookie_name: str) -> str:
+    require_browser_origin(request)
+    header_token = request.headers.get("x-csrf-token")
+    cookie_token = request.cookies.get(cookie_name)
+    if not header_token or not cookie_token or not hmac.compare_digest(header_token, cookie_token):
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+    return header_token
+
+
+def require_web_csrf_pair(request: Request) -> str:
+    return _csrf_pair(request, cookie_name=WEB_COOKIES.csrf)
+
+
+def require_admin_csrf_pair(request: Request) -> str:
+    return _csrf_pair(request, cookie_name=ADMIN_COOKIES.csrf)
+
+
+async def get_current_user(
+    request: Request,
+    session: DatabaseSession,
+    access_token: Annotated[str | None, Cookie(alias=WEB_COOKIES.access)] = None,
+) -> CurrentUser:
+    if not access_token:
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_REQUIRED,
+            message="Authentication is required",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    settings = get_request_settings(request)
+    resources = get_resources(request)
+    if resources.redis is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Authentication service is temporarily unavailable",
+        )
+    web_secret, _, _, _ = settings.authentication_secrets()
+    try:
+        claims = decode_access_token(
+            access_token,
+            audience="pinjie-web",
+            issuer=settings.jwt_issuer,
+            secret=web_secret,
+        )
+        login_session = await SessionRepository(session).get_web(claims.session_id)
+    except InvalidTokenError as exc:
+        request.state.clear_auth_profile = "web"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_TOKEN_INVALID,
+            message="Authentication token is invalid",
+            headers={"WWW-Authenticate": "Cookie"},
+        ) from exc
+    except SQLAlchemyError as exc:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Authentication service is temporarily unavailable",
+        ) from exc
+    if login_session is None or login_session.user_id != claims.subject_id:
+        request.state.clear_auth_profile = "web"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_REVOKED,
+            message="Authentication session is no longer valid",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    now = datetime.now(UTC)
+    if login_session.revoked_at is not None:
+        request.state.clear_auth_profile = "web"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_REVOKED,
+            message="Authentication session is no longer valid",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    if login_session.idle_expires_at <= now or login_session.absolute_expires_at <= now:
+        request.state.clear_auth_profile = "web"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_EXPIRED,
+            message="Authentication session has expired",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    user = login_session.user
+    if claims.credential_version != user.credential_version:
+        request.state.clear_auth_profile = "web"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_REVOKED,
+            message="Authentication session is no longer valid",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    if not user.is_active or user.deleted_at is not None:
+        raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+    request.state.current_user_id = str(user.id)
+    request.state.current_session_id = str(login_session.id)
+    return CurrentUser(user=user, login_session=login_session)
+
+
+async def get_current_admin(
+    request: Request,
+    session: DatabaseSession,
+    access_token: Annotated[str | None, Cookie(alias=ADMIN_COOKIES.access)] = None,
+) -> CurrentAdmin:
+    if not access_token:
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_REQUIRED,
+            message="Administrator authentication is required",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    settings = get_request_settings(request)
+    resources = get_resources(request)
+    if resources.redis is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Authentication service is temporarily unavailable",
+        )
+    _, admin_secret, _, _ = settings.authentication_secrets()
+    try:
+        claims = decode_access_token(
+            access_token,
+            audience="pinjie-admin",
+            issuer=settings.jwt_issuer,
+            secret=admin_secret,
+        )
+        login_session = await SessionRepository(session).get_admin(claims.session_id)
+    except InvalidTokenError as exc:
+        request.state.clear_auth_profile = "admin"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_TOKEN_INVALID,
+            message="Administrator authentication token is invalid",
+            headers={"WWW-Authenticate": "Cookie"},
+        ) from exc
+    except SQLAlchemyError as exc:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Authentication service is temporarily unavailable",
+        ) from exc
+    if login_session is None or login_session.admin_id != claims.subject_id:
+        request.state.clear_auth_profile = "admin"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_REVOKED,
+            message="Administrator session is no longer valid",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    now = datetime.now(UTC)
+    if login_session.revoked_at is not None:
+        request.state.clear_auth_profile = "admin"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_REVOKED,
+            message="Administrator session is no longer valid",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    if login_session.idle_expires_at <= now or login_session.absolute_expires_at <= now:
+        request.state.clear_auth_profile = "admin"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_EXPIRED,
+            message="Administrator session has expired",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    admin = login_session.admin
+    if claims.credential_version != admin.credential_version:
+        request.state.clear_auth_profile = "admin"
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_SESSION_REVOKED,
+            message="Administrator session is no longer valid",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    if not admin.is_active:
+        raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+    if admin.is_superuser:
+        permissions = frozenset(PERMISSION_CODES)
+    else:
+        permissions = frozenset(
+            permission.code
+            for role in admin.roles
+            if role.is_active
+            for permission in role.permissions
+            if permission.is_active and permission.code in PERMISSION_CODES
+        )
+    request.state.current_admin_id = str(admin.id)
+    request.state.current_session_id = str(login_session.id)
+    return CurrentAdmin(admin=admin, login_session=login_session, permissions=permissions)
+
+
+def get_admin_management_service(
+    request: Request,
+    session: DatabaseSession,
+    current: Annotated[CurrentAdmin, Depends(get_current_admin)],
+) -> AdminManagementService:
+    resources = get_resources(request)
+    return AdminManagementService(
+        session=session,
+        session_factory=resources.session_factory,
+        settings=get_request_settings(request),
+        password_manager=resources.password_manager,
+        metadata=request_metadata(request),
+        actor_id=current.admin.id,
+    )
+
+
+AdminManagementServiceDependency = Annotated[AdminManagementService, Depends(get_admin_management_service)]
+
+
+def require_web_csrf(
+    request: Request,
+    current: Annotated[CurrentUser, Depends(get_current_user)],
+) -> CurrentUser:
+    token = require_web_csrf_pair(request)
+    settings = get_request_settings(request)
+    _, _, web_hmac, _ = settings.authentication_secrets()
+    if not hmac.compare_digest(token_digest(token, web_hmac), current.login_session.csrf_digest):
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+    return current
+
+
+def require_admin_csrf(
+    request: Request,
+    current: Annotated[CurrentAdmin, Depends(get_current_admin)],
+) -> CurrentAdmin:
+    token = require_admin_csrf_pair(request)
+    settings = get_request_settings(request)
+    _, _, _, admin_hmac = settings.authentication_secrets()
+    if not hmac.compare_digest(token_digest(token, admin_hmac), current.login_session.csrf_digest):
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+    return current
+
+
+def require_permission(code: PermissionCode) -> Callable[[CurrentAdmin], Awaitable[CurrentAdmin]]:
+    async def dependency(current: Annotated[CurrentAdmin, Depends(get_current_admin)]) -> CurrentAdmin:
+        if code.value not in current.permissions:
+            raise AppException(status_code=403, code=ErrorCode.PERMISSION_DENIED, message="Permission denied")
+        return current
+
+    return dependency
+
+
+def require_admin_confirmation(
+    action: ConfirmationAction,
+) -> Callable[[Request, CurrentAdmin, str | None], Awaitable[CurrentAdmin]]:
+    async def dependency(
+        request: Request,
+        current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
+        confirmation_token: Annotated[str | None, Header(alias="X-Admin-Confirmation")] = None,
+    ) -> CurrentAdmin:
+        await consume_admin_confirmation(request, current, action, confirmation_token)
+        return current
+
+    return dependency
+
+
+async def consume_admin_confirmation(
+    request: Request,
+    current: CurrentAdmin,
+    action: ConfirmationAction,
+    confirmation_token: str | None,
+) -> None:
+    if not confirmation_token:
+        raise AppException(
+            status_code=403,
+            code=ErrorCode.ADMIN_CONFIRMATION_REQUIRED,
+            message="Administrator confirmation is required",
+        )
+    settings = get_request_settings(request)
+    resources = get_resources(request)
+    if resources.redis is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Authentication service is temporarily unavailable",
+        )
+    _, _, _, admin_hmac = settings.authentication_secrets()
+    key = cache_keys(settings).admin_confirmation(token_digest(confirmation_token, admin_hmac))
+    try:
+        raw = await resources.redis.getdel(key)
+    except RedisError as exc:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="Authentication service is temporarily unavailable",
+        ) from exc
+    try:
+        value = json.loads(raw) if raw else None
+    except json.JSONDecodeError:
+        value = None
+    expected = {
+        "admin_id": str(current.admin.id),
+        "session_id": str(current.login_session.id),
+        "action": action.value,
+    }
+    if value != expected:
+        raise AppException(
+            status_code=403,
+            code=ErrorCode.ADMIN_CONFIRMATION_INVALID,
+            message="Administrator confirmation is invalid or expired",
+        )
+
+
+__all__ = [
+    "CurrentAdmin",
+    "CurrentUser",
+    "AdminAccountServiceDependency",
+    "AdminAuthServiceDependency",
+    "AdminManagementServiceDependency",
+    "consume_admin_confirmation",
+    "DatabaseSession",
+    "get_current_admin",
+    "get_current_user",
+    "get_db_session",
+    "get_request_settings",
+    "get_resources",
+    "require_admin_confirmation",
+    "require_admin_csrf",
+    "require_admin_csrf_pair",
+    "require_browser_origin",
+    "require_permission",
+    "require_web_csrf",
+    "require_web_csrf_pair",
+    "UserAccountServiceDependency",
+    "WebAuthServiceDependency",
+]

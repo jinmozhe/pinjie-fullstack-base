@@ -47,6 +47,19 @@ services:
       timeout: 3s
       retries: 6
 
+  request-log-consumer:
+    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
+    command: ["python", "-m", "scripts.consume_request_logs"]
+    env_file:
+      - apps/backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    profiles: ["request-logs"]
+
   web:
     image: ${WEB_IMAGE:?WEB_IMAGE must be a complete immutable image digest}
     ports:

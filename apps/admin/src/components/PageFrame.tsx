@@ -1,0 +1,28 @@
+import type { ReactNode } from "react";
+import { Alert, Button, Empty, Flex, Spin, Typography } from "antd";
+
+export function PageFrame({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="workspace" aria-labelledby="page-heading">
+      <Flex align="flex-start" justify="space-between" gap={16} wrap>
+        <div>
+          <Typography.Title id="page-heading" level={3}>{title}</Typography.Title>
+          <Typography.Paragraph type="secondary">{description}</Typography.Paragraph>
+        </div>
+        {action}
+      </Flex>
+      {children}
+    </section>
+  );
+}
+
+export function QueryState({ loading, error, empty, onRetry }: { loading: boolean; error?: string; empty?: boolean; onRetry: () => void }) {
+  if (loading) return <div className="center-state" role="status" aria-label="正在加载"><Spin /><Typography.Text type="secondary">正在加载</Typography.Text></div>;
+  if (error) return <Alert showIcon type="error" message={error} action={<Button onClick={onRetry}>重试</Button>} />;
+  if (empty) return <Empty description="暂无数据" />;
+  return null;
+}
+
+export function formatTime(value: string | null | undefined): string {
+  return value ? new Intl.DateTimeFormat("zh-CN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "-";
+}

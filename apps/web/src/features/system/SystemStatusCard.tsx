@@ -31,19 +31,19 @@ export function SystemStatusCard({ initialStatus }: Props) {
     <section className="status-panel" aria-labelledby="status-heading">
       <div className="status-panel__header">
         <div>
-          <p className="eyebrow">Runtime foundation</p>
-          <h1 id="status-heading">System status</h1>
+          <p className="kicker">RUNTIME STATUS</p>
+          <h2 id="status-heading">系统运行状态</h2>
         </div>
         <span className={`status-pill ${available ? "status-pill--ok" : "status-pill--error"}`}>
-          {available ? "Available" : "Unavailable"}
+          {available ? "可用" : "不可用"}
         </span>
       </div>
       <p className="status-panel__copy">
-        This business-neutral shell reports the shared application foundation before a derived project adds its own experience.
+        这里显示当前后端基础服务是否可用，不包含具体派生业务状态。
       </p>
-      {error ? <p className="status-message status-message--error" role="alert">Backend is unavailable. Retry when the service is ready.</p> : null}
+      {error ? <p className="status-message status-message--error" role="alert">后端服务暂不可用，请稍后重试。</p> : null}
       <button className="status-action" type="button" onClick={retry} disabled={loading}>
-        {loading ? "Checking..." : "Check again"}
+        {loading ? "正在检查" : "重新检查"}
       </button>
     </section>
   );

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from app.core.config import get_settings
-from app.db.models.base import Base
+from app.db.models import Base
 
 config = context.config
 if config.config_file_name is not None:
@@ -20,7 +20,7 @@ target_metadata = Base.metadata
 
 def run_migrations_offline() -> None:
     settings = get_settings()
-    settings.validate_runtime()
+    settings.validate_database_runtime()
     context.configure(
         url=settings.database_url,
         target_metadata=target_metadata,
@@ -40,7 +40,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 async def run_async_migrations() -> None:
     settings = get_settings()
-    settings.validate_runtime()
+    settings.validate_database_runtime()
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = settings.database_url
     connectable = async_engine_from_config(

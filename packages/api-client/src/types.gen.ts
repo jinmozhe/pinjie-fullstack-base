@@ -5,6 +5,248 @@ export type ClientOptions = {
 };
 
 /**
+ * AccountDeleteIn
+ */
+export type AccountDeleteIn = {
+    /**
+     * Current Password
+     */
+    current_password: string;
+};
+
+/**
+ * ActionResult
+ */
+export type ActionResult = {
+    /**
+     * Completed
+     */
+    completed?: boolean;
+};
+
+/**
+ * AdminAuthSessionOut
+ */
+export type AdminAuthSessionOut = {
+    principal: AdminRead;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Access Expires At
+     */
+    access_expires_at: string;
+    /**
+     * Idle Expires At
+     */
+    idle_expires_at: string;
+    /**
+     * Absolute Expires At
+     */
+    absolute_expires_at: string;
+};
+
+/**
+ * AdminConfirmIn
+ */
+export type AdminConfirmIn = {
+    /**
+     * Current Password
+     */
+    current_password: string;
+    action: ConfirmationAction;
+};
+
+/**
+ * AdminConfirmOut
+ */
+export type AdminConfirmOut = {
+    /**
+     * Confirmation Token
+     */
+    confirmation_token: string;
+    action: ConfirmationAction;
+    /**
+     * Expires At
+     */
+    expires_at: string;
+};
+
+/**
+ * AdminCreateIn
+ */
+export type AdminCreateIn = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Initial Password
+     */
+    initial_password: string;
+    /**
+     * Display Name
+     */
+    display_name?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean;
+    /**
+     * Role Ids
+     */
+    role_ids?: Array<string>;
+};
+
+/**
+ * AdminLoginIn
+ */
+export type AdminLoginIn = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+};
+
+/**
+ * AdminRead
+ */
+export type AdminRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Display Name
+     */
+    display_name: string | null;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Is Superuser
+     */
+    is_superuser: boolean;
+    /**
+     * Roles
+     */
+    roles: Array<RoleSummary>;
+    /**
+     * Permissions
+     */
+    permissions: Array<string>;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * AdminRoleAssignIn
+ */
+export type AdminRoleAssignIn = {
+    /**
+     * Role Ids
+     */
+    role_ids: Array<string>;
+};
+
+/**
+ * AdminUpdateIn
+ */
+export type AdminUpdateIn = {
+    /**
+     * Display Name
+     */
+    display_name?: string | null;
+    /**
+     * Is Superuser
+     */
+    is_superuser?: boolean | null;
+};
+
+/**
+ * AuditEventRead
+ */
+export type AuditEventRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Actor Id
+     */
+    actor_id: string | null;
+    /**
+     * Action
+     */
+    action: string;
+    /**
+     * Target Type
+     */
+    target_type: string;
+    /**
+     * Target Id
+     */
+    target_id: string | null;
+    /**
+     * Result
+     */
+    result: string;
+    /**
+     * Changed Fields
+     */
+    changed_fields: {
+        [key: string]: unknown;
+    };
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Occurred At
+     */
+    occurred_at: string;
+    /**
+     * Completed At
+     */
+    completed_at: string | null;
+};
+
+/**
+ * ConfirmationAction
+ */
+export type ConfirmationAction = 'users:disable' | 'users:credentials:reset' | 'users:sessions:revoke' | 'admins:create' | 'admins:superuser:change' | 'admins:status:change' | 'admins:credentials:reset' | 'admins:roles:assign' | 'admins:sessions:revoke' | 'roles:delete' | 'roles:permissions:assign';
+
+/**
+ * HTTPValidationError
+ */
+export type HttpValidationError = {
+    /**
+     * Detail
+     */
+    detail?: Array<ValidationError>;
+};
+
+/**
  * LiveStatus
  */
 export type LiveStatus = {
@@ -12,6 +254,262 @@ export type LiveStatus = {
      * Status
      */
     status: 'alive';
+};
+
+/**
+ * LoginEventRead
+ */
+export type LoginEventRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Principal Type
+     */
+    principal_type: string;
+    /**
+     * Principal Id
+     */
+    principal_id: string | null;
+    /**
+     * Event Type
+     */
+    event_type: string;
+    /**
+     * Succeeded
+     */
+    succeeded: boolean;
+    /**
+     * Reason Code
+     */
+    reason_code: string;
+    /**
+     * Ip Address
+     */
+    ip_address: string | null;
+    /**
+     * User Agent Summary
+     */
+    user_agent_summary: string | null;
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Occurred At
+     */
+    occurred_at: string;
+};
+
+/**
+ * PageResult[AdminRead]
+ */
+export type PageResultAdminRead = {
+    /**
+     * Items
+     */
+    items: Array<AdminRead>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[AuditEventRead]
+ */
+export type PageResultAuditEventRead = {
+    /**
+     * Items
+     */
+    items: Array<AuditEventRead>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[LoginEventRead]
+ */
+export type PageResultLoginEventRead = {
+    /**
+     * Items
+     */
+    items: Array<LoginEventRead>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[RequestLogRead]
+ */
+export type PageResultRequestLogRead = {
+    /**
+     * Items
+     */
+    items: Array<RequestLogRead>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[RoleRead]
+ */
+export type PageResultRoleRead = {
+    /**
+     * Items
+     */
+    items: Array<RoleRead>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[UserPrincipalOut]
+ */
+export type PageResultUserPrincipalOut = {
+    /**
+     * Items
+     */
+    items: Array<UserPrincipalOut>;
+    /**
+     * Page
+     */
+    page: number;
+    /**
+     * Page Size
+     */
+    page_size: number;
+    /**
+     * Total
+     */
+    total: number;
+    /**
+     * Total Pages
+     */
+    total_pages: number;
+};
+
+/**
+ * PasswordChangeIn
+ */
+export type PasswordChangeIn = {
+    /**
+     * Current Password
+     */
+    current_password: string;
+    /**
+     * New Password
+     */
+    new_password: string;
+};
+
+/**
+ * PasswordResetIn
+ */
+export type PasswordResetIn = {
+    /**
+     * New Password
+     */
+    new_password: string;
+};
+
+/**
+ * PermissionRead
+ */
+export type PermissionRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Catalog Version
+     */
+    catalog_version: string;
 };
 
 /**
@@ -28,6 +526,302 @@ export type ReadinessStatus = {
     checks: {
         [key: string]: string;
     };
+};
+
+/**
+ * RefreshSessionOut
+ */
+export type RefreshSessionOut = {
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Access Expires At
+     */
+    access_expires_at: string;
+    /**
+     * Idle Expires At
+     */
+    idle_expires_at: string;
+    /**
+     * Absolute Expires At
+     */
+    absolute_expires_at: string;
+};
+
+/**
+ * RequestLogRead
+ */
+export type RequestLogRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Trace Id
+     */
+    trace_id: string;
+    /**
+     * Method
+     */
+    method: string;
+    /**
+     * Route Template
+     */
+    route_template: string;
+    /**
+     * Status Code
+     */
+    status_code: number;
+    /**
+     * Duration Ms
+     */
+    duration_ms: number;
+    /**
+     * Principal Type
+     */
+    principal_type: string | null;
+    /**
+     * Release Version
+     */
+    release_version: string | null;
+    /**
+     * Occurred At
+     */
+    occurred_at: string;
+};
+
+/**
+ * ResponseModel[ActionResult]
+ */
+export type ResponseModelActionResult = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: ActionResult;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminAuthSessionOut]
+ */
+export type ResponseModelAdminAuthSessionOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: AdminAuthSessionOut;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminConfirmOut]
+ */
+export type ResponseModelAdminConfirmOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: AdminConfirmOut;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminRead]
+ */
+export type ResponseModelAdminRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: AdminRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[AdminRead]]
+ */
+export type ResponseModelPageResultAdminRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: PageResultAdminRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[AuditEventRead]]
+ */
+export type ResponseModelPageResultAuditEventRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: PageResultAuditEventRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[LoginEventRead]]
+ */
+export type ResponseModelPageResultLoginEventRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: PageResultLoginEventRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[RequestLogRead]]
+ */
+export type ResponseModelPageResultRequestLogRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: PageResultRequestLogRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[RoleRead]]
+ */
+export type ResponseModelPageResultRoleRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: PageResultRoleRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[UserPrincipalOut]]
+ */
+export type ResponseModelPageResultUserPrincipalOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: PageResultUserPrincipalOut;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[RefreshSessionOut]
+ */
+export type ResponseModelRefreshSessionOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: RefreshSessionOut;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[RoleRead]
+ */
+export type ResponseModelRoleRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: RoleRead;
+    /**
+     * Request Id
+     */
+    request_id: string;
 };
 
 /**
@@ -50,6 +844,272 @@ export type ResponseModelSystemStatus = {
 };
 
 /**
+ * ResponseModel[UserAuthSessionOut]
+ */
+export type ResponseModelUserAuthSessionOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: UserAuthSessionOut;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[UserPrincipalOut]
+ */
+export type ResponseModelUserPrincipalOut = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    data: UserPrincipalOut;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[bool]
+ */
+export type ResponseModelBool = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Data
+     */
+    data: boolean;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[list[PermissionRead]]
+ */
+export type ResponseModelListPermissionRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Data
+     */
+    data: Array<PermissionRead>;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[list[SessionRead]]
+ */
+export type ResponseModelListSessionRead = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Message
+     */
+    message: string;
+    /**
+     * Data
+     */
+    data: Array<SessionRead>;
+    /**
+     * Request Id
+     */
+    request_id: string;
+};
+
+/**
+ * RoleCreateIn
+ */
+export type RoleCreateIn = {
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean;
+};
+
+/**
+ * RolePermissionAssignIn
+ */
+export type RolePermissionAssignIn = {
+    /**
+     * Permission Codes
+     */
+    permission_codes: Array<string>;
+};
+
+/**
+ * RoleRead
+ */
+export type RoleRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Name
+     */
+    name: string;
+    /**
+     * Description
+     */
+    description: string | null;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Permissions
+     */
+    permissions: Array<string>;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * RoleSummary
+ */
+export type RoleSummary = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Code
+     */
+    code: string;
+    /**
+     * Name
+     */
+    name: string;
+};
+
+/**
+ * RoleUpdateIn
+ */
+export type RoleUpdateIn = {
+    /**
+     * Name
+     */
+    name?: string | null;
+    /**
+     * Description
+     */
+    description?: string | null;
+    /**
+     * Is Active
+     */
+    is_active?: boolean | null;
+};
+
+/**
+ * SessionRead
+ */
+export type SessionRead = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Device Name
+     */
+    device_name: string | null;
+    /**
+     * Ip Masked
+     */
+    ip_masked: string | null;
+    /**
+     * User Agent Summary
+     */
+    user_agent_summary: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Last Seen At
+     */
+    last_seen_at: string;
+    /**
+     * Idle Expires At
+     */
+    idle_expires_at: string;
+    /**
+     * Absolute Expires At
+     */
+    absolute_expires_at: string;
+    /**
+     * Is Current
+     */
+    is_current: boolean;
+    /**
+     * Revoked At
+     */
+    revoked_at: string | null;
+};
+
+/**
+ * StatusUpdateIn
+ */
+export type StatusUpdateIn = {
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+};
+
+/**
  * SystemStatus
  */
 export type SystemStatus = {
@@ -58,6 +1118,1476 @@ export type SystemStatus = {
      */
     status: 'available' | 'unavailable';
 };
+
+/**
+ * UserAuthSessionOut
+ */
+export type UserAuthSessionOut = {
+    principal: UserPrincipalOut;
+    /**
+     * Session Id
+     */
+    session_id: string;
+    /**
+     * Access Expires At
+     */
+    access_expires_at: string;
+    /**
+     * Idle Expires At
+     */
+    idle_expires_at: string;
+    /**
+     * Absolute Expires At
+     */
+    absolute_expires_at: string;
+};
+
+/**
+ * UserLoginIn
+ */
+export type UserLoginIn = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+};
+
+/**
+ * UserPrincipalOut
+ */
+export type UserPrincipalOut = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Display Name
+     */
+    display_name: string | null;
+    /**
+     * Email
+     */
+    email: string | null;
+    /**
+     * Is Active
+     */
+    is_active: boolean;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * UserRegisterIn
+ */
+export type UserRegisterIn = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+    /**
+     * Display Name
+     */
+    display_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+};
+
+/**
+ * UserUpdateIn
+ */
+export type UserUpdateIn = {
+    /**
+     * Display Name
+     */
+    display_name?: string | null;
+    /**
+     * Email
+     */
+    email?: string | null;
+};
+
+/**
+ * ValidationError
+ */
+export type ValidationError = {
+    /**
+     * Location
+     */
+    loc: Array<string | number>;
+    /**
+     * Message
+     */
+    msg: string;
+    /**
+     * Error Type
+     */
+    type: string;
+    /**
+     * Input
+     */
+    input?: unknown;
+    /**
+     * Context
+     */
+    ctx?: {
+        [key: string]: unknown;
+    };
+};
+
+export type RegisterApiV1AuthRegisterPostData = {
+    body: UserRegisterIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/register';
+};
+
+export type RegisterApiV1AuthRegisterPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RegisterApiV1AuthRegisterPostError = RegisterApiV1AuthRegisterPostErrors[keyof RegisterApiV1AuthRegisterPostErrors];
+
+export type RegisterApiV1AuthRegisterPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ResponseModelUserAuthSessionOut;
+};
+
+export type RegisterApiV1AuthRegisterPostResponse = RegisterApiV1AuthRegisterPostResponses[keyof RegisterApiV1AuthRegisterPostResponses];
+
+export type LoginApiV1AuthLoginPostData = {
+    body: UserLoginIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/login';
+};
+
+export type LoginApiV1AuthLoginPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LoginApiV1AuthLoginPostError = LoginApiV1AuthLoginPostErrors[keyof LoginApiV1AuthLoginPostErrors];
+
+export type LoginApiV1AuthLoginPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelUserAuthSessionOut;
+};
+
+export type LoginApiV1AuthLoginPostResponse = LoginApiV1AuthLoginPostResponses[keyof LoginApiV1AuthLoginPostResponses];
+
+export type RefreshApiV1AuthRefreshPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/refresh';
+};
+
+export type RefreshApiV1AuthRefreshPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RefreshApiV1AuthRefreshPostError = RefreshApiV1AuthRefreshPostErrors[keyof RefreshApiV1AuthRefreshPostErrors];
+
+export type RefreshApiV1AuthRefreshPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRefreshSessionOut;
+};
+
+export type RefreshApiV1AuthRefreshPostResponse = RefreshApiV1AuthRefreshPostResponses[keyof RefreshApiV1AuthRefreshPostResponses];
+
+export type LogoutApiV1AuthLogoutPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/logout';
+};
+
+export type LogoutApiV1AuthLogoutPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LogoutApiV1AuthLogoutPostError = LogoutApiV1AuthLogoutPostErrors[keyof LogoutApiV1AuthLogoutPostErrors];
+
+export type LogoutApiV1AuthLogoutPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelBool;
+};
+
+export type LogoutApiV1AuthLogoutPostResponse = LogoutApiV1AuthLogoutPostResponses[keyof LogoutApiV1AuthLogoutPostResponses];
+
+export type DeleteAccountApiV1UsersMeDeleteData = {
+    body: AccountDeleteIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me';
+};
+
+export type DeleteAccountApiV1UsersMeDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAccountApiV1UsersMeDeleteError = DeleteAccountApiV1UsersMeDeleteErrors[keyof DeleteAccountApiV1UsersMeDeleteErrors];
+
+export type DeleteAccountApiV1UsersMeDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type DeleteAccountApiV1UsersMeDeleteResponse = DeleteAccountApiV1UsersMeDeleteResponses[keyof DeleteAccountApiV1UsersMeDeleteResponses];
+
+export type GetMeApiV1UsersMeGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me';
+};
+
+export type GetMeApiV1UsersMeGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMeApiV1UsersMeGetError = GetMeApiV1UsersMeGetErrors[keyof GetMeApiV1UsersMeGetErrors];
+
+export type GetMeApiV1UsersMeGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelUserPrincipalOut;
+};
+
+export type GetMeApiV1UsersMeGetResponse = GetMeApiV1UsersMeGetResponses[keyof GetMeApiV1UsersMeGetResponses];
+
+export type UpdateMeApiV1UsersMePatchData = {
+    body: UserUpdateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me';
+};
+
+export type UpdateMeApiV1UsersMePatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateMeApiV1UsersMePatchError = UpdateMeApiV1UsersMePatchErrors[keyof UpdateMeApiV1UsersMePatchErrors];
+
+export type UpdateMeApiV1UsersMePatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelUserPrincipalOut;
+};
+
+export type UpdateMeApiV1UsersMePatchResponse = UpdateMeApiV1UsersMePatchResponses[keyof UpdateMeApiV1UsersMePatchResponses];
+
+export type ChangePasswordApiV1UsersMePasswordPostData = {
+    body: PasswordChangeIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me/password';
+};
+
+export type ChangePasswordApiV1UsersMePasswordPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChangePasswordApiV1UsersMePasswordPostError = ChangePasswordApiV1UsersMePasswordPostErrors[keyof ChangePasswordApiV1UsersMePasswordPostErrors];
+
+export type ChangePasswordApiV1UsersMePasswordPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRefreshSessionOut;
+};
+
+export type ChangePasswordApiV1UsersMePasswordPostResponse = ChangePasswordApiV1UsersMePasswordPostResponses[keyof ChangePasswordApiV1UsersMePasswordPostResponses];
+
+export type ListSessionsApiV1UsersMeSessionsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me/sessions';
+};
+
+export type ListSessionsApiV1UsersMeSessionsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListSessionsApiV1UsersMeSessionsGetError = ListSessionsApiV1UsersMeSessionsGetErrors[keyof ListSessionsApiV1UsersMeSessionsGetErrors];
+
+export type ListSessionsApiV1UsersMeSessionsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelListSessionRead;
+};
+
+export type ListSessionsApiV1UsersMeSessionsGetResponse = ListSessionsApiV1UsersMeSessionsGetResponses[keyof ListSessionsApiV1UsersMeSessionsGetResponses];
+
+export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData = {
+    body?: never;
+    path: {
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/api/v1/users/me/sessions/{session_id}';
+};
+
+export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteError = RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors[keyof RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors];
+
+export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponse = RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses[keyof RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses];
+
+export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me/sessions/revoke-others';
+};
+
+export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostError = RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors[keyof RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors];
+
+export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponse = RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses[keyof RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses];
+
+export type LoginApiV1AdminAuthLoginPostData = {
+    body: AdminLoginIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/login';
+};
+
+export type LoginApiV1AdminAuthLoginPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LoginApiV1AdminAuthLoginPostError = LoginApiV1AdminAuthLoginPostErrors[keyof LoginApiV1AdminAuthLoginPostErrors];
+
+export type LoginApiV1AdminAuthLoginPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminAuthSessionOut;
+};
+
+export type LoginApiV1AdminAuthLoginPostResponse = LoginApiV1AdminAuthLoginPostResponses[keyof LoginApiV1AdminAuthLoginPostResponses];
+
+export type RefreshApiV1AdminAuthRefreshPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/refresh';
+};
+
+export type RefreshApiV1AdminAuthRefreshPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RefreshApiV1AdminAuthRefreshPostError = RefreshApiV1AdminAuthRefreshPostErrors[keyof RefreshApiV1AdminAuthRefreshPostErrors];
+
+export type RefreshApiV1AdminAuthRefreshPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRefreshSessionOut;
+};
+
+export type RefreshApiV1AdminAuthRefreshPostResponse = RefreshApiV1AdminAuthRefreshPostResponses[keyof RefreshApiV1AdminAuthRefreshPostResponses];
+
+export type LogoutApiV1AdminAuthLogoutPostData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/logout';
+};
+
+export type LogoutApiV1AdminAuthLogoutPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type LogoutApiV1AdminAuthLogoutPostError = LogoutApiV1AdminAuthLogoutPostErrors[keyof LogoutApiV1AdminAuthLogoutPostErrors];
+
+export type LogoutApiV1AdminAuthLogoutPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelBool;
+};
+
+export type LogoutApiV1AdminAuthLogoutPostResponse = LogoutApiV1AdminAuthLogoutPostResponses[keyof LogoutApiV1AdminAuthLogoutPostResponses];
+
+export type GetMeApiV1AdminAuthMeGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/me';
+};
+
+export type GetMeApiV1AdminAuthMeGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMeApiV1AdminAuthMeGetError = GetMeApiV1AdminAuthMeGetErrors[keyof GetMeApiV1AdminAuthMeGetErrors];
+
+export type GetMeApiV1AdminAuthMeGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type GetMeApiV1AdminAuthMeGetResponse = GetMeApiV1AdminAuthMeGetResponses[keyof GetMeApiV1AdminAuthMeGetResponses];
+
+export type ChangePasswordApiV1AdminAuthPasswordPostData = {
+    body: PasswordChangeIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/password';
+};
+
+export type ChangePasswordApiV1AdminAuthPasswordPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ChangePasswordApiV1AdminAuthPasswordPostError = ChangePasswordApiV1AdminAuthPasswordPostErrors[keyof ChangePasswordApiV1AdminAuthPasswordPostErrors];
+
+export type ChangePasswordApiV1AdminAuthPasswordPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRefreshSessionOut;
+};
+
+export type ChangePasswordApiV1AdminAuthPasswordPostResponse = ChangePasswordApiV1AdminAuthPasswordPostResponses[keyof ChangePasswordApiV1AdminAuthPasswordPostResponses];
+
+export type ConfirmApiV1AdminAuthConfirmPostData = {
+    body: AdminConfirmIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/confirm';
+};
+
+export type ConfirmApiV1AdminAuthConfirmPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ConfirmApiV1AdminAuthConfirmPostError = ConfirmApiV1AdminAuthConfirmPostErrors[keyof ConfirmApiV1AdminAuthConfirmPostErrors];
+
+export type ConfirmApiV1AdminAuthConfirmPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminConfirmOut;
+};
+
+export type ConfirmApiV1AdminAuthConfirmPostResponse = ConfirmApiV1AdminAuthConfirmPostResponses[keyof ConfirmApiV1AdminAuthConfirmPostResponses];
+
+export type ListUsersApiV1AdminUsersGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+    };
+    url: '/api/v1/admin/users';
+};
+
+export type ListUsersApiV1AdminUsersGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListUsersApiV1AdminUsersGetError = ListUsersApiV1AdminUsersGetErrors[keyof ListUsersApiV1AdminUsersGetErrors];
+
+export type ListUsersApiV1AdminUsersGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelPageResultUserPrincipalOut;
+};
+
+export type ListUsersApiV1AdminUsersGetResponse = ListUsersApiV1AdminUsersGetResponses[keyof ListUsersApiV1AdminUsersGetResponses];
+
+export type GetUserApiV1AdminUsersUserIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}';
+};
+
+export type GetUserApiV1AdminUsersUserIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetUserApiV1AdminUsersUserIdGetError = GetUserApiV1AdminUsersUserIdGetErrors[keyof GetUserApiV1AdminUsersUserIdGetErrors];
+
+export type GetUserApiV1AdminUsersUserIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelUserPrincipalOut;
+};
+
+export type GetUserApiV1AdminUsersUserIdGetResponse = GetUserApiV1AdminUsersUserIdGetResponses[keyof GetUserApiV1AdminUsersUserIdGetResponses];
+
+export type UpdateUserApiV1AdminUsersUserIdPatchData = {
+    body: UserUpdateIn;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}';
+};
+
+export type UpdateUserApiV1AdminUsersUserIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateUserApiV1AdminUsersUserIdPatchError = UpdateUserApiV1AdminUsersUserIdPatchErrors[keyof UpdateUserApiV1AdminUsersUserIdPatchErrors];
+
+export type UpdateUserApiV1AdminUsersUserIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelUserPrincipalOut;
+};
+
+export type UpdateUserApiV1AdminUsersUserIdPatchResponse = UpdateUserApiV1AdminUsersUserIdPatchResponses[keyof UpdateUserApiV1AdminUsersUserIdPatchResponses];
+
+export type SetUserStatusApiV1AdminUsersUserIdStatusPatchData = {
+    body: StatusUpdateIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}/status';
+};
+
+export type SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SetUserStatusApiV1AdminUsersUserIdStatusPatchError = SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors[keyof SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors];
+
+export type SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelUserPrincipalOut;
+};
+
+export type SetUserStatusApiV1AdminUsersUserIdStatusPatchResponse = SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses[keyof SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses];
+
+export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData = {
+    body: PasswordResetIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}/credentials/password';
+};
+
+export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutError = ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors[keyof ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors];
+
+export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponse = ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses[keyof ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses];
+
+export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}/sessions';
+};
+
+export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetError = ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors[keyof ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors];
+
+export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelListSessionRead;
+};
+
+export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponse = ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses[keyof ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses];
+
+export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+        /**
+         * Session Id
+         */
+        session_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}/sessions/{session_id}';
+};
+
+export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteError = RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors[keyof RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors];
+
+export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponse = RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses[keyof RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses];
+
+export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}/sessions/revoke-all';
+};
+
+export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostError = RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors[keyof RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors];
+
+export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponse = RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses[keyof RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses];
+
+export type ListAdminsApiV1AdminAdminsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/api/v1/admin/admins';
+};
+
+export type ListAdminsApiV1AdminAdminsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAdminsApiV1AdminAdminsGetError = ListAdminsApiV1AdminAdminsGetErrors[keyof ListAdminsApiV1AdminAdminsGetErrors];
+
+export type ListAdminsApiV1AdminAdminsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelPageResultAdminRead;
+};
+
+export type ListAdminsApiV1AdminAdminsGetResponse = ListAdminsApiV1AdminAdminsGetResponses[keyof ListAdminsApiV1AdminAdminsGetResponses];
+
+export type CreateAdminApiV1AdminAdminsPostData = {
+    body: AdminCreateIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/admins';
+};
+
+export type CreateAdminApiV1AdminAdminsPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateAdminApiV1AdminAdminsPostError = CreateAdminApiV1AdminAdminsPostErrors[keyof CreateAdminApiV1AdminAdminsPostErrors];
+
+export type CreateAdminApiV1AdminAdminsPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ResponseModelAdminRead;
+};
+
+export type CreateAdminApiV1AdminAdminsPostResponse = CreateAdminApiV1AdminAdminsPostResponses[keyof CreateAdminApiV1AdminAdminsPostResponses];
+
+export type GetAdminApiV1AdminAdminsAdminIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}';
+};
+
+export type GetAdminApiV1AdminAdminsAdminIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAdminApiV1AdminAdminsAdminIdGetError = GetAdminApiV1AdminAdminsAdminIdGetErrors[keyof GetAdminApiV1AdminAdminsAdminIdGetErrors];
+
+export type GetAdminApiV1AdminAdminsAdminIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type GetAdminApiV1AdminAdminsAdminIdGetResponse = GetAdminApiV1AdminAdminsAdminIdGetResponses[keyof GetAdminApiV1AdminAdminsAdminIdGetResponses];
+
+export type UpdateAdminApiV1AdminAdminsAdminIdPatchData = {
+    body: AdminUpdateIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}';
+};
+
+export type UpdateAdminApiV1AdminAdminsAdminIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateAdminApiV1AdminAdminsAdminIdPatchError = UpdateAdminApiV1AdminAdminsAdminIdPatchErrors[keyof UpdateAdminApiV1AdminAdminsAdminIdPatchErrors];
+
+export type UpdateAdminApiV1AdminAdminsAdminIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type UpdateAdminApiV1AdminAdminsAdminIdPatchResponse = UpdateAdminApiV1AdminAdminsAdminIdPatchResponses[keyof UpdateAdminApiV1AdminAdminsAdminIdPatchResponses];
+
+export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData = {
+    body: StatusUpdateIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}/status';
+};
+
+export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchError = SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors[keyof SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors];
+
+export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponse = SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses[keyof SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses];
+
+export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData = {
+    body: PasswordResetIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}/credentials/password';
+};
+
+export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutError = ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors[keyof ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors];
+
+export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponse = ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses[keyof ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses];
+
+export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData = {
+    body: AdminRoleAssignIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}/roles';
+};
+
+export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutError = AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors[keyof AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors];
+
+export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponse = AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses[keyof AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses];
+
+export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData = {
+    body?: never;
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}/sessions';
+};
+
+export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetError = ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors[keyof ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors];
+
+export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelListSessionRead;
+};
+
+export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponse = ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses[keyof ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses];
+
+export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}/sessions/revoke-all';
+};
+
+export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostError = RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors[keyof RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors];
+
+export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponse = RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses[keyof RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses];
+
+export type ListRolesApiV1AdminRolesGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/api/v1/admin/roles';
+};
+
+export type ListRolesApiV1AdminRolesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListRolesApiV1AdminRolesGetError = ListRolesApiV1AdminRolesGetErrors[keyof ListRolesApiV1AdminRolesGetErrors];
+
+export type ListRolesApiV1AdminRolesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelPageResultRoleRead;
+};
+
+export type ListRolesApiV1AdminRolesGetResponse = ListRolesApiV1AdminRolesGetResponses[keyof ListRolesApiV1AdminRolesGetResponses];
+
+export type CreateRoleApiV1AdminRolesPostData = {
+    body: RoleCreateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/roles';
+};
+
+export type CreateRoleApiV1AdminRolesPostErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateRoleApiV1AdminRolesPostError = CreateRoleApiV1AdminRolesPostErrors[keyof CreateRoleApiV1AdminRolesPostErrors];
+
+export type CreateRoleApiV1AdminRolesPostResponses = {
+    /**
+     * Successful Response
+     */
+    201: ResponseModelRoleRead;
+};
+
+export type CreateRoleApiV1AdminRolesPostResponse = CreateRoleApiV1AdminRolesPostResponses[keyof CreateRoleApiV1AdminRolesPostResponses];
+
+export type DeleteRoleApiV1AdminRolesRoleIdDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Role Id
+         */
+        role_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/roles/{role_id}';
+};
+
+export type DeleteRoleApiV1AdminRolesRoleIdDeleteErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteRoleApiV1AdminRolesRoleIdDeleteError = DeleteRoleApiV1AdminRolesRoleIdDeleteErrors[keyof DeleteRoleApiV1AdminRolesRoleIdDeleteErrors];
+
+export type DeleteRoleApiV1AdminRolesRoleIdDeleteResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelActionResult;
+};
+
+export type DeleteRoleApiV1AdminRolesRoleIdDeleteResponse = DeleteRoleApiV1AdminRolesRoleIdDeleteResponses[keyof DeleteRoleApiV1AdminRolesRoleIdDeleteResponses];
+
+export type GetRoleApiV1AdminRolesRoleIdGetData = {
+    body?: never;
+    path: {
+        /**
+         * Role Id
+         */
+        role_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/roles/{role_id}';
+};
+
+export type GetRoleApiV1AdminRolesRoleIdGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetRoleApiV1AdminRolesRoleIdGetError = GetRoleApiV1AdminRolesRoleIdGetErrors[keyof GetRoleApiV1AdminRolesRoleIdGetErrors];
+
+export type GetRoleApiV1AdminRolesRoleIdGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRoleRead;
+};
+
+export type GetRoleApiV1AdminRolesRoleIdGetResponse = GetRoleApiV1AdminRolesRoleIdGetResponses[keyof GetRoleApiV1AdminRolesRoleIdGetResponses];
+
+export type UpdateRoleApiV1AdminRolesRoleIdPatchData = {
+    body: RoleUpdateIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Role Id
+         */
+        role_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/roles/{role_id}';
+};
+
+export type UpdateRoleApiV1AdminRolesRoleIdPatchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateRoleApiV1AdminRolesRoleIdPatchError = UpdateRoleApiV1AdminRolesRoleIdPatchErrors[keyof UpdateRoleApiV1AdminRolesRoleIdPatchErrors];
+
+export type UpdateRoleApiV1AdminRolesRoleIdPatchResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRoleRead;
+};
+
+export type UpdateRoleApiV1AdminRolesRoleIdPatchResponse = UpdateRoleApiV1AdminRolesRoleIdPatchResponses[keyof UpdateRoleApiV1AdminRolesRoleIdPatchResponses];
+
+export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData = {
+    body: RolePermissionAssignIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Role Id
+         */
+        role_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/roles/{role_id}/permissions';
+};
+
+export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutError = AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors[keyof AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors];
+
+export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelRoleRead;
+};
+
+export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponse = AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses[keyof AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses];
+
+export type ListPermissionsApiV1AdminPermissionsGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/permissions';
+};
+
+export type ListPermissionsApiV1AdminPermissionsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListPermissionsApiV1AdminPermissionsGetError = ListPermissionsApiV1AdminPermissionsGetErrors[keyof ListPermissionsApiV1AdminPermissionsGetErrors];
+
+export type ListPermissionsApiV1AdminPermissionsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelListPermissionRead;
+};
+
+export type ListPermissionsApiV1AdminPermissionsGetResponse = ListPermissionsApiV1AdminPermissionsGetResponses[keyof ListPermissionsApiV1AdminPermissionsGetResponses];
+
+export type ListLoginEventsApiV1AdminSecurityLoginEventsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/api/v1/admin/security/login-events';
+};
+
+export type ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListLoginEventsApiV1AdminSecurityLoginEventsGetError = ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors[keyof ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors];
+
+export type ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelPageResultLoginEventRead;
+};
+
+export type ListLoginEventsApiV1AdminSecurityLoginEventsGetResponse = ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses[keyof ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses];
+
+export type ListAuditEventsApiV1AdminSecurityAuditEventsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/api/v1/admin/security/audit-events';
+};
+
+export type ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAuditEventsApiV1AdminSecurityAuditEventsGetError = ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors[keyof ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors];
+
+export type ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelPageResultAuditEventRead;
+};
+
+export type ListAuditEventsApiV1AdminSecurityAuditEventsGetResponse = ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses[keyof ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses];
+
+export type ListRequestLogsApiV1AdminSystemRequestLogsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/api/v1/admin/system/request-logs';
+};
+
+export type ListRequestLogsApiV1AdminSystemRequestLogsGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListRequestLogsApiV1AdminSystemRequestLogsGetError = ListRequestLogsApiV1AdminSystemRequestLogsGetErrors[keyof ListRequestLogsApiV1AdminSystemRequestLogsGetErrors];
+
+export type ListRequestLogsApiV1AdminSystemRequestLogsGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: ResponseModelPageResultRequestLogRead;
+};
+
+export type ListRequestLogsApiV1AdminSystemRequestLogsGetResponse = ListRequestLogsApiV1AdminSystemRequestLogsGetResponses[keyof ListRequestLogsApiV1AdminSystemRequestLogsGetResponses];
 
 export type GetSystemStatusApiV1SystemStatusGetData = {
     body?: never;

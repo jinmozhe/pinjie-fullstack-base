@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 阶段 B 应用运行与测试基础设施实施中，三端已达到工程 `ready`，业务领域仍未实现 |
+| 当前阶段 | 阶段 C 通用业务核心能力已完成；阶段 B 的真实 PostgreSQL、Redis、镜像构建与跨栈 E2E 已补验，仍保留发布级镜像摘要和容器运行验收项 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -31,6 +31,7 @@
 | `scripts/ci/` | 生效 | 三态完整性、模块边界、文本卫生和门禁正反例检查 |
 | `CHANGELOG.md` | 生效 | 已交付但尚未发布的能力和后续版本变化 |
 | `docs/adr/0009-Python运行时基线决策.md` | 生效 | 标准 CPython 3.14、本地 uv、CI、容器补丁固定和标准库 UUID v7 的长期决策 |
+| `docs/adr/0010-浏览器认证会话RBAC与审计决策.md` | 生效 | Browser Cookie Profile、C/B 会话隔离、Refresh 权威、规范化 RBAC 和审计决策 |
 
 ## 当前开发计划
 
@@ -62,19 +63,20 @@
 | `plans/2026-08-13_工程治理与安全可靠性基线计划.md` | 已结束 | 已完成 | 全栈治理、架构规则、质量门禁、安全供应链、发布与运维边界 | 建立业务开发前的模块化、失败关闭、受控兼容、不可变发布和全链路追溯基线 |
 | `plans/2026-08-13_Backend工程标准与规则分层计划.md` | 已结束 | 已完成 | Backend 规则、工程标准、文档治理 | 建立 Backend 宪法级规则入口、详细工程标准和专题文档读取路由 |
 | `plans/2026-08-13_AI助手开发与文档读取指南计划.md` | 已结束 | 已完成 | 全栈 AI 开发、文档治理 | 说明规则自动发现、按需读取、常见任务和完整开发交付链路 |
-| `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 三端工程 `ready`，待 PostgreSQL、Docker 构建与跨栈 E2E 环境验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 实施三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
+| `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 三端工程 `ready`，真实数据库、镜像构建和跨栈 E2E 已补验；仍待发布级镜像摘要与容器运行专项验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 实施三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
+| `plans/2026-08-14_阶段C通用业务核心能力计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 对照两个参考项目完成认证、会话、用户、RBAC、审计、日志和真实跨栈验收 |
 
 ## 当前系统状态
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | 运行入口、Core、数据库会话、事务、健康探针、系统状态、测试和契约导出已实现 | `apps/backend/app/`、`apps/backend/tests/`、`apps/backend/uv.lock` |
-| Admin | Vite、React、Ant Design 系统状态页、MSW/RTL 测试和生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile` |
-| Web | Next.js App Router 系统状态页、同域 API 代理、Vitest/RTL 测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
-| API Client | 从真实 Backend OpenAPI 生成并由 Admin/Web 消费 | `packages/api-client/src/`、根 `openapi.json` |
-| Database | Alembic 异步环境、空库 revision 检查和隔离集成测试已实现；尚未完成本机 `_test` 实测 | `apps/backend/alembic/`、`apps/backend/tests/test_postgres_integration.py` |
-| Deployment | 三个 Dockerfile、生产 Compose 健康依赖、同域代理和独立 Playwright E2E Workflow 已实现；本机镜像构建受 Docker Hub 网络阻塞 | `compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
-| Documentation | 目录结构已按当前 191 个项目文件同步，阶段 B 架构、环境、容器、测试、计划与索引保持一致；阶段 B 仍待数据库、镜像构建和真实 E2E 环境验收 | `docs/architecture/project-structure.md`、`docs/README.md`、本计划、`CHANGELOG.md` |
+| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计、请求元数据和运维脚本已实现 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/` |
+| Admin | 登录、受保护布局、权限导航、用户、管理员、角色权限、安全日志、MSW/RTL 测试和生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile` |
+| Web | 注册登录、SSR 用户中心、资料、密码、会话、退出、注销、同域代理、组件测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
+| API Client | 根 OpenAPI 共 39 条路径，生成 Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |
+| Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，PostgreSQL 18.4 空库/重复升级、Model/Head 和隔离集成测试通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/tests/` |
+| Deployment | 三个本地 Linux 镜像构建成功，生产 Compose、同域代理、请求日志 Profile 和桌面/移动 Chromium 真实跨栈 E2E 已验证；未执行镜像发布与生产部署 | `compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
+| Documentation | 目录结构已按阶段 C 收尾时的 259 个项目文件、64 个含文件目录同步，计划、ADR、架构、测试、运维、索引和 Changelog 与实现一致 | `docs/architecture/project-structure.md`、`plans/2026-08-14_阶段C通用业务核心能力计划.md`、`CHANGELOG.md` |
 
 ## 权威来源
 
@@ -95,6 +97,7 @@
 | Node.js 锁文件 | 根 `pnpm-lock.yaml` | 全仓库唯一，必须随依赖变化同步提交 |
 | Python 锁文件 | `apps/backend/uv.lock` | 后端唯一，已生成并锁定 Windows AMD64 与 Linux x86_64 环境 |
 | Python 运行时 | `docs/adr/0009-Python运行时基线决策.md` | 标准 CPython 3.14；依赖由 `uv.lock` 锁定，生产补丁由固定基础镜像 digest 控制 |
+| 浏览器认证、会话、RBAC 与审计 | `docs/adr/0010-浏览器认证会话RBAC与审计决策.md`、`docs/architecture/authentication-authorization.md` | ADR 保存取舍，架构文档保存当前运行机制 |
 | 数据库结构 | Backend Models 与 `apps/backend/alembic/versions/` | 结构变化必须通过 Alembic 迁移 |
 | 已交付变化 | `CHANGELOG.md` | 按版本或 `Unreleased` 记录用户可见和治理变化 |
 

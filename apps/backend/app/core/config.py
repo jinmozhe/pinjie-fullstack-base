@@ -7,6 +7,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Environment = Literal["local", "test", "production"]
 RedisMode = Literal["disabled", "required"]
+RegistrationMode = Literal["open", "closed"]
+RequestLogMode = Literal["disabled", "metadata"]
 
 
 class Settings(BaseSettings):
@@ -33,6 +35,7 @@ class Settings(BaseSettings):
         default_factory=lambda: ["localhost", "127.0.0.1", "testserver"],
         validation_alias="TRUSTED_HOSTS",
     )
+    trusted_proxy_cidrs: list[str] = Field(default_factory=list, validation_alias="TRUSTED_PROXY_CIDRS")
     force_https: bool = Field(default=False, validation_alias="FORCE_HTTPS")
     api_docs_enabled: bool | None = Field(default=None, validation_alias="API_DOCS_ENABLED")
     release_version: str | None = Field(default=None, validation_alias="RELEASE_VERSION")
@@ -41,6 +44,47 @@ class Settings(BaseSettings):
     db_max_overflow: int = Field(default=5, validation_alias="DB_MAX_OVERFLOW", ge=0, le=50)
     db_pool_timeout: float = Field(default=5.0, validation_alias="DB_POOL_TIMEOUT", gt=0, le=60)
     dependency_timeout: float = Field(default=2.0, validation_alias="DEPENDENCY_TIMEOUT", gt=0, le=30)
+    jwt_issuer: str = Field(
+        default="pinjie-fullstack-base", validation_alias="JWT_ISSUER", min_length=3, max_length=128
+    )
+    web_jwt_secret: str | None = Field(default=None, validation_alias="WEB_JWT_SECRET")
+    admin_jwt_secret: str | None = Field(default=None, validation_alias="ADMIN_JWT_SECRET")
+    web_token_hmac_key: str | None = Field(default=None, validation_alias="WEB_TOKEN_HMAC_KEY")
+    admin_token_hmac_key: str | None = Field(default=None, validation_alias="ADMIN_TOKEN_HMAC_KEY")
+    registration_mode: RegistrationMode = Field(default="closed", validation_alias="REGISTRATION_MODE")
+    auth_cookie_secure: bool = Field(default=False, validation_alias="AUTH_COOKIE_SECURE")
+    web_access_ttl_seconds: int = Field(default=900, validation_alias="WEB_ACCESS_TTL_SECONDS", ge=300, le=1800)
+    admin_access_ttl_seconds: int = Field(
+        default=600,
+        validation_alias="ADMIN_ACCESS_TTL_SECONDS",
+        ge=300,
+        le=900,
+    )
+    refresh_idle_ttl_days: int = Field(default=7, validation_alias="REFRESH_IDLE_TTL_DAYS", ge=1, le=14)
+    session_absolute_ttl_days: int = Field(default=30, validation_alias="SESSION_ABSOLUTE_TTL_DAYS", ge=2, le=90)
+    password_hash_concurrency: int = Field(default=4, validation_alias="PASSWORD_HASH_CONCURRENCY", ge=1, le=16)
+    request_log_mode: RequestLogMode = Field(default="disabled", validation_alias="REQUEST_LOG_MODE")
+    security_event_retention_days: int = Field(
+        default=180,
+        validation_alias="SECURITY_EVENT_RETENTION_DAYS",
+        ge=30,
+        le=3650,
+    )
+    request_log_retention_days: int = Field(
+        default=30,
+        validation_alias="REQUEST_LOG_RETENTION_DAYS",
+        ge=1,
+        le=365,
+    )
+    request_log_stream_maxlen: int = Field(
+        default=10000,
+        validation_alias="REQUEST_LOG_STREAM_MAXLEN",
+        ge=1000,
+        le=1000000,
+    )
+    web_login_limit: int = Field(default=10, validation_alias="WEB_LOGIN_LIMIT", ge=1, le=100)
+    admin_login_limit: int = Field(default=5, validation_alias="ADMIN_LOGIN_LIMIT", ge=1, le=20)
+    login_window_seconds: int = Field(default=900, validation_alias="LOGIN_WINDOW_SECONDS", ge=60, le=3600)
 
     @field_validator("api_v1_str")
     @classmethod
@@ -58,6 +102,33 @@ class Settings(BaseSettings):
         return level
 
     def validate_runtime(self) -> None:
+        self.validate_database_runtime()
+        if self.redis_mode == "required":
+            if self.redis_url is None:
+                raise ValueError("REDIS_URL is required when REDIS_MODE=required")
+            if urlsplit(self.redis_url).scheme not in {"redis", "rediss"}:
+                raise ValueError("REDIS_URL must use redis or rediss")
+        else:
+            raise ValueError("REDIS_MODE must be required while authentication is enabled")
+        self._validate_authentication_secrets()
+        self._validate_trusted_proxy_cidrs()
+        if self.session_absolute_ttl_days <= self.refresh_idle_ttl_days:
+            raise ValueError("SESSION_ABSOLUTE_TTL_DAYS must be greater than REFRESH_IDLE_TTL_DAYS")
+        if self.environment == "production":
+            if self.api_docs_enabled is True:
+                raise ValueError("API_DOCS_ENABLED must remain false in production unless explicitly reviewed")
+            if not self.release_version:
+                raise ValueError("RELEASE_VERSION is required in production")
+            if not self.trusted_hosts or "*" in self.trusted_hosts:
+                raise ValueError("TRUSTED_HOSTS must be explicit in production")
+            if not self.cors_origins or "*" in self.cors_origins:
+                raise ValueError("BACKEND_CORS_ORIGINS must be explicit in production")
+            if not self.auth_cookie_secure:
+                raise ValueError("AUTH_COOKIE_SECURE must be true in production")
+            if not self.trusted_proxy_cidrs:
+                raise ValueError("TRUSTED_PROXY_CIDRS must be explicit in production")
+
+    def validate_database_runtime(self) -> None:
         if self.database_url is None:
             raise ValueError("DATABASE_URL is required")
         self._validate_database_url(self.database_url, "DATABASE_URL")
@@ -68,20 +139,46 @@ class Settings(BaseSettings):
             database_name = urlsplit(self.test_database_url).path.removeprefix("/")
             if not database_name.endswith("_test"):
                 raise ValueError("TEST_DATABASE_URL database name must end with _test")
-        if self.redis_mode == "required":
-            if self.redis_url is None:
-                raise ValueError("REDIS_URL is required when REDIS_MODE=required")
-            if urlsplit(self.redis_url).scheme not in {"redis", "rediss"}:
-                raise ValueError("REDIS_URL must use redis or rediss")
-        if self.environment == "production":
-            if self.api_docs_enabled is True:
-                raise ValueError("API_DOCS_ENABLED must remain false in production unless explicitly reviewed")
-            if not self.release_version:
-                raise ValueError("RELEASE_VERSION is required in production")
-            if not self.trusted_hosts or "*" in self.trusted_hosts:
-                raise ValueError("TRUSTED_HOSTS must be explicit in production")
-            if not self.cors_origins or "*" in self.cors_origins:
-                raise ValueError("BACKEND_CORS_ORIGINS must be explicit in production")
+
+    def _validate_authentication_secrets(self) -> None:
+        named_values = {
+            "WEB_JWT_SECRET": self.web_jwt_secret,
+            "ADMIN_JWT_SECRET": self.admin_jwt_secret,
+            "WEB_TOKEN_HMAC_KEY": self.web_token_hmac_key,
+            "ADMIN_TOKEN_HMAC_KEY": self.admin_token_hmac_key,
+        }
+        values: list[str] = []
+        for name, value in named_values.items():
+            if value is None or len(value.encode("utf-8")) < 32:
+                raise ValueError(f"{name} must contain at least 32 UTF-8 bytes")
+            lowered = value.lower()
+            if any(marker in lowered for marker in {"replace_with", "change_me", "example", "placeholder"}):
+                raise ValueError(f"{name} must not use a template value")
+            values.append(value)
+        if len(set(values)) != len(values):
+            raise ValueError("JWT and token HMAC keys must all be different")
+
+    def _validate_trusted_proxy_cidrs(self) -> None:
+        import ipaddress
+
+        for value in self.trusted_proxy_cidrs:
+            try:
+                ipaddress.ip_network(value, strict=False)
+            except ValueError as exc:
+                raise ValueError(f"TRUSTED_PROXY_CIDRS contains an invalid network: {value}") from exc
+
+    def authentication_secrets(self) -> tuple[str, str, str, str]:
+        self._validate_authentication_secrets()
+        assert self.web_jwt_secret is not None
+        assert self.admin_jwt_secret is not None
+        assert self.web_token_hmac_key is not None
+        assert self.admin_token_hmac_key is not None
+        return (
+            self.web_jwt_secret,
+            self.admin_jwt_secret,
+            self.web_token_hmac_key,
+            self.admin_token_hmac_key,
+        )
 
     @staticmethod
     def _validate_database_url(value: str, name: str) -> None:

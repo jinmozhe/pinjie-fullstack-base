@@ -4,7 +4,7 @@
 
 本文规定 `apps/backend` 在详细技术设计、实施、代码评审和验证阶段的具体工程标准，适用于 FastAPI、Pydantic、SQLAlchemy、Alembic、PostgreSQL、Redis、日志、外部调用和测试基础设施。
 
-阶段 B 已提供 Backend 运行源码、基础测试、Alembic 运行环境、OpenAPI 导出和 `uv.lock`。本文描述当前已落地的工程标准；PostgreSQL 集成测试、容器构建和真实跨栈 E2E 仍需在具备对应环境时完成。
+阶段 B 已提供运行与测试基础设施，阶段 C 已提供认证、用户、管理员、RBAC、安全事件、审计和请求元数据能力。本文描述当前已落地的工程标准；当前验证事实和命令记录在对应阶段计划。
 
 本文使用以下规范词：
 
@@ -32,7 +32,7 @@
 
 - 标准 CPython 3.14、FastAPI、Pydantic v2 和 Pydantic Settings；禁止使用 free-threaded `3.14t`，版本和运行环境边界以 [Python 运行时基线决策](../adr/0009-Python运行时基线决策.md)为准。
 - PostgreSQL、SQLAlchemy 2 async、asyncpg 和 Alembic。
-- Redis、Loguru 和 uv。认证、密码哈希和 Token 依赖留到阶段 C。
+- Redis、Loguru 和 uv；认证使用 PyJWT，密码哈希使用 pwdlib 的 Argon2id 实现。
 - UUID v7 已确认由应用层统一生成；Python 3.14 使用标准库 `uuid.uuid7()`，阶段 B 不引入 `uuid-utils` 或其他 UUID v7 第三方运行依赖。
 - Ruff、Mypy、pytest、pytest-asyncio 和 httpx 当前作为开发依赖。
 
@@ -41,7 +41,7 @@
 1. 直接依赖写入 `apps/backend/pyproject.toml`，精确解析结果写入 `apps/backend/uv.lock`。
 2. 使用 `uv add <package>` 或 `uv add --dev <package>`，禁止手工制造与锁文件不一致的安装状态。
 3. 生产代码导入的包必须是运行依赖。当前 `httpx` 只在开发依赖中，未来生产外部 HTTP 能力必须先通过计划将其加入运行依赖。
-4. 引入 Psycopg 3、import-linter 或其他尚未声明的工具时必须经过计划、锁定依赖并补充相应验证，本文不得被解释为这些依赖已经存在。
+4. import-linter 已纳入 Backend 开发依赖和门禁。引入 Psycopg 3 或其他尚未声明的工具时必须经过计划、锁定依赖并补充相应验证。
 5. 外部参考项目只作为设计证据，禁止绝对路径导入、符号链接、Git 子模块或运行时读取参考项目文件。
 
 ## 4. 配置与启动失败

@@ -6,9 +6,18 @@ name = Backend layers point inward
 type = layers
 layers =
     app.api
+    app.services
     app.domains
     app.db
     app.core
+# HTTP routers are transport adapters colocated with their domain slices.
+ignore_imports =
+    app.domains.auth.router -> app.api.dependencies
+    app.domains.auth.router -> app.services.authentication
+    app.domains.admin.auth_router -> app.api.dependencies
+    app.domains.admin.auth_router -> app.services.authentication
+    app.domains.admin.management_router -> app.api.dependencies
+    app.domains.users.router -> app.api.dependencies
 
 [importlinter:contract:core-is-independent]
 name = Core does not import application layers

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const backendURL = process.env.E2E_BACKEND_URL ?? "http://127.0.0.1:8000";
-const reuseExistingServer = !process.env.CI;
+const reuseExistingServer = process.env.E2E_MANAGED_SERVERS === "1" || !process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -34,11 +34,11 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: "pnpm --filter @pinjie/web start --hostname 127.0.0.1 --port 3000",
+      command: "node apps/web/.next/standalone/apps/web/server.js",
       url: "http://127.0.0.1:3000",
       reuseExistingServer,
       timeout: 120_000,
-      env: { BACKEND_INTERNAL_URL: backendURL },
+      env: { BACKEND_INTERNAL_URL: backendURL, HOSTNAME: "127.0.0.1", PORT: "3000" },
     },
     {
       command: "pnpm --filter @pinjie/admin preview --host 127.0.0.1",

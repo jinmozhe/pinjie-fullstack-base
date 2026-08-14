@@ -2,7 +2,7 @@
 
 ## 1. 目标
 
-本文件定义身份认证、权限声明、资源授权和审计的职责边界。具体 Token 格式、会话期限、刷新协议和 RBAC 数据模型由后续独立计划确认。
+本文件定义当前 Browser Cookie Profile 的身份认证、会话、权限声明、资源授权和审计机制。重大取舍以 [ADR 0010](../adr/0010-浏览器认证会话RBAC与审计决策.md) 为准，完整端点与验收规格保存在[阶段 C 计划](../../plans/2026-08-14_阶段C通用业务核心能力计划.md)。
 
 ## 2. 分层职责
 
@@ -24,19 +24,46 @@
 - 超级管理员仍需经过统一身份、授权和审计链，禁止绕过。
 - 后台任务和内部调用使用独立服务身份或明确调用上下文，禁止伪装最终用户。
 
-## 4. 浏览器凭据
+## 4. 客户端认证 Profile
 
-浏览器会话优先使用 `HttpOnly`、`Secure` 和合适 `SameSite` 属性的 Cookie。认证 Token 不进入 Zustand、`localStorage`、URL、页面源码或可读客户端持久化存储。
+阶段 C 只开放 Web 与 Admin 的 Browser Cookie Profile：
 
-采用 Cookie 时必须设计 CSRF 防护、来源校验、Cookie 作用域和注销失效。采用 Bearer Token 的非浏览器消费者必须定义存储、轮换、撤销和最小权限策略。
+- Access 与 Refresh 使用 `HttpOnly`、`SameSite=Lax` Cookie，生产必须启用 `Secure`，不设置 `Domain`。
+- C 端 Cookie 使用 `pinjie_web_*` 命名，B 端使用 `pinjie_admin_*` 命名。Access 路径为 `/`，Refresh 分别限制到 `/api/v1/auth` 与 `/api/v1/admin/auth`。
+- CSRF Cookie 允许浏览器读取，但只保存 Session 绑定的随机值。服务端只保存 HMAC 摘要，并以常量时间比较。
+- 登录响应只返回主体、Session 与过期时间，不返回 Access Token 或 Refresh Token。
+- Token 不进入 Zustand、`localStorage`、`sessionStorage`、URL、页面源码、日志或其他客户端可读持久化存储。
 
-## 5. 权限模型边界
+小程序、原生 App 和其他无法可靠使用 Cookie 的客户端属于后续 Public Client Bearer Profile。该 Profile 必须独立定义端点、Session 类型、客户端证明、Token 存储、轮换、撤销和测试契约，禁止临时复用浏览器登录响应输出 JSON Token。
 
-母版默认提供 RBAC 基础，不预设复杂 ABAC、组织树和多租户数据权限。权限标识必须稳定、可审计并由服务端执行。
+## 5. JWT、密码与 Session
 
-资源级授权不应塞入 Router Dependency 后假设资源状态永远不变。Service 在事务内读取权威状态并执行最终授权，防止检查与写入之间发生竞态。
+- Access JWT 使用 PyJWT 与固定 `HS256` allowlist。Web 和 Admin 分别使用独立 Secret 与 `pinjie-web`、`pinjie-admin` audience。
+- JWT 必需 Claims 为 `iss`、`aud`、`sub`、`sid`、`jti`、`iat`、`nbf`、`exp`、`token_type` 和 `credential_version`，允许最多 30 秒时钟偏差。JWT 不保存角色、权限和个人资料。
+- Web Access 默认 15 分钟，Admin Access 默认 10 分钟。验签后继续校验 PostgreSQL Session、主体状态与凭据版本。
+- 密码使用 Argon2id。Hash 和 Verify 通过线程池执行，并由进程内信号量限制并发。未知用户名执行固定虚拟密码校验，避免明显的账号枚举时序差异。
+- PostgreSQL 是 Session 和 Refresh Token 的权威来源。Refresh 原值只进入 `HttpOnly` Cookie，数据库保存 HMAC-SHA256 摘要。
+- Refresh 闲置期限默认 7 天，Session 绝对期限默认 30 天。刷新通过行锁单次消费并旋转，已消费 Token 重放会撤销整个 Session Family。
+- 密码、主体状态、管理员角色或超级管理员标记变化时递增 `credential_version` 并撤销相关会话。
 
-## 6. 审计
+四个 JWT/HMAC Secret 必须至少包含 32 个 UTF-8 字节、彼此不同且不能使用模板值。认证启用后 Redis 必须为 `required`；生产缺少安全 Cookie、可信代理、明确 CORS 或 Release 配置时拒绝启动。
+
+## 6. CSRF 与来源校验
+
+- Cookie 身份的 `POST`、`PUT`、`PATCH` 和 `DELETE` 请求必须同时通过精确 Origin allowlist 与 `X-CSRF-Token` 校验。
+- Refresh 与 Logout 使用 Refresh Cookie 和同一 Session 的 CSRF 对，普通受保护写请求使用 Access Cookie 对应的当前 Session。
+- 登录和注册尚无 Session，仍执行 Origin 校验，并结合 `SameSite=Lax` Cookie 与 Redis 原子限流。
+- 401 清理对应 Profile 的认证 Cookie。前端只允许一次受控 Refresh，失败后清理会话状态并进入登录失效流程。
+
+## 7. 权限模型边界
+
+母版提供规范化 RBAC 基础，不预设复杂 ABAC、组织树和多租户数据权限。`PermissionCode` 与 `PERMISSION_CATALOG` 是权限目录源码，数据库通过显式 `scripts.sync_permissions --check/--apply` 同步；应用启动不自动修改权限表。
+
+管理员、角色、权限及关联关系使用规范化表和外键。Admin 导航由前端代码维护，并按服务端返回的权限过滤，不建立动态菜单表。Dependency 校验端点权限，Service 在事务内读取权威资源状态并执行最终授权。超级管理员仍经过 Session、CSRF、二次确认、最后超级管理员保护和审计链。
+
+高风险管理操作使用 5 分钟、一次性、动作与 Session 绑定的二次确认 Token。前端隐藏路由或按钮只改善体验，不承担授权控制。
+
+## 8. 审计与请求元数据
 
 以下事件默认属于高风险审计范围：
 
@@ -46,11 +73,13 @@
 - 数据导出、批量修改、删除和不可逆操作。
 - 安全配置、部署和迁移等生产变更。
 
-审计记录至少能够关联操作者、动作、目标、结果、时间、`request_id`、`trace_id` 和运行版本。不得记录密码、完整 Token、Cookie、私钥或完整敏感请求体。
+审计记录至少关联操作者、动作、目标、结果、时间和 `request_id`。高风险业务通过 `AuditCoordinator` 建立审计意图，成功变更与审计结果在同一事务提交；拒绝和异常由独立终结器记录。登录安全事件属于认证结果，写入失败时认证失败关闭。
 
-审计日志需要独立的访问控制和保留策略。应用日志不能替代审计日志，审计日志也不能替代指标和 Trace。
+普通访问日志使用结构化输出。可选请求持久化只支持 `REQUEST_LOG_MODE=metadata`，由 Redis Stream、Consumer Group、pending reclaim、DLQ 和 PostgreSQL `request_id` 唯一约束组成。请求体、响应体、Cookie、Authorization 和 Token 永不进入请求日志。
 
-## 7. 必测场景
+登录安全事件和审计事件默认保留 180 天，请求元数据默认保留 30 天。清理由显式 dry-run/`--apply` 脚本执行，不在请求进程内自动删除。应用日志、审计日志、指标和 Trace 各自承担独立职责。
+
+## 9. 必测场景
 
 - 未认证、凭据过期、凭据撤销和会话注销。
 - 有身份但缺少权限。
@@ -58,3 +87,6 @@
 - 权限在请求期间发生变化。
 - 超级管理员和服务身份的审计链完整。
 - 错误响应不泄露资源存在性或敏感上下文。
+- C/B Secret、audience、Cookie、Session 和权限交叉使用均被拒绝。
+- CSRF 缺失、错误 Origin、Refresh 并发与重放均失败关闭。
+- 响应、浏览器存储、页面源码、日志和测试产物中没有 Token 泄露。

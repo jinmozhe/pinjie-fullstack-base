@@ -34,6 +34,16 @@ Liveness 不应依赖可短时故障的外部系统，避免依赖抖动导致�
 
 日志用于事件细节，指标用于趋势和告警，Trace 用于跨组件路径。三者职责不同，不能互相替代。
 
+### 4.1 阶段 C 安全与请求信号
+
+- 普通请求由 Middleware 输出结构化白名单字段，包含方法、规范化路由、状态、耗时和 `request_id`，不记录请求体、响应体、Cookie、Authorization 或 Token。
+- 登录安全事件写入 PostgreSQL，属于认证结果的一部分。写入失败时登录、刷新或凭据变更失败关闭。
+- 高风险管理操作使用审计意图、结果与 `request_id` 关联。成功业务变更与审计结果在同一事务提交；拒绝或异常由独立终结器记录，终结失败输出 critical 信号。
+- `REQUEST_LOG_MODE=metadata` 只持久化请求白名单元数据。Middleware 发布到 Redis Stream，独立 Consumer Group Worker 负责 pending reclaim、幂等入库、ACK 和 DLQ；队列故障不改变普通请求结果，但必须输出 critical 日志。
+- 登录安全事件和审计事件默认保留 180 天，请求元数据默认保留 30 天。保留清理由显式 dry-run/`--apply` 工具执行。
+
+Readiness 当前检查 PostgreSQL 与认证必需的 Redis。请求元数据功能关闭时不要求 Worker 存活；启用后必须单独监控 Stream backlog、pending 数、DLQ 增长和消费者心跳。
+
 ## 5. SLI 与 SLO
 
 派生项目优先从用户可观察结果定义 SLI，例如：

@@ -21,7 +21,7 @@ export function SystemStatusPage() {
           title="Backend availability"
           extra={<Button aria-label="Retry status" icon={<ReloadOutlined />} onClick={() => query.refetch()} />}
         >
-          {query.isPending ? <Spin aria-label="Loading system status" /> : null}
+          {query.isPending ? <div role="status" aria-label="Loading system status"><Spin /></div> : null}
           {query.isError ? (
             <Alert type="error" showIcon message="Backend is unavailable" description="Retry when the service is ready." />
           ) : null}

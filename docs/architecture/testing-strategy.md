@@ -35,7 +35,7 @@ Backend 进入 `ready` 后，CI 必须：
 4. 检查 Breaking Change 并关联消费者迁移计划。
 5. 验证 Admin 和 Web 使用生成类型，没有复制 DTO。
 
-阶段 B 已从真实 FastAPI 应用导出系统状态契约，并由 `pnpm generate-api` 生成客户端；后续公开 API 变化继续遵循同一链路。
+当前根契约已包含阶段 C 认证、用户、管理员、RBAC 与安全日志端点，并由 `pnpm generate-api` 生成客户端；后续公开 API 变化继续遵循同一链路。
 
 ## 5. 架构和静态质量
 
@@ -48,7 +48,7 @@ Backend 进入 `ready` 后，CI 必须：
 
 ### 6.1 固定测试栈
 
-Admin 与 Web 进入 `ready` 后统一采用以下测试栈：
+Admin 与 Web 统一采用以下测试栈：
 
 | 职责 | 工具 | 边界 |
 | --- | --- | --- |
@@ -74,7 +74,8 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 ### 6.3 Playwright 跨栈 E2E
 
-- E2E 默认针对生产构建运行：Web 使用 `next build` 与 `next start`，Admin 使用 `vite build` 与 `vite preview` 或生产等价静态服务器。
+- E2E 默认针对生产构建运行：Web 使用 `next build` 后的 standalone server，Admin 使用 `vite build` 与 `vite preview`。Web 构建脚本同时把静态资源准备到 standalone 目录。
+- Windows 和 CI 统一通过 `scripts/e2e/run-e2e.mjs` 启动并回收本次拥有的 Web、Admin 进程，再调用 Playwright。脚本会复用已经存在的受管服务，退出时只终止自己启动的进程，避免 Playwright `webServer` 在 Windows 上回收挂起。
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
@@ -108,3 +109,5 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 ## 8. 完成条件
 
 一项实现只有在计划内全部适用门禁通过、未适用项有依据、跳过项被明确记录并且代码与文档同步后才能宣称完成。覆盖率阈值由后续实现计划按风险确定，不在空骨架阶段虚构数字。
+
+阶段 C 当前验证基线为 Backend 32 项、Admin 14 项、Web 13 项自动化测试通过；Playwright 四个项目共 8 项通过、8 项按 Web/Admin 项目互斥条件标记为不适用。真实 PostgreSQL 18.4、Redis 8.10.0、Alembic、三端生产构建和三张 Linux 容器镜像均已完成本地验证，完整命令与结果保存在阶段 C 计划。

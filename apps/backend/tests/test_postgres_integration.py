@@ -18,7 +18,7 @@ async def test_postgresql_test_database_is_isolated_and_ready() -> None:
         DATABASE_URL=database_url,
         TEST_DATABASE_URL=database_url,
     )
-    settings.validate_runtime()
+    settings.validate_database_runtime()
     engine = create_async_engine(database_url, pool_pre_ping=True)
     try:
         ready, state = await check_database(engine, timeout=2)

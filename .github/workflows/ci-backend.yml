@@ -36,6 +36,41 @@ jobs:
     needs: backend-state
     if: needs.backend-state.outputs.backend == 'ready'
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.4-alpine
+        env:
+          POSTGRES_USER: pinjie_test
+          POSTGRES_PASSWORD: pinjie_test
+          POSTGRES_DB: pinjie_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pinjie_test -d pinjie_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:8.10.0-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://pinjie_test:pinjie_test@127.0.0.1:5432/pinjie_ci_test
+      TEST_DATABASE_URL: postgresql+asyncpg://pinjie_test:pinjie_test@127.0.0.1:5432/pinjie_ci_test
+      REDIS_MODE: required
+      REDIS_URL: redis://127.0.0.1:6379/0
+      TEST_REDIS_URL: redis://127.0.0.1:6379/0
+      ENVIRONMENT: test
+      REGISTRATION_MODE: open
+      WEB_JWT_SECRET: ci-web-jwt-secret-00000000000000001
+      ADMIN_JWT_SECRET: ci-admin-jwt-secret-000000000000001
+      WEB_TOKEN_HMAC_KEY: ci-web-hmac-key-000000000000000001
+      ADMIN_TOKEN_HMAC_KEY: ci-admin-hmac-key-0000000000000001
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -84,29 +119,20 @@ jobs:
 
       - name: Validate isolated test database
         working-directory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         shell: bash
         run: |
-          uv run python -c 'import os; from urllib.parse import urlsplit; name=urlsplit(os.environ["DATABASE_URL"]).path.rsplit("/", 1)[-1]; assert name.endswith("_test"), "TEST_DATABASE_URL must target a database ending in _test"'
+          uv run python -c 'import os; from urllib.parse import urlsplit; name=urlsplit(os.environ["TEST_DATABASE_URL"]).path.rsplit("/", 1)[-1]; assert name.endswith("_test"), "TEST_DATABASE_URL must target a database ending in _test"'
 
       - name: Upgrade test database twice
         working-directory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         run: uv run alembic upgrade head && uv run alembic upgrade head
 
       - name: Check migration drift
         working-directory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
         run: uv run alembic check
 
       - name: Pytest
         working-directory: apps/backend
-        env:
-          DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-          REDIS_URL: ${{ secrets.TEST_REDIS_URL }}
         run: uv run pytest tests/ -v
 
       - name: Export OpenAPI contract

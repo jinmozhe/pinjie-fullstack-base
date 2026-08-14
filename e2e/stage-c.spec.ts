@@ -1,0 +1,115 @@
+import { expect, test } from "@playwright/test";
+
+import {
+  expectCookieProfile,
+  expectNoClientTokenPersistence,
+  expectPageQuality,
+  uniqueUsername,
+} from "./helpers";
+
+const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "stage-admin";
+const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "stage-c-admin-password-2026";
+const userPassword = "stage-c-user-password-2026";
+const limitedAdminPassword = "stage-c-limited-password-2026";
+
+test.describe("stage C cross-stack journeys", () => {
+  test("Web registers a user, manages the account, and signs out without exposing tokens", async ({ page }) => {
+    test.skip(!test.info().project.name.startsWith("web"), "Web journey runs in Web projects");
+    const username = uniqueUsername("web", test.info().project.name);
+    await page.goto("/register");
+    await page.getByLabel("用户名").fill(username);
+    await page.getByLabel(/显示名称/).fill("Stage C Browser User");
+    await page.getByLabel(/邮箱/).fill(`${username}@example.test`);
+    await page.getByLabel("密码").fill(userPassword);
+    const registrationResponsePromise = page.waitForResponse(
+      (response) => response.url().endsWith("/api/v1/auth/register") && response.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: /注册并登录/ }).click();
+    const registrationResponse = await registrationResponsePromise;
+    expect(registrationResponse.ok()).toBe(true);
+    const registrationBody = JSON.stringify(await registrationResponse.json());
+    expect(registrationBody).not.toMatch(/access_token|refresh_token/i);
+    await expect(page).toHaveURL(/\/account$/);
+    await expect(page.getByRole("heading", { name: "用户中心" })).toBeVisible();
+
+    await expectCookieProfile(page, {
+      access: "pinjie_web_access",
+      refresh: "pinjie_web_refresh",
+      csrf: "pinjie_web_csrf",
+    });
+    await expectNoClientTokenPersistence(page);
+    await expectPageQuality(page);
+
+    await page.getByLabel("显示名称").fill("Stage C Updated User");
+    await page.getByRole("button", { name: "保存资料" }).click();
+    await expect(page.getByRole("status")).toContainText("个人资料已保存");
+    await page.getByRole("button", { name: /登录设备/ }).click();
+    await expect(page.getByText("当前设备")).toBeVisible();
+    await page.getByRole("button", { name: "退出" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+  });
+
+  test("Admin records privileged work and rejects an administrator without permissions", async ({ page }) => {
+    test.skip(!test.info().project.name.startsWith("admin"), "Admin journey runs in Admin projects");
+    const limitedUsername = uniqueUsername("limited", test.info().project.name);
+    await page.goto("/login");
+    await page.getByLabel("用户名").fill(adminUsername);
+    await page.getByLabel("密码").fill(adminPassword);
+    const loginResponsePromise = page.waitForResponse(
+      (response) => response.url().endsWith("/api/v1/admin/auth/login") && response.request().method() === "POST",
+    );
+    await page.getByRole("button", { name: /登\s*录/ }).click();
+    const loginResponse = await loginResponsePromise;
+    expect(loginResponse.ok()).toBe(true);
+    expect(JSON.stringify(await loginResponse.json())).not.toMatch(/access_token|refresh_token/i);
+    await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
+
+    const csrf = await expectCookieProfile(page, {
+      access: "pinjie_admin_access",
+      refresh: "pinjie_admin_refresh",
+      csrf: "pinjie_admin_csrf",
+    });
+    await expectNoClientTokenPersistence(page);
+    await expectPageQuality(page);
+
+    const origin = new URL(page.url()).origin;
+    const commonHeaders = { Origin: origin, "X-CSRF-Token": csrf };
+    const confirmResponse = await page.request.post(`${origin}/api/v1/admin/auth/confirm`, {
+      headers: commonHeaders,
+      data: { current_password: adminPassword, action: "admins:create" },
+    });
+    expect(confirmResponse.ok()).toBe(true);
+    const confirmationToken = (await confirmResponse.json()).data.confirmation_token as string;
+    const createResponse = await page.request.post(`${origin}/api/v1/admin/admins`, {
+      headers: { ...commonHeaders, "X-Admin-Confirmation": confirmationToken },
+      data: {
+        username: limitedUsername,
+        initial_password: limitedAdminPassword,
+        display_name: "Limited E2E Admin",
+        is_active: true,
+        is_superuser: false,
+        role_ids: [],
+      },
+    });
+    expect(createResponse.ok()).toBe(true);
+
+    await page.goto("/security");
+    await page.getByRole("tab", { name: "审计事件" }).click();
+    await expect(page.getByText("admins:create").first()).toBeVisible();
+
+    const logoutResponse = await page.request.post(`${origin}/api/v1/admin/auth/logout`, {
+      headers: commonHeaders,
+    });
+    expect(logoutResponse.ok()).toBe(true);
+    await page.goto("/login");
+    await page.getByLabel("用户名").fill(limitedUsername);
+    await page.getByLabel("密码").fill(limitedAdminPassword);
+    await page.getByRole("button", { name: /登\s*录/ }).click();
+    await expect(page.getByText("无权访问")).toBeVisible();
+
+    const deniedResponse = await page.request.get(`${origin}/api/v1/admin/users`);
+    expect(deniedResponse.status()).toBe(403);
+    expect((await deniedResponse.json()).code).toBe("PERMISSION_DENIED");
+    await expectNoClientTokenPersistence(page);
+  });
+});

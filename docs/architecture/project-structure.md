@@ -2,13 +2,13 @@
 
 > 文档归属：`docs/architecture/project-structure.md`
 > 适用仓库：`pinjie-fullstack-base`
-> 最后更新：2026-08-14
+> 最后更新：2026-08-15
 
 ---
 
 ## 一、当前完整文件结构
 
-以下清单以 2026-08-14 当前工作区为准，共 191 个项目文件、41 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。
+以下清单以 2026-08-15 当前工作区为准，共 259 个项目文件、64 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。
 
 ```text
 ./ :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
@@ -19,40 +19,62 @@
 .vscode/ :: extensions.json
 apps/admin/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, index.html, nginx.conf, package.json, README.md, tsconfig.json, vite.config.ts
 apps/admin/src/ :: App.tsx, main.tsx, styles.css
+apps/admin/src/components/ :: PageFrame.tsx
+apps/admin/src/features/ :: StageC.test.tsx
+apps/admin/src/features/admins/ :: AdminsPage.tsx
+apps/admin/src/features/auth/ :: auth-context.ts, ConfirmActionModal.tsx, index.ts, LoginPage.tsx
+apps/admin/src/features/roles/ :: RolesPage.tsx
+apps/admin/src/features/security/ :: SecurityPage.tsx
 apps/admin/src/features/system/ :: api.ts, SystemStatusPage.test.tsx, SystemStatusPage.tsx
+apps/admin/src/features/users/ :: UsersPage.tsx
+apps/admin/src/lib/api/ :: admin.ts, http.ts
 apps/admin/src/test/ :: server.ts, setup.ts
 apps/backend/ :: .env.example, .importlinter, .python-version, AGENTS.md, alembic.ini, Dockerfile, pyproject.toml, README.md, uv.lock
 apps/backend/alembic/ :: env.py, script.py.mako
-apps/backend/alembic/versions/ :: README.md
+apps/backend/alembic/versions/ :: 20260815_01_stage_c_identity.py, README.md
 apps/backend/app/ :: __init__.py, api_router.py, main.py
 apps/backend/app/api/ :: __init__.py, dependencies.py
-apps/backend/app/core/ :: __init__.py, config.py, context.py, error_codes.py, exceptions.py, health.py, identifiers.py, logging.py, middleware.py, redis.py, resources.py, response.py
+apps/backend/app/core/ :: __init__.py, cache_keys.py, config.py, context.py, cookies.py, csrf.py, error_codes.py, exceptions.py, health.py, identifiers.py, logging.py, middleware.py, pagination.py, privacy.py, rate_limit.py, redis.py, request_metadata.py, resources.py, response.py, security.py
 apps/backend/app/db/ :: __init__.py, session.py, transaction.py
-apps/backend/app/db/models/ :: __init__.py, base.py
+apps/backend/app/db/models/ :: __init__.py, base.py, identity.py
+apps/backend/app/db/repositories/ :: __init__.py, identity.py
 apps/backend/app/domains/ :: __init__.py
+apps/backend/app/domains/admin/ :: __init__.py, auth_router.py, management_router.py, permissions.py, presenters.py, schemas.py
+apps/backend/app/domains/auth/ :: __init__.py, router.py, schemas.py
 apps/backend/app/domains/system/ :: __init__.py, router.py, schemas.py
-apps/backend/scripts/ :: __init__.py, export_openapi.py
-apps/backend/tests/ :: __init__.py, conftest.py, test_api.py, test_config.py, test_identifiers.py, test_postgres_integration.py, test_transaction.py
+apps/backend/app/domains/users/ :: __init__.py, router.py, schemas.py
+apps/backend/app/services/ :: __init__.py, accounts.py, admin_management.py, authentication.py, security_events.py
+apps/backend/scripts/ :: __init__.py, _database_target.py, cleanup_security_logs.py, consume_request_logs.py, create_initial_admin.py, export_openapi.py, sync_permissions.py
+apps/backend/tests/ :: __init__.py, conftest.py, test_api.py, test_config.py, test_identifiers.py, test_postgres_integration.py, test_stage_c_auth_api.py, test_stage_c_cookies.py, test_stage_c_integrations.py, test_stage_c_request_metadata.py, test_stage_c_security.py, test_transaction.py
 apps/web/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, next.config.ts, package.json, README.md, tsconfig.json, vitest.config.ts
-apps/web/src/app/ :: error.tsx, globals.css, layout.tsx, loading.tsx, not-found.tsx, page.tsx
+apps/web/scripts/ :: prepare-standalone.mjs
+apps/web/src/app/ :: error.tsx, globals.css, layout.tsx, loading.tsx, not-found.tsx, page.tsx, providers.tsx
+apps/web/src/app/account/ :: page.tsx
+apps/web/src/app/api/v1/[...path]/ :: route.ts
 apps/web/src/app/api/v1/system/status/ :: route.ts
+apps/web/src/app/login/ :: page.tsx
+apps/web/src/app/register/ :: page.tsx
+apps/web/src/features/ :: StageC.test.tsx
+apps/web/src/features/account/ :: AccountCenter.tsx
+apps/web/src/features/auth/ :: api.ts, AuthForm.tsx, index.ts
 apps/web/src/features/system/ :: SystemStatusCard.test.tsx, SystemStatusCard.tsx
-apps/web/src/lib/api/ :: client.ts, server.ts
+apps/web/src/lib/api/ :: client.ts, http.ts, server.ts
 apps/web/src/test/ :: server.ts, setup.ts
 docs/ :: PROJECT_REQUIREMENTS.md, README.md
-docs/adr/ :: 0001-全栈Monorepo架构决策.md, 0002-Codex与Antigravity指令兼容决策.md, 0003-本地开发环境架构决策.md, 0004-全项目索引与计划生命周期决策.md, 0005-GitHub Wiki停用与文档单一来源决策.md, 0006-模块化单体与领域依赖边界决策.md, 0007-受控迁移兼容策略决策.md, 0008-不可变发布与生产追溯决策.md, 0009-Python运行时基线决策.md
-docs/architecture/ :: authentication-authorization.md, backend-engineering-standard.md, error-model.md, module-boundaries.md, observability-reliability.md, project-structure.md, testing-strategy.md, 全栈Monorepo架构规划原始方案.md
+docs/adr/ :: 0001-全栈Monorepo架构决策.md, 0002-Codex与Antigravity指令兼容决策.md, 0003-本地开发环境架构决策.md, 0004-全项目索引与计划生命周期决策.md, 0005-GitHub Wiki停用与文档单一来源决策.md, 0006-模块化单体与领域依赖边界决策.md, 0007-受控迁移兼容策略决策.md, 0008-不可变发布与生产追溯决策.md, 0009-Python运行时基线决策.md, 0010-浏览器认证会话RBAC与审计决策.md
+docs/architecture/ :: 全栈Monorepo架构规划原始方案.md, authentication-authorization.md, backend-engineering-standard.md, error-model.md, module-boundaries.md, observability-reliability.md, project-structure.md, testing-strategy.md
 docs/blueprints/commerce/ :: README.md
 docs/operations/ :: ai-assisted-development-workflow.md, container-build-and-run.md, database-backup-restore.md, environment-variables-and-backend-local-run.md, incident-response.md, local-dev-environment.md, pnpm使用指南.md, release-and-rollback.md, uv使用指南.md
-e2e/ :: system-status.spec.ts
+e2e/ :: helpers.ts, stage-c.spec.ts, system-status.spec.ts
 packages/api-client/ :: package.json
 packages/api-client/src/ :: client.gen.ts, index.ts, sdk.gen.ts, types.gen.ts
 packages/api-client/src/client/ :: client.gen.ts, index.ts, types.gen.ts, utils.gen.ts
 packages/api-client/src/core/ :: auth.gen.ts, bodySerializer.gen.ts, params.gen.ts, pathSerializer.gen.ts, queryKeySerializer.gen.ts, serverSentEvents.gen.ts, types.gen.ts, utils.gen.ts
 packages/eslint-config/ :: index.js, package.json
 packages/typescript-config/ :: base.json, nextjs.json, package.json, vite.json
-plans/ :: 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, README.md
+plans/ :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, README.md
 scripts/ci/ :: check-module-boundaries.ps1, check-text-files.ps1, check-workspace-state.ps1, test-governance-guards.ps1
+scripts/e2e/ :: run-e2e.mjs
 ```
 
 ---
@@ -178,13 +200,13 @@ Next.js 有三种输出模式：
 
 ### 当前实现与后续扩展边界
 
-| 应用范围 | 阶段 B 当前实现 | 阶段 C 通用目标 | 派生仓库扩展 |
-| --- | --- | --- | --- |
-| `apps/backend/app/domains/` | `system` | 认证、用户、管理员、RBAC、审计和系统业务能力 | products、orders、payments 等具体业务领域 |
-| `apps/web/src/features/` | `system` | 登录、退出、当前用户、用户中心和受保护页面 | products、cart、checkout 等用户业务切片 |
-| `apps/admin/src/features/` | `system` | 管理员登录、受保护布局、用户与管理员管理、角色权限和通用系统管理 | products、orders、promotions 等运营业务切片 |
+| 应用范围 | 当前母版实现 | 派生仓库扩展 |
+| --- | --- | --- |
+| `apps/backend/app/domains/` | `system`、`auth`、`users`、`admin`，覆盖浏览器认证、账户、RBAC、安全事件和审计 | products、orders、payments 等具体业务领域 |
+| `apps/web/src/features/` | `system`、`auth`、`account`，覆盖注册、登录、用户中心、会话和注销 | products、cart、checkout 等用户业务切片 |
+| `apps/admin/src/features/` | `system`、`auth`、`users`、`admins`、`roles`、`security` | products、orders、promotions 等运营业务切片 |
 
-阶段 C 仍需创建独立全栈计划并取得用户确认。表中的目标用于区分母版通用能力和派生业务边界，不代表对应目录或功能已经实现。
+阶段 C 已交付上述母版通用能力。短信、微信、邮箱登录、MFA、ABAC、多租户及具体业务领域继续由后续计划或派生仓库实现。
 
 ### 前端共享边界
 

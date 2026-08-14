@@ -9,17 +9,17 @@ import { SystemStatusCard } from "./SystemStatusCard";
 describe("SystemStatusCard", () => {
   it("renders the server status and provides an accessible retry action", () => {
     render(<SystemStatusCard initialStatus={{ status: "available" }} />);
-    expect(screen.getByRole("heading", { name: "System status" })).toBeInTheDocument();
-    expect(screen.getByText("Available")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Check again" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "系统运行状态" })).toBeInTheDocument();
+    expect(screen.getByText("可用")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "重新检查" })).toBeInTheDocument();
   });
 
   it("refreshes the status when the user retries", async () => {
     render(<SystemStatusCard initialStatus={{ status: "unavailable" }} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    fireEvent.click(screen.getByRole("button", { name: "重新检查" }));
 
-    await waitFor(() => expect(screen.getByText("Available")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("可用")).toBeInTheDocument());
   });
 
   it("reports an unavailable backend when retry fails", async () => {
@@ -28,9 +28,9 @@ describe("SystemStatusCard", () => {
     );
     render(<SystemStatusCard initialStatus={{ status: "available" }} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Check again" }));
+    fireEvent.click(screen.getByRole("button", { name: "重新检查" }));
 
-    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Backend is unavailable"));
-    expect(screen.getByText("Unavailable")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("后端服务暂不可用"));
+    expect(screen.getByText("不可用")).toBeInTheDocument();
   });
 });

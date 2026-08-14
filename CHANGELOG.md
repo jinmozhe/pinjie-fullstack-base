@@ -6,6 +6,11 @@
 
 ### Added
 
+- 完成阶段 C 通用业务核心能力：C/B 独立 Browser Cookie Profile、Argon2id、JWT、Session 绑定 CSRF、PostgreSQL 权威 Refresh Rotation、重放撤销、Redis 原子限流和严格 Origin 校验。
+- 增加用户、管理员、角色、权限、会话、Refresh、安全登录事件、审计和可选请求元数据模型及 Alembic 迁移，并提供初始化管理员、权限同步、日志保留清理和 Redis Stream 消费脚本。
+- 完成 Web 注册、登录、SSR 用户中心、资料、密码、会话、退出和注销流程，以及 Admin 登录、权限导航、用户、管理员、角色权限和安全日志工作台。
+- 增加阶段 C 真实 PostgreSQL/Redis 集成测试、C/B 安全回归、Admin/Web 组件测试和桌面/移动 Chromium 跨栈 E2E；Web production E2E 使用 Next.js standalone server 和受控跨平台服务回收脚本。
+- 增加 Browser Cookie Profile、会话、RBAC 与审计 ADR，明确未来小程序和原生 App 通过独立 Public Client Bearer Profile 扩展。
 - 完成阶段 B 运行基础设施：Backend FastAPI 入口、统一响应与错误处理、请求上下文、数据库会话与事务、Redis 生命周期、健康探针、系统状态接口、Alembic 环境、UUID v7 和基础测试。
 - 完成 Admin/Web 业务中立系统状态页、同域 API 代理、Vitest + RTL + jsdom + MSW 组件测试及覆盖率门禁。
 - 增加根 Playwright Test 与 axe 跨栈 E2E 配置，覆盖桌面和移动 Chromium、控制台错误、横向溢出和关键可访问性扫描。

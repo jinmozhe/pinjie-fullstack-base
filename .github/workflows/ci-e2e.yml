@@ -39,7 +39,18 @@ jobs:
       TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/pinjie_e2e_test
       ENVIRONMENT: test
       API_DOCS_ENABLED: "false"
-      REDIS_MODE: disabled
+      REDIS_MODE: required
+      REDIS_URL: redis://127.0.0.1:6379/0
+      TEST_REDIS_URL: redis://127.0.0.1:6379/0
+      REGISTRATION_MODE: open
+      BACKEND_CORS_ORIGINS: '["http://127.0.0.1:3000","http://127.0.0.1:3001"]'
+      WEB_JWT_SECRET: e2e-web-jwt-secret-0000000000000001
+      ADMIN_JWT_SECRET: e2e-admin-jwt-secret-00000000000001
+      WEB_TOKEN_HMAC_KEY: e2e-web-hmac-key-00000000000000001
+      ADMIN_TOKEN_HMAC_KEY: e2e-admin-hmac-key-000000000000001
+      INITIAL_ADMIN_PASSWORD: stage-c-admin-password-2026
+      E2E_ADMIN_USERNAME: stage-admin
+      E2E_ADMIN_PASSWORD: stage-c-admin-password-2026
       E2E_BACKEND_URL: http://127.0.0.1:8000
     steps:
       - name: Checkout repository
@@ -58,6 +69,13 @@ jobs:
       - name: Verify Python runtime
         working-directory: apps/backend
         run: uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"
+
+      - name: Prepare Stage C database and administrator
+        working-directory: apps/backend
+        run: |
+          uv run alembic upgrade head
+          uv run python -m scripts.sync_permissions --apply --confirm-database pinjie_e2e_test
+          uv run python -m scripts.create_initial_admin --username "$E2E_ADMIN_USERNAME" --confirm-database pinjie_e2e_test
 
       - name: Start Backend
         working-directory: apps/backend

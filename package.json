@@ -14,7 +14,7 @@
     "lint": "turbo run lint",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#**/node_modules/**\" \"#**/.venv/**\" \"#**/coverage/**\" \"#**/.next/**\"",
     "typecheck": "turbo run typecheck",
-    "test:e2e": "playwright test"
+    "test:e2e": "node scripts/e2e/run-e2e.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
