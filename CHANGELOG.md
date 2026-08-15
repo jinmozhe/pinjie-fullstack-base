@@ -39,7 +39,7 @@
 
 ### Fixed
 
-- 修复 Governance 文本检查在 Linux PowerShell 中无法读取点文件的问题，并补齐私有仓库 CodeQL Job 读取 Actions 元数据所需的最小权限。
+- 修复 Governance 文本检查在 Linux PowerShell 中无法读取点文件、正反例脚本遗留预期失败退出码的问题，并补齐私有仓库 CodeQL Job 读取 Actions 元数据所需的最小权限。
 - 修复根 `.env.example` 的乱码、粘连和职责错位，只保留 `compose.prod.yml` 使用的公开部署变量模板。
 - 修复 Compose、GitHub Actions 和共享包说明中的既有乱码与换行损坏，并统一文本文件为 UTF-8 无 BOM且保留末尾换行。
 - 修复角色创建后响应序列化触发 SQLAlchemy 异步懒加载并返回 500 的问题。
