@@ -291,7 +291,7 @@ Service、Domain 和 Repository 禁止依赖 FastAPI `Request`、`Response`、`D
 2. 数据库测试只连接名称以 `_test` 结尾的独立 PostgreSQL 数据库，并在迁移、建表、清理前同时校验环境标识、主机允许范围、数据库名和连接身份与开发、生产隔离。
 3. 任一数据库身份条件无法确认时立即终止。禁止自动切换到开发库、SQLite 或内存数据库继续执行。
 4. 测试只清理本次测试创建且可准确定位的数据或 Schema，禁止对未知数据库执行 `drop_all()`、全表清空或无条件删除。
-5. 普通测试默认禁止未声明外部网络；真实服务测试使用独立标记、环境和授权，并且默认不在本地或 CI 普通套件运行。
+5. 普通测试默认禁止未声明外部网络；真实 PostgreSQL 与 Redis 集成测试属于 Backend 全量门禁，第三方服务验证使用独立标记、环境和授权。
 
 ### 15.2 分层要求
 
@@ -331,8 +331,9 @@ git diff --exit-code -- openapi.json packages/api-client/src
 适用规则：
 
 1. 数据库不可用、测试跳过、工具未安装和替代验证必须分别报告，不能汇总为“测试通过”。
-2. 当前本机全量 pytest 因缺少 `TEST_DATABASE_URL` 按 fail closed 规则失败；非集成测试已通过。
-3. 修改公开 API 时必须重新导出 OpenAPI 并生成客户端；生成后工作区存在差异表示契约尚未同步完成。
+2. `pyproject.toml` 默认对 `app` 同时统计行与分支覆盖率，`uv run pytest` 和 Backend CI 低于 90% 时必须失败；禁止通过 marker、单测子集或关闭 coverage 交付。
+3. 全量 pytest 必须显式提供隔离的 `TEST_DATABASE_URL` 与 `TEST_REDIS_URL`，数据库名必须以 `_test` 结尾；依赖不可用时按 fail closed 规则失败。
+4. 修改公开 API 时必须重新导出 OpenAPI 并生成客户端；生成后工作区存在差异表示契约尚未同步完成。
 
 ## 17. 代码评审清单
 

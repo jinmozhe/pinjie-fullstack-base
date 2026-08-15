@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 阶段 C 通用业务核心能力已完成；阶段 B 的真实 PostgreSQL、Redis、镜像构建与跨栈 E2E 已补验，仍保留发布级镜像摘要和容器运行验收项 |
+| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力均已完成；当前无活动开发计划 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -37,14 +37,7 @@
 
 | 范围 | 当前目标 | 计划 | 状态 | 依赖 |
 | --- | --- | --- | --- | --- |
-| 全栈 | 阶段 B 应用运行与测试基础设施 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Linux x86_64、PostgreSQL 18.4、Redis 8.10.0 |
-| Backend | 运行入口、Core、数据库、健康、测试和契约导出 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 阶段 A 基线、标准 CPython 3.14 |
-| Admin | 可运行管理端骨架、状态页、测试和镜像 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Backend 系统状态契约 |
-| Web | 可运行用户端骨架、状态入口、测试和镜像 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Backend 系统状态契约 |
-| API Client | 从 Backend OpenAPI 生成并由两端消费 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | Backend OpenAPI |
-| Database | Alembic 运行环境和 PostgreSQL 测试隔离，不新增业务表 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 独立 PostgreSQL 18.4 `_test` 数据库 |
-| Deployment | 三个 Dockerfile、健康检查、Compose 和跨栈 E2E | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 三个应用 ready |
-| Documentation | 阶段 B 计划、目录结构与后续实施事实同步 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 实施与验证结果 |
+| 全栈 | 暂无活动开发计划 | 无 | 无 | 新能力开始前按 `plans/README.md` 建立或继续相应计划 |
 
 ## 计划文档登记
 
@@ -63,20 +56,20 @@
 | `plans/2026-08-13_工程治理与安全可靠性基线计划.md` | 已结束 | 已完成 | 全栈治理、架构规则、质量门禁、安全供应链、发布与运维边界 | 建立业务开发前的模块化、失败关闭、受控兼容、不可变发布和全链路追溯基线 |
 | `plans/2026-08-13_Backend工程标准与规则分层计划.md` | 已结束 | 已完成 | Backend 规则、工程标准、文档治理 | 建立 Backend 宪法级规则入口、详细工程标准和专题文档读取路由 |
 | `plans/2026-08-13_AI助手开发与文档读取指南计划.md` | 已结束 | 已完成 | 全栈 AI 开发、文档治理 | 说明规则自动发现、按需读取、常见任务和完整开发交付链路 |
-| `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 实施中 | 三端工程 `ready`，真实数据库、镜像构建和跨栈 E2E 已补验；仍待发布级镜像摘要与容器运行专项验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 实施三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
+| `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
 | `plans/2026-08-14_阶段C通用业务核心能力计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 对照两个参考项目完成认证、会话、用户、RBAC、审计、日志和真实跨栈验收 |
 
 ## 当前系统状态
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计、请求元数据和运维脚本已实现 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/` |
-| Admin | 登录、受保护布局、权限导航、用户、管理员、角色权限、安全日志、MSW/RTL 测试和生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile` |
+| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；默认 pytest 对 `app` 执行 90% 行与分支覆盖率门禁 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Admin | 登录、受保护布局、权限导航、用户、管理员、角色权限、安全日志、MSW/RTL 测试和可健康运行的非 Root Nginx 生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf` |
 | Web | 注册登录、SSR 用户中心、资料、密码、会话、退出、注销、同域代理、组件测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径，生成 Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，PostgreSQL 18.4 空库/重复升级、Model/Head 和隔离集成测试通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/tests/` |
-| Deployment | 三个本地 Linux 镜像构建成功，生产 Compose、同域代理、请求日志 Profile 和桌面/移动 Chromium 真实跨栈 E2E 已验证；未执行镜像发布与生产部署 | `compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
-| Documentation | 目录结构已按阶段 C 收尾时的 259 个项目文件、64 个含文件目录同步，计划、ADR、架构、测试、运维、索引和 Changelog 与实现一致 | `docs/architecture/project-structure.md`、`plans/2026-08-14_阶段C通用业务核心能力计划.md`、`CHANGELOG.md` |
+| Deployment | Backend 固定官方 CPython 3.14.7 slim-trixie 完整基础镜像 digest；三张本地 Linux x86_64 非 Root 镜像构建和健康运行成功，生产 Compose、同域代理、请求日志 Profile 和桌面/移动 Chromium 真实跨栈 E2E 已验证；未执行镜像发布与生产部署 | `apps/backend/Dockerfile`、`compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
+| Documentation | 目录结构已按阶段 B 收尾时的 261 个项目文件、64 个含文件目录同步，阶段 B/C 计划、ADR、架构、测试、运维、索引和 Changelog 与实现一致 | `docs/architecture/project-structure.md`、`plans/2026-08-13_阶段B应用运行与测试基础设施计划.md`、`plans/2026-08-14_阶段C通用业务核心能力计划.md`、`CHANGELOG.md` |
 
 ## 权威来源
 

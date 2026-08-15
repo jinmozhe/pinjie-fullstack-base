@@ -8,7 +8,7 @@
 
 ## 一、当前完整文件结构
 
-以下清单以 2026-08-15 当前工作区为准，共 259 个项目文件、64 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。
+以下清单以 2026-08-15 当前工作区为准，共 261 个项目文件、64 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。
 
 ```text
 ./ :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
@@ -45,7 +45,7 @@ apps/backend/app/domains/system/ :: __init__.py, router.py, schemas.py
 apps/backend/app/domains/users/ :: __init__.py, router.py, schemas.py
 apps/backend/app/services/ :: __init__.py, accounts.py, admin_management.py, authentication.py, security_events.py
 apps/backend/scripts/ :: __init__.py, _database_target.py, cleanup_security_logs.py, consume_request_logs.py, create_initial_admin.py, export_openapi.py, sync_permissions.py
-apps/backend/tests/ :: __init__.py, conftest.py, test_api.py, test_config.py, test_identifiers.py, test_postgres_integration.py, test_stage_c_auth_api.py, test_stage_c_cookies.py, test_stage_c_integrations.py, test_stage_c_request_metadata.py, test_stage_c_security.py, test_transaction.py
+apps/backend/tests/ :: __init__.py, conftest.py, test_api.py, test_config.py, test_core_coverage.py, test_identifiers.py, test_postgres_integration.py, test_stage_b_coverage.py, test_stage_c_auth_api.py, test_stage_c_cookies.py, test_stage_c_integrations.py, test_stage_c_request_metadata.py, test_stage_c_security.py, test_transaction.py
 apps/web/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, next.config.ts, package.json, README.md, tsconfig.json, vitest.config.ts
 apps/web/scripts/ :: prepare-standalone.mjs
 apps/web/src/app/ :: error.tsx, globals.css, layout.tsx, loading.tsx, not-found.tsx, page.tsx, providers.tsx

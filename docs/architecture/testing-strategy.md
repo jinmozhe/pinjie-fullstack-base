@@ -99,15 +99,22 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 官方依据：[Next.js Vitest 指南](https://nextjs.org/docs/app/guides/testing/vitest)、[Next.js Playwright 指南](https://nextjs.org/docs/app/guides/testing/playwright)、[Playwright 最佳实践](https://playwright.dev/docs/best-practices)、[Testing Library 原则](https://testing-library.com/docs/guiding-principles)、[Vitest Browser Mode](https://vitest.dev/guide/browser/)和 [MSW 文档](https://mswjs.io/docs/)。
 
-## 7. 跳过和不稳定测试
+## 7. Backend 覆盖率门禁
+
+- `apps/backend/pyproject.toml` 是 Backend 覆盖率配置的唯一来源，统计范围为 `app`，同时启用行覆盖率和分支覆盖率。
+- 默认 `uv run pytest` 与 Backend CI 都继承 `--cov=app --cov-branch --cov-report=term-missing --cov-fail-under=90`，低于 90% 时退出码非零。
+- 全量门禁包含真实 PostgreSQL 18.4 与 Redis 8.10.0 集成测试，不允许用 SQLite、跳过 integration marker 或只运行单元测试代替。
+- 覆盖率只用于暴露测试空白。关键成功、拒绝、冲突、依赖失败、配置失败和恢复路径仍需具备可观察行为断言。
+
+## 8. 跳过和不稳定测试
 
 - 关键门禁不得因缺少依赖而静默跳过。
 - `skip`、`xfail` 和隔离测试必须包含原因、负责人和清理日期。
 - 不稳定测试先定位原因，不能通过无限重试掩盖。
 - CI Summary 必须区分通过、失败、跳过和未适用。
 
-## 8. 完成条件
+## 9. 完成条件
 
-一项实现只有在计划内全部适用门禁通过、未适用项有依据、跳过项被明确记录并且代码与文档同步后才能宣称完成。覆盖率阈值由后续实现计划按风险确定，不在空骨架阶段虚构数字。
+一项实现只有在计划内全部适用门禁通过、未适用项有依据、跳过项被明确记录并且代码与文档同步后才能宣称完成。Backend 当前最低覆盖率为 90%；Admin 与 Web 的语句、分支、函数和行覆盖率最低为 80%。
 
-阶段 C 当前验证基线为 Backend 32 项、Admin 14 项、Web 13 项自动化测试通过；Playwright 四个项目共 8 项通过、8 项按 Web/Admin 项目互斥条件标记为不适用。真实 PostgreSQL 18.4、Redis 8.10.0、Alembic、三端生产构建和三张 Linux 容器镜像均已完成本地验证，完整命令与结果保存在阶段 C 计划。
+当前验证基线为 Backend 66 项自动化测试通过，行与分支综合覆盖率 `90.34%`；Admin 与 Web 保持各维度 80% 门禁。真实 PostgreSQL 18.4、Redis 8.10.0、Alembic、三端生产构建和三张 Linux x86_64 非 Root 容器均已完成本地验证，完整命令与结果保存在阶段 B 和阶段 C 计划。

@@ -131,7 +131,7 @@ jobs:
         working-directory: apps/backend
         run: uv run alembic check
 
-      - name: Pytest
+      - name: Pytest with 90% coverage gate
         working-directory: apps/backend
         run: uv run pytest tests/ -v
 

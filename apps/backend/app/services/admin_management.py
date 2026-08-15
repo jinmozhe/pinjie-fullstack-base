@@ -400,6 +400,7 @@ class AdminManagementService:
                 name=payload.name.strip(),
                 description=payload.description.strip() if payload.description else None,
                 is_active=payload.is_active,
+                permissions=[],
             )
             self.admins.add_role(role)
             return role

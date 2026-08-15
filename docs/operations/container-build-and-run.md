@@ -7,7 +7,7 @@
 ## 2. 构建前提
 
 - 构建主机使用 Linux x86_64 或 Docker Desktop Linux 容器模式。
-- Backend 使用标准 CPython 3.14，镜像内只安装 `uv.lock` 的运行依赖。
+- Backend 使用标准 CPython 3.14，当前构建与运行阶段固定官方 `python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`，工具来源固定 `uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c`，镜像内只安装 `uv.lock` 的运行依赖。
 - 根目录是三个 Dockerfile 的构建上下文，不能把应用子目录单独作为上下文。
 - 生产 PostgreSQL 固定为 `postgres:18.4-alpine`，Redis 固定为 `redis:8.10.0-alpine`。
 
@@ -31,7 +31,7 @@ docker image inspect pinjie-fullstack-admin:local --format '{{.Architecture}} {{
 
 Backend、Web 和 Admin 应分别以非 root 用户运行。具体 UID 属于镜像实现细节，检查结果必须确认不是空值或 `0`。
 
-阶段 C 本地验收已经在 Linux 容器模式成功构建三张镜像。该结果只证明当前工作区可构建，不代替发布时的基础镜像 digest 固定、SBOM、来源证明和目标镜像扫描。
+阶段 B 收尾已在 Linux x86_64 容器模式成功构建并运行三张镜像。Backend、Web 和 Admin 分别以 `app`、`app` 和 `nginx` 非 Root 用户运行，内置健康检查均达到 `healthy`；该结果不代替发布时的 SBOM、来源证明、目标镜像扫描和生产部署验证。
 
 ## 4. 生产 Compose 配置
 

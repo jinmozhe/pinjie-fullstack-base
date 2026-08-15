@@ -13,7 +13,8 @@ RUN pnpm --filter @pinjie/admin build
 FROM nginx:1.29-alpine AS runtime
 COPY apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/apps/admin/dist /usr/share/nginx/html
-RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /usr/share/nginx/html
+RUN sed -i 's#^pid .*;#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
+    && chown -R nginx:nginx /var/cache/nginx /var/log/nginx /usr/share/nginx/html
 USER nginx
 EXPOSE 3001
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=6 CMD ["wget", "--quiet", "--spider", "http://127.0.0.1:3001/healthz"]

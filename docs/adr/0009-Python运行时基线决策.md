@@ -89,6 +89,10 @@ FROM python:3.14.<当前受支持补丁>-slim-trixie@sha256:<核验后的完整�
 
 占位值不得进入生产发布配置。当前本地构建因 Docker Hub 网络超时未完成，发布前必须查询官方镜像并填入真实补丁版本和对应平台 digest。
 
+## 实施记录
+
+2026-08-15 已完成原决策中的待办：官方 `python:3.14.7-slim-trixie` 经 Docker Hub 拉取并在本机核验为标准 CPython 3.14.7、Linux x86_64，RepoDigest 为 `sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`。Backend Dockerfile 的 builder 与 runtime 已同时固定该完整 digest，镜像构建、原生扩展安装、非 Root 运行和健康探针均通过。此前“完整 digest 仍待核验”和“本地构建未完成”的实施状态到此关闭，运行时升级仍按本 ADR 的受控更新流程执行。
+
 ## 官方依据
 
 - [Python 版本状态](https://devguide.python.org/versions/)
