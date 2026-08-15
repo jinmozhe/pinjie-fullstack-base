@@ -37,7 +37,7 @@
 
 | 范围 | 当前目标 | 计划 | 状态 | 依赖 |
 | --- | --- | --- | --- | --- |
-| 全栈治理、GitHub | 停用 Dependabot 自动分支并将本地和远程分支收敛为 `main` | `plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md` | 实施中 | 已确认，正在实施配置删除、提交推送、PR 关闭和分支清理 |
+| 全栈 | 暂无活动开发计划 | 无 | 无 | 新能力开始前按 `plans/README.md` 建立或继续相应计划 |
 
 ## 计划文档登记
 
@@ -58,7 +58,7 @@
 | `plans/2026-08-13_AI助手开发与文档读取指南计划.md` | 已结束 | 已完成 | 全栈 AI 开发、文档治理 | 说明规则自动发现、按需读取、常见任务和完整开发交付链路 |
 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
 | `plans/2026-08-14_阶段C通用业务核心能力计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 对照两个参考项目完成认证、会话、用户、RBAC、审计、日志和真实跨栈验收 |
-| `plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md` | 实施中 | 未实施 | 全栈治理、GitHub、Documentation | 停用自动依赖分支，关闭相关 PR，并将本地和远程分支收敛为 `main` |
+| `plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md` | 已结束 | 已完成 | 全栈治理、GitHub、Documentation | 已停用自动依赖分支、关闭相关 PR，并将本地和远程分支收敛为 `main` |
 
 ## 当前系统状态
 

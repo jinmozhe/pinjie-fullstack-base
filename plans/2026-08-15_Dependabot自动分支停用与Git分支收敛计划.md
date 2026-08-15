@@ -2,8 +2,8 @@
 
 ## 当前状态和结果
 
-- 状态：实施中
-- 结果：未实施
+- 状态：已结束
+- 结果：已完成
 
 ## 关联需求
 
@@ -98,13 +98,13 @@ GitHub 当前实际存在 `main` 和 3 条 Dependabot 分支，对应开放的 P
 - [x] `pnpm lint:md` 通过。
 - [x] `pnpm check:workspace` 通过。
 - [x] `pnpm check:boundaries` 通过。
-- [ ] `.github/dependabot.yml` 已从本地和 GitHub `main` 删除。
-- [ ] GitHub `automated-security-fixes` 仍为关闭状态。
-- [ ] GitHub 开放 Dependabot Pull Request 数量为 0。
-- [ ] `git ls-remote --heads origin` 只返回 `refs/heads/main`。
-- [ ] `git branch --list` 只返回本地 `main`。
-- [ ] `git branch --remotes` 只返回 `origin/HEAD -> origin/main` 和 `origin/main`。
-- [ ] `git status --short --branch` 显示 `main...origin/main` 且无工作区修改。
+- [x] `.github/dependabot.yml` 已从本地和 GitHub `main` 删除。
+- [x] GitHub `automated-security-fixes` 仍为关闭状态。
+- [x] GitHub 开放 Dependabot Pull Request 数量为 0。
+- [x] `git ls-remote --heads origin` 只返回 `refs/heads/main`。
+- [x] `git branch --list` 只返回本地 `main`。
+- [x] `git branch --remotes` 只返回 `origin/HEAD -> origin/main` 和 `origin/main`。
+- [x] `git status --short --branch` 显示 `main...origin/main` 且无工作区修改。
 - [x] 修改文件均为 UTF-8 无 BOM 并保留末尾换行。
 
 ## 待确认问题
@@ -119,7 +119,12 @@ GitHub 当前实际存在 `main` 和 3 条 Dependabot 分支，对应开放的 P
 
 - 已删除本地 `.github/dependabot.yml`，并同步项目结构、变更日志、计划和项目索引。
 - `pnpm lint:md`、`pnpm check:workspace`、`pnpm check:boundaries` 和文本卫生检查已执行；前三项通过，文本卫生检查仅报告公开 `.env.example` 占位密码的既有人工复核警告，已确认不是真实凭据。
+- 已将配置删除提交推送到 GitHub `main`，线上 `main` 已不存在 `.github/dependabot.yml`。
+- 已关闭 Pull Request #2、#5、#6，并删除对应的 3 条 Dependabot 远程分支。
+- 已通过带 `prune` 的远程刷新清理本地 6 条失效 Dependabot 远程跟踪引用。
+- 已配置本地 `main` 跟踪 `origin/main`。
+- 最终核验确认 GitHub 和本地均只保留 `main`，GitHub 开放 Pull Request 为 0，仓库级自动安全修复保持关闭。
 
 ## 剩余问题
 
-- 等待本地变更提交并推送 `main`，随后关闭 Pull Request、删除远程分支、清理远程引用并设置上游关系。
+- 无。
