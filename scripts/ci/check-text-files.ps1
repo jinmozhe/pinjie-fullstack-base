@@ -25,7 +25,7 @@ foreach ($relativePath in $tracked) {
         continue
     }
 
-    $item = Get-Item -LiteralPath $fullPath
+    $item = Get-Item -Force -LiteralPath $fullPath
     if ($extensions -notcontains $item.Extension.ToLowerInvariant() -and $names -notcontains $item.Name) {
         continue
     }

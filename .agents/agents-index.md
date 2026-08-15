@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力均已完成；当前无活动开发计划 |
+| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力均已完成；当前正在修复 CI 跨平台兼容与 CodeQL 权限问题 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -37,7 +37,7 @@
 
 | 范围 | 当前目标 | 计划 | 状态 | 依赖 |
 | --- | --- | --- | --- | --- |
-| 全栈 | 暂无活动开发计划 | 无 | 无 | 新能力开始前按 `plans/README.md` 建立或继续相应计划 |
+| 全栈治理 | 修复 Governance Linux 点文件读取和私有仓库 CodeQL 权限 | `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 实施中 | 完成本地验证后交付，提交与推送另行授权 |
 
 ## 计划文档登记
 
@@ -59,6 +59,7 @@
 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
 | `plans/2026-08-14_阶段C通用业务核心能力计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 对照两个参考项目完成认证、会话、用户、RBAC、审计、日志和真实跨栈验收 |
 | `plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md` | 已结束 | 已完成 | 全栈治理、GitHub、Documentation | 已停用自动依赖分支、关闭相关 PR，并将本地和远程分支收敛为 `main` |
+| `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 实施中 | 无 | 全栈治理、GitHub Actions、Documentation | 修复 Governance Linux 点文件读取和私有仓库 CodeQL Job 权限 |
 
 ## 当前系统状态
 
