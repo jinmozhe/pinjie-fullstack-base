@@ -14,7 +14,7 @@
 ./ :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
 .agents/ :: agents-index.md
 .agents/rules/ :: .markdownlint.json, 00-repository.md, 10-backend.md, 20-admin.md, 30-web.md
-.github/ :: CODEOWNERS, dependabot.yml, pull_request_template.md
+.github/ :: CODEOWNERS, pull_request_template.md
 .github/workflows/ :: ci-backend.yml, ci-e2e.yml, ci-frontend.yml, ci-governance.yml, deploy-production.yml, publish-images.yml, security.yml
 .vscode/ :: extensions.json
 apps/admin/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, index.html, nginx.conf, package.json, README.md, tsconfig.json, vite.config.ts
@@ -72,7 +72,7 @@ packages/api-client/src/client/ :: client.gen.ts, index.ts, types.gen.ts, utils.
 packages/api-client/src/core/ :: auth.gen.ts, bodySerializer.gen.ts, params.gen.ts, pathSerializer.gen.ts, queryKeySerializer.gen.ts, serverSentEvents.gen.ts, types.gen.ts, utils.gen.ts
 packages/eslint-config/ :: index.js, package.json
 packages/typescript-config/ :: base.json, nextjs.json, package.json, vite.json
-plans/ :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, README.md
+plans/ :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, 2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md, README.md
 scripts/ci/ :: check-module-boundaries.ps1, check-text-files.ps1, check-workspace-state.ps1, test-governance-guards.ps1
 scripts/e2e/ :: run-e2e.mjs
 ```

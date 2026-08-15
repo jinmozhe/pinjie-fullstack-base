@@ -29,7 +29,7 @@
 - 建立 `empty`、`partial`、`ready` 三态工程完整性门禁；部分实现、契约不一致和跨模块内部依赖会直接失败，空骨架只报告治理检查结果。
 - 建立模块化单体、领域所有权、Fail Closed、认证授权分层、测试、可观测性和可靠性架构基线。
 - 建立受控迁移兼容和不可变发布 ADR，生产部署固定镜像 digest，禁止 `latest` 与缺失版本回退。
-- 增加 `SECURITY.md`、CODEOWNERS、Pull Request 风险模板、Dependabot、Gitleaks、Dependency Review、包管理器依赖审计、依赖文件扫描和 CodeQL 治理基线。
+- 增加 `SECURITY.md`、CODEOWNERS、Pull Request 风险模板、Gitleaks、Dependency Review、包管理器依赖审计、依赖文件扫描和 CodeQL 治理基线。
 - 分离 CI、镜像发布和生产部署工作流；发布生成 SBOM 与构建来源证明，部署要求受保护环境、明确开关和固定 digest。
 - 增加发布回滚、数据库备份恢复和事故响应手册，以及统一文本编码、换行和模块边界检查脚本。
 - 增加环境变量分层与 Backend 本地运行手册，明确根 `.env`、三端应用配置、1Panel 部署关系和 VS Code 下的后端启动顺序。
@@ -46,6 +46,7 @@
 
 ### Changed
 
+- 停用 Dependabot 定期依赖升级分支和 Pull Request，依赖版本调整改为人工发起、评审和验证；保留漏洞告警、Dependency Review、依赖审计和 CodeQL 安全门禁。
 - 清空并关闭 GitHub Wiki，项目文档统一以仓库 `docs/` 为唯一来源，后续提交和文档同步流程跳过 Wiki。
 - 生产 Compose 改为强制接收 Backend、Web 和 Admin 的完整不可变镜像引用，缺失变量时立即失败。
 - 前端和治理 CI 运行基线升级到仍受官方支持的 Node.js 24，并固定 pnpm 11.17.0。
