@@ -1,6 +1,12 @@
 packages:
   - "apps/*"
   - "packages/*"
+blockExoticSubdeps: true
+minimumReleaseAge: 10080
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  - "semver@6.3.1"
+  - "undici-types@6.21.0"
 overrides:
   path-to-regexp: 8.4.2
   "js-yaml@<5": 4.3.1

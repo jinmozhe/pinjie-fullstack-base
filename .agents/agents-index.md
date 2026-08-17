@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力均已完成；当前正在修复 CI 跨平台兼容与 CodeQL 权限问题 |
+| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力均已完成；当前正在完成 CI 跨平台修复和私有仓库 SAST 替换 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -27,6 +27,7 @@
 | `docs/PROJECT_REQUIREMENTS.md` | 生效 | 母版目标用户、场景、目标能力、非目标、派生规则和验收基线 |
 | `docs/README.md` | 生效 | `docs/` 下全部项目文档的专项索引 |
 | `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则发现、按需读取、计划实施、验证交付和独立授权的操作指南 |
+| `docs/operations/github-actions-workflows.md` | 生效 | GitHub Actions 自动检查、人工镜像发布和生产部署的逐工作流说明 |
 | `SECURITY.md` | 生效 | 漏洞报告、安全响应目标和安全开发要求 |
 | `scripts/ci/` | 生效 | 三态完整性、模块边界、文本卫生和门禁正反例检查 |
 | `CHANGELOG.md` | 生效 | 已交付但尚未发布的能力和后续版本变化 |
@@ -37,7 +38,7 @@
 
 | 范围 | 当前目标 | 计划 | 状态 | 依赖 |
 | --- | --- | --- | --- | --- |
-| 全栈治理 | 修复 Governance Linux 点文件读取和私有仓库 CodeQL 权限 | `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 实施中 | 完成本地验证后交付，提交与推送另行授权 |
+| 全栈治理 | 修复 Governance Linux 兼容并以 Semgrep CE 替换不可用的 CodeQL | `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 实施中 | 本地验证已通过，等待提交后线上五个工作流复验 |
 
 ## 计划文档登记
 
@@ -59,7 +60,7 @@
 | `plans/2026-08-13_阶段B应用运行与测试基础设施计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成三个应用运行、测试、契约和容器基础设施，不包含认证与具体业务领域 |
 | `plans/2026-08-14_阶段C通用业务核心能力计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 对照两个参考项目完成认证、会话、用户、RBAC、审计、日志和真实跨栈验收 |
 | `plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md` | 已结束 | 已完成 | 全栈治理、GitHub、Documentation | 已停用自动依赖分支、关闭相关 PR，并将本地和远程分支收敛为 `main` |
-| `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 实施中 | 无 | 全栈治理、GitHub Actions、Documentation | 修复 Governance Linux 点文件读取和私有仓库 CodeQL Job 权限 |
+| `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 实施中 | 无 | 全栈治理、GitHub Actions、Documentation | 修复 Governance Linux 兼容并以 Semgrep CE 替换私有仓库不可用的 CodeQL |
 
 ## 当前系统状态
 

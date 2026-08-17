@@ -282,6 +282,16 @@ pnpm --filter @pinjie/admin remove dayjs
 pnpm update --recursive
 ```
 
+根 `pnpm-workspace.yaml` 同时执行以下供应链约束：
+
+- `minimumReleaseAge: 10080`：新发布版本经过 10080 分钟，即七天冷却期后，才可进入新的依赖解析结果。
+- `blockExoticSubdeps: true`：拒绝传递依赖从未信任的 Git 仓库、压缩包 URL 等来源拉取代码；Registry、本地路径、Workspace 链接和 pnpm 明确信任的官方 GitHub 仓库仍可使用。
+- `trustPolicy: no-downgrade`：拒绝包的发布来源信任等级相对已有记录下降。
+- `trustPolicyExclude`：只为已审查且当前依赖链无法替换的 `semver@6.3.1` 和 `undici-types@6.21.0` 保留精确版本例外，不放行同名包的其他版本。
+- `allowBuilds`：只有显式白名单中的包可以执行安装构建脚本。
+
+这些策略不会在 frozen install 中静默改写锁文件，不符合策略的既有锁文件会直接失败。新增、升级或首次启用策略时遇到拒绝，先核对包来源、发布时间和信任变化，再重新解析锁文件；紧急安全修复通过专项评审调整具体边界，不关闭整套策略。
+
 > **注意**：不要在子项目目录里单独运行 `pnpm install`，
 > 始终在根目录统一管理，确保 `pnpm-lock.yaml` 唯一且完整。
 

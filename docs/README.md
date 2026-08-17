@@ -77,6 +77,7 @@
 | [ai-assisted-development-workflow.md](operations/ai-assisted-development-workflow.md) | AI 助手规则发现、文档读取路由、常见任务、计划实施、验证交付和独立授权的完整开发指南 |
 | [uv使用指南.md](operations/uv使用指南.md) | uv 原理、纯 uv 环境方案、常用命令和 conda 对比 |
 | [pnpm使用指南.md](operations/pnpm使用指南.md) | pnpm 存储机制、workspace 共享包、Markdown 检查等常用命令和 npm 对比 |
+| [github-actions-workflows.md](operations/github-actions-workflows.md) | GitHub Actions 自动 CI、安全扫描、人工镜像发布和生产部署的逐工作流说明与排障入口 |
 | [release-and-rollback.md](operations/release-and-rollback.md) | CI、镜像发布、生产部署和按固定 digest 回滚的操作边界 |
 | [container-build-and-run.md](operations/container-build-and-run.md) | 三个应用镜像构建、迁移与权限初始化、请求日志 Profile、生产 Compose 和健康验证 |
 | [database-backup-restore.md](operations/database-backup-restore.md) | 备份参数、恢复演练、生产恢复和数据库迁移保护步骤 |

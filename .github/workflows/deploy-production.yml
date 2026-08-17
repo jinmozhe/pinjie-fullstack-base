@@ -161,11 +161,18 @@ jobs:
 
       - name: Record deployment inputs
         shell: bash
+        env:
+          ADMIN_DIGEST: ${{ inputs.admin_digest }}
+          BACKEND_DIGEST: ${{ inputs.backend_digest }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          COMPOSE_SHA256: ${{ steps.source.outputs.compose_sha256 }}
+          IMAGE_OWNER: ${{ github.repository_owner }}
+          WEB_DIGEST: ${{ inputs.web_digest }}
         run: |
-          {
-            echo "commit_sha=${{ inputs.commit_sha }}"
-            echo "compose_sha256=${{ steps.source.outputs.compose_sha256 }}"
-            echo "backend=ghcr.io/${{ github.repository_owner }}/pinjie-fullstack-backend@${{ inputs.backend_digest }}"
-            echo "web=ghcr.io/${{ github.repository_owner }}/pinjie-fullstack-web@${{ inputs.web_digest }}"
-            echo "admin=ghcr.io/${{ github.repository_owner }}/pinjie-fullstack-admin@${{ inputs.admin_digest }}"
-          } >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' \
+            "commit_sha=$COMMIT_SHA" \
+            "compose_sha256=$COMPOSE_SHA256" \
+            "backend=ghcr.io/$IMAGE_OWNER/pinjie-fullstack-backend@$BACKEND_DIGEST" \
+            "web=ghcr.io/$IMAGE_OWNER/pinjie-fullstack-web@$WEB_DIGEST" \
+            "admin=ghcr.io/$IMAGE_OWNER/pinjie-fullstack-admin@$ADMIN_DIGEST" \
+            >> "$GITHUB_STEP_SUMMARY"

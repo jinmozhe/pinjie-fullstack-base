@@ -1,0 +1,601 @@
+# GitHub Actions 工作流说明
+
+## 1. 文档目标
+
+本文说明仓库中每个 GitHub Actions 工作流的触发条件、执行步骤、作用、使用场景、失败含义和流程边界。
+
+本文负责解释“GitHub 收到提交后会运行什么”以及“人工发布和部署会执行什么”。实际发布、部署和回滚操作仍以[发布与回滚手册](release-and-rollback.md)为准，不在本文重复维护生产操作决策。
+
+工作流配置是执行事实的最终来源：
+
+| 工作流 | 配置文件 |
+| --- | --- |
+| CI - Governance | [ci-governance.yml](../../.github/workflows/ci-governance.yml) |
+| CI - Backend | [ci-backend.yml](../../.github/workflows/ci-backend.yml) |
+| CI - Frontend | [ci-frontend.yml](../../.github/workflows/ci-frontend.yml) |
+| CI - Browser E2E | [ci-e2e.yml](../../.github/workflows/ci-e2e.yml) |
+| Security | [security.yml](../../.github/workflows/security.yml) |
+| Publish Images | [publish-images.yml](../../.github/workflows/publish-images.yml) |
+| Deploy Production | [deploy-production.yml](../../.github/workflows/deploy-production.yml) |
+
+## 2. 总体流程
+
+```mermaid
+flowchart TD
+    A["本地提交"] --> B["git push"]
+    B --> C["CI - Governance"]
+    B --> D["CI - Backend"]
+    B --> E["CI - Frontend"]
+    B --> F["CI - Browser E2E"]
+    B --> G["Security"]
+    C --> H["同一 Commit SHA 的 5 个 push 工作流全部成功"]
+    D --> H
+    E --> H
+    F --> H
+    G --> H
+    H --> I["人工授权 Publish Images"]
+    I --> J["构建、扫描并发布 3 张 GHCR 镜像"]
+    J --> K["人工授权 Deploy Production"]
+    K --> L["固定 3 个镜像 digest 部署生产环境"]
+```
+
+流程坚持三项边界：
+
+1. `git push` 只触发质量和安全检查，不发布镜像，不接触生产服务器。
+2. 镜像发布必须人工触发，并且只接受已经通过全部 push 工作流的完整 Commit SHA。
+3. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
+
+## 3. 触发条件总表
+
+| 工作流 | Push | Pull Request | 定时 | 人工触发 |
+| --- | --- | --- | --- | --- |
+| CI - Governance | 是 | 是 | 否 | 否 |
+| CI - Backend | 是 | 是 | 否 | 否 |
+| CI - Frontend | 是 | 是 | 否 | 否 |
+| CI - Browser E2E | 是 | 是 | 否 | 否 |
+| Security | 是 | 是 | 每周一次 | 否 |
+| Publish Images | 否 | 否 | 否 | 是 |
+| Deploy Production | 否 | 否 | 否 | 是 |
+
+五个自动工作流没有配置分支过滤或路径过滤，因此向任意分支推送提交都会触发。当前仓库远程只保留 `main`，日常实际触发点是向 `main` 推送。
+
+`Security` 的定时表达式是 `23 3 * * 1`，即每周一 `03:23 UTC`。在中国标准时间下对应每周一 `11:23`。
+
+`git push` 只上传已经提交的 Git 对象。本地未提交修改和未跟踪文件不会进入 GitHub，也不会被对应 Actions Run 检查。
+
+## 4. Push 后的执行顺序
+
+GitHub 收到新提交后，会为同一个 Commit SHA 创建五个相互独立的 Workflow Run：
+
+1. `CI - Governance`
+2. `CI - Backend`
+3. `CI - Frontend`
+4. `CI - Browser E2E`
+5. `Security`
+
+五个工作流通常并行排队和执行。它们之间没有 `workflow_run` 自动串联，因此一个工作流成功不会自动启动另一个工作流。
+
+同一工作流内部可以通过 `needs` 建立 Job 依赖。例如 Backend 和 Frontend 先判断应用状态，再决定是否运行完整质量检查。GitHub Runner 配额、依赖下载速度和服务容器启动速度会影响完成先后顺序。
+
+任意工作流失败时：
+
+- 该 Commit SHA 的整体检查状态会出现失败。
+- GitHub 可能按个人通知设置发送 Actions 失败邮件。
+- 其他已经开始的工作流通常继续运行。
+- `Publish Images` 会拒绝使用该 Commit SHA，因为它要求五个 push 工作流都有成功记录。
+- 不会自动回退本地代码，也不会自动修改远程分支。
+
+## 5. CI - Governance
+
+### 5.1 作用和使用场景
+
+Governance 检查仓库结构、文本质量和架构边界，防止代码本身能编译，但仓库已经出现不完整应用、错误编码、生成缓存入库或跨模块非法依赖。
+
+适用场景包括：
+
+- 修改任何源码、配置或文档后验证文本卫生。
+- 新增目录、应用入口、依赖或共享包后验证工作区状态。
+- 调整 Backend 领域或 Frontend Feature 后验证模块边界。
+- 修改治理脚本后运行正反例，确认门禁能够正确放行和拒绝。
+
+### 5.2 执行步骤
+
+| 步骤 | 作用 | 典型失败原因 |
+| --- | --- | --- |
+| Checkout repository | 检出目标提交 | Action 或 GitHub 基础设施异常 |
+| Validate text assets | 检查 UTF-8、BOM、末尾换行和受控文件类型 | 乱码、UTF-8 BOM、缺少末尾换行 |
+| Validate workspace state | 判断 Backend、Web、Admin 是 `empty`、`partial` 或 `ready` | 应用只有部分入口、脚本或配置 |
+| Validate module boundaries | 检查跨应用和模块内部依赖 | 应用互相直接引用、领域越界导入 |
+| Test governance guards | 用正反例验证治理脚本本身 | 门禁未拒绝反例、清理或退出码错误 |
+| Install pnpm and Node.js | 安装固定 pnpm 11.17.0 和 Node.js 24 | 下载失败、缓存或运行环境异常 |
+| Install locked dependencies | 按锁文件安装依赖 | 锁文件漂移、供应链策略拒绝依赖 |
+| Lint Markdown | 运行全仓库 Markdown 格式检查 | 标题、列表、表格或链接格式违规 |
+
+### 5.3 结果含义
+
+成功表示仓库治理规则通过，不等于 Backend、Frontend 或真实业务流程已经通过。应用质量和端到端行为由其他工作流负责。
+
+## 6. CI - Backend
+
+### 6.1 作用和使用场景
+
+Backend 工作流验证 FastAPI 应用、数据库迁移、Redis 依赖、静态质量、测试覆盖率和 OpenAPI 生成契约。
+
+适用场景包括：
+
+- 修改 Python 业务代码、配置、依赖或测试。
+- 修改 SQLAlchemy Model 或 Alembic 迁移。
+- 修改 Router、Schema 或 OpenAPI 契约。
+- 修改共享 API Client 的生成来源。
+
+### 6.2 Backend state and boundaries
+
+第一个 Job 运行工作区状态和模块边界检查，并输出 Backend 状态：
+
+- `empty`：明确的空骨架，只报告状态，不宣称应用质量通过。
+- `ready`：入口、依赖、测试和必要配置完整，继续运行 `backend-quality`。
+- `partial`：部分实现状态，工作区门禁直接失败。
+
+当前 Backend 为 `ready`，因此每次 push 都会进入完整质量检查。
+
+### 6.3 Backend quality
+
+Job 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器，并使用隔离的 `pinjie_ci_test` 测试数据库。
+
+| 步骤 | 作用 |
+| --- | --- |
+| 安装 uv 和 CPython 3.14 | 建立固定 Python 运行环境 |
+| `uv sync --locked` | 按 `uv.lock` 安装精确依赖，拒绝锁文件漂移 |
+| Python 版本断言 | 确认实际运行 CPython 3.14 |
+| Ruff | 检查 Python 代码质量和导入顺序 |
+| Ruff format | 检查格式，无自动改写 |
+| Mypy | 运行严格静态类型检查 |
+| Import boundaries | 检查 Backend 模块依赖规则 |
+| Compile Python sources | 编译应用、迁移、脚本和测试源码 |
+| Import application | 导入 FastAPI 应用并生成内存 OpenAPI |
+| Validate isolated test database | 强制测试库名称以 `_test` 结尾 |
+| Upgrade test database twice | 验证 Alembic 从空库升级和重复升级幂等性 |
+| Check migration drift | 验证 Model 与迁移 Head 一致 |
+| Pytest | 运行测试并要求行和分支覆盖率达到 90% |
+| Export OpenAPI contract | 从 Backend 重新生成根 `openapi.json` |
+| Regenerate API Client | 从 OpenAPI 重新生成 TypeScript Client |
+| Reject generated contract drift | 发现生成结果与仓库不一致时失败 |
+
+### 6.4 Pull Request 专属检查
+
+`OpenAPI breaking changes` Job 只在 Pull Request 运行。它比较 PR 与目标分支的 `openapi.json`，使用 `oasdiff` 拒绝未处理的破坏性接口变化。
+
+普通 push 不运行该 Job，因为 push 事件没有 PR 的目标分支上下文。
+
+## 7. CI - Frontend
+
+### 7.1 作用和使用场景
+
+Frontend 工作流分别验证 Web 和 Admin 两个独立应用，覆盖代码质量、类型、单元或组件测试、生产构建和生成 API Client 一致性。
+
+适用场景包括：
+
+- 修改 Next.js Web 应用。
+- 修改 Vite、React、Ant Design Admin 应用。
+- 修改共享前端包或根依赖。
+- OpenAPI 变化后验证两个消费者仍能构建。
+
+### 7.2 Frontend state and boundaries
+
+第一个 Job 检查工作区状态和模块边界，分别输出 `web` 与 `admin` 状态。`ready` 应用进入对应质量 Job，`partial` 状态导致门禁失败。
+
+Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
+
+### 7.3 Web quality
+
+1. 安装固定 pnpm 11.17.0 和 Node.js 24。
+2. 使用 `pnpm install --frozen-lockfile` 安装锁定依赖。
+3. 运行 Web ESLint。
+4. 运行 Web TypeScript 类型检查。
+5. 运行 Web 单元和组件测试。
+6. 运行 Web 生产构建。
+7. 重新生成 API Client，并拒绝生成目录出现 Git 差异。
+
+### 7.4 Admin quality
+
+1. 安装固定 pnpm 11.17.0 和 Node.js 24。
+2. 使用 `pnpm install --frozen-lockfile` 安装锁定依赖。
+3. 运行 Admin ESLint。
+4. 运行 Admin TypeScript 类型检查。
+5. 运行 Admin 单元和组件测试。
+6. 运行 Admin 生产构建。
+7. 重新生成 API Client，并拒绝生成目录出现 Git 差异。
+
+### 7.5 结果含义
+
+成功表示两个前端应用可以通过各自的静态检查、测试和生产构建。真实浏览器中的 Backend、Web、Admin 联动由 Browser E2E 工作流继续验证。
+
+## 8. CI - Browser E2E
+
+### 8.1 作用和使用场景
+
+Browser E2E 在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，构建两个前端，再用 Chromium 执行完整用户流程。
+
+它主要发现单元测试难以覆盖的问题：
+
+- Backend 与数据库或 Redis 的真实连接问题。
+- Cookie、CSRF、跨应用认证和同域代理问题。
+- OpenAPI Client 与真实 HTTP 响应不一致。
+- 页面路由、表单、权限导航和浏览器运行错误。
+- 多个应用分别构建成功，但组合运行失败。
+
+### 8.2 执行步骤
+
+1. 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器。
+2. 使用 uv 和 CPython 3.14 安装 Backend 锁定依赖。
+3. 执行 Alembic 迁移、权限同步和初始管理员创建。
+4. 在 Runner 后台启动 Uvicorn，并轮询 `/health/live`。
+5. 安装固定 pnpm 和 Node.js 版本。
+6. 安装根锁文件依赖。
+7. 构建 Admin 和 Web。
+8. 安装 Chromium 及其系统依赖。
+9. 运行 `pnpm test:e2e`。
+
+### 8.3 资源特征
+
+该工作流会下载浏览器、启动数据库和 Redis，并构建两个前端，通常是五个自动工作流中耗时和资源占用较高的一项。
+
+## 9. Security
+
+### 9.1 作用和使用场景
+
+Security 工作流覆盖密钥泄露、依赖漏洞、依赖变更和源码安全问题。它在 push、Pull Request 和每周定时任务中运行，使没有新提交时出现的最新漏洞公告也能被发现。
+
+### 9.2 Source state
+
+运行工作区完整性检查，避免在应用处于不完整状态时把安全检查结果误表述为完整应用已经通过安全验证。
+
+### 9.3 Gitleaks Secret scan
+
+Gitleaks 使用完整 Git 历史检查密码、API Key、Token、私钥和其他高风险秘密。
+
+适用场景：
+
+- 开发者误提交真实 `.env`。
+- 测试代码中写入真实云服务或支付密钥。
+- 当前文件已删除密钥，但历史提交仍保留原文。
+
+发现真实秘密后，必须先吊销或轮换对应凭据，再处理 Git 历史和扫描结果。只删除当前文件不能消除已经泄露的凭据风险。
+
+### 9.4 Dependency review
+
+该 Job 只在 Pull Request 运行，比较基础分支和 PR 之间的依赖变化，并拒绝新引入的高危依赖。
+
+它回答的问题是“这次 PR 新增或升级的依赖带来了什么风险”，普通 push 和定时任务没有对应的 PR 差异，因此跳过。
+
+### 9.5 Trivy Dependency vulnerability scan
+
+Trivy 以文件系统模式扫描依赖清单和锁文件，检查 Python、Node.js 等生态中已经公开的已知漏洞。
+
+当前门禁：
+
+- 只把 `HIGH` 和 `CRITICAL` 作为阻断等级。
+- 发现阻断漏洞时退出码为 1。
+- 使用 `ignore-unfixed: true` 忽略尚无可用修复版本的漏洞。
+
+适用场景包括新披露的 CVE/GHSA、锁文件中仍固定旧版本以及间接依赖带来的漏洞。
+
+### 9.6 pnpm audit
+
+`pnpm audit` 专门检查 pnpm/npm 生态的已知安全公告。当前使用 npm Registry，并通过 `--audit-level high` 阻断高危和严重漏洞。
+
+它与 Trivy 的 Node.js 检查存在部分覆盖，但解析方式和数据来源链路不完全相同。双重检查用于降低单一工具遗漏风险。
+
+### 9.7 Semgrep CE SAST
+
+Semgrep 检查仓库自己编写的 Python、JavaScript、TypeScript、Shell、YAML 和其他受支持源码或配置，覆盖命令注入、危险 API、不安全数据流和 CI 配置风险。
+
+当前配置：
+
+```text
+semgrep scan --config p/default --error --strict --metrics off
+```
+
+参数含义：
+
+- `p/default`：使用 Semgrep Registry 的默认社区规则集。
+- `--error`：发现规则命中时返回失败退出码。
+- `--strict`：规则、解析警告和内部错误同样失败关闭。
+- `--metrics off`：关闭使用指标上报。
+
+CI 固定安装 Semgrep CE `1.173.0`，不配置 Semgrep Token，不创建云端项目，也不上传源码或扫描结果。
+
+### 9.8 Security 失败如何判断
+
+| 失败 Job | 优先检查 |
+| --- | --- |
+| Source state | 应用是否进入 `partial`，入口、脚本和测试是否完整 |
+| Secret scan | 命中内容是否是真实密钥，是否需要立即轮换 |
+| Dependency review | PR 是否新引入高危依赖 |
+| Dependency vulnerability scan | Trivy 报告的包、版本、严重度和可修复版本 |
+| Node dependency audit | pnpm 报告的直接或间接依赖链 |
+| Semgrep CE SAST | 规则 ID、文件、行号、数据流和修复建议 |
+
+依赖安装还执行仓库级供应链策略：uv 和 pnpm 对新发布版本设置七天冷却期，pnpm 拒绝奇异传递依赖和包信任等级降级。历史信任问题只允许精确包版本例外；新依赖、升级解析或现有锁文件违反策略时会在安装阶段失败。
+
+扫描器发现问题和扫描器自身故障都可能使 Job 失败。判断时先看具体 Job 和第一条有效错误，不能只根据 `Security failed` 邮件标题推断原因。
+
+## 10. Pull Request 流程差异
+
+Pull Request 会运行同样的五个自动工作流，并额外启用两项差异检查：
+
+1. Backend 的 `OpenAPI breaking changes` 比较目标分支与 PR 契约。
+2. Security 的 `Dependency review` 检查 PR 新增或改变的依赖。
+
+Pull Request 检查用于合并前评审。push 检查用于验证某个已经存在于远程分支的精确 Commit SHA。镜像发布要求的是同一 Commit SHA 的成功 `push` Run，PR Run 不能替代。
+
+## 11. Publish Images
+
+### 11.1 作用和使用场景
+
+`Publish Images` 把一个已经通过全部检查的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变 GHCR 镜像。
+
+典型使用场景：
+
+- 准备正式部署某个已经审核的 `main` 提交。
+- 为派生项目或测试环境生成可追溯镜像。
+- 为后续回滚保留经过扫描和证明的镜像版本。
+
+该工作流只支持 `workflow_dispatch` 人工触发。执行前必须取得独立的镜像发布授权，并输入完整 40 位小写 Commit SHA。
+
+### 11.2 Validate immutable input
+
+发布前验证包括：
+
+1. Commit SHA 必须匹配 40 位小写十六进制格式。
+2. 检出的 `HEAD` 必须与输入 SHA 完全一致。
+3. 目标提交必须属于仓库默认分支历史。
+4. 同一 SHA 必须存在以下五个成功、已完成的 push Run：
+   - `CI - Governance`
+   - `CI - Backend`
+   - `CI - Frontend`
+   - `CI - Browser E2E`
+   - `Security`
+5. Backend、Web 和 Admin 状态必须全部为 `ready`。
+6. 模块边界必须再次通过。
+
+任何一项缺少时，工作流在构建镜像前停止。
+
+### 11.3 Publish matrix
+
+验证通过后，矩阵并行处理三个应用：
+
+| 矩阵项 | Dockerfile | GHCR 镜像名 |
+| --- | --- | --- |
+| Backend | `apps/backend/Dockerfile` | `pinjie-fullstack-backend` |
+| Web | `apps/web/Dockerfile` | `pinjie-fullstack-web` |
+| Admin | `apps/admin/Dockerfile` | `pinjie-fullstack-admin` |
+
+每个矩阵任务执行：
+
+1. 检出目标提交并再次核对 SHA。
+2. 设置 Docker Buildx。
+3. 使用当前 GitHub Actor 和 `GITHUB_TOKEN` 登录 GHCR。
+4. 构建并按内容 digest 推送候选镜像。
+5. 生成最大级别构建来源证明和 SBOM。
+6. 使用 Trivy 扫描已经推送的精确镜像 digest。
+7. 高危或严重且已有修复的漏洞使发布失败。
+8. 为镜像写入并推送 GitHub build provenance attestation。
+9. 上传经过验证的 digest 证据 Artifact，保留 7 天。
+
+### 11.4 Finalize
+
+三个矩阵任务全部成功后，最终 Job：
+
+1. 下载三份经过验证的 digest 证据。
+2. 检查 `sha-<完整 Commit SHA>` 目标标签是否存在冲突。
+3. 标签不存在时，从精确 digest 创建不可变 SHA 标签。
+4. 标签已经指向同一 digest 时允许验证通过。
+5. 标签指向不同 digest 时立即失败，禁止覆盖。
+6. 在 Workflow Summary 输出三个最终镜像引用。
+
+工作流不会创建 `latest` 标签。GHCR 的三个镜像仓库之间没有事务，最终标签创建期间可能短暂部分可见；只有整个 `Publish Images` Run 成功后，才能进入部署授权。
+
+### 11.5 权限
+
+验证 Job 只读取 Actions 和仓库内容。构建 Job 按需获得 `packages: write`、`attestations: write` 和 `id-token: write`。权限只在需要的 Job 内提升。
+
+## 12. Deploy Production
+
+### 12.1 作用和使用场景
+
+`Deploy Production` 将已经发布并验证的三个镜像 digest 部署到生产服务器。它不重新构建源码，也不自动选择最新镜像。
+
+典型使用场景：
+
+- 将一组已经发布的 Backend、Web 和 Admin 镜像上线。
+- 使用上一组已验证 digest 执行应用回滚。
+
+该工作流只支持 `workflow_dispatch` 人工触发。真实部署和回滚分别需要独立授权。
+
+### 12.2 人工输入
+
+| 输入 | 要求 |
+| --- | --- |
+| `commit_sha` | 三张镜像共同来源的完整 40 位小写 Commit SHA |
+| `backend_digest` | `sha256:` 加 64 位小写十六进制 |
+| `web_digest` | `sha256:` 加 64 位小写十六进制 |
+| `admin_digest` | `sha256:` 加 64 位小写十六进制 |
+
+工作流绑定 GitHub `production` Environment。远端仓库应在该 Environment 配置审批者和分支保护；这些设置存在于 GitHub 仓库中，不能只通过 YAML 证明已经生效。
+
+### 12.3 并发和权限
+
+- 并发组固定为 `production`，同一时间只允许一个生产部署或回滚流程运行。
+- `cancel-in-progress: false`，后启动的流程不会强制取消正在执行的部署。
+- 工作流只申请 `contents: read` 和 `packages: read`。
+
+### 12.4 部署前验证
+
+1. 检出输入 Commit SHA，并要求它属于默认分支历史。
+2. 计算目标提交中 `compose.prod.yml` 的 SHA-256。
+3. 要求 `PRODUCTION_DEPLOYMENT_ENABLED` 为 `true`。
+4. 要求 `DEPLOY_PATH` 是非空绝对路径。
+5. 验证三个 digest 的格式。
+6. 登录 GHCR。
+7. 分别解析三个 `sha-<commit>` 标签，确认实际 manifest digest 与人工输入完全一致。
+
+这组验证保证操作人员输入的 Commit SHA、发布标签和镜像内容指向同一版本。
+
+### 12.5 远程部署
+
+工作流通过固定版本的 SSH Action 连接生产服务器，并只传递部署所需变量。
+
+远程脚本依次执行：
+
+1. 使用 `set -eu` 开启失败关闭。
+2. 进入 `DEPLOY_PATH`。
+3. 确认 `apps/backend/.env` 和根 `.env` 存在。
+4. 计算服务器 `compose.prod.yml` 哈希，并与目标提交哈希比较。
+5. 以权限 `077` 创建临时镜像变量文件。
+6. 从现有根 `.env` 保留 PostgreSQL 初始化变量。
+7. 写入三张固定 digest 镜像引用。
+8. 使用 `docker compose config --quiet` 验证配置。
+9. 拉取三个固定 digest。
+10. 执行 `docker compose up -d --remove-orphans --wait --wait-timeout 120`。
+11. 查询 Compose 服务状态。
+12. 逐个读取运行容器的镜像引用，并与批准输入比较。
+13. 全部一致后，用临时文件替换根 `.env`。
+14. 写入 `.deployment-version`，保存 Commit SHA 和 Compose 哈希。
+
+最后一步在 GitHub Workflow Summary 记录 Commit SHA、Compose 哈希和三个镜像 digest。
+
+### 12.6 成功含义
+
+Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对均已完成。正式生产交付仍应按发布手册继续验证健康探针、关键业务冒烟、数据库 Revision、日志和观察窗口。
+
+## 13. 完整使用场景
+
+### 13.1 日常直接推送
+
+```text
+本地修改
+-> 本地验证
+-> git add
+-> git commit
+-> git push
+-> 5 个自动工作流并行运行
+-> 查看失败 Job 或确认全部成功
+```
+
+适合当前只维护 `main`、不使用功能分支的工作方式。直接推送意味着远程先收到提交，再由 CI 发现问题，因此本地验证仍然重要。
+
+### 13.2 Pull Request 评审
+
+```text
+推送开发分支
+-> 创建或更新 Pull Request
+-> 5 个工作流运行
+-> 额外执行 OpenAPI breaking changes 和 Dependency review
+-> 评审通过后合并
+-> 合并提交再次触发 5 个 push 工作流
+```
+
+### 13.3 正式镜像发布
+
+```text
+选择 main 上的完整 Commit SHA
+-> 确认该 SHA 的 5 个 push 工作流全部成功
+-> 取得镜像发布授权
+-> 人工触发 Publish Images
+-> 等待 validate、3 个 publish 矩阵和 finalize 全部成功
+-> 保存 Workflow Summary 中的三个 digest
+```
+
+### 13.4 生产部署
+
+```text
+取得生产部署授权
+-> 准备 Commit SHA 和三个 digest
+-> 核对 production Environment 审批和变量
+-> 人工触发 Deploy Production
+-> 完成 Environment 审批
+-> 等待远程部署和镜像核对
+-> 执行部署后健康、业务、日志和数据验证
+-> 记录生产追溯信息
+```
+
+### 13.5 回滚
+
+```text
+确认达到回滚条件
+-> 选择上一组已验证 digest
+-> 核对数据库兼容性和恢复点
+-> 取得回滚授权
+-> 使用 Deploy Production 输入旧 Commit SHA 和旧 digest
+-> 完成部署后验证和事故记录
+```
+
+应用回滚不重新构建旧代码。数据库降级或恢复属于独立高风险操作，需要专项授权。
+
+## 14. 常见失败定位
+
+| 现象 | 查看位置 | 常见原因 |
+| --- | --- | --- |
+| 邮件只写 Workflow failed | GitHub Actions 对应 Run 的红色 Job | 邮件标题不包含根因 |
+| Governance 失败 | 第一条失败的治理步骤 | 文本编码、Markdown、结构或边界问题 |
+| Backend quality 失败 | PostgreSQL、Redis 或具体质量步骤 | 锁文件、类型、迁移、测试、覆盖率、契约漂移 |
+| Frontend quality 失败 | Web 或 Admin Job | lint、类型、测试、构建、生成 Client 漂移 |
+| Browser E2E 失败 | Backend 启动日志或 Playwright 输出 | 服务启动、迁移、浏览器流程或跨栈契约问题 |
+| Security 失败 | 具体扫描 Job | 密钥、依赖漏洞、源码风险或扫描器运行错误 |
+| Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、五个 push Run 或应用状态不满足 |
+| Publish matrix 失败 | 对应应用矩阵 | 镜像构建、容器漏洞、证明或 GHCR 权限问题 |
+| Publish finalize 失败 | Publish verified immutable tags | digest 证据缺失或不可变标签冲突 |
+| Deploy 验证失败 | Validate 或 Verify 步骤 | 输入格式、环境开关、路径、标签与 digest 不一致 |
+| 远程部署失败 | Deploy approved digests | SSH、Compose 哈希、环境文件、拉取、健康或镜像核对失败 |
+
+排查原则：
+
+1. 先确认失败的 Workflow 和 Job。
+2. 找到第一条真正失败的命令，后续错误可能只是连锁结果。
+3. 区分代码问题、扫描发现、依赖服务故障和 GitHub Runner 故障。
+4. 在本地复现适用检查，修复后创建新提交。
+5. 禁止通过 `continue-on-error`、删除检查或扩大权限制造假成功。
+
+## 15. 必须与可替换边界
+
+GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发布工作流要求以下能力必须有成功证据：
+
+- 仓库治理和模块边界检查。
+- Backend、Frontend 和真实浏览器质量检查。
+- 密钥、依赖漏洞和源码静态安全检查。
+- 镜像漏洞扫描、SBOM 和构建来源证明。
+- 固定 Commit SHA 和镜像 digest 的生产追溯。
+
+具体工具未来可以通过已确认计划替换，但不能直接删除能力或静默跳过。任何门禁调整都应同步工作流配置、安全策略、本文、发布手册和相关计划。
+
+## 16. 操作检查清单
+
+### Push 前
+
+- [ ] 本地修改已经完成适用验证。
+- [ ] `git status` 中没有准备遗漏的文件。
+- [ ] 提交不包含真实 `.env`、Token、密码或私钥。
+- [ ] 生成契约和锁文件不存在未解释漂移。
+
+### Push 后
+
+- [ ] 五个自动工作流均对应预期 Commit SHA。
+- [ ] Governance、Backend、Frontend、Browser E2E 和 Security 全部成功。
+- [ ] 没有把 `skipped` 误判成应用质量通过。
+- [ ] 失败时已定位具体 Job 和第一条有效错误。
+
+### 发布镜像前
+
+- [ ] 已取得独立镜像发布授权。
+- [ ] 使用完整 40 位 Commit SHA。
+- [ ] 五个 push 工作流都有同一 SHA 的成功记录。
+- [ ] 三个应用状态均为 `ready`。
+
+### 部署生产前
+
+- [ ] 已取得独立生产部署授权。
+- [ ] 三个 digest 来自同一次成功的 Publish Images Run。
+- [ ] `production` Environment 审批和变量已经核验。
+- [ ] 数据库迁移、备份、恢复和回滚边界已经确认。
+- [ ] 部署后验证、观察窗口和停止条件已经安排。
