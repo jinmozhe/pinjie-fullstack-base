@@ -82,6 +82,7 @@
 | [container-build-and-run.md](operations/container-build-and-run.md) | 三个应用镜像构建、迁移与权限初始化、请求日志 Profile、生产 Compose 和健康验证 |
 | [database-backup-restore.md](operations/database-backup-restore.md) | 备份参数、恢复演练、生产恢复和数据库迁移保护步骤 |
 | [incident-response.md](operations/incident-response.md) | 事故分级、角色、止损、恢复验证、状态沟通和复盘步骤 |
+| [docker-desktop-redis使用指南.md](operations/docker-desktop-redis使用指南.md) | Docker Desktop Redis 架构选型、日常启停、会话限流关键依赖、多项目数据隔离与生产建议 |
 
 待补充文档（有需要时创建）：
 
