@@ -48,7 +48,7 @@ def get_resources(request: Request) -> AppResources:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Service is not ready",
+            message="服务尚未就绪",
         )
     return cast(AppResources, resources)
 
@@ -59,7 +59,7 @@ def get_request_settings(request: Request) -> Settings:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Service is not ready",
+            message="服务尚未就绪",
         )
     return cast(Settings, settings)
 
@@ -130,7 +130,7 @@ def require_browser_origin(request: Request) -> None:
     origin = request.headers.get("origin")
     allowed = {item.rstrip("/") for item in settings.cors_origins}
     if origin is None or origin.rstrip("/") not in allowed:
-        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="Request origin is not allowed")
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="请求来源不在允许范围内")
 
 
 def _csrf_pair(request: Request, *, cookie_name: str) -> str:
@@ -138,7 +138,7 @@ def _csrf_pair(request: Request, *, cookie_name: str) -> str:
     header_token = request.headers.get("x-csrf-token")
     cookie_token = request.cookies.get(cookie_name)
     if not header_token or not cookie_token or not hmac.compare_digest(header_token, cookie_token):
-        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF 校验失败")
     return header_token
 
 
@@ -159,7 +159,7 @@ async def get_current_user(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_REQUIRED,
-            message="Authentication is required",
+            message="需要用户身份认证",
             headers={"WWW-Authenticate": "Cookie"},
         )
     settings = get_request_settings(request)
@@ -168,7 +168,7 @@ async def get_current_user(
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         )
     web_secret, _, _, _ = settings.authentication_secrets()
     try:
@@ -184,21 +184,21 @@ async def get_current_user(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_TOKEN_INVALID,
-            message="Authentication token is invalid",
+            message="身份认证令牌无效",
             headers={"WWW-Authenticate": "Cookie"},
         ) from exc
     except SQLAlchemyError as exc:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         ) from exc
     if login_session is None or login_session.user_id != claims.subject_id:
         request.state.clear_auth_profile = "web"
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_REVOKED,
-            message="Authentication session is no longer valid",
+            message="身份认证会话已失效",
             headers={"WWW-Authenticate": "Cookie"},
         )
     now = datetime.now(UTC)
@@ -207,7 +207,7 @@ async def get_current_user(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_REVOKED,
-            message="Authentication session is no longer valid",
+            message="身份认证会话已失效",
             headers={"WWW-Authenticate": "Cookie"},
         )
     if login_session.idle_expires_at <= now or login_session.absolute_expires_at <= now:
@@ -215,7 +215,7 @@ async def get_current_user(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_EXPIRED,
-            message="Authentication session has expired",
+            message="身份认证会话已过期",
             headers={"WWW-Authenticate": "Cookie"},
         )
     user = login_session.user
@@ -224,11 +224,11 @@ async def get_current_user(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_REVOKED,
-            message="Authentication session is no longer valid",
+            message="身份认证会话已失效",
             headers={"WWW-Authenticate": "Cookie"},
         )
     if not user.is_active or user.deleted_at is not None:
-        raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+        raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="账户已停用")
     request.state.current_user_id = str(user.id)
     request.state.current_session_id = str(login_session.id)
     return CurrentUser(user=user, login_session=login_session)
@@ -243,7 +243,7 @@ async def get_current_admin(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_REQUIRED,
-            message="Administrator authentication is required",
+            message="需要管理员身份认证",
             headers={"WWW-Authenticate": "Cookie"},
         )
     settings = get_request_settings(request)
@@ -252,7 +252,7 @@ async def get_current_admin(
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         )
     _, admin_secret, _, _ = settings.authentication_secrets()
     try:
@@ -268,21 +268,21 @@ async def get_current_admin(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_TOKEN_INVALID,
-            message="Administrator authentication token is invalid",
+            message="管理员身份认证令牌无效",
             headers={"WWW-Authenticate": "Cookie"},
         ) from exc
     except SQLAlchemyError as exc:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         ) from exc
     if login_session is None or login_session.admin_id != claims.subject_id:
         request.state.clear_auth_profile = "admin"
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_REVOKED,
-            message="Administrator session is no longer valid",
+            message="管理员会话已失效",
             headers={"WWW-Authenticate": "Cookie"},
         )
     now = datetime.now(UTC)
@@ -291,7 +291,7 @@ async def get_current_admin(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_REVOKED,
-            message="Administrator session is no longer valid",
+            message="管理员会话已失效",
             headers={"WWW-Authenticate": "Cookie"},
         )
     if login_session.idle_expires_at <= now or login_session.absolute_expires_at <= now:
@@ -299,7 +299,7 @@ async def get_current_admin(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_EXPIRED,
-            message="Administrator session has expired",
+            message="管理员会话已过期",
             headers={"WWW-Authenticate": "Cookie"},
         )
     admin = login_session.admin
@@ -308,11 +308,11 @@ async def get_current_admin(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_SESSION_REVOKED,
-            message="Administrator session is no longer valid",
+            message="管理员会话已失效",
             headers={"WWW-Authenticate": "Cookie"},
         )
     if not admin.is_active:
-        raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+        raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="账户已停用")
     if admin.is_superuser:
         permissions = frozenset(PERMISSION_CODES)
     else:
@@ -355,7 +355,7 @@ def require_web_csrf(
     settings = get_request_settings(request)
     _, _, web_hmac, _ = settings.authentication_secrets()
     if not hmac.compare_digest(token_digest(token, web_hmac), current.login_session.csrf_digest):
-        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF 校验失败")
     return current
 
 
@@ -367,14 +367,14 @@ def require_admin_csrf(
     settings = get_request_settings(request)
     _, _, _, admin_hmac = settings.authentication_secrets()
     if not hmac.compare_digest(token_digest(token, admin_hmac), current.login_session.csrf_digest):
-        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+        raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF 校验失败")
     return current
 
 
 def require_permission(code: PermissionCode) -> Callable[[CurrentAdmin], Awaitable[CurrentAdmin]]:
     async def dependency(current: Annotated[CurrentAdmin, Depends(get_current_admin)]) -> CurrentAdmin:
         if code.value not in current.permissions:
-            raise AppException(status_code=403, code=ErrorCode.PERMISSION_DENIED, message="Permission denied")
+            raise AppException(status_code=403, code=ErrorCode.PERMISSION_DENIED, message="权限不足")
         return current
 
     return dependency
@@ -404,7 +404,7 @@ async def consume_admin_confirmation(
         raise AppException(
             status_code=403,
             code=ErrorCode.ADMIN_CONFIRMATION_REQUIRED,
-            message="Administrator confirmation is required",
+            message="需要管理员二次确认",
         )
     settings = get_request_settings(request)
     resources = get_resources(request)
@@ -412,7 +412,7 @@ async def consume_admin_confirmation(
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         )
     _, _, _, admin_hmac = settings.authentication_secrets()
     key = cache_keys(settings).admin_confirmation(token_digest(confirmation_token, admin_hmac))
@@ -422,7 +422,7 @@ async def consume_admin_confirmation(
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         ) from exc
     try:
         value = json.loads(raw) if raw else None
@@ -437,7 +437,7 @@ async def consume_admin_confirmation(
         raise AppException(
             status_code=403,
             code=ErrorCode.ADMIN_CONFIRMATION_INVALID,
-            message="Administrator confirmation is invalid or expired",
+            message="管理员二次确认无效或已过期",
         )
 
 

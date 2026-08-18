@@ -1,3 +1,5 @@
+import re
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -19,6 +21,7 @@ async def test_system_status_returns_unavailable_without_resources(client) -> No
     response = await client.get("/api/v1/system/status")
     assert response.status_code == 503
     assert response.json()["code"] == "SERVICE_UNAVAILABLE"
+    assert response.json()["message"] == "服务尚未就绪"
     assert response.json()["request_id"]
 
 
@@ -37,6 +40,7 @@ async def test_system_status_returns_safe_success_payload(client, fake_resources
         response = await client.get("/api/v1/system/status")
     assert response.status_code == 200
     assert response.json()["code"] == "OK"
+    assert response.json()["message"] == "操作成功"
     assert response.json()["data"] == {"status": "available"}
 
 
@@ -45,6 +49,53 @@ async def test_unknown_route_has_stable_error(client) -> None:
     response = await client.get("/does-not-exist")
     assert response.status_code == 404
     assert response.json()["code"] == "NOT_FOUND"
+    assert response.json()["message"] == "请求的资源不存在"
+
+
+@pytest.mark.asyncio
+async def test_validation_error_uses_chinese_top_level_message(client) -> None:
+    response = await client.post(
+        "/api/v1/auth/login",
+        headers={"Origin": "http://localhost:3000"},
+        json={"username": "browser-user", "password": "a" * 65},
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+    assert response.json()["message"] == "请求参数校验失败"
+
+
+def _documentation_texts(node: Any) -> list[str]:
+    values: list[str] = []
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key in {"summary", "description"} and isinstance(value, str):
+                values.append(value)
+            values.extend(_documentation_texts(value))
+    elif isinstance(node, list):
+        for value in node:
+            values.extend(_documentation_texts(value))
+    return values
+
+
+def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
+    from app.main import app
+
+    schema = app.openapi()
+    texts = _documentation_texts(schema)
+    assert texts
+    assert all(re.search(r"[\u3400-\u4dbf\u4e00-\u9fff]", text) for text in texts), texts
+    assert {tag["name"] for tag in schema["tags"]} == {
+        "用户认证",
+        "用户账户",
+        "管理员认证",
+        "后台管理",
+        "系统",
+        "健康检查",
+    }
+    login_operation = schema["paths"]["/api/v1/auth/login"]["post"]
+    assert login_operation["operationId"] == "login_api_v1_auth_login_post"
+    assert login_operation["requestBody"]["content"]["application/json"]["schema"]["$ref"].endswith("/UserLoginIn")
+    assert "password" in schema["components"]["schemas"]["UserLoginIn"]["properties"]
 
 
 @pytest.mark.asyncio

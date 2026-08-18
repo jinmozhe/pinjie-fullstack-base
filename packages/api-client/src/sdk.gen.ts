@@ -19,7 +19,7 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Register a browser user account
+ * 注册用户账户
  */
 export const registerApiV1AuthRegisterPost = <ThrowOnError extends boolean = false>(options: Options<RegisterApiV1AuthRegisterPostData, ThrowOnError>): RequestResult<RegisterApiV1AuthRegisterPostResponses, RegisterApiV1AuthRegisterPostErrors, ThrowOnError> => (options.client ?? client).post<RegisterApiV1AuthRegisterPostResponses, RegisterApiV1AuthRegisterPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -32,7 +32,7 @@ export const registerApiV1AuthRegisterPost = <ThrowOnError extends boolean = fal
 });
 
 /**
- * Sign in a browser user
+ * 用户登录
  */
 export const loginApiV1AuthLoginPost = <ThrowOnError extends boolean = false>(options: Options<LoginApiV1AuthLoginPostData, ThrowOnError>): RequestResult<LoginApiV1AuthLoginPostResponses, LoginApiV1AuthLoginPostErrors, ThrowOnError> => (options.client ?? client).post<LoginApiV1AuthLoginPostResponses, LoginApiV1AuthLoginPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -45,7 +45,7 @@ export const loginApiV1AuthLoginPost = <ThrowOnError extends boolean = false>(op
 });
 
 /**
- * Rotate the browser refresh token
+ * 刷新用户登录会话
  */
 export const refreshApiV1AuthRefreshPost = <ThrowOnError extends boolean = false>(options?: Options<RefreshApiV1AuthRefreshPostData, ThrowOnError>): RequestResult<RefreshApiV1AuthRefreshPostResponses, RefreshApiV1AuthRefreshPostErrors, ThrowOnError> => (options?.client ?? client).post<RefreshApiV1AuthRefreshPostResponses, RefreshApiV1AuthRefreshPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -54,7 +54,7 @@ export const refreshApiV1AuthRefreshPost = <ThrowOnError extends boolean = false
 });
 
 /**
- * Sign out the current browser session
+ * 退出当前用户会话
  */
 export const logoutApiV1AuthLogoutPost = <ThrowOnError extends boolean = false>(options?: Options<LogoutApiV1AuthLogoutPostData, ThrowOnError>): RequestResult<LogoutApiV1AuthLogoutPostResponses, LogoutApiV1AuthLogoutPostErrors, ThrowOnError> => (options?.client ?? client).post<LogoutApiV1AuthLogoutPostResponses, LogoutApiV1AuthLogoutPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -63,7 +63,7 @@ export const logoutApiV1AuthLogoutPost = <ThrowOnError extends boolean = false>(
 });
 
 /**
- * Delete and anonymize the current user account
+ * 注销并匿名化当前用户账户
  */
 export const deleteAccountApiV1UsersMeDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAccountApiV1UsersMeDeleteData, ThrowOnError>): RequestResult<DeleteAccountApiV1UsersMeDeleteResponses, DeleteAccountApiV1UsersMeDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAccountApiV1UsersMeDeleteResponses, DeleteAccountApiV1UsersMeDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -76,7 +76,7 @@ export const deleteAccountApiV1UsersMeDelete = <ThrowOnError extends boolean = f
 });
 
 /**
- * Get the current user
+ * 获取当前用户
  */
 export const getMeApiV1UsersMeGet = <ThrowOnError extends boolean = false>(options?: Options<GetMeApiV1UsersMeGetData, ThrowOnError>): RequestResult<GetMeApiV1UsersMeGetResponses, GetMeApiV1UsersMeGetErrors, ThrowOnError> => (options?.client ?? client).get<GetMeApiV1UsersMeGetResponses, GetMeApiV1UsersMeGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -85,7 +85,7 @@ export const getMeApiV1UsersMeGet = <ThrowOnError extends boolean = false>(optio
 });
 
 /**
- * Update the current user profile
+ * 更新当前用户资料
  */
 export const updateMeApiV1UsersMePatch = <ThrowOnError extends boolean = false>(options: Options<UpdateMeApiV1UsersMePatchData, ThrowOnError>): RequestResult<UpdateMeApiV1UsersMePatchResponses, UpdateMeApiV1UsersMePatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateMeApiV1UsersMePatchResponses, UpdateMeApiV1UsersMePatchErrors, ThrowOnError>({
     responseType: 'json',
@@ -98,7 +98,7 @@ export const updateMeApiV1UsersMePatch = <ThrowOnError extends boolean = false>(
 });
 
 /**
- * Change the current user password
+ * 修改当前用户密码
  */
 export const changePasswordApiV1UsersMePasswordPost = <ThrowOnError extends boolean = false>(options: Options<ChangePasswordApiV1UsersMePasswordPostData, ThrowOnError>): RequestResult<ChangePasswordApiV1UsersMePasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostErrors, ThrowOnError> => (options.client ?? client).post<ChangePasswordApiV1UsersMePasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -111,7 +111,7 @@ export const changePasswordApiV1UsersMePasswordPost = <ThrowOnError extends bool
 });
 
 /**
- * List current user sessions
+ * 获取当前用户会话列表
  */
 export const listSessionsApiV1UsersMeSessionsGet = <ThrowOnError extends boolean = false>(options?: Options<ListSessionsApiV1UsersMeSessionsGetData, ThrowOnError>): RequestResult<ListSessionsApiV1UsersMeSessionsGetResponses, ListSessionsApiV1UsersMeSessionsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListSessionsApiV1UsersMeSessionsGetResponses, ListSessionsApiV1UsersMeSessionsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -120,7 +120,7 @@ export const listSessionsApiV1UsersMeSessionsGet = <ThrowOnError extends boolean
 });
 
 /**
- * Revoke a current user session
+ * 撤销当前用户的指定会话
  */
 export const revokeSessionApiV1UsersMeSessionsSessionIdDelete = <ThrowOnError extends boolean = false>(options: Options<RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData, ThrowOnError>): RequestResult<RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -129,7 +129,7 @@ export const revokeSessionApiV1UsersMeSessionsSessionIdDelete = <ThrowOnError ex
 });
 
 /**
- * Revoke all other current user sessions
+ * 撤销当前用户的其他会话
  */
 export const revokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPost = <ThrowOnError extends boolean = false>(options?: Options<RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData, ThrowOnError>): RequestResult<RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, ThrowOnError> => (options?.client ?? client).post<RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -138,7 +138,7 @@ export const revokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPost = <ThrowOnE
 });
 
 /**
- * Sign in an administrator
+ * 管理员登录
  */
 export const loginApiV1AdminAuthLoginPost = <ThrowOnError extends boolean = false>(options: Options<LoginApiV1AdminAuthLoginPostData, ThrowOnError>): RequestResult<LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AdminAuthLoginPostErrors, ThrowOnError> => (options.client ?? client).post<LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AdminAuthLoginPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -151,7 +151,7 @@ export const loginApiV1AdminAuthLoginPost = <ThrowOnError extends boolean = fals
 });
 
 /**
- * Rotate administrator refresh token
+ * 刷新管理员登录会话
  */
 export const refreshApiV1AdminAuthRefreshPost = <ThrowOnError extends boolean = false>(options?: Options<RefreshApiV1AdminAuthRefreshPostData, ThrowOnError>): RequestResult<RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AdminAuthRefreshPostErrors, ThrowOnError> => (options?.client ?? client).post<RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AdminAuthRefreshPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -160,7 +160,7 @@ export const refreshApiV1AdminAuthRefreshPost = <ThrowOnError extends boolean = 
 });
 
 /**
- * Sign out the current administrator session
+ * 退出当前管理员会话
  */
 export const logoutApiV1AdminAuthLogoutPost = <ThrowOnError extends boolean = false>(options?: Options<LogoutApiV1AdminAuthLogoutPostData, ThrowOnError>): RequestResult<LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AdminAuthLogoutPostErrors, ThrowOnError> => (options?.client ?? client).post<LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AdminAuthLogoutPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -169,7 +169,7 @@ export const logoutApiV1AdminAuthLogoutPost = <ThrowOnError extends boolean = fa
 });
 
 /**
- * Get the current administrator
+ * 获取当前管理员
  */
 export const getMeApiV1AdminAuthMeGet = <ThrowOnError extends boolean = false>(options?: Options<GetMeApiV1AdminAuthMeGetData, ThrowOnError>): RequestResult<GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1AdminAuthMeGetErrors, ThrowOnError> => (options?.client ?? client).get<GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1AdminAuthMeGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -178,7 +178,7 @@ export const getMeApiV1AdminAuthMeGet = <ThrowOnError extends boolean = false>(o
 });
 
 /**
- * Change administrator password
+ * 修改当前管理员密码
  */
 export const changePasswordApiV1AdminAuthPasswordPost = <ThrowOnError extends boolean = false>(options: Options<ChangePasswordApiV1AdminAuthPasswordPostData, ThrowOnError>): RequestResult<ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1AdminAuthPasswordPostErrors, ThrowOnError> => (options.client ?? client).post<ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1AdminAuthPasswordPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -191,7 +191,7 @@ export const changePasswordApiV1AdminAuthPasswordPost = <ThrowOnError extends bo
 });
 
 /**
- * Confirm a sensitive administrator action
+ * 确认管理员敏感操作
  */
 export const confirmApiV1AdminAuthConfirmPost = <ThrowOnError extends boolean = false>(options: Options<ConfirmApiV1AdminAuthConfirmPostData, ThrowOnError>): RequestResult<ConfirmApiV1AdminAuthConfirmPostResponses, ConfirmApiV1AdminAuthConfirmPostErrors, ThrowOnError> => (options.client ?? client).post<ConfirmApiV1AdminAuthConfirmPostResponses, ConfirmApiV1AdminAuthConfirmPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -204,7 +204,7 @@ export const confirmApiV1AdminAuthConfirmPost = <ThrowOnError extends boolean = 
 });
 
 /**
- * List users
+ * 获取用户列表
  */
 export const listUsersApiV1AdminUsersGet = <ThrowOnError extends boolean = false>(options?: Options<ListUsersApiV1AdminUsersGetData, ThrowOnError>): RequestResult<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -213,7 +213,7 @@ export const listUsersApiV1AdminUsersGet = <ThrowOnError extends boolean = false
 });
 
 /**
- * Get a user
+ * 获取用户详情
  */
 export const getUserApiV1AdminUsersUserIdGet = <ThrowOnError extends boolean = false>(options: Options<GetUserApiV1AdminUsersUserIdGetData, ThrowOnError>): RequestResult<GetUserApiV1AdminUsersUserIdGetResponses, GetUserApiV1AdminUsersUserIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetUserApiV1AdminUsersUserIdGetResponses, GetUserApiV1AdminUsersUserIdGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -222,7 +222,7 @@ export const getUserApiV1AdminUsersUserIdGet = <ThrowOnError extends boolean = f
 });
 
 /**
- * Update a user
+ * 更新用户资料
  */
 export const updateUserApiV1AdminUsersUserIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateUserApiV1AdminUsersUserIdPatchData, ThrowOnError>): RequestResult<UpdateUserApiV1AdminUsersUserIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateUserApiV1AdminUsersUserIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchErrors, ThrowOnError>({
     responseType: 'json',
@@ -235,7 +235,7 @@ export const updateUserApiV1AdminUsersUserIdPatch = <ThrowOnError extends boolea
 });
 
 /**
- * Change a user status
+ * 修改用户状态
  */
 export const setUserStatusApiV1AdminUsersUserIdStatusPatch = <ThrowOnError extends boolean = false>(options: Options<SetUserStatusApiV1AdminUsersUserIdStatusPatchData, ThrowOnError>): RequestResult<SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, ThrowOnError> => (options.client ?? client).patch<SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, ThrowOnError>({
     responseType: 'json',
@@ -248,7 +248,7 @@ export const setUserStatusApiV1AdminUsersUserIdStatusPatch = <ThrowOnError exten
 });
 
 /**
- * Reset a user password
+ * 重置用户密码
  */
 export const resetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPut = <ThrowOnError extends boolean = false>(options: Options<ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData, ThrowOnError>): RequestResult<ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ThrowOnError> => (options.client ?? client).put<ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ThrowOnError>({
     responseType: 'json',
@@ -261,7 +261,7 @@ export const resetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPut = <Thr
 });
 
 /**
- * List user sessions
+ * 获取用户会话列表
  */
 export const listUserSessionsApiV1AdminUsersUserIdSessionsGet = <ThrowOnError extends boolean = false>(options: Options<ListUserSessionsApiV1AdminUsersUserIdSessionsGetData, ThrowOnError>): RequestResult<ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ThrowOnError> => (options.client ?? client).get<ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -270,7 +270,7 @@ export const listUserSessionsApiV1AdminUsersUserIdSessionsGet = <ThrowOnError ex
 });
 
 /**
- * Revoke a user session
+ * 撤销用户指定会话
  */
 export const revokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDelete = <ThrowOnError extends boolean = false>(options: Options<RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData, ThrowOnError>): RequestResult<RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -279,7 +279,7 @@ export const revokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDelete = <Th
 });
 
 /**
- * Revoke all user sessions
+ * 撤销用户全部会话
  */
 export const revokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPost = <ThrowOnError extends boolean = false>(options: Options<RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData, ThrowOnError>): RequestResult<RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, ThrowOnError> => (options.client ?? client).post<RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -288,7 +288,7 @@ export const revokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPost = <
 });
 
 /**
- * List administrators
+ * 获取管理员列表
  */
 export const listAdminsApiV1AdminAdminsGet = <ThrowOnError extends boolean = false>(options?: Options<ListAdminsApiV1AdminAdminsGetData, ThrowOnError>): RequestResult<ListAdminsApiV1AdminAdminsGetResponses, ListAdminsApiV1AdminAdminsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminsApiV1AdminAdminsGetResponses, ListAdminsApiV1AdminAdminsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -297,7 +297,7 @@ export const listAdminsApiV1AdminAdminsGet = <ThrowOnError extends boolean = fal
 });
 
 /**
- * Create an administrator
+ * 创建管理员
  */
 export const createAdminApiV1AdminAdminsPost = <ThrowOnError extends boolean = false>(options: Options<CreateAdminApiV1AdminAdminsPostData, ThrowOnError>): RequestResult<CreateAdminApiV1AdminAdminsPostResponses, CreateAdminApiV1AdminAdminsPostErrors, ThrowOnError> => (options.client ?? client).post<CreateAdminApiV1AdminAdminsPostResponses, CreateAdminApiV1AdminAdminsPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -310,7 +310,7 @@ export const createAdminApiV1AdminAdminsPost = <ThrowOnError extends boolean = f
 });
 
 /**
- * Get an administrator
+ * 获取管理员详情
  */
 export const getAdminApiV1AdminAdminsAdminIdGet = <ThrowOnError extends boolean = false>(options: Options<GetAdminApiV1AdminAdminsAdminIdGetData, ThrowOnError>): RequestResult<GetAdminApiV1AdminAdminsAdminIdGetResponses, GetAdminApiV1AdminAdminsAdminIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetAdminApiV1AdminAdminsAdminIdGetResponses, GetAdminApiV1AdminAdminsAdminIdGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -319,7 +319,7 @@ export const getAdminApiV1AdminAdminsAdminIdGet = <ThrowOnError extends boolean 
 });
 
 /**
- * Update an administrator
+ * 更新管理员资料
  */
 export const updateAdminApiV1AdminAdminsAdminIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateAdminApiV1AdminAdminsAdminIdPatchData, ThrowOnError>): RequestResult<UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, ThrowOnError>({
     responseType: 'json',
@@ -332,7 +332,7 @@ export const updateAdminApiV1AdminAdminsAdminIdPatch = <ThrowOnError extends boo
 });
 
 /**
- * Change an administrator status
+ * 修改管理员状态
  */
 export const setAdminStatusApiV1AdminAdminsAdminIdStatusPatch = <ThrowOnError extends boolean = false>(options: Options<SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData, ThrowOnError>): RequestResult<SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, ThrowOnError> => (options.client ?? client).patch<SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, ThrowOnError>({
     responseType: 'json',
@@ -345,7 +345,7 @@ export const setAdminStatusApiV1AdminAdminsAdminIdStatusPatch = <ThrowOnError ex
 });
 
 /**
- * Reset an administrator password
+ * 重置管理员密码
  */
 export const resetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPut = <ThrowOnError extends boolean = false>(options: Options<ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData, ThrowOnError>): RequestResult<ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ThrowOnError> => (options.client ?? client).put<ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ThrowOnError>({
     responseType: 'json',
@@ -358,7 +358,7 @@ export const resetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPut = <
 });
 
 /**
- * Assign administrator roles
+ * 分配管理员角色
  */
 export const assignAdminRolesApiV1AdminAdminsAdminIdRolesPut = <ThrowOnError extends boolean = false>(options: Options<AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData, ThrowOnError>): RequestResult<AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, ThrowOnError> => (options.client ?? client).put<AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, ThrowOnError>({
     responseType: 'json',
@@ -371,7 +371,7 @@ export const assignAdminRolesApiV1AdminAdminsAdminIdRolesPut = <ThrowOnError ext
 });
 
 /**
- * List administrator sessions
+ * 获取管理员会话列表
  */
 export const listAdminSessionsApiV1AdminAdminsAdminIdSessionsGet = <ThrowOnError extends boolean = false>(options: Options<ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData, ThrowOnError>): RequestResult<ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ThrowOnError> => (options.client ?? client).get<ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -380,7 +380,7 @@ export const listAdminSessionsApiV1AdminAdminsAdminIdSessionsGet = <ThrowOnError
 });
 
 /**
- * Revoke all administrator sessions
+ * 撤销管理员全部会话
  */
 export const revokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPost = <ThrowOnError extends boolean = false>(options: Options<RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData, ThrowOnError>): RequestResult<RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, ThrowOnError> => (options.client ?? client).post<RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -389,7 +389,7 @@ export const revokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPost 
 });
 
 /**
- * List roles
+ * 获取角色列表
  */
 export const listRolesApiV1AdminRolesGet = <ThrowOnError extends boolean = false>(options?: Options<ListRolesApiV1AdminRolesGetData, ThrowOnError>): RequestResult<ListRolesApiV1AdminRolesGetResponses, ListRolesApiV1AdminRolesGetErrors, ThrowOnError> => (options?.client ?? client).get<ListRolesApiV1AdminRolesGetResponses, ListRolesApiV1AdminRolesGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -398,7 +398,7 @@ export const listRolesApiV1AdminRolesGet = <ThrowOnError extends boolean = false
 });
 
 /**
- * Create a role
+ * 创建角色
  */
 export const createRoleApiV1AdminRolesPost = <ThrowOnError extends boolean = false>(options: Options<CreateRoleApiV1AdminRolesPostData, ThrowOnError>): RequestResult<CreateRoleApiV1AdminRolesPostResponses, CreateRoleApiV1AdminRolesPostErrors, ThrowOnError> => (options.client ?? client).post<CreateRoleApiV1AdminRolesPostResponses, CreateRoleApiV1AdminRolesPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -411,7 +411,7 @@ export const createRoleApiV1AdminRolesPost = <ThrowOnError extends boolean = fal
 });
 
 /**
- * Delete an unused role
+ * 删除未使用的角色
  */
 export const deleteRoleApiV1AdminRolesRoleIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteRoleApiV1AdminRolesRoleIdDeleteData, ThrowOnError>): RequestResult<DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -420,7 +420,7 @@ export const deleteRoleApiV1AdminRolesRoleIdDelete = <ThrowOnError extends boole
 });
 
 /**
- * Get a role
+ * 获取角色详情
  */
 export const getRoleApiV1AdminRolesRoleIdGet = <ThrowOnError extends boolean = false>(options: Options<GetRoleApiV1AdminRolesRoleIdGetData, ThrowOnError>): RequestResult<GetRoleApiV1AdminRolesRoleIdGetResponses, GetRoleApiV1AdminRolesRoleIdGetErrors, ThrowOnError> => (options.client ?? client).get<GetRoleApiV1AdminRolesRoleIdGetResponses, GetRoleApiV1AdminRolesRoleIdGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -429,7 +429,7 @@ export const getRoleApiV1AdminRolesRoleIdGet = <ThrowOnError extends boolean = f
 });
 
 /**
- * Update a role
+ * 更新角色
  */
 export const updateRoleApiV1AdminRolesRoleIdPatch = <ThrowOnError extends boolean = false>(options: Options<UpdateRoleApiV1AdminRolesRoleIdPatchData, ThrowOnError>): RequestResult<UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, ThrowOnError> => (options.client ?? client).patch<UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, ThrowOnError>({
     responseType: 'json',
@@ -442,7 +442,7 @@ export const updateRoleApiV1AdminRolesRoleIdPatch = <ThrowOnError extends boolea
 });
 
 /**
- * Assign role permissions
+ * 分配角色权限
  */
 export const assignRolePermissionsApiV1AdminRolesRoleIdPermissionsPut = <ThrowOnError extends boolean = false>(options: Options<AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData, ThrowOnError>): RequestResult<AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, ThrowOnError> => (options.client ?? client).put<AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, ThrowOnError>({
     responseType: 'json',
@@ -455,7 +455,7 @@ export const assignRolePermissionsApiV1AdminRolesRoleIdPermissionsPut = <ThrowOn
 });
 
 /**
- * List the source-controlled permission catalog
+ * 获取源码管理的权限目录
  */
 export const listPermissionsApiV1AdminPermissionsGet = <ThrowOnError extends boolean = false>(options?: Options<ListPermissionsApiV1AdminPermissionsGetData, ThrowOnError>): RequestResult<ListPermissionsApiV1AdminPermissionsGetResponses, ListPermissionsApiV1AdminPermissionsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListPermissionsApiV1AdminPermissionsGetResponses, ListPermissionsApiV1AdminPermissionsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -464,7 +464,7 @@ export const listPermissionsApiV1AdminPermissionsGet = <ThrowOnError extends boo
 });
 
 /**
- * List authentication security events
+ * 获取身份认证安全事件
  */
 export const listLoginEventsApiV1AdminSecurityLoginEventsGet = <ThrowOnError extends boolean = false>(options?: Options<ListLoginEventsApiV1AdminSecurityLoginEventsGetData, ThrowOnError>): RequestResult<ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -473,7 +473,7 @@ export const listLoginEventsApiV1AdminSecurityLoginEventsGet = <ThrowOnError ext
 });
 
 /**
- * List administrator audit events
+ * 获取管理员审计事件
  */
 export const listAuditEventsApiV1AdminSecurityAuditEventsGet = <ThrowOnError extends boolean = false>(options?: Options<ListAuditEventsApiV1AdminSecurityAuditEventsGetData, ThrowOnError>): RequestResult<ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -482,7 +482,7 @@ export const listAuditEventsApiV1AdminSecurityAuditEventsGet = <ThrowOnError ext
 });
 
 /**
- * List optional request metadata logs
+ * 获取可选请求元数据日志
  */
 export const listRequestLogsApiV1AdminSystemRequestLogsGet = <ThrowOnError extends boolean = false>(options?: Options<ListRequestLogsApiV1AdminSystemRequestLogsGetData, ThrowOnError>): RequestResult<ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ThrowOnError> => (options?.client ?? client).get<ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ThrowOnError>({
     responseType: 'json',
@@ -491,7 +491,7 @@ export const listRequestLogsApiV1AdminSystemRequestLogsGet = <ThrowOnError exten
 });
 
 /**
- * Get public system status
+ * 获取公共系统状态
  */
 export const getSystemStatusApiV1SystemStatusGet = <ThrowOnError extends boolean = false>(options?: Options<GetSystemStatusApiV1SystemStatusGetData, ThrowOnError>): RequestResult<GetSystemStatusApiV1SystemStatusGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetSystemStatusApiV1SystemStatusGetResponses, unknown, ThrowOnError>({
     responseType: 'json',
@@ -500,7 +500,7 @@ export const getSystemStatusApiV1SystemStatusGet = <ThrowOnError extends boolean
 });
 
 /**
- * Liveness probe
+ * 检查应用存活状态
  */
 export const healthLiveHealthLiveGet = <ThrowOnError extends boolean = false>(options?: Options<HealthLiveHealthLiveGetData, ThrowOnError>): RequestResult<HealthLiveHealthLiveGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<HealthLiveHealthLiveGetResponses, unknown, ThrowOnError>({
     responseType: 'json',
@@ -509,7 +509,7 @@ export const healthLiveHealthLiveGet = <ThrowOnError extends boolean = false>(op
 });
 
 /**
- * Readiness probe
+ * 检查应用就绪状态
  */
 export const healthReadyHealthReadyGet = <ThrowOnError extends boolean = false>(options?: Options<HealthReadyHealthReadyGetData, ThrowOnError>): RequestResult<HealthReadyHealthReadyGetResponses, unknown, ThrowOnError> => (options?.client ?? client).get<HealthReadyHealthReadyGetResponses, unknown, ThrowOnError>({
     responseType: 'json',

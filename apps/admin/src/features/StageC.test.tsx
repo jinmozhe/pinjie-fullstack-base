@@ -28,6 +28,7 @@ function renderPage(node: ReactNode, principal: AdminRead | null = current) {
 
 async function confirmAction(user: ReturnType<typeof userEvent.setup>) {
   const password = await screen.findByLabelText("当前密码");
+  expect(password).toHaveAttribute("maxlength", "64");
   await user.type(password, "stage-c-admin-password");
   await user.click(screen.getByRole("button", { name: /确认执行/ }));
   await waitFor(() => {
@@ -42,6 +43,7 @@ describe("stage C admin workspace", () => {
     const user = userEvent.setup();
     renderPage(<LoginPage authenticated={false} />, null);
     await user.type(screen.getByLabelText("用户名"), "stage-admin");
+    expect(screen.getByLabelText("密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("密码"), "stage-c-admin-password");
     await user.click(screen.getByRole("button", { name: /登\s*录/ }));
     await waitFor(() => expect(screen.getByRole("button", { name: /登\s*录/ })).toBeEnabled());
@@ -79,6 +81,7 @@ describe("stage C admin workspace", () => {
     await confirmAction(user);
 
     await user.click(screen.getByRole("button", { name: /重置密码/ }));
+    expect(screen.getByLabelText("新密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("新密码"), "replacement-password");
     await user.click(screen.getByRole("button", { name: /下一步/ }));
     await confirmAction(user);
@@ -105,6 +108,7 @@ describe("stage C admin workspace", () => {
 
     await user.click(screen.getByRole("button", { name: /新建管理员/ }));
     await user.type(screen.getByLabelText("用户名"), "new-operator");
+    expect(screen.getByLabelText("初始密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("初始密码"), "new-operator-password");
     await user.click(screen.getByRole("button", { name: /下一步/ }));
     await confirmAction(user);
@@ -113,6 +117,17 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("button", { name: /下一步/ }));
     await confirmAction(user);
   }, 20_000);
+
+  it("rejects administrator passwords shorter than six characters", async () => {
+    const user = userEvent.setup();
+    renderPage(<AdminsPage />);
+    expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /新建管理员/ }));
+    await user.type(screen.getByLabelText("用户名"), "new-operator");
+    await user.type(screen.getByLabelText("初始密码"), "short");
+    await user.click(screen.getByRole("button", { name: /下一步/ }));
+    expect(await screen.findByText("密码必须为 6 至 64 个字符")).toBeInTheDocument();
+  });
 
   it("loads roles and the source-controlled permission catalog", async () => {
     const user = userEvent.setup();
@@ -157,7 +172,7 @@ describe("stage C admin workspace", () => {
   });
 
   it("renders denied login, in-progress audit, and failed request states", async () => {
-    const ok = (data: unknown) => HttpResponse.json({ code: "OK", message: "OK", data, request_id: "test-request" });
+    const ok = (data: unknown) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
     server.use(
       http.get("http://localhost:3000/api/v1/admin/security/login-events", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000015", principal_type: "admin", principal_id: null, event_type: "login", succeeded: false, reason_code: "invalid_credentials", ip_address: null, user_agent_summary: null, request_id: "test-request", occurred_at: now }], page: 1, page_size: 20, total: 1, total_pages: 1 })),
       http.get("http://localhost:3000/api/v1/admin/security/audit-events", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000016", actor_id: current.id, action: "roles:update", target_type: "role", target_id: null, result: "started", changed_fields: {}, request_id: "test-request", occurred_at: now, completed_at: null }], page: 1, page_size: 20, total: 1, total_pages: 1 })),
@@ -173,7 +188,7 @@ describe("stage C admin workspace", () => {
   });
 
   it("explains when request metadata logging is disabled", async () => {
-    server.use(http.get("http://localhost:3000/api/v1/admin/system/request-logs", () => HttpResponse.json({ code: "REQUEST_LOG_DISABLED", message: "disabled", details: null, request_id: "test-request" }, { status: 409 })));
+    server.use(http.get("http://localhost:3000/api/v1/admin/system/request-logs", () => HttpResponse.json({ code: "REQUEST_LOG_DISABLED", message: "请求日志功能已关闭", details: null, request_id: "test-request" }, { status: 409 })));
     const user = userEvent.setup();
     renderPage(<SecurityPage />);
     await user.click(screen.getByRole("tab", { name: "请求元数据" }));

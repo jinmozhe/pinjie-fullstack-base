@@ -84,20 +84,18 @@ class AdminManagementService:
     async def get_user(self, user_id: uuid.UUID) -> User:
         user = await self.users.get(user_id)
         if user is None or user.deleted_at is not None:
-            raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+            raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
         return user
 
     async def update_user(self, user_id: uuid.UUID, payload: UserUpdateIn) -> User:
         async def operation() -> User:
             user = await self.users.get(user_id, for_update=True)
             if user is None or user.deleted_at is not None:
-                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
             if "email" in payload.model_fields_set and payload.email:
                 existing = await self.users.get_by_email(payload.email)
                 if existing is not None and existing.id != user.id:
-                    raise AppException(
-                        status_code=409, code=ErrorCode.STATE_CONFLICT, message="Email is already in use"
-                    )
+                    raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="邮箱已被使用")
             if "display_name" in payload.model_fields_set:
                 user.display_name = payload.display_name.strip() if payload.display_name else None
             if "email" in payload.model_fields_set:
@@ -116,7 +114,7 @@ class AdminManagementService:
         async def operation() -> User:
             user = await self.users.get(user_id, for_update=True)
             if user is None or user.deleted_at is not None:
-                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
             if user.is_active != payload.is_active:
                 user.is_active = payload.is_active
                 user.credential_version += 1
@@ -137,7 +135,7 @@ class AdminManagementService:
         async def operation() -> None:
             user = await self.users.get(user_id, for_update=True)
             if user is None or user.deleted_at is not None:
-                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
             user.password_hash = password_hash
             user.credential_version += 1
             await self.sessions.revoke_web_for_user(user.id, reason="password_reset")
@@ -158,7 +156,7 @@ class AdminManagementService:
         async def operation() -> None:
             target = await self.sessions.get_web_for_user(session_id, user_id)
             if target is None:
-                raise AppException(status_code=404, code=ErrorCode.NOT_FOUND, message="Session was not found")
+                raise AppException(status_code=404, code=ErrorCode.NOT_FOUND, message="会话不存在")
             await self.sessions.revoke_web_session(session_id, reason="admin_revoked")
 
         await self.audit.execute(
@@ -172,7 +170,7 @@ class AdminManagementService:
     async def revoke_all_user_sessions(self, user_id: uuid.UUID) -> None:
         async def operation() -> None:
             if await self.users.get(user_id) is None:
-                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
             await self.sessions.revoke_web_for_user(user_id, reason="admin_revoked_all")
 
         await self.audit.execute(
@@ -192,7 +190,7 @@ class AdminManagementService:
     async def get_admin(self, admin_id: uuid.UUID) -> Admin:
         admin = await self.admins.get(admin_id)
         if admin is None:
-            raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="Administrator was not found")
+            raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
         return admin
 
     async def create_admin(self, payload: AdminCreateIn) -> Admin:
@@ -201,12 +199,10 @@ class AdminManagementService:
 
         async def operation() -> Admin:
             if await self.admins.get_by_username(payload.username) is not None:
-                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="Username is already in use")
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户名已被使用")
             roles = await self.admins.get_roles(list(dict.fromkeys(payload.role_ids)))
             if len(roles) != len(set(payload.role_ids)):
-                raise AppException(
-                    status_code=422, code=ErrorCode.VALIDATION_ERROR, message="One or more roles are invalid"
-                )
+                raise AppException(status_code=422, code=ErrorCode.VALIDATION_ERROR, message="一个或多个角色无效")
             admin = Admin(
                 id=admin_id,
                 username=payload.username,
@@ -234,17 +230,13 @@ class AdminManagementService:
                 operation=operation,
             )
         except IntegrityError as exc:
-            raise AppException(
-                status_code=409, code=ErrorCode.STATE_CONFLICT, message="Username is already in use"
-            ) from exc
+            raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户名已被使用") from exc
 
     async def update_admin(self, admin_id: uuid.UUID, payload: AdminUpdateIn) -> Admin:
         async def operation() -> Admin:
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
-                raise AppException(
-                    status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="Administrator was not found"
-                )
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
             if "display_name" in payload.model_fields_set:
                 admin.display_name = payload.display_name.strip() if payload.display_name else None
             if "is_superuser" in payload.model_fields_set and payload.is_superuser is not None:
@@ -252,7 +244,7 @@ class AdminManagementService:
                     raise AppException(
                         status_code=409,
                         code=ErrorCode.STATE_CONFLICT,
-                        message="Cannot change your own superuser status",
+                        message="不能修改自己的超级管理员状态",
                     )
                 if admin.is_superuser and not payload.is_superuser and admin.is_active:
                     await self._protect_last_superuser()
@@ -273,14 +265,10 @@ class AdminManagementService:
     async def set_admin_status(self, admin_id: uuid.UUID, payload: StatusUpdateIn) -> Admin:
         async def operation() -> Admin:
             if admin_id == self.actor_id:
-                raise AppException(
-                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="Cannot change your own status"
-                )
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="不能修改自己的启用状态")
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
-                raise AppException(
-                    status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="Administrator was not found"
-                )
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
             if admin.is_active and not payload.is_active and admin.is_superuser:
                 await self._protect_last_superuser()
             if admin.is_active != payload.is_active:
@@ -303,13 +291,11 @@ class AdminManagementService:
         async def operation() -> None:
             if admin_id == self.actor_id:
                 raise AppException(
-                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="Use the password change endpoint"
+                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="请使用当前管理员修改密码接口"
                 )
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
-                raise AppException(
-                    status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="Administrator was not found"
-                )
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
             admin.password_hash = password_hash
             admin.credential_version += 1
             await self.sessions.revoke_admin_for_admin(admin.id, reason="password_reset")
@@ -325,20 +311,14 @@ class AdminManagementService:
     async def assign_admin_roles(self, admin_id: uuid.UUID, payload: AdminRoleAssignIn) -> Admin:
         async def operation() -> Admin:
             if admin_id == self.actor_id:
-                raise AppException(
-                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="Cannot change your own roles"
-                )
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="不能修改自己的角色")
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
-                raise AppException(
-                    status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="Administrator was not found"
-                )
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
             role_ids = list(dict.fromkeys(payload.role_ids))
             roles = await self.admins.get_roles(role_ids)
             if len(roles) != len(role_ids):
-                raise AppException(
-                    status_code=422, code=ErrorCode.VALIDATION_ERROR, message="One or more roles are invalid"
-                )
+                raise AppException(status_code=422, code=ErrorCode.VALIDATION_ERROR, message="一个或多个角色无效")
             admin.roles = roles
             admin.credential_version += 1
             await self.sessions.revoke_admin_for_admin(admin.id, reason="roles_changed")
@@ -359,13 +339,9 @@ class AdminManagementService:
     async def revoke_all_admin_sessions(self, admin_id: uuid.UUID) -> None:
         async def operation() -> None:
             if admin_id == self.actor_id:
-                raise AppException(
-                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="Cannot revoke your own sessions here"
-                )
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="不能在此处撤销自己的会话")
             if await self.admins.get(admin_id) is None:
-                raise AppException(
-                    status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="Administrator was not found"
-                )
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
             await self.sessions.revoke_admin_for_admin(admin_id, reason="admin_revoked_all")
 
         await self.audit.execute(
@@ -383,7 +359,7 @@ class AdminManagementService:
     async def get_role(self, role_id: uuid.UUID) -> Role:
         role = await self.admins.get_role(role_id)
         if role is None:
-            raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="Role was not found")
+            raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="角色不存在")
         return role
 
     async def create_role(self, payload: RoleCreateIn) -> Role:
@@ -391,9 +367,7 @@ class AdminManagementService:
 
         async def operation() -> Role:
             if await self.admins.get_role_by_code(payload.code) is not None:
-                raise AppException(
-                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="Role code is already in use"
-                )
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="角色代码已被使用")
             role = Role(
                 id=role_id,
                 code=payload.code,
@@ -417,7 +391,7 @@ class AdminManagementService:
         async def operation() -> Role:
             role = await self.admins.get_role(role_id, for_update=True)
             if role is None:
-                raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="Role was not found")
+                raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="角色不存在")
             if "name" in payload.model_fields_set and payload.name is not None:
                 role.name = payload.name.strip()
             if "description" in payload.model_fields_set:
@@ -442,11 +416,9 @@ class AdminManagementService:
         async def operation() -> None:
             role = await self.admins.get_role(role_id, for_update=True)
             if role is None:
-                raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="Role was not found")
+                raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="角色不存在")
             if await self.admins.role_admin_count(role_id) > 0:
-                raise AppException(
-                    status_code=409, code=ErrorCode.STATE_CONFLICT, message="Role is assigned to administrators"
-                )
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="角色仍分配给管理员")
             await self.admins.delete_role(role)
 
         await self.audit.execute(
@@ -462,16 +434,16 @@ class AdminManagementService:
 
         async def operation() -> Role:
             if any(code not in PERMISSION_CODES for code in codes):
-                raise AppException(status_code=422, code=ErrorCode.VALIDATION_ERROR, message="Unknown permission code")
+                raise AppException(status_code=422, code=ErrorCode.VALIDATION_ERROR, message="权限代码未知")
             role = await self.admins.get_role(role_id, for_update=True)
             if role is None:
-                raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="Role was not found")
+                raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="角色不存在")
             permissions = await self.admins.get_permissions_by_codes(codes)
             if len(permissions) != len(codes):
                 raise AppException(
                     status_code=409,
                     code=ErrorCode.STATE_CONFLICT,
-                    message="Permission catalog is not synchronized",
+                    message="权限目录尚未同步",
                 )
             role.permissions = permissions
             await self._invalidate_role_admins(role.id)
@@ -511,7 +483,7 @@ class AdminManagementService:
             raise AppException(
                 status_code=409,
                 code=ErrorCode.STATE_CONFLICT,
-                message="Request metadata logging is disabled",
+                message="请求元数据日志功能已关闭",
             )
         items, total = await self.request_logs.list_logs(page=page, page_size=page_size)
         return RequestLogPage.create(
@@ -526,7 +498,7 @@ class AdminManagementService:
             raise AppException(
                 status_code=409,
                 code=ErrorCode.LAST_SUPERUSER_PROTECTED,
-                message="The last active superuser is protected",
+                message="最后一名启用的超级管理员受保护",
             )
 
     async def _invalidate_role_admins(self, role_id: uuid.UUID) -> None:

@@ -19,7 +19,7 @@ from app.domains.auth.schemas import RefreshSessionOut, UserPrincipalOut
 
 from .schemas import AccountDeleteIn, ActionResult, PasswordChangeIn, SessionRead, UserUpdateIn
 
-router = APIRouter(prefix="/users/me", tags=["users"])
+router = APIRouter(prefix="/users/me", tags=["用户账户"])
 
 
 def _session_read(item: UserSession, current_session_id: uuid.UUID) -> SessionRead:
@@ -37,14 +37,14 @@ def _session_read(item: UserSession, current_session_id: uuid.UUID) -> SessionRe
     )
 
 
-@router.get("", response_model=ResponseModel[UserPrincipalOut], summary="Get the current user")
+@router.get("", response_model=ResponseModel[UserPrincipalOut], summary="获取当前用户")
 async def get_me(
     current: Annotated[CurrentUser, Depends(get_current_user)],
 ) -> ResponseModel[UserPrincipalOut]:
     return success_response(data=UserPrincipalOut.model_validate(current.user), request_id=current_request_id())
 
 
-@router.patch("", response_model=ResponseModel[UserPrincipalOut], summary="Update the current user profile")
+@router.patch("", response_model=ResponseModel[UserPrincipalOut], summary="更新当前用户资料")
 async def update_me(
     payload: UserUpdateIn,
     service: UserAccountServiceDependency,
@@ -52,11 +52,11 @@ async def update_me(
 ) -> ResponseModel[UserPrincipalOut]:
     user = await service.update_profile(current.user.id, payload)
     return success_response(
-        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="Profile updated"
+        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="用户资料更新成功"
     )
 
 
-@router.post("/password", response_model=ResponseModel[RefreshSessionOut], summary="Change the current user password")
+@router.post("/password", response_model=ResponseModel[RefreshSessionOut], summary="修改当前用户密码")
 async def change_password(
     payload: PasswordChangeIn,
     request: Request,
@@ -88,11 +88,11 @@ async def change_password(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Password changed",
+        message="密码修改成功",
     )
 
 
-@router.get("/sessions", response_model=ResponseModel[list[SessionRead]], summary="List current user sessions")
+@router.get("/sessions", response_model=ResponseModel[list[SessionRead]], summary="获取当前用户会话列表")
 async def list_sessions(
     service: UserAccountServiceDependency,
     current: Annotated[CurrentUser, Depends(get_current_user)],
@@ -104,9 +104,7 @@ async def list_sessions(
     )
 
 
-@router.delete(
-    "/sessions/{session_id}", response_model=ResponseModel[ActionResult], summary="Revoke a current user session"
-)
+@router.delete("/sessions/{session_id}", response_model=ResponseModel[ActionResult], summary="撤销当前用户的指定会话")
 async def revoke_session(
     session_id: uuid.UUID,
     request: Request,
@@ -117,23 +115,23 @@ async def revoke_session(
     await service.revoke_session(user_id=current.user.id, session_id=session_id)
     if session_id == current.login_session.id:
         clear_auth_cookies(response, names=WEB_COOKIES, settings=get_request_settings(request))
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Session revoked")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="会话撤销成功")
 
 
 @router.post(
     "/sessions/revoke-others",
     response_model=ResponseModel[ActionResult],
-    summary="Revoke all other current user sessions",
+    summary="撤销当前用户的其他会话",
 )
 async def revoke_other_sessions(
     service: UserAccountServiceDependency,
     current: Annotated[CurrentUser, Depends(require_web_csrf)],
 ) -> ResponseModel[ActionResult]:
     await service.revoke_other_sessions(user_id=current.user.id, current_session_id=current.login_session.id)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Other sessions revoked")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="其他会话撤销成功")
 
 
-@router.delete("", response_model=ResponseModel[ActionResult], summary="Delete and anonymize the current user account")
+@router.delete("", response_model=ResponseModel[ActionResult], summary="注销并匿名化当前用户账户")
 async def delete_account(
     payload: AccountDeleteIn,
     request: Request,
@@ -143,7 +141,7 @@ async def delete_account(
 ) -> ResponseModel[ActionResult]:
     await service.delete_account(user=current.user, payload=payload)
     clear_auth_cookies(response, names=WEB_COOKIES, settings=get_request_settings(request))
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Account deleted")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="账户注销成功")
 
 
 __all__ = ["router"]

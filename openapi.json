@@ -2,15 +2,16 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Pinjie Fullstack Base Backend",
+    "description": "通用全栈母版的后端 API，提供用户认证、账户管理、后台管理和系统状态能力。",
     "version": "0.1.0"
   },
   "paths": {
     "/api/v1/auth/register": {
       "post": {
         "tags": [
-          "authentication"
+          "用户认证"
         ],
-        "summary": "Register a browser user account",
+        "summary": "注册用户账户",
         "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
           "content": {
@@ -24,7 +25,7 @@
         },
         "responses": {
           "201": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -34,7 +35,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -49,9 +50,9 @@
     "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "authentication"
+          "用户认证"
         ],
-        "summary": "Sign in a browser user",
+        "summary": "用户登录",
         "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
           "content": {
@@ -65,7 +66,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -75,7 +76,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -90,9 +91,9 @@
     "/api/v1/auth/refresh": {
       "post": {
         "tags": [
-          "authentication"
+          "用户认证"
         ],
-        "summary": "Rotate the browser refresh token",
+        "summary": "刷新用户登录会话",
         "operationId": "refresh_api_v1_auth_refresh_post",
         "parameters": [
           {
@@ -114,7 +115,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -124,7 +125,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -139,9 +140,9 @@
     "/api/v1/auth/logout": {
       "post": {
         "tags": [
-          "authentication"
+          "用户认证"
         ],
-        "summary": "Sign out the current browser session",
+        "summary": "退出当前用户会话",
         "operationId": "logout_api_v1_auth_logout_post",
         "parameters": [
           {
@@ -163,7 +164,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -173,7 +174,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -188,9 +189,9 @@
     "/api/v1/users/me": {
       "get": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "Get the current user",
+        "summary": "获取当前用户",
         "operationId": "get_me_api_v1_users_me_get",
         "parameters": [
           {
@@ -212,7 +213,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -222,7 +223,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -235,9 +236,9 @@
       },
       "patch": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "Update the current user profile",
+        "summary": "更新当前用户资料",
         "operationId": "update_me_api_v1_users_me_patch",
         "parameters": [
           {
@@ -269,7 +270,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -279,7 +280,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -292,9 +293,9 @@
       },
       "delete": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "Delete and anonymize the current user account",
+        "summary": "注销并匿名化当前用户账户",
         "operationId": "delete_account_api_v1_users_me_delete",
         "parameters": [
           {
@@ -326,7 +327,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -336,7 +337,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -351,9 +352,9 @@
     "/api/v1/users/me/password": {
       "post": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "Change the current user password",
+        "summary": "修改当前用户密码",
         "operationId": "change_password_api_v1_users_me_password_post",
         "parameters": [
           {
@@ -385,7 +386,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -395,7 +396,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -410,9 +411,9 @@
     "/api/v1/users/me/sessions": {
       "get": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "List current user sessions",
+        "summary": "获取当前用户会话列表",
         "operationId": "list_sessions_api_v1_users_me_sessions_get",
         "parameters": [
           {
@@ -434,7 +435,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -444,7 +445,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -459,9 +460,9 @@
     "/api/v1/users/me/sessions/{session_id}": {
       "delete": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "Revoke a current user session",
+        "summary": "撤销当前用户的指定会话",
         "operationId": "revoke_session_api_v1_users_me_sessions__session_id__delete",
         "parameters": [
           {
@@ -493,7 +494,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -503,7 +504,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -518,9 +519,9 @@
     "/api/v1/users/me/sessions/revoke-others": {
       "post": {
         "tags": [
-          "users"
+          "用户账户"
         ],
-        "summary": "Revoke all other current user sessions",
+        "summary": "撤销当前用户的其他会话",
         "operationId": "revoke_other_sessions_api_v1_users_me_sessions_revoke_others_post",
         "parameters": [
           {
@@ -542,7 +543,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -552,7 +553,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -567,9 +568,9 @@
     "/api/v1/admin/auth/login": {
       "post": {
         "tags": [
-          "admin-authentication"
+          "管理员认证"
         ],
-        "summary": "Sign in an administrator",
+        "summary": "管理员登录",
         "operationId": "login_api_v1_admin_auth_login_post",
         "requestBody": {
           "content": {
@@ -583,7 +584,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -593,7 +594,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -608,9 +609,9 @@
     "/api/v1/admin/auth/refresh": {
       "post": {
         "tags": [
-          "admin-authentication"
+          "管理员认证"
         ],
-        "summary": "Rotate administrator refresh token",
+        "summary": "刷新管理员登录会话",
         "operationId": "refresh_api_v1_admin_auth_refresh_post",
         "parameters": [
           {
@@ -632,7 +633,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -642,7 +643,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -657,9 +658,9 @@
     "/api/v1/admin/auth/logout": {
       "post": {
         "tags": [
-          "admin-authentication"
+          "管理员认证"
         ],
-        "summary": "Sign out the current administrator session",
+        "summary": "退出当前管理员会话",
         "operationId": "logout_api_v1_admin_auth_logout_post",
         "parameters": [
           {
@@ -681,7 +682,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -691,7 +692,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -706,9 +707,9 @@
     "/api/v1/admin/auth/me": {
       "get": {
         "tags": [
-          "admin-authentication"
+          "管理员认证"
         ],
-        "summary": "Get the current administrator",
+        "summary": "获取当前管理员",
         "operationId": "get_me_api_v1_admin_auth_me_get",
         "parameters": [
           {
@@ -730,7 +731,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -740,7 +741,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -755,9 +756,9 @@
     "/api/v1/admin/auth/password": {
       "post": {
         "tags": [
-          "admin-authentication"
+          "管理员认证"
         ],
-        "summary": "Change administrator password",
+        "summary": "修改当前管理员密码",
         "operationId": "change_password_api_v1_admin_auth_password_post",
         "parameters": [
           {
@@ -789,7 +790,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -799,7 +800,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -814,9 +815,9 @@
     "/api/v1/admin/auth/confirm": {
       "post": {
         "tags": [
-          "admin-authentication"
+          "管理员认证"
         ],
-        "summary": "Confirm a sensitive administrator action",
+        "summary": "确认管理员敏感操作",
         "operationId": "confirm_api_v1_admin_auth_confirm_post",
         "parameters": [
           {
@@ -848,7 +849,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -858,7 +859,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -873,9 +874,9 @@
     "/api/v1/admin/users": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List users",
+        "summary": "获取用户列表",
         "operationId": "list_users_api_v1_admin_users_get",
         "parameters": [
           {
@@ -937,7 +938,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -947,7 +948,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -962,9 +963,9 @@
     "/api/v1/admin/users/{user_id}": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Get a user",
+        "summary": "获取用户详情",
         "operationId": "get_user_api_v1_admin_users__user_id__get",
         "parameters": [
           {
@@ -996,7 +997,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1006,7 +1007,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1019,9 +1020,9 @@
       },
       "patch": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Update a user",
+        "summary": "更新用户资料",
         "operationId": "update_user_api_v1_admin_users__user_id__patch",
         "parameters": [
           {
@@ -1063,7 +1064,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1073,7 +1074,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1088,9 +1089,9 @@
     "/api/v1/admin/users/{user_id}/status": {
       "patch": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Change a user status",
+        "summary": "修改用户状态",
         "operationId": "set_user_status_api_v1_admin_users__user_id__status_patch",
         "parameters": [
           {
@@ -1148,7 +1149,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1158,7 +1159,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1173,9 +1174,9 @@
     "/api/v1/admin/users/{user_id}/credentials/password": {
       "put": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Reset a user password",
+        "summary": "重置用户密码",
         "operationId": "reset_user_password_api_v1_admin_users__user_id__credentials_password_put",
         "parameters": [
           {
@@ -1233,7 +1234,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1243,7 +1244,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1258,9 +1259,9 @@
     "/api/v1/admin/users/{user_id}/sessions": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List user sessions",
+        "summary": "获取用户会话列表",
         "operationId": "list_user_sessions_api_v1_admin_users__user_id__sessions_get",
         "parameters": [
           {
@@ -1292,7 +1293,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1302,7 +1303,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1317,9 +1318,9 @@
     "/api/v1/admin/users/{user_id}/sessions/{session_id}": {
       "delete": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Revoke a user session",
+        "summary": "撤销用户指定会话",
         "operationId": "revoke_user_session_api_v1_admin_users__user_id__sessions__session_id__delete",
         "parameters": [
           {
@@ -1377,7 +1378,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1387,7 +1388,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1402,9 +1403,9 @@
     "/api/v1/admin/users/{user_id}/sessions/revoke-all": {
       "post": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Revoke all user sessions",
+        "summary": "撤销用户全部会话",
         "operationId": "revoke_all_user_sessions_api_v1_admin_users__user_id__sessions_revoke_all_post",
         "parameters": [
           {
@@ -1452,7 +1453,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1462,7 +1463,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1477,9 +1478,9 @@
     "/api/v1/admin/admins": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List administrators",
+        "summary": "获取管理员列表",
         "operationId": "list_admins_api_v1_admin_admins_get",
         "parameters": [
           {
@@ -1524,7 +1525,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1534,7 +1535,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1547,9 +1548,9 @@
       },
       "post": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Create an administrator",
+        "summary": "创建管理员",
         "operationId": "create_admin_api_v1_admin_admins_post",
         "parameters": [
           {
@@ -1597,7 +1598,7 @@
         },
         "responses": {
           "201": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1607,7 +1608,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1622,9 +1623,9 @@
     "/api/v1/admin/admins/{admin_id}": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Get an administrator",
+        "summary": "获取管理员详情",
         "operationId": "get_admin_api_v1_admin_admins__admin_id__get",
         "parameters": [
           {
@@ -1656,7 +1657,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1666,7 +1667,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1679,9 +1680,9 @@
       },
       "patch": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Update an administrator",
+        "summary": "更新管理员资料",
         "operationId": "update_admin_api_v1_admin_admins__admin_id__patch",
         "parameters": [
           {
@@ -1739,7 +1740,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1749,7 +1750,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1764,9 +1765,9 @@
     "/api/v1/admin/admins/{admin_id}/status": {
       "patch": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Change an administrator status",
+        "summary": "修改管理员状态",
         "operationId": "set_admin_status_api_v1_admin_admins__admin_id__status_patch",
         "parameters": [
           {
@@ -1824,7 +1825,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1834,7 +1835,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1849,9 +1850,9 @@
     "/api/v1/admin/admins/{admin_id}/credentials/password": {
       "put": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Reset an administrator password",
+        "summary": "重置管理员密码",
         "operationId": "reset_admin_password_api_v1_admin_admins__admin_id__credentials_password_put",
         "parameters": [
           {
@@ -1909,7 +1910,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -1919,7 +1920,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -1934,9 +1935,9 @@
     "/api/v1/admin/admins/{admin_id}/roles": {
       "put": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Assign administrator roles",
+        "summary": "分配管理员角色",
         "operationId": "assign_admin_roles_api_v1_admin_admins__admin_id__roles_put",
         "parameters": [
           {
@@ -1994,7 +1995,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2004,7 +2005,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2019,9 +2020,9 @@
     "/api/v1/admin/admins/{admin_id}/sessions": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List administrator sessions",
+        "summary": "获取管理员会话列表",
         "operationId": "list_admin_sessions_api_v1_admin_admins__admin_id__sessions_get",
         "parameters": [
           {
@@ -2053,7 +2054,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2063,7 +2064,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2078,9 +2079,9 @@
     "/api/v1/admin/admins/{admin_id}/sessions/revoke-all": {
       "post": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Revoke all administrator sessions",
+        "summary": "撤销管理员全部会话",
         "operationId": "revoke_all_admin_sessions_api_v1_admin_admins__admin_id__sessions_revoke_all_post",
         "parameters": [
           {
@@ -2128,7 +2129,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2138,7 +2139,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2153,9 +2154,9 @@
     "/api/v1/admin/roles": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List roles",
+        "summary": "获取角色列表",
         "operationId": "list_roles_api_v1_admin_roles_get",
         "parameters": [
           {
@@ -2200,7 +2201,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2210,7 +2211,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2223,9 +2224,9 @@
       },
       "post": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Create a role",
+        "summary": "创建角色",
         "operationId": "create_role_api_v1_admin_roles_post",
         "parameters": [
           {
@@ -2257,7 +2258,7 @@
         },
         "responses": {
           "201": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2267,7 +2268,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2282,9 +2283,9 @@
     "/api/v1/admin/roles/{role_id}": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Get a role",
+        "summary": "获取角色详情",
         "operationId": "get_role_api_v1_admin_roles__role_id__get",
         "parameters": [
           {
@@ -2316,7 +2317,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2326,7 +2327,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2339,9 +2340,9 @@
       },
       "patch": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Update a role",
+        "summary": "更新角色",
         "operationId": "update_role_api_v1_admin_roles__role_id__patch",
         "parameters": [
           {
@@ -2399,7 +2400,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2409,7 +2410,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2422,9 +2423,9 @@
       },
       "delete": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Delete an unused role",
+        "summary": "删除未使用的角色",
         "operationId": "delete_role_api_v1_admin_roles__role_id__delete",
         "parameters": [
           {
@@ -2472,7 +2473,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2482,7 +2483,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2497,9 +2498,9 @@
     "/api/v1/admin/roles/{role_id}/permissions": {
       "put": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "Assign role permissions",
+        "summary": "分配角色权限",
         "operationId": "assign_role_permissions_api_v1_admin_roles__role_id__permissions_put",
         "parameters": [
           {
@@ -2557,7 +2558,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2567,7 +2568,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2582,9 +2583,9 @@
     "/api/v1/admin/permissions": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List the source-controlled permission catalog",
+        "summary": "获取源码管理的权限目录",
         "operationId": "list_permissions_api_v1_admin_permissions_get",
         "parameters": [
           {
@@ -2606,7 +2607,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2616,7 +2617,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2631,9 +2632,9 @@
     "/api/v1/admin/security/login-events": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List authentication security events",
+        "summary": "获取身份认证安全事件",
         "operationId": "list_login_events_api_v1_admin_security_login_events_get",
         "parameters": [
           {
@@ -2678,7 +2679,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2688,7 +2689,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2703,9 +2704,9 @@
     "/api/v1/admin/security/audit-events": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List administrator audit events",
+        "summary": "获取管理员审计事件",
         "operationId": "list_audit_events_api_v1_admin_security_audit_events_get",
         "parameters": [
           {
@@ -2750,7 +2751,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2760,7 +2761,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2775,9 +2776,9 @@
     "/api/v1/admin/system/request-logs": {
       "get": {
         "tags": [
-          "administration"
+          "后台管理"
         ],
-        "summary": "List optional request metadata logs",
+        "summary": "获取可选请求元数据日志",
         "operationId": "list_request_logs_api_v1_admin_system_request_logs_get",
         "parameters": [
           {
@@ -2822,7 +2823,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2832,7 +2833,7 @@
             }
           },
           "422": {
-            "description": "Validation Error",
+            "description": "请求参数校验失败",
             "content": {
               "application/json": {
                 "schema": {
@@ -2847,13 +2848,13 @@
     "/api/v1/system/status": {
       "get": {
         "tags": [
-          "system"
+          "系统"
         ],
-        "summary": "Get public system status",
+        "summary": "获取公共系统状态",
         "operationId": "get_system_status_api_v1_system_status_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2868,13 +2869,13 @@
     "/health/live": {
       "get": {
         "tags": [
-          "health"
+          "健康检查"
         ],
-        "summary": "Liveness probe",
+        "summary": "检查应用存活状态",
         "operationId": "health_live_health_live_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2889,13 +2890,13 @@
     "/health/ready": {
       "get": {
         "tags": [
-          "health"
+          "健康检查"
         ],
-        "summary": "Readiness probe",
+        "summary": "检查应用就绪状态",
         "operationId": "health_ready_health_ready_get",
         "responses": {
           "200": {
-            "description": "Successful Response",
+            "description": "请求成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -2914,9 +2915,10 @@
         "properties": {
           "current_password": {
             "type": "string",
-            "maxLength": 128,
+            "maxLength": 64,
             "minLength": 1,
-            "title": "Current Password"
+            "title": "Current Password",
+            "description": "当前密码，最多 64 个字符"
           }
         },
         "additionalProperties": false,
@@ -2979,9 +2981,10 @@
         "properties": {
           "current_password": {
             "type": "string",
-            "maxLength": 128,
+            "maxLength": 64,
             "minLength": 1,
-            "title": "Current Password"
+            "title": "Current Password",
+            "description": "当前密码，最多 64 个字符"
           },
           "action": {
             "$ref": "#/components/schemas/ConfirmationAction"
@@ -3027,9 +3030,10 @@
           },
           "initial_password": {
             "type": "string",
-            "maxLength": 128,
-            "minLength": 12,
-            "title": "Initial Password"
+            "maxLength": 64,
+            "minLength": 6,
+            "title": "Initial Password",
+            "description": "初始密码，长度为 6 至 64 个字符"
           },
           "display_name": {
             "anyOf": [
@@ -3078,9 +3082,10 @@
           },
           "password": {
             "type": "string",
-            "maxLength": 128,
+            "maxLength": 64,
             "minLength": 1,
-            "title": "Password"
+            "title": "Password",
+            "description": "登录密码，最多 64 个字符"
           }
         },
         "additionalProperties": false,
@@ -3679,15 +3684,17 @@
         "properties": {
           "current_password": {
             "type": "string",
-            "maxLength": 128,
+            "maxLength": 64,
             "minLength": 1,
-            "title": "Current Password"
+            "title": "Current Password",
+            "description": "当前密码，最多 64 个字符"
           },
           "new_password": {
             "type": "string",
-            "maxLength": 128,
-            "minLength": 12,
-            "title": "New Password"
+            "maxLength": 64,
+            "minLength": 6,
+            "title": "New Password",
+            "description": "新密码，长度为 6 至 64 个字符"
           }
         },
         "additionalProperties": false,
@@ -3702,9 +3709,10 @@
         "properties": {
           "new_password": {
             "type": "string",
-            "maxLength": 128,
-            "minLength": 12,
-            "title": "New Password"
+            "maxLength": 64,
+            "minLength": 6,
+            "title": "New Password",
+            "description": "新密码，长度为 6 至 64 个字符"
           }
         },
         "additionalProperties": false,
@@ -4761,9 +4769,10 @@
           },
           "password": {
             "type": "string",
-            "maxLength": 128,
+            "maxLength": 64,
             "minLength": 1,
-            "title": "Password"
+            "title": "Password",
+            "description": "登录密码，最多 64 个字符"
           }
         },
         "additionalProperties": false,
@@ -4843,9 +4852,10 @@
           },
           "password": {
             "type": "string",
-            "maxLength": 128,
-            "minLength": 12,
-            "title": "Password"
+            "maxLength": 64,
+            "minLength": 6,
+            "title": "Password",
+            "description": "登录密码，长度为 6 至 64 个字符"
           },
           "display_name": {
             "anyOf": [
@@ -4952,5 +4962,31 @@
         "title": "ValidationError"
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "用户认证",
+      "description": "用户注册、登录、刷新会话和退出登录接口。"
+    },
+    {
+      "name": "用户账户",
+      "description": "当前用户资料、密码、登录会话和账户管理接口。"
+    },
+    {
+      "name": "管理员认证",
+      "description": "管理员登录、刷新会话、修改密码和敏感操作确认接口。"
+    },
+    {
+      "name": "后台管理",
+      "description": "用户、管理员、角色、权限和安全审计管理接口。"
+    },
+    {
+      "name": "系统",
+      "description": "面向应用调用方的公共系统状态接口。"
+    },
+    {
+      "name": "健康检查",
+      "description": "面向运行平台的存活与就绪探针。"
+    }
+  ]
 }

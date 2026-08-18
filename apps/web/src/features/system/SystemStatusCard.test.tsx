@@ -24,7 +24,7 @@ describe("SystemStatusCard", () => {
 
   it("reports an unavailable backend when retry fails", async () => {
     server.use(
-      http.get("http://localhost:3000/api/v1/system/status", () => HttpResponse.json({ message: "down" }, { status: 503 })),
+      http.get("http://localhost:3000/api/v1/system/status", () => HttpResponse.json({ message: "服务不可用" }, { status: 503 })),
     );
     render(<SystemStatusCard initialStatus={{ status: "available" }} />);
 

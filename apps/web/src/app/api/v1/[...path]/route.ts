@@ -7,7 +7,7 @@ const FORWARDED_HEADERS = ["accept", "content-type", "cookie", "origin", "user-a
 
 async function proxy(request: Request, context: { params: Promise<{ path: string[] }> }) {
   const backendURL = process.env.BACKEND_INTERNAL_URL;
-  if (!backendURL) return NextResponse.json({ code: "SERVICE_UNAVAILABLE", message: "Backend is not configured", request_id: request.headers.get("x-request-id") ?? "" }, { status: 503 });
+  if (!backendURL) return NextResponse.json({ code: "SERVICE_UNAVAILABLE", message: "后端服务尚未配置", request_id: request.headers.get("x-request-id") ?? "" }, { status: 503 });
   const { path } = await context.params;
   const source = new URL(request.url);
   const target = new URL(`/api/v1/${path.join("/")}${source.search}`, backendURL);
@@ -33,7 +33,7 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
     for (const cookie of responseHeaders.getSetCookie?.() ?? []) outgoing.append("set-cookie", cookie);
     return new NextResponse(response.body, { status: response.status, headers: outgoing });
   } catch {
-    return NextResponse.json({ code: "SERVICE_UNAVAILABLE", message: "Backend is unavailable", request_id: request.headers.get("x-request-id") ?? "" }, { status: 503 });
+    return NextResponse.json({ code: "SERVICE_UNAVAILABLE", message: "后端服务不可用", request_id: request.headers.get("x-request-id") ?? "" }, { status: 503 });
   }
 }
 

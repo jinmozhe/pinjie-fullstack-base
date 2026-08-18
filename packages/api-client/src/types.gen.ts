@@ -10,6 +10,8 @@ export type ClientOptions = {
 export type AccountDeleteIn = {
     /**
      * Current Password
+     *
+     * 当前密码，最多 64 个字符
      */
     current_password: string;
 };
@@ -53,6 +55,8 @@ export type AdminAuthSessionOut = {
 export type AdminConfirmIn = {
     /**
      * Current Password
+     *
+     * 当前密码，最多 64 个字符
      */
     current_password: string;
     action: ConfirmationAction;
@@ -83,6 +87,8 @@ export type AdminCreateIn = {
     username: string;
     /**
      * Initial Password
+     *
+     * 初始密码，长度为 6 至 64 个字符
      */
     initial_password: string;
     /**
@@ -113,6 +119,8 @@ export type AdminLoginIn = {
     username: string;
     /**
      * Password
+     *
+     * 登录密码，最多 64 个字符
      */
     password: string;
 };
@@ -464,10 +472,14 @@ export type PageResultUserPrincipalOut = {
 export type PasswordChangeIn = {
     /**
      * Current Password
+     *
+     * 当前密码，最多 64 个字符
      */
     current_password: string;
     /**
      * New Password
+     *
+     * 新密码，长度为 6 至 64 个字符
      */
     new_password: string;
 };
@@ -478,6 +490,8 @@ export type PasswordChangeIn = {
 export type PasswordResetIn = {
     /**
      * New Password
+     *
+     * 新密码，长度为 6 至 64 个字符
      */
     new_password: string;
 };
@@ -1152,6 +1166,8 @@ export type UserLoginIn = {
     username: string;
     /**
      * Password
+     *
+     * 登录密码，最多 64 个字符
      */
     password: string;
 };
@@ -1200,6 +1216,8 @@ export type UserRegisterIn = {
     username: string;
     /**
      * Password
+     *
+     * 登录密码，长度为 6 至 64 个字符
      */
     password: string;
     /**
@@ -1263,7 +1281,7 @@ export type RegisterApiV1AuthRegisterPostData = {
 
 export type RegisterApiV1AuthRegisterPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1272,7 +1290,7 @@ export type RegisterApiV1AuthRegisterPostError = RegisterApiV1AuthRegisterPostEr
 
 export type RegisterApiV1AuthRegisterPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     201: ResponseModelUserAuthSessionOut;
 };
@@ -1288,7 +1306,7 @@ export type LoginApiV1AuthLoginPostData = {
 
 export type LoginApiV1AuthLoginPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1297,7 +1315,7 @@ export type LoginApiV1AuthLoginPostError = LoginApiV1AuthLoginPostErrors[keyof L
 
 export type LoginApiV1AuthLoginPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelUserAuthSessionOut;
 };
@@ -1313,7 +1331,7 @@ export type RefreshApiV1AuthRefreshPostData = {
 
 export type RefreshApiV1AuthRefreshPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1322,7 +1340,7 @@ export type RefreshApiV1AuthRefreshPostError = RefreshApiV1AuthRefreshPostErrors
 
 export type RefreshApiV1AuthRefreshPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRefreshSessionOut;
 };
@@ -1338,7 +1356,7 @@ export type LogoutApiV1AuthLogoutPostData = {
 
 export type LogoutApiV1AuthLogoutPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1347,7 +1365,7 @@ export type LogoutApiV1AuthLogoutPostError = LogoutApiV1AuthLogoutPostErrors[key
 
 export type LogoutApiV1AuthLogoutPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelBool;
 };
@@ -1363,7 +1381,7 @@ export type DeleteAccountApiV1UsersMeDeleteData = {
 
 export type DeleteAccountApiV1UsersMeDeleteErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1372,7 +1390,7 @@ export type DeleteAccountApiV1UsersMeDeleteError = DeleteAccountApiV1UsersMeDele
 
 export type DeleteAccountApiV1UsersMeDeleteResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -1388,7 +1406,7 @@ export type GetMeApiV1UsersMeGetData = {
 
 export type GetMeApiV1UsersMeGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1397,7 +1415,7 @@ export type GetMeApiV1UsersMeGetError = GetMeApiV1UsersMeGetErrors[keyof GetMeAp
 
 export type GetMeApiV1UsersMeGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelUserPrincipalOut;
 };
@@ -1413,7 +1431,7 @@ export type UpdateMeApiV1UsersMePatchData = {
 
 export type UpdateMeApiV1UsersMePatchErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1422,7 +1440,7 @@ export type UpdateMeApiV1UsersMePatchError = UpdateMeApiV1UsersMePatchErrors[key
 
 export type UpdateMeApiV1UsersMePatchResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelUserPrincipalOut;
 };
@@ -1438,7 +1456,7 @@ export type ChangePasswordApiV1UsersMePasswordPostData = {
 
 export type ChangePasswordApiV1UsersMePasswordPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1447,7 +1465,7 @@ export type ChangePasswordApiV1UsersMePasswordPostError = ChangePasswordApiV1Use
 
 export type ChangePasswordApiV1UsersMePasswordPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRefreshSessionOut;
 };
@@ -1463,7 +1481,7 @@ export type ListSessionsApiV1UsersMeSessionsGetData = {
 
 export type ListSessionsApiV1UsersMeSessionsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1472,7 +1490,7 @@ export type ListSessionsApiV1UsersMeSessionsGetError = ListSessionsApiV1UsersMeS
 
 export type ListSessionsApiV1UsersMeSessionsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelListSessionRead;
 };
@@ -1493,7 +1511,7 @@ export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData = {
 
 export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1502,7 +1520,7 @@ export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteError = RevokeSessio
 
 export type RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -1518,7 +1536,7 @@ export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData = {
 
 export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1527,7 +1545,7 @@ export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostError = Revok
 
 export type RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -1543,7 +1561,7 @@ export type LoginApiV1AdminAuthLoginPostData = {
 
 export type LoginApiV1AdminAuthLoginPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1552,7 +1570,7 @@ export type LoginApiV1AdminAuthLoginPostError = LoginApiV1AdminAuthLoginPostErro
 
 export type LoginApiV1AdminAuthLoginPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminAuthSessionOut;
 };
@@ -1568,7 +1586,7 @@ export type RefreshApiV1AdminAuthRefreshPostData = {
 
 export type RefreshApiV1AdminAuthRefreshPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1577,7 +1595,7 @@ export type RefreshApiV1AdminAuthRefreshPostError = RefreshApiV1AdminAuthRefresh
 
 export type RefreshApiV1AdminAuthRefreshPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRefreshSessionOut;
 };
@@ -1593,7 +1611,7 @@ export type LogoutApiV1AdminAuthLogoutPostData = {
 
 export type LogoutApiV1AdminAuthLogoutPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1602,7 +1620,7 @@ export type LogoutApiV1AdminAuthLogoutPostError = LogoutApiV1AdminAuthLogoutPost
 
 export type LogoutApiV1AdminAuthLogoutPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelBool;
 };
@@ -1618,7 +1636,7 @@ export type GetMeApiV1AdminAuthMeGetData = {
 
 export type GetMeApiV1AdminAuthMeGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1627,7 +1645,7 @@ export type GetMeApiV1AdminAuthMeGetError = GetMeApiV1AdminAuthMeGetErrors[keyof
 
 export type GetMeApiV1AdminAuthMeGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminRead;
 };
@@ -1643,7 +1661,7 @@ export type ChangePasswordApiV1AdminAuthPasswordPostData = {
 
 export type ChangePasswordApiV1AdminAuthPasswordPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1652,7 +1670,7 @@ export type ChangePasswordApiV1AdminAuthPasswordPostError = ChangePasswordApiV1A
 
 export type ChangePasswordApiV1AdminAuthPasswordPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRefreshSessionOut;
 };
@@ -1668,7 +1686,7 @@ export type ConfirmApiV1AdminAuthConfirmPostData = {
 
 export type ConfirmApiV1AdminAuthConfirmPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1677,7 +1695,7 @@ export type ConfirmApiV1AdminAuthConfirmPostError = ConfirmApiV1AdminAuthConfirm
 
 export type ConfirmApiV1AdminAuthConfirmPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminConfirmOut;
 };
@@ -1706,7 +1724,7 @@ export type ListUsersApiV1AdminUsersGetData = {
 
 export type ListUsersApiV1AdminUsersGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1715,7 +1733,7 @@ export type ListUsersApiV1AdminUsersGetError = ListUsersApiV1AdminUsersGetErrors
 
 export type ListUsersApiV1AdminUsersGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelPageResultUserPrincipalOut;
 };
@@ -1736,7 +1754,7 @@ export type GetUserApiV1AdminUsersUserIdGetData = {
 
 export type GetUserApiV1AdminUsersUserIdGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1745,7 +1763,7 @@ export type GetUserApiV1AdminUsersUserIdGetError = GetUserApiV1AdminUsersUserIdG
 
 export type GetUserApiV1AdminUsersUserIdGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelUserPrincipalOut;
 };
@@ -1766,7 +1784,7 @@ export type UpdateUserApiV1AdminUsersUserIdPatchData = {
 
 export type UpdateUserApiV1AdminUsersUserIdPatchErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1775,7 +1793,7 @@ export type UpdateUserApiV1AdminUsersUserIdPatchError = UpdateUserApiV1AdminUser
 
 export type UpdateUserApiV1AdminUsersUserIdPatchResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelUserPrincipalOut;
 };
@@ -1802,7 +1820,7 @@ export type SetUserStatusApiV1AdminUsersUserIdStatusPatchData = {
 
 export type SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1811,7 +1829,7 @@ export type SetUserStatusApiV1AdminUsersUserIdStatusPatchError = SetUserStatusAp
 
 export type SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelUserPrincipalOut;
 };
@@ -1838,7 +1856,7 @@ export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData = {
 
 export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1847,7 +1865,7 @@ export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutError = 
 
 export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -1868,7 +1886,7 @@ export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetData = {
 
 export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1877,7 +1895,7 @@ export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetError = ListUserSess
 
 export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelListSessionRead;
 };
@@ -1908,7 +1926,7 @@ export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData = 
 
 export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1917,7 +1935,7 @@ export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteError =
 
 export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -1944,7 +1962,7 @@ export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData 
 
 export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1953,7 +1971,7 @@ export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostError
 
 export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -1978,7 +1996,7 @@ export type ListAdminsApiV1AdminAdminsGetData = {
 
 export type ListAdminsApiV1AdminAdminsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -1987,7 +2005,7 @@ export type ListAdminsApiV1AdminAdminsGetError = ListAdminsApiV1AdminAdminsGetEr
 
 export type ListAdminsApiV1AdminAdminsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelPageResultAdminRead;
 };
@@ -2009,7 +2027,7 @@ export type CreateAdminApiV1AdminAdminsPostData = {
 
 export type CreateAdminApiV1AdminAdminsPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2018,7 +2036,7 @@ export type CreateAdminApiV1AdminAdminsPostError = CreateAdminApiV1AdminAdminsPo
 
 export type CreateAdminApiV1AdminAdminsPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     201: ResponseModelAdminRead;
 };
@@ -2039,7 +2057,7 @@ export type GetAdminApiV1AdminAdminsAdminIdGetData = {
 
 export type GetAdminApiV1AdminAdminsAdminIdGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2048,7 +2066,7 @@ export type GetAdminApiV1AdminAdminsAdminIdGetError = GetAdminApiV1AdminAdminsAd
 
 export type GetAdminApiV1AdminAdminsAdminIdGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminRead;
 };
@@ -2075,7 +2093,7 @@ export type UpdateAdminApiV1AdminAdminsAdminIdPatchData = {
 
 export type UpdateAdminApiV1AdminAdminsAdminIdPatchErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2084,7 +2102,7 @@ export type UpdateAdminApiV1AdminAdminsAdminIdPatchError = UpdateAdminApiV1Admin
 
 export type UpdateAdminApiV1AdminAdminsAdminIdPatchResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminRead;
 };
@@ -2111,7 +2129,7 @@ export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData = {
 
 export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2120,7 +2138,7 @@ export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchError = SetAdminStat
 
 export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminRead;
 };
@@ -2147,7 +2165,7 @@ export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData 
 
 export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2156,7 +2174,7 @@ export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutError
 
 export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -2183,7 +2201,7 @@ export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData = {
 
 export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2192,7 +2210,7 @@ export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutError = AssignAdminRo
 
 export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelAdminRead;
 };
@@ -2213,7 +2231,7 @@ export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData = {
 
 export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2222,7 +2240,7 @@ export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetError = ListAdmin
 
 export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelListSessionRead;
 };
@@ -2249,7 +2267,7 @@ export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostDa
 
 export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2258,7 +2276,7 @@ export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostEr
 
 export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -2283,7 +2301,7 @@ export type ListRolesApiV1AdminRolesGetData = {
 
 export type ListRolesApiV1AdminRolesGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2292,7 +2310,7 @@ export type ListRolesApiV1AdminRolesGetError = ListRolesApiV1AdminRolesGetErrors
 
 export type ListRolesApiV1AdminRolesGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelPageResultRoleRead;
 };
@@ -2308,7 +2326,7 @@ export type CreateRoleApiV1AdminRolesPostData = {
 
 export type CreateRoleApiV1AdminRolesPostErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2317,7 +2335,7 @@ export type CreateRoleApiV1AdminRolesPostError = CreateRoleApiV1AdminRolesPostEr
 
 export type CreateRoleApiV1AdminRolesPostResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     201: ResponseModelRoleRead;
 };
@@ -2344,7 +2362,7 @@ export type DeleteRoleApiV1AdminRolesRoleIdDeleteData = {
 
 export type DeleteRoleApiV1AdminRolesRoleIdDeleteErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2353,7 +2371,7 @@ export type DeleteRoleApiV1AdminRolesRoleIdDeleteError = DeleteRoleApiV1AdminRol
 
 export type DeleteRoleApiV1AdminRolesRoleIdDeleteResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelActionResult;
 };
@@ -2374,7 +2392,7 @@ export type GetRoleApiV1AdminRolesRoleIdGetData = {
 
 export type GetRoleApiV1AdminRolesRoleIdGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2383,7 +2401,7 @@ export type GetRoleApiV1AdminRolesRoleIdGetError = GetRoleApiV1AdminRolesRoleIdG
 
 export type GetRoleApiV1AdminRolesRoleIdGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRoleRead;
 };
@@ -2410,7 +2428,7 @@ export type UpdateRoleApiV1AdminRolesRoleIdPatchData = {
 
 export type UpdateRoleApiV1AdminRolesRoleIdPatchErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2419,7 +2437,7 @@ export type UpdateRoleApiV1AdminRolesRoleIdPatchError = UpdateRoleApiV1AdminRole
 
 export type UpdateRoleApiV1AdminRolesRoleIdPatchResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRoleRead;
 };
@@ -2446,7 +2464,7 @@ export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData = {
 
 export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2455,7 +2473,7 @@ export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutError = Assi
 
 export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelRoleRead;
 };
@@ -2471,7 +2489,7 @@ export type ListPermissionsApiV1AdminPermissionsGetData = {
 
 export type ListPermissionsApiV1AdminPermissionsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2480,7 +2498,7 @@ export type ListPermissionsApiV1AdminPermissionsGetError = ListPermissionsApiV1A
 
 export type ListPermissionsApiV1AdminPermissionsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelListPermissionRead;
 };
@@ -2505,7 +2523,7 @@ export type ListLoginEventsApiV1AdminSecurityLoginEventsGetData = {
 
 export type ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2514,7 +2532,7 @@ export type ListLoginEventsApiV1AdminSecurityLoginEventsGetError = ListLoginEven
 
 export type ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelPageResultLoginEventRead;
 };
@@ -2539,7 +2557,7 @@ export type ListAuditEventsApiV1AdminSecurityAuditEventsGetData = {
 
 export type ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2548,7 +2566,7 @@ export type ListAuditEventsApiV1AdminSecurityAuditEventsGetError = ListAuditEven
 
 export type ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelPageResultAuditEventRead;
 };
@@ -2573,7 +2591,7 @@ export type ListRequestLogsApiV1AdminSystemRequestLogsGetData = {
 
 export type ListRequestLogsApiV1AdminSystemRequestLogsGetErrors = {
     /**
-     * Validation Error
+     * 请求参数校验失败
      */
     422: HttpValidationError;
 };
@@ -2582,7 +2600,7 @@ export type ListRequestLogsApiV1AdminSystemRequestLogsGetError = ListRequestLogs
 
 export type ListRequestLogsApiV1AdminSystemRequestLogsGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelPageResultRequestLogRead;
 };
@@ -2598,7 +2616,7 @@ export type GetSystemStatusApiV1SystemStatusGetData = {
 
 export type GetSystemStatusApiV1SystemStatusGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ResponseModelSystemStatus;
 };
@@ -2614,7 +2632,7 @@ export type HealthLiveHealthLiveGetData = {
 
 export type HealthLiveHealthLiveGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: LiveStatus;
 };
@@ -2630,7 +2648,7 @@ export type HealthReadyHealthReadyGetData = {
 
 export type HealthReadyHealthReadyGetResponses = {
     /**
-     * Successful Response
+     * 请求成功
      */
     200: ReadinessStatus;
 };

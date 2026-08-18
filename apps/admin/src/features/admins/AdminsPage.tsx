@@ -56,7 +56,7 @@ export function AdminsPage() {
         <Form<AdminCreateIn> form={createForm} layout="vertical" initialValues={{ is_active: true, is_superuser: false, role_ids: [] }} onFinish={(values) => create.mutate(values)}>
           <Form.Item label="用户名" name="username" rules={[{ required: true }, { min: 3 }]}><Input autoComplete="off" /></Form.Item>
           <Form.Item label="显示名称" name="display_name"><Input maxLength={100} /></Form.Item>
-          <Form.Item label="初始密码" name="initial_password" rules={[{ required: true }, { min: 12, message: "密码至少 12 个字符" }]}><Input.Password autoComplete="new-password" /></Form.Item>
+          <Form.Item label="初始密码" name="initial_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
           <Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item>
           <Form.Item name="is_superuser" valuePropName="checked"><Checkbox>超级管理员</Checkbox></Form.Item>
         </Form>

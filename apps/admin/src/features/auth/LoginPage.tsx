@@ -32,8 +32,8 @@ export function LoginPage({ authenticated }: { authenticated: boolean }) {
           <Form.Item label="用户名" name="username" rules={[{ required: true, message: "请输入用户名" }]}>
             <Input autoComplete="username" prefix={<UserOutlined />} size="large" />
           </Form.Item>
-          <Form.Item label="密码" name="password" rules={[{ required: true, message: "请输入密码" }]}>
-            <Input.Password autoComplete="current-password" prefix={<LockOutlined />} size="large" />
+          <Form.Item label="密码" name="password" rules={[{ required: true, message: "请输入密码" }, { max: 64, message: "密码最多 64 个字符" }]}>
+            <Input.Password autoComplete="current-password" maxLength={64} prefix={<LockOutlined />} size="large" />
           </Form.Item>
           <Button block htmlType="submit" loading={login.isPending} size="large" type="primary">登录</Button>
         </Form>

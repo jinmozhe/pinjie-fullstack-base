@@ -24,6 +24,8 @@ export class ServerAuthError extends Error {
   }
 }
 
+export type ServerAuthenticationState = "authenticated" | "anonymous" | "unavailable";
+
 export async function fetchCurrentUser(): Promise<UserPrincipalOut> {
   const baseURL = process.env.BACKEND_INTERNAL_URL;
   if (!baseURL) throw new ServerAuthError(503);
@@ -35,4 +37,14 @@ export async function fetchCurrentUser(): Promise<UserPrincipalOut> {
   if (!response.ok) throw new ServerAuthError(response.status);
   const payload = (await response.json()) as { data: UserPrincipalOut };
   return payload.data;
+}
+
+export async function fetchAuthenticationState(): Promise<ServerAuthenticationState> {
+  try {
+    await fetchCurrentUser();
+    return "authenticated";
+  } catch (error) {
+    if (error instanceof ServerAuthError && error.status === 401) return "anonymous";
+    return "unavailable";
+  }
 }

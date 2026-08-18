@@ -12,6 +12,8 @@ test.describe("system status foundation", () => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "通用账户与管理基础" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "系统运行状态" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "登录" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "创建账户" })).toBeVisible();
     await expect(async () => {
       const availability = page.getByText("可用", { exact: true });
       if (!(await availability.isVisible())) {

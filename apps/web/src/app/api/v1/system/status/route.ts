@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const backendURL = process.env.BACKEND_INTERNAL_URL;
   if (!backendURL) {
     return NextResponse.json(
-      { code: "SERVICE_UNAVAILABLE", message: "Backend is not configured", request_id: request.headers.get("x-request-id") ?? "" },
+      { code: "SERVICE_UNAVAILABLE", message: "后端服务尚未配置", request_id: request.headers.get("x-request-id") ?? "" },
       { status: 503 },
     );
   }
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     });
   } catch {
     return NextResponse.json(
-      { code: "SERVICE_UNAVAILABLE", message: "Backend is unavailable", request_id: request.headers.get("x-request-id") ?? "" },
+      { code: "SERVICE_UNAVAILABLE", message: "后端服务不可用", request_id: request.headers.get("x-request-id") ?? "" },
       { status: 503 },
     );
   }

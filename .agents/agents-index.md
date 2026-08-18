@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力、CI 跨平台修复和私有仓库 SAST 替换均已完成 |
+| 当前阶段 | 阶段 B 应用运行与测试基础设施、阶段 C 通用业务核心能力、CI 跨平台修复、私有仓库 SAST 替换、密码规则统一和 API 中文化均已完成 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -59,18 +59,21 @@
 | `plans/2026-08-14_阶段C通用业务核心能力计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 对照两个参考项目完成认证、会话、用户、RBAC、审计、日志和真实跨栈验收 |
 | `plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md` | 已结束 | 已完成 | 全栈治理、GitHub、Documentation | 已停用自动依赖分支、关闭相关 PR，并将本地和远程分支收敛为 `main` |
 | `plans/2026-08-16_CI跨平台与CodeQL权限修复计划.md` | 已结束 | 已完成 | 全栈治理、GitHub Actions、Backend、Admin、Documentation | 修复 Governance Linux 兼容，以 Semgrep CE 替换私有仓库不可用的 CodeQL，并完成供应链门禁与线上五工作流验收 |
+| `plans/2026-08-17_密码规则与API中文化计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Documentation | 统一密码规则、API 顶层消息和 OpenAPI 中文描述并完成跨栈验证 |
+| `plans/2026-08-17_初始管理员默认用户名计划.md` | 已结束 | 已取消 | Backend、Deployment、Documentation | 用户决定继续通过必填 `--username` 显式创建初始管理员，未实施默认用户名变更 |
+| `plans/2026-08-17_Web首页登录态操作按钮计划.md` | 已结束 | 已完成 | Web、Documentation | Web 首页根据服务端真实登录态隐藏登录和创建账户按钮，并补充登录前后浏览器验证 |
 
 ## 当前系统状态
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；默认 pytest 对 `app` 执行 90% 行与分支覆盖率门禁 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 登录、受保护布局、权限导航、用户、管理员、角色权限、安全日志、MSW/RTL 测试和可健康运行的非 Root Nginx 生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf` |
-| Web | 注册登录、SSR 用户中心、资料、密码、会话、退出、注销、同域代理、组件测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
-| API Client | 根 OpenAPI 共 39 条路径，生成 Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |
+| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；新密码统一为 6 至 64 个字符，API 顶层消息和 OpenAPI 描述使用中文；默认 pytest 对 `app` 执行 90% 行与分支覆盖率门禁 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Admin | 登录、受保护布局、权限导航、用户、管理员、角色权限、安全日志、统一密码约束、MSW/RTL 测试和可健康运行的非 Root Nginx 生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf` |
+| Web | 注册登录、SSR 用户中心、资料、统一密码约束、会话、退出、注销、首页登录态操作、中文错误代理、组件测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
+| API Client | 根 OpenAPI 共 39 条路径、47 个操作，中文描述和密码约束已重新生成，Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，PostgreSQL 18.4 空库/重复升级、Model/Head 和隔离集成测试通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/tests/` |
 | Deployment | Backend 固定官方 CPython 3.14.7 slim-trixie 完整基础镜像 digest；三张本地 Linux x86_64 非 Root 镜像构建和健康运行成功，生产 Compose、同域代理、请求日志 Profile 和桌面/移动 Chromium 真实跨栈 E2E 已验证；未执行镜像发布与生产部署 | `apps/backend/Dockerfile`、`compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
-| Documentation | 目录结构已按阶段 B 收尾时的 261 个项目文件、64 个含文件目录同步，阶段 B/C 计划、ADR、架构、测试、运维、索引和 Changelog 与实现一致 | `docs/architecture/project-structure.md`、`plans/2026-08-13_阶段B应用运行与测试基础设施计划.md`、`plans/2026-08-14_阶段C通用业务核心能力计划.md`、`CHANGELOG.md` |
+| Documentation | 目录结构已按 2026-08-17 的 271 个项目文件、64 个含文件目录同步，阶段 B/C、密码与 API 中文化、Web 首页登录态计划、ADR、架构、测试、运维、索引和 Changelog 与实现一致 | `docs/architecture/project-structure.md`、`plans/2026-08-17_Web首页登录态操作按钮计划.md`、`CHANGELOG.md` |
 
 ## 权威来源
 

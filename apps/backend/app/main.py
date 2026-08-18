@@ -18,15 +18,33 @@ from app.core.exceptions import AppException
 from app.core.health import check_readiness
 from app.core.logging import configure_logging
 from app.core.middleware import request_context_middleware
+from app.core.openapi import OPENAPI_TAGS, localize_openapi_schema
 from app.core.resources import AppResources, create_resources
+from app.core.response import public_message
 from app.domains.system.router import readiness_response
 from app.domains.system.schemas import LiveStatus, ReadinessStatus
+
+_HTTP_ERROR_MESSAGES = {
+    400: "请求内容有误",
+    401: "需要身份认证",
+    403: "请求被拒绝",
+    404: "请求的资源不存在",
+    405: "请求方法不允许",
+    413: "请求内容过大",
+    422: "请求参数校验失败",
+    429: "请求过于频繁",
+}
 
 
 def _error_response(*, request_id: str, code: str, message: str, details: Any = None, status_code: int) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
-        content={"code": code, "message": message, "details": details, "request_id": request_id},
+        content={
+            "code": code,
+            "message": public_message(message, fallback="请求处理失败"),
+            "details": details,
+            "request_id": request_id,
+        },
     )
 
 
@@ -67,7 +85,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
         return _error_response(
             request_id=current_request_id(),
             code=ErrorCode.VALIDATION_ERROR,
-            message="Request validation failed",
+            message="请求参数校验失败",
             details=_safe_validation_details(exc),
             status_code=422,
         )
@@ -78,7 +96,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
         return _error_response(
             request_id=current_request_id(),
             code=code,
-            message=str(exc.detail) if isinstance(exc.detail, str) else "Request failed",
+            message=_HTTP_ERROR_MESSAGES.get(exc.status_code, "请求处理失败"),
             status_code=exc.status_code,
         )
 
@@ -90,7 +108,7 @@ def _register_exception_handlers(app: FastAPI) -> None:
         return _error_response(
             request_id=current_request_id(),
             code=ErrorCode.INTERNAL_ERROR,
-            message="Internal server error",
+            message="服务器内部错误",
             status_code=500,
         )
 
@@ -112,9 +130,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title=app_settings.project_name,
+        description="通用全栈母版的后端 API，提供用户认证、账户管理、后台管理和系统状态能力。",
         version=app_settings.release_version or "0.1.0",
         docs_url=app_settings.docs_url,
         redoc_url=app_settings.redoc_url,
+        openapi_tags=OPENAPI_TAGS,
         lifespan=lifespan,
     )
     app.state.settings = app_settings
@@ -139,11 +159,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app.include_router(api_router, prefix=app_settings.api_v1_str)
 
-    @app.get("/health/live", response_model=LiveStatus, tags=["health"], summary="Liveness probe")
+    @app.get("/health/live", response_model=LiveStatus, tags=["健康检查"], summary="检查应用存活状态")
     async def health_live() -> LiveStatus:
         return LiveStatus(status="alive")
 
-    @app.get("/health/ready", response_model=ReadinessStatus, tags=["health"], summary="Readiness probe")
+    @app.get("/health/ready", response_model=ReadinessStatus, tags=["健康检查"], summary="检查应用就绪状态")
     async def health_ready(request: Request) -> JSONResponse:
         resources = getattr(request.app.state, "resources", None)
         settings = getattr(request.app.state, "settings", None)
@@ -156,6 +176,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             checks=result.checks,
         )
 
+    app.openapi_schema = localize_openapi_schema(app.openapi())
     return app
 
 

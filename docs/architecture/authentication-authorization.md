@@ -42,6 +42,7 @@
 - JWT 必需 Claims 为 `iss`、`aud`、`sub`、`sid`、`jti`、`iat`、`nbf`、`exp`、`token_type` 和 `credential_version`，允许最多 30 秒时钟偏差。JWT 不保存角色、权限和个人资料。
 - Web Access 默认 15 分钟，Admin Access 默认 10 分钟。验签后继续校验 PostgreSQL Session、主体状态与凭据版本。
 - 密码使用 Argon2id。Hash 和 Verify 通过线程池执行，并由进程内信号量限制并发。未知用户名执行固定虚拟密码校验，避免明显的账号枚举时序差异。
+- 用户和管理员在注册、修改、重置及初始创建时，新密码统一要求 6 至 64 个字符。登录、当前密码和二次确认输入最多接受 64 个字符；现存超过 64 个字符的密码需要先通过受控重置改为符合当前策略的密码。
 - PostgreSQL 是 Session 和 Refresh Token 的权威来源。Refresh 原值只进入 `HttpOnly` Cookie，数据库保存 HMAC-SHA256 摘要。
 - Refresh 闲置期限默认 7 天，Session 绝对期限默认 30 天。刷新通过行锁单次消费并旋转，已消费 Token 重放会撤销整个 Session Family。
 - 密码、主体状态、管理员角色或超级管理员标记变化时递增 `credential_version` 并撤销相关会话。

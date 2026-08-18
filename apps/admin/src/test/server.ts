@@ -32,17 +32,17 @@ const role = {
   updated_at: now,
 };
 
-const ok = <T>(data: T) => HttpResponse.json({ code: "OK", message: "OK", data, request_id: "test-request" });
+const ok = <T>(data: T) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
 
 export const handlers = [
   http.get("http://localhost:3000/api/v1/system/status", () =>
-    HttpResponse.json({ code: "OK", message: "OK", data: { status: "available" }, request_id: "test-request" }),
+    HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "test-request" }),
   ),
   http.get("http://localhost:8000/api/v1/system/status", () =>
-    HttpResponse.json({ code: "OK", message: "OK", data: { status: "available" }, request_id: "test-request" }),
+    HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "test-request" }),
   ),
   http.get("http://localhost:3001/api/v1/system/status", () =>
-    HttpResponse.json({ code: "OK", message: "OK", data: { status: "available" }, request_id: "test-request" }),
+    HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "test-request" }),
   ),
   http.get("http://localhost:3000/api/v1/admin/auth/me", () => ok(admin)),
   http.post("http://localhost:3000/api/v1/admin/auth/login", () => ok({ principal: admin, session_id: admin.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),

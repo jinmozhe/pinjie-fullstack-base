@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
+
 _USERNAME_PATTERN = re.compile(r"^[a-z0-9._-]{3,50}$")
 
 
@@ -18,7 +20,11 @@ class UserRegisterIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     username: str
-    password: str = Field(min_length=12, max_length=128)
+    password: str = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="登录密码，长度为 6 至 64 个字符",
+    )
     display_name: str | None = Field(default=None, max_length=100)
     email: str | None = Field(default=None, max_length=320)
 
@@ -37,7 +43,7 @@ class UserLoginIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     username: str
-    password: str = Field(min_length=1, max_length=128)
+    password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH, description="登录密码，最多 64 个字符")
 
     @field_validator("username")
     @classmethod

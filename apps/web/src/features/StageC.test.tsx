@@ -52,6 +52,9 @@ describe("stage C web account", () => {
     renderWithQuery(<AuthForm mode="register" />);
     expect(screen.getByLabelText(/显示名称/)).toBeInTheDocument();
     expect(screen.getByLabelText(/邮箱/)).toBeInTheDocument();
+    expect(screen.getByLabelText("密码")).toHaveAttribute("minlength", "6");
+    expect(screen.getByLabelText("密码")).toHaveAttribute("maxlength", "64");
+    expect(screen.getByText("至少 6 个字符，最多 64 个字符。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /注册并登录/ })).toBeInTheDocument();
   });
 
@@ -101,6 +104,9 @@ describe("stage C web account", () => {
     const user = userEvent.setup();
     renderWithQuery(<AccountCenter initialUser={initialUser} />);
     await user.click(screen.getByRole("button", { name: /密码安全/ }));
+    expect(screen.getByLabelText("当前密码")).toHaveAttribute("maxlength", "64");
+    expect(screen.getByLabelText("新密码")).toHaveAttribute("minlength", "6");
+    expect(screen.getByLabelText("新密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("当前密码"), "stage-c-user-password");
     await user.type(screen.getByLabelText("新密码"), "stage-c-user-password-next");
     await user.click(screen.getByRole("button", { name: "确认修改" }));
@@ -121,7 +127,7 @@ describe("stage C web account", () => {
     server.use(
       http.get("http://localhost:3000/api/v1/users/me/sessions", () => HttpResponse.json({
         code: "OK",
-        message: "OK",
+        message: "操作成功",
         request_id: "test-request",
         data: [
           { id: "01900000-0000-7000-8000-000000000004", device_name: null, ip_masked: null, user_agent_summary: null, created_at: now, last_seen_at: now, idle_expires_at: now, absolute_expires_at: now, is_current: false, revoked_at: null },
@@ -143,6 +149,7 @@ describe("stage C web account", () => {
     renderWithQuery(<AccountCenter initialUser={initialUser} />);
     await user.click(screen.getByRole("button", { name: /注销账户/ }));
     await user.type(screen.getByLabelText(/输入用户名/), "browser-user");
+    expect(screen.getByLabelText("当前密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("当前密码"), "stage-c-user-password");
     await user.click(screen.getByRole("button", { name: /永久注销账户/ }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?reason=account-deleted"));

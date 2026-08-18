@@ -60,8 +60,8 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
             <input id="email" name="email" type="email" maxLength={320} autoComplete="email" />
           </>}
           <label htmlFor="password">密码</label>
-          <div className="input-wrap"><LockKeyhole aria-hidden="true" size={18} /><input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "register" ? 12 : 1} maxLength={128} required /></div>
-          {mode === "register" && <p className="field-hint">至少 12 个字符，最多 128 个字符。</p>}
+          <div className="input-wrap"><LockKeyhole aria-hidden="true" size={18} /><input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "register" ? 6 : 1} maxLength={64} required /></div>
+          {mode === "register" && <p className="field-hint">至少 6 个字符，最多 64 个字符。</p>}
           <button className="primary-action" disabled={pending} type="submit">{pending ? "正在提交" : mode === "login" ? "登录" : "注册并登录"}<ArrowRight aria-hidden="true" size={18} /></button>
         </form>
         <p className="auth-switch">{mode === "login" ? "还没有账户？" : "已经有账户？"}<Link href={mode === "login" ? "/register" : "/login"}>{mode === "login" ? "立即注册" : "返回登录"}</Link></p>

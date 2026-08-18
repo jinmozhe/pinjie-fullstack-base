@@ -40,6 +40,16 @@ test.describe("stage C cross-stack journeys", () => {
     await expectNoClientTokenPersistence(page);
     await expectPageQuality(page);
 
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "通用账户与管理基础" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "登录" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "创建账户" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /用户中心/ })).toBeVisible();
+    await expectNoClientTokenPersistence(page);
+    await expectPageQuality(page);
+    await page.goto("/account");
+    await expect(page.getByRole("heading", { name: "用户中心" })).toBeVisible();
+
     await page.getByLabel("显示名称").fill("Stage C Updated User");
     await page.getByRole("button", { name: "保存资料" }).click();
     await expect(page.getByRole("status")).toContainText("个人资料已保存");

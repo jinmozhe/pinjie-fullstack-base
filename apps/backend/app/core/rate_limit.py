@@ -28,7 +28,7 @@ async def enforce_rate_limit(redis: Redis | None, *, key: str, limit: int, windo
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         )
     try:
         raw = await redis.eval(_FIXED_WINDOW_SCRIPT, 1, key, window_seconds)
@@ -36,20 +36,20 @@ async def enforce_rate_limit(redis: Redis | None, *, key: str, limit: int, windo
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         ) from exc
     if not isinstance(raw, (list, tuple)) or len(raw) != 2:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service returned an invalid rate limit state",
+            message="认证服务返回了无效的限流状态",
         )
     state = RateLimitState(count=int(raw[0]), retry_after=max(1, int(raw[1])))
     if state.count > limit:
         raise AppException(
             status_code=429,
             code=ErrorCode.RATE_LIMITED,
-            message="Too many requests",
+            message="请求过于频繁",
             details={"retry_after": state.retry_after},
             headers={"Retry-After": str(state.retry_after)},
         )
@@ -61,7 +61,7 @@ async def acquire_refresh_lock(redis: Redis | None, *, key: str, owner: str, ttl
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         )
     try:
         return bool(await redis.set(key, owner, ex=ttl_seconds, nx=True))
@@ -69,7 +69,7 @@ async def acquire_refresh_lock(redis: Redis | None, *, key: str, owner: str, ttl
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Authentication service is temporarily unavailable",
+            message="认证服务暂时不可用",
         ) from exc
 
 

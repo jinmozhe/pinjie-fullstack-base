@@ -17,7 +17,7 @@ from app.services.authentication import SessionArtifacts
 
 from .schemas import RefreshSessionOut, UserAuthSessionOut, UserLoginIn, UserPrincipalOut, UserRegisterIn
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(prefix="/auth", tags=["用户认证"])
 
 
 def _set_session_cookies(response: Response, request: Request, artifacts: SessionArtifacts) -> None:
@@ -39,7 +39,7 @@ def _set_session_cookies(response: Response, request: Request, artifacts: Sessio
     response_model=ResponseModel[UserAuthSessionOut],
     status_code=201,
     dependencies=[Depends(require_browser_origin)],
-    summary="Register a browser user account",
+    summary="注册用户账户",
 )
 async def register(
     payload: UserRegisterIn,
@@ -58,7 +58,7 @@ async def register(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Registered",
+        message="注册成功",
     )
 
 
@@ -66,7 +66,7 @@ async def register(
     "/login",
     response_model=ResponseModel[UserAuthSessionOut],
     dependencies=[Depends(require_browser_origin)],
-    summary="Sign in a browser user",
+    summary="用户登录",
 )
 async def login(
     payload: UserLoginIn,
@@ -85,11 +85,11 @@ async def login(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Authenticated",
+        message="登录成功",
     )
 
 
-@router.post("/refresh", response_model=ResponseModel[RefreshSessionOut], summary="Rotate the browser refresh token")
+@router.post("/refresh", response_model=ResponseModel[RefreshSessionOut], summary="刷新用户登录会话")
 async def refresh(
     request: Request,
     response: Response,
@@ -102,7 +102,7 @@ async def refresh(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_REQUIRED,
-            message="Refresh authentication is required",
+            message="需要刷新令牌身份认证",
             headers={"WWW-Authenticate": "Cookie"},
         )
     artifacts = await service.refresh(refresh_token, csrf_token)
@@ -116,11 +116,11 @@ async def refresh(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Session refreshed",
+        message="会话刷新成功",
     )
 
 
-@router.post("/logout", response_model=ResponseModel[bool], summary="Sign out the current browser session")
+@router.post("/logout", response_model=ResponseModel[bool], summary="退出当前用户会话")
 async def logout(
     request: Request,
     response: Response,
@@ -133,13 +133,13 @@ async def logout(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_REQUIRED,
-            message="Refresh authentication is required",
+            message="需要刷新令牌身份认证",
             headers={"WWW-Authenticate": "Cookie"},
         )
     await service.logout(refresh_token, csrf_token)
     clear_auth_cookies(response, names=WEB_COOKIES, settings=get_request_settings(request))
     request.state.clear_auth_profile = None
-    return success_response(data=True, request_id=current_request_id(), message="Logged out")
+    return success_response(data=True, request_id=current_request_id(), message="退出登录成功")
 
 
 __all__ = ["router"]

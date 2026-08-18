@@ -52,8 +52,8 @@ function AccountDrawer({ open, onClose }: { open: boolean; onClose: () => void }
     <Typography.Paragraph type="secondary">修改密码会撤销当前管理员的全部会话。</Typography.Paragraph>
     {mutation.isError && <Alert showIcon type="error" message={errorMessage(mutation.error)} />}
     <Form form={form} layout="vertical" onFinish={(values) => mutation.mutate(values)}>
-      <Form.Item label="当前密码" name="current_password" rules={[{ required: true }]}><Input.Password autoComplete="current-password" /></Form.Item>
-      <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 12, message: "密码至少 12 个字符" }]}><Input.Password autoComplete="new-password" /></Form.Item>
+      <Form.Item label="当前密码" name="current_password" rules={[{ required: true }, { max: 64, message: "密码最多 64 个字符" }]}><Input.Password autoComplete="current-password" maxLength={64} /></Form.Item>
+      <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
       <Button type="primary" htmlType="submit" loading={mutation.isPending}>修改密码</Button>
     </Form>
   </Drawer>;

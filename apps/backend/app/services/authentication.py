@@ -39,7 +39,7 @@ def _auth_error(code: ErrorCode = ErrorCode.AUTH_INVALID_CREDENTIALS) -> AppExce
     return AppException(
         status_code=401,
         code=code,
-        message="Invalid authentication credentials",
+        message="身份认证凭据无效",
         headers={"WWW-Authenticate": "Cookie"},
     )
 
@@ -93,7 +93,7 @@ class _AuthBase:
             raise AppException(
                 status_code=503,
                 code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="Authentication service is temporarily unavailable",
+                message="认证服务暂时不可用",
             )
         keys = (
             self.keys.login_identifier(token_digest(identifier, self.hmac_key), admin=self.admin),
@@ -105,7 +105,7 @@ class _AuthBase:
             raise AppException(
                 status_code=503,
                 code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="Authentication service is temporarily unavailable",
+                message="认证服务暂时不可用",
             ) from exc
 
     async def record_failure(
@@ -149,7 +149,7 @@ class _AuthBase:
     @staticmethod
     def _verify_session_csrf(csrf_token: str, csrf_digest: str, key: str) -> None:
         if not hmac.compare_digest(token_digest(csrf_token, key), csrf_digest):
-            raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF validation failed")
+            raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="CSRF 校验失败")
 
 
 class WebAuthService(_AuthBase):
@@ -177,7 +177,7 @@ class WebAuthService(_AuthBase):
 
     async def register(self, payload: UserRegisterIn) -> tuple[User, SessionArtifacts]:
         if self.settings.registration_mode != "open":
-            raise AppException(status_code=403, code=ErrorCode.REGISTRATION_CLOSED, message="Registration is closed")
+            raise AppException(status_code=403, code=ErrorCode.REGISTRATION_CLOSED, message="用户注册功能已关闭")
         await self.enforce_login_limit(payload.username)
         password_hash = await self.password_manager.hash(payload.password)
         now = datetime.now(UTC)
@@ -208,13 +208,13 @@ class WebAuthService(_AuthBase):
                     raise AppException(
                         status_code=409,
                         code=ErrorCode.USER_USERNAME_CONFLICT,
-                        message="Username is already registered",
+                        message="用户名已被注册",
                     )
                 if payload.email and await self.users.get_by_email(payload.email) is not None:
                     raise AppException(
                         status_code=409,
                         code=ErrorCode.STATE_CONFLICT,
-                        message="Email is already in use",
+                        message="邮箱已被使用",
                     )
                 self.users.add(user)
                 self.sessions.add_web(login_session, refresh)
@@ -223,7 +223,7 @@ class WebAuthService(_AuthBase):
             raise AppException(
                 status_code=409,
                 code=ErrorCode.USER_USERNAME_CONFLICT,
-                message="Username or email is already registered",
+                message="用户名或邮箱已被注册",
             ) from exc
         await self.clear_login_limit(payload.username)
         return user, artifacts
@@ -255,7 +255,7 @@ class WebAuthService(_AuthBase):
                 reason_code="ACCOUNT_DISABLED",
                 principal_id=user.id,
             )
-            raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+            raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="账户已停用")
 
         now = datetime.now(UTC)
         artifacts, login_session, refresh = self._new_session(user, now)
@@ -272,7 +272,7 @@ class WebAuthService(_AuthBase):
         async with transaction_scope(self.session):
             locked = await self.users.get(user.id, for_update=True)
             if locked is None or not locked.is_active or locked.deleted_at is not None:
-                raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+                raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="账户已停用")
             if updated_hash is not None:
                 locked.password_hash = updated_hash
             self.sessions.add_web(login_session, refresh)
@@ -340,7 +340,7 @@ class WebAuthService(_AuthBase):
             raise AppException(
                 status_code=429,
                 code=ErrorCode.RATE_LIMITED,
-                message="Refresh is already in progress",
+                message="会话刷新正在进行中",
                 details={"retry_after": 1},
                 headers={"Retry-After": "1"},
             )
@@ -381,7 +381,7 @@ class WebAuthService(_AuthBase):
                         raise AppException(
                             status_code=403,
                             code=ErrorCode.AUTH_ACCOUNT_DISABLED,
-                            message="Account is disabled",
+                            message="账户已停用",
                         )
                     else:
                         new_refresh_token = new_opaque_token()
@@ -439,7 +439,7 @@ class WebAuthService(_AuthBase):
                 raise AppException(
                     status_code=500,
                     code=ErrorCode.INTERNAL_ERROR,
-                    message="Authentication refresh did not produce a result",
+                    message="身份认证会话刷新未产生结果",
                 )
             return artifacts
         finally:
@@ -518,13 +518,13 @@ class AdminAuthService(_AuthBase):
                 reason_code="ACCOUNT_DISABLED",
                 principal_id=admin.id,
             )
-            raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+            raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="账户已停用")
         now = datetime.now(UTC)
         artifacts, login_session, refresh = self._new_session(admin, now)
         async with transaction_scope(self.session):
             locked = await self.admins.get(admin.id, for_update=True)
             if locked is None or not locked.is_active:
-                raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="Account is disabled")
+                raise AppException(status_code=403, code=ErrorCode.AUTH_ACCOUNT_DISABLED, message="账户已停用")
             if updated_hash is not None:
                 locked.password_hash = updated_hash
             self.sessions.add_admin(login_session, refresh)
@@ -602,7 +602,7 @@ class AdminAuthService(_AuthBase):
             raise AppException(
                 status_code=429,
                 code=ErrorCode.RATE_LIMITED,
-                message="Refresh is already in progress",
+                message="会话刷新正在进行中",
                 details={"retry_after": 1},
                 headers={"Retry-After": "1"},
             )
@@ -643,7 +643,7 @@ class AdminAuthService(_AuthBase):
                         raise AppException(
                             status_code=403,
                             code=ErrorCode.AUTH_ACCOUNT_DISABLED,
-                            message="Account is disabled",
+                            message="账户已停用",
                         )
                     else:
                         new_refresh_token = new_opaque_token()
@@ -701,7 +701,7 @@ class AdminAuthService(_AuthBase):
                 raise AppException(
                     status_code=500,
                     code=ErrorCode.INTERNAL_ERROR,
-                    message="Authentication refresh did not produce a result",
+                    message="身份认证会话刷新未产生结果",
                 )
             return artifacts
         finally:

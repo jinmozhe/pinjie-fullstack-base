@@ -56,7 +56,7 @@ class SecurityEventWriter:
             raise AppException(
                 status_code=503,
                 code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="Security event storage is temporarily unavailable",
+                message="安全事件存储暂时不可用",
             ) from exc
 
 
@@ -92,7 +92,7 @@ class AuditCoordinator:
                     raise AppException(
                         status_code=503,
                         code=ErrorCode.SERVICE_UNAVAILABLE,
-                        message="Audit event storage is temporarily unavailable",
+                        message="审计事件存储暂时不可用",
                     )
                 event.result = "succeeded"
                 event.changed_fields = changed_fields
@@ -129,7 +129,7 @@ class AuditCoordinator:
             raise AppException(
                 status_code=503,
                 code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="Audit storage is temporarily unavailable",
+                message="审计存储暂时不可用",
             ) from exc
         return event_id
 

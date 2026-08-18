@@ -24,7 +24,7 @@ from app.services.authentication import SessionArtifacts
 from .presenters import admin_read
 from .schemas import AdminAuthSessionOut, AdminConfirmIn, AdminConfirmOut, AdminLoginIn, AdminRead
 
-router = APIRouter(prefix="/admin/auth", tags=["admin-authentication"])
+router = APIRouter(prefix="/admin/auth", tags=["管理员认证"])
 
 
 def _set_session_cookies(response: Response, request: Request, artifacts: SessionArtifacts) -> None:
@@ -45,7 +45,7 @@ def _set_session_cookies(response: Response, request: Request, artifacts: Sessio
     "/login",
     response_model=ResponseModel[AdminAuthSessionOut],
     dependencies=[Depends(require_browser_origin)],
-    summary="Sign in an administrator",
+    summary="管理员登录",
 )
 async def login(
     payload: AdminLoginIn,
@@ -64,11 +64,11 @@ async def login(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Authenticated",
+        message="登录成功",
     )
 
 
-@router.post("/refresh", response_model=ResponseModel[RefreshSessionOut], summary="Rotate administrator refresh token")
+@router.post("/refresh", response_model=ResponseModel[RefreshSessionOut], summary="刷新管理员登录会话")
 async def refresh(
     request: Request,
     response: Response,
@@ -81,7 +81,7 @@ async def refresh(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_REQUIRED,
-            message="Administrator refresh authentication is required",
+            message="需要管理员刷新令牌身份认证",
             headers={"WWW-Authenticate": "Cookie"},
         )
     artifacts = await service.refresh(refresh_token, csrf_token)
@@ -95,11 +95,11 @@ async def refresh(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Session refreshed",
+        message="会话刷新成功",
     )
 
 
-@router.post("/logout", response_model=ResponseModel[bool], summary="Sign out the current administrator session")
+@router.post("/logout", response_model=ResponseModel[bool], summary="退出当前管理员会话")
 async def logout(
     request: Request,
     response: Response,
@@ -112,21 +112,21 @@ async def logout(
         raise AppException(
             status_code=401,
             code=ErrorCode.AUTH_REQUIRED,
-            message="Administrator refresh authentication is required",
+            message="需要管理员刷新令牌身份认证",
             headers={"WWW-Authenticate": "Cookie"},
         )
     await service.logout(refresh_token, csrf_token)
     clear_auth_cookies(response, names=ADMIN_COOKIES, settings=get_request_settings(request))
     request.state.clear_auth_profile = None
-    return success_response(data=True, request_id=current_request_id(), message="Logged out")
+    return success_response(data=True, request_id=current_request_id(), message="退出登录成功")
 
 
-@router.get("/me", response_model=ResponseModel[AdminRead], summary="Get the current administrator")
+@router.get("/me", response_model=ResponseModel[AdminRead], summary="获取当前管理员")
 async def get_me(current: Annotated[CurrentAdmin, Depends(get_current_admin)]) -> ResponseModel[AdminRead]:
     return success_response(data=admin_read(current.admin), request_id=current_request_id())
 
 
-@router.post("/password", response_model=ResponseModel[RefreshSessionOut], summary="Change administrator password")
+@router.post("/password", response_model=ResponseModel[RefreshSessionOut], summary="修改当前管理员密码")
 async def change_password(
     payload: PasswordChangeIn,
     request: Request,
@@ -148,13 +148,11 @@ async def change_password(
             absolute_expires_at=artifacts.absolute_expires_at,
         ),
         request_id=current_request_id(),
-        message="Password changed",
+        message="密码修改成功",
     )
 
 
-@router.post(
-    "/confirm", response_model=ResponseModel[AdminConfirmOut], summary="Confirm a sensitive administrator action"
-)
+@router.post("/confirm", response_model=ResponseModel[AdminConfirmOut], summary="确认管理员敏感操作")
 async def confirm(
     payload: AdminConfirmIn,
     response: Response,
@@ -167,7 +165,7 @@ async def confirm(
         payload=payload,
     )
     response.headers["Cache-Control"] = "no-store"
-    return success_response(data=result, request_id=current_request_id(), message="Confirmed")
+    return success_response(data=result, request_id=current_request_id(), message="敏感操作确认成功")
 
 
 __all__ = ["router"]

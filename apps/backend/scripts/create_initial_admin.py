@@ -5,6 +5,7 @@ import os
 
 from app.core.config import get_settings
 from app.core.identifiers import new_uuid7
+from app.core.password_policy import validate_new_password_length
 from app.core.resources import create_resources
 from app.core.security import PasswordManager
 from app.db.models import Admin
@@ -29,11 +30,9 @@ def _password() -> str:
         first = getpass.getpass("Initial administrator password: ")
         second = getpass.getpass("Confirm password: ")
         if first != second:
-            raise ValueError("Password confirmation does not match")
+            raise ValueError("两次输入的密码不一致")
         value = first
-    if not 12 <= len(value) <= 128:
-        raise ValueError("Administrator password must contain 12 to 128 characters")
-    return value
+    return validate_new_password_length(value)
 
 
 async def _run(args: argparse.Namespace) -> None:

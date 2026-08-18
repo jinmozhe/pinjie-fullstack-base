@@ -45,14 +45,14 @@ class UserAccountService:
         async with transaction_scope(self.session):
             user = await self.users.get(user_id, for_update=True)
             if user is None or user.deleted_at is not None:
-                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
             if "email" in payload.model_fields_set and payload.email:
                 existing = await self.users.get_by_email(payload.email)
                 if existing is not None and existing.id != user.id:
                     raise AppException(
                         status_code=409,
                         code=ErrorCode.STATE_CONFLICT,
-                        message="Email is already in use",
+                        message="邮箱已被使用",
                     )
             if "display_name" in payload.model_fields_set:
                 user.display_name = payload.display_name.strip() if payload.display_name else None
@@ -71,7 +71,7 @@ class UserAccountService:
             raise AppException(
                 status_code=401,
                 code=ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="Current password is incorrect",
+                message="当前密码错误",
             )
         new_hash = await self.password_manager.hash(payload.new_password)
         new_refresh = new_opaque_token()
@@ -84,7 +84,7 @@ class UserAccountService:
                 raise AppException(
                     status_code=401,
                     code=ErrorCode.AUTH_SESSION_REVOKED,
-                    message="Authentication session is no longer valid",
+                    message="身份认证会话已失效",
                 )
             locked.password_hash = new_hash
             locked.credential_version += 1
@@ -144,7 +144,7 @@ class UserAccountService:
         async with transaction_scope(self.session):
             target = await self.sessions.get_web_for_user(session_id, user_id)
             if target is None:
-                raise AppException(status_code=404, code=ErrorCode.NOT_FOUND, message="Session was not found")
+                raise AppException(status_code=404, code=ErrorCode.NOT_FOUND, message="会话不存在")
             return await self.sessions.revoke_web_session(session_id, reason="user_revoked")
 
     async def list_sessions(self, user_id: uuid.UUID) -> list[UserSession]:
@@ -159,14 +159,14 @@ class UserAccountService:
             raise AppException(
                 status_code=401,
                 code=ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="Current password is incorrect",
+                message="当前密码错误",
             )
         replacement_hash = await self.password_manager.hash(new_opaque_token())
         now = datetime.now(UTC)
         async with transaction_scope(self.session):
             locked = await self.users.get(user.id, for_update=True)
             if locked is None or locked.deleted_at is not None:
-                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="User was not found")
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
             locked.username = f"deleted-{locked.id.hex}"
             locked.email = None
             locked.display_name = None
@@ -211,7 +211,7 @@ class AdminAccountService:
             raise AppException(
                 status_code=401,
                 code=ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="Current password is incorrect",
+                message="当前密码错误",
             )
         new_hash = await self.password_manager.hash(payload.new_password)
         new_refresh = new_opaque_token()
@@ -224,7 +224,7 @@ class AdminAccountService:
                 raise AppException(
                     status_code=401,
                     code=ErrorCode.AUTH_SESSION_REVOKED,
-                    message="Administrator session is no longer valid",
+                    message="管理员会话已失效",
                 )
             locked.password_hash = new_hash
             locked.credential_version += 1
@@ -293,13 +293,13 @@ class AdminAccountService:
             raise AppException(
                 status_code=401,
                 code=ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="Current password is incorrect",
+                message="当前密码错误",
             )
         if self.redis is None:
             raise AppException(
                 status_code=503,
                 code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="Authentication service is temporarily unavailable",
+                message="认证服务暂时不可用",
             )
         token = new_opaque_token()
         key = cache_keys(self.settings).admin_confirmation(token_digest(token, self.hmac_key))
@@ -317,7 +317,7 @@ class AdminAccountService:
             raise AppException(
                 status_code=503,
                 code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="Authentication service is temporarily unavailable",
+                message="认证服务暂时不可用",
             ) from exc
         return AdminConfirmOut(
             confirmation_token=token,

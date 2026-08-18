@@ -24,14 +24,14 @@ describe("SystemStatusPage", () => {
 
   it("shows an error and recovers after retry", async () => {
     server.use(
-      http.get("http://localhost:3000/api/v1/system/status", () => HttpResponse.json({ message: "down" }, { status: 503 })),
+      http.get("http://localhost:3000/api/v1/system/status", () => HttpResponse.json({ message: "服务不可用" }, { status: 503 })),
     );
     renderPage();
 
-    expect(await screen.findByText("Backend is unavailable")).toBeInTheDocument();
+    expect(await screen.findByText("后端服务不可用")).toBeInTheDocument();
     server.use(
       http.get("http://localhost:3000/api/v1/system/status", () =>
-        HttpResponse.json({ code: "OK", message: "OK", data: { status: "available" }, request_id: "retry-request" }),
+        HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "retry-request" }),
       ),
     );
     fireEvent.click(screen.getByRole("button", { name: "Retry status" }));

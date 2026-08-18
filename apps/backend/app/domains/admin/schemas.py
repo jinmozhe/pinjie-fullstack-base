@@ -6,6 +6,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.pagination import PageResult
+from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 from app.domains.auth.schemas import UserPrincipalOut, normalize_username
 
 _ROLE_CODE = re.compile(r"^[a-z][a-z0-9_-]{2,99}$")
@@ -29,7 +30,7 @@ class AdminLoginIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     username: str
-    password: str = Field(min_length=1, max_length=128)
+    password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH, description="登录密码，最多 64 个字符")
 
     @field_validator("username")
     @classmethod
@@ -72,7 +73,7 @@ class AdminAuthSessionOut(BaseModel):
 class AdminConfirmIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    current_password: str = Field(min_length=1, max_length=128)
+    current_password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH, description="当前密码，最多 64 个字符")
     action: ConfirmationAction
 
 
@@ -88,7 +89,11 @@ class AdminCreateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     username: str
-    initial_password: str = Field(min_length=12, max_length=128)
+    initial_password: str = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="初始密码，长度为 6 至 64 个字符",
+    )
     display_name: str | None = Field(default=None, max_length=100)
     is_active: bool = True
     is_superuser: bool = False
@@ -122,7 +127,11 @@ class StatusUpdateIn(BaseModel):
 class PasswordResetIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    new_password: str = Field(min_length=12, max_length=128)
+    new_password: str = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="新密码，长度为 6 至 64 个字符",
+    )
 
 
 class AdminRoleAssignIn(BaseModel):

@@ -9,10 +9,10 @@ from app.core.response import ResponseModel, success_response
 
 from .schemas import SystemStatus
 
-router = APIRouter(prefix="/system", tags=["system"])
+router = APIRouter(prefix="/system", tags=["系统"])
 
 
-@router.get("/status", response_model=ResponseModel[SystemStatus], summary="Get public system status")
+@router.get("/status", response_model=ResponseModel[SystemStatus], summary="获取公共系统状态")
 async def get_system_status(request: Request) -> ResponseModel[SystemStatus]:
     resources = getattr(request.app.state, "resources", None)
     settings = getattr(request.app.state, "settings", None)
@@ -20,14 +20,14 @@ async def get_system_status(request: Request) -> ResponseModel[SystemStatus]:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Service is not ready",
+            message="服务尚未就绪",
         )
     result = await check_readiness(resources, settings)
     if not result.ready:
         raise AppException(
             status_code=503,
             code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="Service is temporarily unavailable",
+            message="服务暂时不可用",
         )
     return success_response(data=SystemStatus(status="available"), request_id=current_request_id())
 

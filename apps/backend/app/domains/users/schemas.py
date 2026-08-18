@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
+
 
 class UserUpdateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -25,14 +27,18 @@ class UserUpdateIn(BaseModel):
 class PasswordChangeIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    current_password: str = Field(min_length=1, max_length=128)
-    new_password: str = Field(min_length=12, max_length=128)
+    current_password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH, description="当前密码，最多 64 个字符")
+    new_password: str = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="新密码，长度为 6 至 64 个字符",
+    )
 
 
 class AccountDeleteIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    current_password: str = Field(min_length=1, max_length=128)
+    current_password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH, description="当前密码，最多 64 个字符")
 
 
 class SessionRead(BaseModel):

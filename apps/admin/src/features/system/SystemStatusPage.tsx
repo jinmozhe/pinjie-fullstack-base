@@ -23,7 +23,7 @@ export function SystemStatusPage() {
         >
           {query.isPending ? <div role="status" aria-label="Loading system status"><Spin /></div> : null}
           {query.isError ? (
-            <Alert type="error" showIcon message="Backend is unavailable" description="Retry when the service is ready." />
+            <Alert type="error" showIcon message="后端服务不可用" description="请在服务恢复后重试。" />
           ) : null}
           {query.isSuccess ? (
             <Descriptions column={{ xs: 1, sm: 2 }}>

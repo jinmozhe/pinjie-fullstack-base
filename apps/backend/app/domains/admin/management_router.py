@@ -41,7 +41,7 @@ from .schemas import (
     UserPage,
 )
 
-router = APIRouter(prefix="/admin", tags=["administration"])
+router = APIRouter(prefix="/admin", tags=["后台管理"])
 
 
 def _session_read(item: UserSession | AdminSession) -> SessionRead:
@@ -63,7 +63,7 @@ def _session_read(item: UserSession | AdminSession) -> SessionRead:
     "/users",
     response_model=ResponseModel[UserPage],
     dependencies=[Depends(require_permission(PermissionCode.USERS_READ))],
-    summary="List users",
+    summary="获取用户列表",
 )
 async def list_users(
     service: AdminManagementServiceDependency,
@@ -79,7 +79,7 @@ async def list_users(
     "/users/{user_id}",
     response_model=ResponseModel[UserPrincipalOut],
     dependencies=[Depends(require_permission(PermissionCode.USERS_READ))],
-    summary="Get a user",
+    summary="获取用户详情",
 )
 async def get_user(user_id: uuid.UUID, service: AdminManagementServiceDependency) -> ResponseModel[UserPrincipalOut]:
     return success_response(
@@ -91,7 +91,7 @@ async def get_user(user_id: uuid.UUID, service: AdminManagementServiceDependency
     "/users/{user_id}",
     response_model=ResponseModel[UserPrincipalOut],
     dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.USERS_UPDATE))],
-    summary="Update a user",
+    summary="更新用户资料",
 )
 async def update_user(
     user_id: uuid.UUID,
@@ -100,7 +100,7 @@ async def update_user(
 ) -> ResponseModel[UserPrincipalOut]:
     user = await service.update_user(user_id, payload)
     return success_response(
-        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="User updated"
+        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="用户更新成功"
     )
 
 
@@ -108,7 +108,7 @@ async def update_user(
     "/users/{user_id}/status",
     response_model=ResponseModel[UserPrincipalOut],
     dependencies=[Depends(require_permission(PermissionCode.USERS_UPDATE))],
-    summary="Change a user status",
+    summary="修改用户状态",
 )
 async def set_user_status(
     user_id: uuid.UUID,
@@ -122,7 +122,7 @@ async def set_user_status(
         await consume_admin_confirmation(request, current, ConfirmationAction.USER_DISABLE, confirmation_token)
     user = await service.set_user_status(user_id, payload)
     return success_response(
-        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="User status updated"
+        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="用户状态更新成功"
     )
 
 
@@ -133,7 +133,7 @@ async def set_user_status(
         Depends(require_permission(PermissionCode.USERS_CREDENTIALS_RESET)),
         Depends(require_admin_confirmation(ConfirmationAction.USER_PASSWORD_RESET)),
     ],
-    summary="Reset a user password",
+    summary="重置用户密码",
 )
 async def reset_user_password(
     user_id: uuid.UUID,
@@ -141,14 +141,14 @@ async def reset_user_password(
     service: AdminManagementServiceDependency,
 ) -> ResponseModel[ActionResult]:
     await service.reset_user_password(user_id, payload)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Password reset")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="密码重置成功")
 
 
 @router.get(
     "/users/{user_id}/sessions",
     response_model=ResponseModel[list[SessionRead]],
     dependencies=[Depends(require_permission(PermissionCode.USERS_SESSIONS_READ))],
-    summary="List user sessions",
+    summary="获取用户会话列表",
 )
 async def list_user_sessions(
     user_id: uuid.UUID, service: AdminManagementServiceDependency
@@ -166,7 +166,7 @@ async def list_user_sessions(
         Depends(require_permission(PermissionCode.USERS_SESSIONS_REVOKE)),
         Depends(require_admin_confirmation(ConfirmationAction.USER_SESSION_REVOKE)),
     ],
-    summary="Revoke a user session",
+    summary="撤销用户指定会话",
 )
 async def revoke_user_session(
     user_id: uuid.UUID,
@@ -174,7 +174,7 @@ async def revoke_user_session(
     service: AdminManagementServiceDependency,
 ) -> ResponseModel[ActionResult]:
     await service.revoke_user_session(user_id, session_id)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Session revoked")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="会话撤销成功")
 
 
 @router.post(
@@ -184,20 +184,20 @@ async def revoke_user_session(
         Depends(require_permission(PermissionCode.USERS_SESSIONS_REVOKE)),
         Depends(require_admin_confirmation(ConfirmationAction.USER_SESSION_REVOKE)),
     ],
-    summary="Revoke all user sessions",
+    summary="撤销用户全部会话",
 )
 async def revoke_all_user_sessions(
     user_id: uuid.UUID, service: AdminManagementServiceDependency
 ) -> ResponseModel[ActionResult]:
     await service.revoke_all_user_sessions(user_id)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Sessions revoked")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="全部会话撤销成功")
 
 
 @router.get(
     "/admins",
     response_model=ResponseModel[AdminPage],
     dependencies=[Depends(require_permission(PermissionCode.ADMINS_READ))],
-    summary="List administrators",
+    summary="获取管理员列表",
 )
 async def list_admins(
     service: AdminManagementServiceDependency,
@@ -217,13 +217,13 @@ async def list_admins(
         Depends(require_permission(PermissionCode.ADMINS_CREATE)),
         Depends(require_admin_confirmation(ConfirmationAction.ADMIN_CREATE)),
     ],
-    summary="Create an administrator",
+    summary="创建管理员",
 )
 async def create_admin(payload: AdminCreateIn, service: AdminManagementServiceDependency) -> ResponseModel[AdminRead]:
     return success_response(
         data=admin_read(await service.create_admin(payload)),
         request_id=current_request_id(),
-        message="Administrator created",
+        message="管理员创建成功",
     )
 
 
@@ -231,7 +231,7 @@ async def create_admin(payload: AdminCreateIn, service: AdminManagementServiceDe
     "/admins/{admin_id}",
     response_model=ResponseModel[AdminRead],
     dependencies=[Depends(require_permission(PermissionCode.ADMINS_READ))],
-    summary="Get an administrator",
+    summary="获取管理员详情",
 )
 async def get_admin(admin_id: uuid.UUID, service: AdminManagementServiceDependency) -> ResponseModel[AdminRead]:
     return success_response(data=admin_read(await service.get_admin(admin_id)), request_id=current_request_id())
@@ -241,7 +241,7 @@ async def get_admin(admin_id: uuid.UUID, service: AdminManagementServiceDependen
     "/admins/{admin_id}",
     response_model=ResponseModel[AdminRead],
     dependencies=[Depends(require_permission(PermissionCode.ADMINS_UPDATE))],
-    summary="Update an administrator",
+    summary="更新管理员资料",
 )
 async def update_admin(
     admin_id: uuid.UUID,
@@ -258,7 +258,7 @@ async def update_admin(
     return success_response(
         data=admin_read(await service.update_admin(admin_id, payload)),
         request_id=current_request_id(),
-        message="Administrator updated",
+        message="管理员更新成功",
     )
 
 
@@ -266,7 +266,7 @@ async def update_admin(
     "/admins/{admin_id}/status",
     response_model=ResponseModel[AdminRead],
     dependencies=[Depends(require_permission(PermissionCode.ADMINS_UPDATE))],
-    summary="Change an administrator status",
+    summary="修改管理员状态",
 )
 async def set_admin_status(
     admin_id: uuid.UUID,
@@ -277,7 +277,7 @@ async def set_admin_status(
     return success_response(
         data=admin_read(await service.set_admin_status(admin_id, payload)),
         request_id=current_request_id(),
-        message="Administrator status updated",
+        message="管理员状态更新成功",
     )
 
 
@@ -288,7 +288,7 @@ async def set_admin_status(
         Depends(require_permission(PermissionCode.ADMINS_CREDENTIALS_RESET)),
         Depends(require_admin_confirmation(ConfirmationAction.ADMIN_PASSWORD_RESET)),
     ],
-    summary="Reset an administrator password",
+    summary="重置管理员密码",
 )
 async def reset_admin_password(
     admin_id: uuid.UUID,
@@ -296,7 +296,7 @@ async def reset_admin_password(
     service: AdminManagementServiceDependency,
 ) -> ResponseModel[ActionResult]:
     await service.reset_admin_password(admin_id, payload)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Password reset")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="密码重置成功")
 
 
 @router.put(
@@ -306,7 +306,7 @@ async def reset_admin_password(
         Depends(require_permission(PermissionCode.ADMINS_ROLES_ASSIGN)),
         Depends(require_admin_confirmation(ConfirmationAction.ADMIN_ROLES_ASSIGN)),
     ],
-    summary="Assign administrator roles",
+    summary="分配管理员角色",
 )
 async def assign_admin_roles(
     admin_id: uuid.UUID,
@@ -316,7 +316,7 @@ async def assign_admin_roles(
     return success_response(
         data=admin_read(await service.assign_admin_roles(admin_id, payload)),
         request_id=current_request_id(),
-        message="Roles assigned",
+        message="角色分配成功",
     )
 
 
@@ -324,7 +324,7 @@ async def assign_admin_roles(
     "/admins/{admin_id}/sessions",
     response_model=ResponseModel[list[SessionRead]],
     dependencies=[Depends(require_permission(PermissionCode.ADMINS_SESSIONS_READ))],
-    summary="List administrator sessions",
+    summary="获取管理员会话列表",
 )
 async def list_admin_sessions(
     admin_id: uuid.UUID, service: AdminManagementServiceDependency
@@ -342,20 +342,20 @@ async def list_admin_sessions(
         Depends(require_permission(PermissionCode.ADMINS_SESSIONS_REVOKE)),
         Depends(require_admin_confirmation(ConfirmationAction.ADMIN_SESSIONS_REVOKE)),
     ],
-    summary="Revoke all administrator sessions",
+    summary="撤销管理员全部会话",
 )
 async def revoke_all_admin_sessions(
     admin_id: uuid.UUID, service: AdminManagementServiceDependency
 ) -> ResponseModel[ActionResult]:
     await service.revoke_all_admin_sessions(admin_id)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Sessions revoked")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="全部会话撤销成功")
 
 
 @router.get(
     "/roles",
     response_model=ResponseModel[RolePage],
     dependencies=[Depends(require_permission(PermissionCode.ROLES_READ))],
-    summary="List roles",
+    summary="获取角色列表",
 )
 async def list_roles(
     service: AdminManagementServiceDependency,
@@ -372,11 +372,11 @@ async def list_roles(
     response_model=ResponseModel[RoleRead],
     status_code=201,
     dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.ROLES_CREATE))],
-    summary="Create a role",
+    summary="创建角色",
 )
 async def create_role(payload: RoleCreateIn, service: AdminManagementServiceDependency) -> ResponseModel[RoleRead]:
     return success_response(
-        data=role_read(await service.create_role(payload)), request_id=current_request_id(), message="Role created"
+        data=role_read(await service.create_role(payload)), request_id=current_request_id(), message="角色创建成功"
     )
 
 
@@ -384,7 +384,7 @@ async def create_role(payload: RoleCreateIn, service: AdminManagementServiceDepe
     "/roles/{role_id}",
     response_model=ResponseModel[RoleRead],
     dependencies=[Depends(require_permission(PermissionCode.ROLES_READ))],
-    summary="Get a role",
+    summary="获取角色详情",
 )
 async def get_role(role_id: uuid.UUID, service: AdminManagementServiceDependency) -> ResponseModel[RoleRead]:
     return success_response(data=role_read(await service.get_role(role_id)), request_id=current_request_id())
@@ -394,7 +394,7 @@ async def get_role(role_id: uuid.UUID, service: AdminManagementServiceDependency
     "/roles/{role_id}",
     response_model=ResponseModel[RoleRead],
     dependencies=[Depends(require_permission(PermissionCode.ROLES_UPDATE))],
-    summary="Update a role",
+    summary="更新角色",
 )
 async def update_role(
     role_id: uuid.UUID,
@@ -409,7 +409,7 @@ async def update_role(
     return success_response(
         data=role_read(await service.update_role(role_id, payload)),
         request_id=current_request_id(),
-        message="Role updated",
+        message="角色更新成功",
     )
 
 
@@ -420,11 +420,11 @@ async def update_role(
         Depends(require_permission(PermissionCode.ROLES_DELETE)),
         Depends(require_admin_confirmation(ConfirmationAction.ROLE_DELETE)),
     ],
-    summary="Delete an unused role",
+    summary="删除未使用的角色",
 )
 async def delete_role(role_id: uuid.UUID, service: AdminManagementServiceDependency) -> ResponseModel[ActionResult]:
     await service.delete_role(role_id)
-    return success_response(data=ActionResult(), request_id=current_request_id(), message="Role deleted")
+    return success_response(data=ActionResult(), request_id=current_request_id(), message="角色删除成功")
 
 
 @router.put(
@@ -434,7 +434,7 @@ async def delete_role(role_id: uuid.UUID, service: AdminManagementServiceDepende
         Depends(require_permission(PermissionCode.ROLES_PERMISSIONS_ASSIGN)),
         Depends(require_admin_confirmation(ConfirmationAction.ROLE_PERMISSIONS_ASSIGN)),
     ],
-    summary="Assign role permissions",
+    summary="分配角色权限",
 )
 async def assign_role_permissions(
     role_id: uuid.UUID,
@@ -444,7 +444,7 @@ async def assign_role_permissions(
     return success_response(
         data=role_read(await service.assign_role_permissions(role_id, payload)),
         request_id=current_request_id(),
-        message="Permissions assigned",
+        message="权限分配成功",
     )
 
 
@@ -452,7 +452,7 @@ async def assign_role_permissions(
     "/permissions",
     response_model=ResponseModel[list[PermissionRead]],
     dependencies=[Depends(require_permission(PermissionCode.PERMISSIONS_READ))],
-    summary="List the source-controlled permission catalog",
+    summary="获取源码管理的权限目录",
 )
 async def list_permissions(
     service: AdminManagementServiceDependency,
@@ -464,7 +464,7 @@ async def list_permissions(
     "/security/login-events",
     response_model=ResponseModel[LoginEventPage],
     dependencies=[Depends(require_permission(PermissionCode.SECURITY_LOGIN_EVENTS_READ))],
-    summary="List authentication security events",
+    summary="获取身份认证安全事件",
 )
 async def list_login_events(
     service: AdminManagementServiceDependency,
@@ -480,7 +480,7 @@ async def list_login_events(
     "/security/audit-events",
     response_model=ResponseModel[AuditEventPage],
     dependencies=[Depends(require_permission(PermissionCode.SECURITY_AUDIT_EVENTS_READ))],
-    summary="List administrator audit events",
+    summary="获取管理员审计事件",
 )
 async def list_audit_events(
     service: AdminManagementServiceDependency,
@@ -496,7 +496,7 @@ async def list_audit_events(
     "/system/request-logs",
     response_model=ResponseModel[RequestLogPage],
     dependencies=[Depends(require_permission(PermissionCode.SYSTEM_REQUEST_LOGS_READ))],
-    summary="List optional request metadata logs",
+    summary="获取可选请求元数据日志",
 )
 async def list_request_logs(
     service: AdminManagementServiceDependency,

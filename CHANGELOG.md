@@ -40,6 +40,7 @@
 
 ### Fixed
 
+- 修复 Web 首页在用户已经登录后仍显示“登录”和“创建账户”入口的问题；首页通过服务端当前用户接口确认真实会话，匿名或身份服务暂不可用时继续保留入口。
 - 修复 Governance 文本检查在 Linux PowerShell 中无法读取点文件、正反例脚本遗留预期失败退出码的问题。
 - 修复生产部署摘要直接向 Bash 插入 GitHub 表达式的注入风险，并修正 Admin Nginx 健康响应的内容类型声明。
 - 修复根 `.env.example` 的乱码、粘连和职责错位，只保留 `compose.prod.yml` 使用的公开部署变量模板。
@@ -49,6 +50,8 @@
 
 ### Changed
 
+- 用户与管理员的新密码规则统一为 6 至 64 个字符，登录、当前密码和二次确认输入统一限制为最多 64 个字符；Backend、Admin、Web 和初始管理员脚本保持一致。
+- FastAPI 文档的接口分组、摘要、字段说明和响应说明改为中文，API 成功与失败响应的顶层 `message` 统一为中文；路径、参数、字段、错误 `code` 和 `operationId` 保持英文程序标识。
 - 停用 Dependabot 定期依赖升级分支和 Pull Request，依赖版本调整改为人工发起、评审和验证；保留漏洞告警、Dependency Review、依赖审计和静态代码扫描安全门禁。
 - 因个人私有仓库无法启用 GitHub Code Security，将不可运行的 CodeQL Job 替换为固定版本、无账号且不上传源码的 Semgrep CE SAST 门禁。
 - 清空并关闭 GitHub Wiki，项目文档统一以仓库 `docs/` 为唯一来源，后续提交和文档同步流程跳过 Wiki。

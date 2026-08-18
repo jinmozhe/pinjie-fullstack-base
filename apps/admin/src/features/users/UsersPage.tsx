@@ -95,7 +95,7 @@ export function UsersPage() {
             message.success("密码已重置，用户现有会话已撤销");
           });
         }}>
-          <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 12, message: "密码至少 12 个字符" }]}><Input.Password autoComplete="new-password" /></Form.Item>
+          <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
         </Form>
       </Modal>
 
