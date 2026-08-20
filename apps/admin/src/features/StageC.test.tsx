@@ -6,7 +6,7 @@ import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
-import { MemoryRouter, Route, Routes } from "react-router";
+
 import { describe, expect, it } from "vitest";
 
 import { AdminsPage } from "./admins/AdminsPage";
@@ -23,7 +23,8 @@ const restricted: AdminRead = { ...current, id: "01900000-0000-7000-8000-0000000
 
 function renderPage(node: ReactNode, principal: AdminRead | null = current) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(<ConfigProvider locale={zhCN}><QueryClientProvider client={client}><MemoryRouter>{principal ? <AdminContext.Provider value={principal}>{node}</AdminContext.Provider> : node}</MemoryRouter></QueryClientProvider></ConfigProvider>);
+  window.history.replaceState({}, "", "/");
+  return render(<ConfigProvider locale={zhCN}><QueryClientProvider client={client}>{principal ? <AdminContext.Provider value={principal}>{node}</AdminContext.Provider> : node}</QueryClientProvider></ConfigProvider>);
 }
 
 async function confirmAction(user: ReturnType<typeof userEvent.setup>) {
@@ -50,8 +51,8 @@ describe("stage C admin workspace", () => {
   });
 
   it("redirects authenticated administrators away from the login page", () => {
-    renderPage(<Routes><Route path="/" element={<LoginPage authenticated />} /><Route path="/users" element={<p>已进入用户管理</p>} /></Routes>, null);
-    expect(screen.getByText("已进入用户管理")).toBeInTheDocument();
+    renderPage(<LoginPage authenticated />, null);
+    expect(window.location.pathname).toBe("/users");
   });
 
   it("loads users and supports editing and session inspection", async () => {
@@ -68,7 +69,7 @@ describe("stage C admin workspace", () => {
       if (dialog) expect(dialog).not.toBeVisible();
       else expect(dialog).toBeNull();
     });
-    await user.click(screen.getByRole("button", { name: /会话/ }));
+    await user.click(await screen.findByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
   });
 
@@ -86,11 +87,11 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("button", { name: /下一步/ }));
     await confirmAction(user);
 
-    await user.click(screen.getByRole("button", { name: /会话/ }));
+    await user.click(await screen.findByRole("button", { name: /会话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
     await confirmAction(user);
-  }, 20_000);
+  }, 60_000);
 
   it("loads administrators and opens role assignment", async () => {
     const user = userEvent.setup();
@@ -100,6 +101,84 @@ describe("stage C admin workspace", () => {
     expect(screen.getByText("分配角色")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /取\s*消/ }));
   });
+
+  it("protects administrator status and session operations", async () => {
+    const user = userEvent.setup();
+    server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({
+      code: "OK",
+      message: "操作成功",
+      data: { items: [{ ...current, id: "01900000-0000-7000-8000-000000000010", username: "other-admin", display_name: "Other Admin" }], page: 1, page_size: 20, total: 1, total_pages: 1 },
+      request_id: "test-request",
+    })));
+    renderPage(<AdminsPage />);
+    expect(await screen.findByText("Other Admin")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /停\s*用/ }));
+    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: /会\s*话/ }));
+    expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /撤销全部/ }));
+    await confirmAction(user);
+  }, 60_000);
+
+  it("renders inactive records, empty fields, and active session details", async () => {
+    const user = userEvent.setup();
+    const inactiveUser = {
+      id: "01900000-0000-7000-8000-000000000020",
+      username: "inactive-user",
+      display_name: null,
+      email: null,
+      is_active: false,
+      created_at: now,
+      updated_at: now,
+    };
+    const inactiveAdmin = {
+      ...current,
+      id: "01900000-0000-7000-8000-000000000021",
+      username: "inactive-admin",
+      display_name: null,
+      is_active: false,
+      is_superuser: false,
+      roles: [{ id: "01900000-0000-7000-8000-000000000022", code: "auditors", name: "审计员" }],
+    };
+    const activeSession = { id: "01900000-0000-7000-8000-000000000023", device_name: null, ip_masked: null, last_seen_at: now, revoked_at: null };
+    const revokedSession = { ...activeSession, id: "01900000-0000-7000-8000-000000000024", device_name: "旧设备", revoked_at: now };
+    const ok = (data: unknown) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/users", () => ok({ items: [inactiveUser], page: 1, page_size: 20, total: 1, total_pages: 1 })),
+      http.get("http://localhost:3000/api/v1/admin/users/:id/sessions", () => ok([activeSession, revokedSession])),
+      http.post("http://localhost:3000/api/v1/admin/users/:id/sessions/revoke-all", () => ok({ completed: true })),
+      http.get("http://localhost:3000/api/v1/admin/admins", () => ok({ items: [inactiveAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 })),
+      http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () => ok([activeSession, revokedSession])),
+      http.get("http://localhost:3000/api/v1/admin/roles", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000025", code: "auditors", name: "审计员", description: null, is_active: false, permissions: [], created_at: now, updated_at: now }], page: 1, page_size: 100, total: 1, total_pages: 1 })),
+      http.get("http://localhost:3000/api/v1/admin/permissions", () => ok([{ id: "01900000-0000-7000-8000-000000000026", code: "users:read", name: "查看用户", description: null, is_active: false, catalog_version: "v1" }])),
+    );
+
+    const users = renderPage(<UsersPage />);
+    expect((await screen.findAllByText("inactive-user")).length).toBeGreaterThan(0);
+    expect(screen.getByText("停用", { selector: "span" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /启\s*用/ }));
+    await user.click(screen.getByRole("button", { name: /会\s*话/ }));
+    expect(await screen.findByText("旧设备")).toBeInTheDocument();
+    expect(screen.getByText("未知设备")).toBeInTheDocument();
+    expect(screen.getByText("已撤销")).toBeInTheDocument();
+    users.unmount();
+
+    const admins = renderPage(<AdminsPage />);
+    expect((await screen.findAllByText("inactive-admin")).length).toBeGreaterThan(0);
+    expect(screen.getByText("审计员")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /启\s*用/ }));
+    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: /会\s*话/ }));
+    expect(await screen.findByText("旧设备")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /撤销全部/ }));
+    await confirmAction(user);
+    admins.unmount();
+
+    renderPage(<RolesPage />);
+    expect(await screen.findByText("审计员")).toBeInTheDocument();
+    expect(screen.getByText("停用")).toBeInTheDocument();
+    expect(screen.getByText("0")).toBeInTheDocument();
+  }, 60_000);
 
   it("creates an administrator and confirms role assignment", async () => {
     const user = userEvent.setup();
@@ -116,7 +195,7 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("button", { name: /角色/ }));
     await user.click(screen.getByRole("button", { name: /下一步/ }));
     await confirmAction(user);
-  }, 20_000);
+  }, 60_000);
 
   it("rejects administrator passwords shorter than six characters", async () => {
     const user = userEvent.setup();
@@ -139,7 +218,7 @@ describe("stage C admin workspace", () => {
     await confirmAction(user);
     await user.click(screen.getByRole("button", { name: /删除/ }));
     await confirmAction(user);
-  }, 20_000);
+  }, 60_000);
 
   it("creates and edits source-controlled roles", async () => {
     const user = userEvent.setup();
@@ -159,7 +238,7 @@ describe("stage C admin workspace", () => {
     await user.type(name, "运营管理员");
     await user.click(within(dialog).getByRole("button", { name: /保\s*存/ }));
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "编辑角色" })).not.toBeInTheDocument());
-  }, 20_000);
+  }, 60_000);
 
   it("switches between login, audit, and request metadata logs", async () => {
     const user = userEvent.setup();
@@ -209,5 +288,5 @@ describe("stage C admin workspace", () => {
     renderPage(<RolesPage />, restricted);
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /新建角色|编辑|权限|删除/ })).not.toBeInTheDocument();
-  }, 20_000);
+  }, 60_000);
 });

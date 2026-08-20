@@ -74,7 +74,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 ### 6.3 Playwright 跨栈 E2E
 
-- E2E 默认针对生产构建运行：Web 使用 `next build` 后的 standalone server，Admin 使用 `vite build` 与 `vite preview`。Web 构建脚本同时把静态资源准备到 standalone 目录。
+- E2E 默认针对生产构建运行：Web 使用 `next build` 后的 standalone server，Admin 使用 `max build`，开发/预览通过 `apps/admin/scripts/run-umi.mjs` 设置 `PORT=3001`。Web 构建脚本同时把静态资源准备到 standalone 目录。
 - Windows 和 CI 统一通过 `scripts/e2e/run-e2e.mjs` 启动并回收本次拥有的 Web、Admin 进程，再调用 Playwright。脚本会复用已经存在的受管服务，退出时只终止自己启动的进程，避免 Playwright `webServer` 在 Windows 上回收挂起。
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。

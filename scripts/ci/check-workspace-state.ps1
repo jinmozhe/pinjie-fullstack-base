@@ -113,7 +113,8 @@ $webMarkers = [ordered]@{
 }
 $adminMarkers = [ordered]@{
     source = Test-HasSourceFile -Path (Join-Path $rootPath "apps/admin/src") -Extensions @(".js", ".jsx", ".ts", ".tsx")
-    entry = Test-Path -LiteralPath (Join-Path $rootPath "apps/admin/src/main.tsx") -PathType Leaf
+    entry = (Test-Path -LiteralPath (Join-Path $rootPath "apps/admin/src/main.tsx") -PathType Leaf) -or
+        (Test-Path -LiteralPath (Join-Path $rootPath "apps/admin/src/app.tsx") -PathType Leaf)
     test_script = Get-PackageHasScript -PackagePath (Join-Path $rootPath "apps/admin/package.json") -ScriptName "test"
     tests = Test-HasFrontendTestFile -Path (Join-Path $rootPath "apps/admin/src")
 }

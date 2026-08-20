@@ -10,7 +10,7 @@ export function SystemStatusPage() {
 
   return (
     <main>
-      <Space direction="vertical" size={24} style={{ width: "100%" }}>
+      <Space orientation="vertical" size={24} style={{ width: "100%" }}>
         <div>
           <Typography.Title level={2}>System status</Typography.Title>
           <Typography.Paragraph type="secondary">
@@ -23,7 +23,7 @@ export function SystemStatusPage() {
         >
           {query.isPending ? <div role="status" aria-label="Loading system status"><Spin /></div> : null}
           {query.isError ? (
-            <Alert type="error" showIcon message="后端服务不可用" description="请在服务恢复后重试。" />
+            <Alert type="error" showIcon title="后端服务不可用" description="请在服务恢复后重试。" />
           ) : null}
           {query.isSuccess ? (
             <Descriptions column={{ xs: 1, sm: 2 }}>

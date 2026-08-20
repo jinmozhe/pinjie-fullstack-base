@@ -1,8 +1,7 @@
 {
-  "extends": "@pinjie/typescript-config/vite.json",
+  "extends": "@pinjie/typescript-config/base.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "types": ["vite/client"],
+    "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"]
     }

@@ -18,7 +18,7 @@ export function PageFrame({ title, description, action, children }: { title: str
 
 export function QueryState({ loading, error, empty, onRetry }: { loading: boolean; error?: string; empty?: boolean; onRetry: () => void }) {
   if (loading) return <div className="center-state" role="status" aria-label="正在加载"><Spin /><Typography.Text type="secondary">正在加载</Typography.Text></div>;
-  if (error) return <Alert showIcon type="error" message={error} action={<Button onClick={onRetry}>重试</Button>} />;
+  if (error) return <Alert showIcon type="error" title={error} action={<Button onClick={onRetry}>重试</Button>} />;
   if (empty) return <Empty description="暂无数据" />;
   return null;
 }

@@ -24,7 +24,7 @@ export class ApiError extends Error {
   }
 }
 
-const API_BASE = (import.meta.env.VITE_API_URL || window.location.origin).replace(/\/$/, "");
+const API_BASE = (process.env.VITE_API_URL || window.location.origin).replace(/\/$/, "");
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 let refreshPromise: Promise<boolean> | null = null;
 

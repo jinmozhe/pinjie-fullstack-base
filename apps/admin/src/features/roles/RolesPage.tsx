@@ -56,7 +56,7 @@ export function RolesPage() {
       />}
 
       <Modal open={Boolean(editing)} title={editing === "new" ? "新建角色" : "编辑角色"} okText="保存" confirmLoading={saveRole.isPending} onCancel={() => setEditing(null)} onOk={() => roleForm.submit()}>
-        {saveRole.isError && <Alert showIcon type="error" message={errorMessage(saveRole.error)} />}
+        {saveRole.isError && <Alert showIcon type="error" title={errorMessage(saveRole.error)} />}
         <Form<RoleForm> form={roleForm} layout="vertical" onFinish={(values) => saveRole.mutate(values)}>
           <Form.Item label="角色代码" name="code" rules={[{ required: true }, { pattern: /^[a-z][a-z0-9_-]{2,99}$/, message: "使用小写字母、数字、下划线或连字符" }]}><Input disabled={editing !== "new"} /></Form.Item>
           <Form.Item label="名称" name="name" rules={[{ required: true }]}><Input maxLength={100} /></Form.Item>

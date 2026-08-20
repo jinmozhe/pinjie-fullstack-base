@@ -37,7 +37,7 @@ export function ConfirmActionModal({ action, open, title, onCancel, onConfirmed 
       onOk={() => form.submit()}
     >
       <p className="modal-copy">这是高风险操作。请输入当前管理员密码完成一次性确认。</p>
-      {confirmation.isError && <Alert showIcon type="error" message={errorMessage(confirmation.error)} />}
+      {confirmation.isError && <Alert showIcon type="error" title={errorMessage(confirmation.error)} />}
       <Form form={form} layout="vertical" onFinish={(values) => confirmation.mutate(values)}>
         <Form.Item label="当前密码" name="password" rules={[{ required: true, message: "请输入当前密码" }, { max: 64, message: "密码最多 64 个字符" }]}>
           <Input.Password autoComplete="current-password" maxLength={64} />

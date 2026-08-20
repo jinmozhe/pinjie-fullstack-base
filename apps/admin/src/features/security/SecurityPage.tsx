@@ -31,7 +31,7 @@ function AuditEvents() {
 
 function RequestLogs() {
   const query = useQuery({ queryKey: ["request-logs"], queryFn: () => adminApi.requestLogs(), retry: false });
-  if (query.error instanceof ApiError && query.error.status === 409) return <Alert showIcon type="info" message="请求元数据日志当前未启用" description="生产需要时将 REQUEST_LOG_MODE 设置为 metadata，并运行独立消费者。" />;
+  if (query.error instanceof ApiError && query.error.status === 409) return <Alert showIcon type="info" title="请求元数据日志当前未启用" description="生产需要时将 REQUEST_LOG_MODE 设置为 metadata，并运行独立消费者。" />;
   return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} empty={query.data?.items.length === 0} onRetry={() => void query.refetch()} />{query.data && <Table<RequestLogRead> rowKey="id" dataSource={query.data.items} pagination={false} scroll={{ x: 980 }} columns={[
     { title: "时间", dataIndex: "occurred_at", width: 170, render: formatTime },
     { title: "方法", dataIndex: "method", width: 80 },

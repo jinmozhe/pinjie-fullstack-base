@@ -131,3 +131,10 @@
 - 交付前复读修改文件，检查 `git diff` 或等价差异，并清理本次验证产生的缓存和临时产物。
 - 最终回复说明修改内容、验证结果、未执行项和剩余风险。
 - 提交、推送、发布 GHCR、部署和生产变更是独立动作，分别需要用户明确授权；禁止因完成本地修改而自动执行。
+
+## Admin 本地运行与验证补充
+
+- Admin 日常启动使用 `pnpm --filter @pinjie/admin dev`；直接调用 Umi 时工作目录必须是 `apps/admin`，端口通过项目包装器设置的 `PORT=3001` 管理，不使用 `max dev --port` 作为端口契约。
+- Umi 修改路由、插件或配置后，遇到生成缓存导致的异常时必须清理 `apps/admin/src/.umi` 和 `apps/admin/src/.umi-production`，并确认这些目录未被提交。
+- Admin 的 typecheck、lint、Vitest、production build、浏览器冒烟和真实跨栈 E2E 必须分项记录；Docker Desktop、Backend、PostgreSQL 或 Redis 未就绪时，不得把局部冒烟或 MSW 测试表述为完整跨栈通过。
+- Windows 验证结束后只清理本次启动且已核对 PID、命令行和端口归属的服务、进程与浏览器标签，禁止误杀 Codex 或浏览器运行时。

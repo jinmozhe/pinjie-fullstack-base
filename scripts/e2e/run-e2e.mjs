@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..", "..");
 const backendURL = process.env.E2E_BACKEND_URL ?? "http://127.0.0.1:8000";
 const webServer = resolve(root, "apps", "web", ".next", "standalone", "apps", "web", "server.js");
-const adminCLI = resolve(root, "apps", "admin", "node_modules", "vite", "bin", "vite.js");
+const adminCLI = resolve(root, "apps", "admin", "node_modules", "@umijs", "max", "bin", "max.js");
 const playwrightCLI = resolve(root, "node_modules", "@playwright", "test", "cli.js");
 const ownedServices = [];
 
@@ -112,9 +112,9 @@ try {
   await ensureService(
     "Admin preview server",
     "http://127.0.0.1:3001",
-    [adminCLI, "preview", "--host", "127.0.0.1", "--port", "3001"],
+    [adminCLI, "dev", "--host", "127.0.0.1"],
     resolve(root, "apps", "admin"),
-    { BACKEND_INTERNAL_URL: backendURL },
+    { BACKEND_INTERNAL_URL: backendURL, PORT: "3001" },
   );
 
   runner = spawn(process.execPath, [playwrightCLI, "test", ...process.argv.slice(2)], {

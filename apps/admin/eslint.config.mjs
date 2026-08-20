@@ -1,7 +1,7 @@
 import { pinjieConfig } from "@pinjie/eslint-config";
 
 export default [
-  { ignores: ["coverage/**", "dist/**"] },
+  { ignores: ["coverage/**", "dist/**", "**/.umi/**", "**/.umi-production/**"] },
   ...pinjieConfig,
   {
     languageOptions: {

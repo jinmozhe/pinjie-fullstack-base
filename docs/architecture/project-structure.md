@@ -17,8 +17,8 @@
 .github/ :: CODEOWNERS, pull_request_template.md
 .github/workflows/ :: ci-backend.yml, ci-e2e.yml, ci-frontend.yml, ci-governance.yml, deploy-production.yml, publish-images.yml, security.yml
 .vscode/ :: extensions.json
-apps/admin/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, index.html, nginx.conf, package.json, README.md, tsconfig.json, vite.config.ts
-apps/admin/src/ :: App.tsx, main.tsx, styles.css
+apps/admin/ :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, nginx.conf, package.json, README.md, tsconfig.json, config/, vitest.config.ts
+apps/admin/src/ :: app.tsx, access.ts, env.d.ts, global.d.ts, styles.css
 apps/admin/src/components/ :: PageFrame.tsx
 apps/admin/src/features/ :: StageC.test.tsx
 apps/admin/src/features/admins/ :: AdminsPage.tsx
@@ -124,11 +124,11 @@ scripts/e2e/ :: run-e2e.mjs
 | 部署层 | 根目录 `.env.example` | 三端完整 digest 引用和 PostgreSQL 初始化变量 | `compose.prod.yml`、生产部署工作流 |
 | 后端层 | `apps/backend/.env.example` | `DATABASE_URL`、`TEST_DATABASE_URL`、`REDIS_URL`、运行环境和 CORS | uvicorn 进程 |
 | Web 层 | `apps/web/.env.example` | `BACKEND_INTERNAL_URL` | Next.js 服务端运行时 |
-| Admin 层 | `apps/admin/.env.example` | 可选 `VITE_API_URL`，默认同域 `/api/v1` | Vite 开发代理或生产 Nginx |
+| Admin 层 | `apps/admin/.env.example` | 可选 `VITE_API_URL`，默认同域 `/api/v1` | Umi Max 开发代理或生产 Nginx |
 
 各层只声明自己负责的变量。生产 Compose 从根 `.env` 读取镜像引用和 PostgreSQL 初始化变量，从 `apps/backend/.env` 向 Backend 容器注入运行配置；Web 使用 `BACKEND_INTERNAL_URL`，Admin 使用同域代理。根模板不保存 GitHub Environment 变量和 Secret，`DEPLOY_PATH`、部署开关与 SSH 凭据只在受保护的 `production` Environment 中配置。详细操作见[环境变量分层与 Backend 本地运行手册](../operations/environment-variables-and-backend-local-run.md)。分层原因：
 
-- 后端和前端的环境变量格式不同（Python `os.environ` vs Next.js `NEXT_PUBLIC_` 前缀 vs Vite `VITE_` 前缀）
+- 后端和前端的环境变量格式不同（Python `os.environ` vs Next.js `NEXT_PUBLIC_` 前缀 vs Umi 可公开环境变量）
 - 开发者进入某个应用目录工作时，能直接看到该应用需要哪些变量，不需要翻根目录的大文件
 - 生产部署时，部署镜像选择与应用运行配置具有独立边界，只有 Compose 明确声明的变量才进入对应容器
 

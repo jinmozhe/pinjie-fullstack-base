@@ -33,10 +33,15 @@
 | `CHANGELOG.md` | 生效 | 已交付但尚未发布的能力和后续版本变化 |
 | `docs/adr/0009-Python运行时基线决策.md` | 生效 | 标准 CPython 3.14、本地 uv、CI、容器补丁固定和标准库 UUID v7 的长期决策 |
 | `docs/adr/0010-浏览器认证会话RBAC与审计决策.md` | 生效 | Browser Cookie Profile、C/B 会话隔离、Refresh 权威、规范化 RBAC 和审计决策 |
+| `docs/adr/0011-Admin采用AntDesignProV6与UmiMax决策.md` | 已完成 | Admin 采用官方 Ant Design Pro v6/Umi Max，保留项目安全、契约和质量边界 |
 
 ## 当前开发计划
 
-当前无活动实施计划。
+| 路径 | 状态 | 影响范围 | 用途 |
+| --- | --- | --- | --- |
+| `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
+| `plans/2026-08-20_请求日志错误入参捕获与脱敏管道计划.md` | 待确认 | Backend、Admin、API Client、Database、Documentation | 落地错误请求入参捕获、敏感字段脱敏与 4KB 截断兜底的最佳实践管道 |
+| `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 待确认 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
 
 ## 计划文档登记
 
@@ -62,13 +67,16 @@
 | `plans/2026-08-17_密码规则与API中文化计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Documentation | 统一密码规则、API 顶层消息和 OpenAPI 中文描述并完成跨栈验证 |
 | `plans/2026-08-17_初始管理员默认用户名计划.md` | 已结束 | 已取消 | Backend、Deployment、Documentation | 用户决定继续通过必填 `--username` 显式创建初始管理员，未实施默认用户名变更 |
 | `plans/2026-08-17_Web首页登录态操作按钮计划.md` | 已结束 | 已完成 | Web、Documentation | Web 首页根据服务端真实登录态隐藏登录和创建账户按钮，并补充登录前后浏览器验证 |
+| `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | Admin Umi Max/Ant Design 6 迁移、运行时修复、质量门禁和浏览器冒烟已完成；完整跨栈/容器验证受本机环境限制 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
+| `plans/2026-08-20_请求日志错误入参捕获与脱敏管道计划.md` | 待确认 | 方案设计完成，暂缓实施 | Backend、Admin、API Client、Database、Documentation | 落地错误请求入参捕获、敏感字段脱敏与 4KB 截断兜底的最佳实践管道 |
+| `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 待确认 | 方案设计完成，等待确认 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
 
 ## 当前系统状态
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
 | Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；新密码统一为 6 至 64 个字符，API 顶层消息和 OpenAPI 描述使用中文；默认 pytest 对 `app` 执行 90% 行与分支覆盖率门禁 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 登录、受保护布局、权限导航、用户、管理员、角色权限、安全日志、统一密码约束、MSW/RTL 测试和可健康运行的非 Root Nginx 生产静态容器已实现 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf` |
+| Admin | 已完成官方 Ant Design Pro v6/Umi Max 迁移，包含登录、受保护 ProLayout、权限导航、用户、管理员、角色权限、安全日志、系统状态、MSW/RTL、Umi 端口/环境变量/initialState 接线和桌面/移动登录页冒烟；真实跨栈/非 Root 容器需完整环境复核 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf` |
 | Web | 注册登录、SSR 用户中心、资料、统一密码约束、会话、退出、注销、首页登录态操作、中文错误代理、组件测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，中文描述和密码约束已重新生成，Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，PostgreSQL 18.4 空库/重复升级、Model/Head 和隔离集成测试通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/tests/` |
@@ -118,3 +126,10 @@
 5. 文档新增、移动或用途变化时更新 `docs/README.md`；只有入口、职责或权威来源变化时才同步本索引。
 6. Backend、Admin、Web、API Client、Database、Deployment 或 Documentation 的当前目标变化时，更新“当前开发计划”。
 7. 总索引只记录当前事实、路径、状态和一句话用途，不复制规则、计划或专项文档正文。
+
+## 本次文档治理补充
+
+| 路径 | 状态 | 用途 |
+| --- | --- | --- |
+| docs/operations/admin-local-development-and-validation-troubleshooting.md | 生效 | Admin Umi 本地启动、测试、浏览器验证、跨栈前置条件和迁移故障排查 |
+| plans/2026-08-20_Admin本地运行与故障排查文档治理计划.md | 已结束 | 沉淀本次运行、测试和 Windows 系统故障的规则分层结果 |

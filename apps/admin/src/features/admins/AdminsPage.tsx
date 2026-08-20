@@ -52,7 +52,7 @@ export function AdminsPage() {
       />}
 
       <Modal open={creating} title="新建管理员" okText="下一步" onCancel={() => setCreating(false)} onOk={() => createForm.submit()}>
-        {create.isError && <Alert type="error" showIcon message={errorMessage(create.error)} />}
+        {create.isError && <Alert type="error" showIcon title={errorMessage(create.error)} />}
         <Form<AdminCreateIn> form={createForm} layout="vertical" initialValues={{ is_active: true, is_superuser: false, role_ids: [] }} onFinish={(values) => create.mutate(values)}>
           <Form.Item label="用户名" name="username" rules={[{ required: true }, { min: 3 }]}><Input autoComplete="off" /></Form.Item>
           <Form.Item label="显示名称" name="display_name"><Input maxLength={100} /></Form.Item>
@@ -69,7 +69,7 @@ export function AdminsPage() {
         }}><Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item></Form>
       </Modal>
 
-      <Drawer open={Boolean(sessionTarget)} width={560} title={sessionTarget ? `${sessionTarget.username} 的会话` : "管理员会话"} onClose={() => setSessionTarget(null)} extra={sessionTarget && canAccess(current, "admins:sessions:revoke") ? <Button danger disabled={sessionTarget.id === current.id} onClick={() => begin("admins:sessions:revoke", "撤销管理员全部会话", async (token) => { await adminApi.revokeAdminSessions(sessionTarget.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
+      <Drawer open={Boolean(sessionTarget)} styles={{ wrapper: { width: 560 } }} title={sessionTarget ? `${sessionTarget.username} 的会话` : "管理员会话"} onClose={() => setSessionTarget(null)} extra={sessionTarget && canAccess(current, "admins:sessions:revoke") ? <Button danger disabled={sessionTarget.id === current.id} onClick={() => begin("admins:sessions:revoke", "撤销管理员全部会话", async (token) => { await adminApi.revokeAdminSessions(sessionTarget.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
         <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.length === 0} onRetry={() => void sessions.refetch()} />
         {sessions.data?.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · {formatTime(session.last_seen_at)}</Typography.Text></div>)}
       </Drawer>

@@ -1,25 +1,31 @@
 import { LockOutlined, SafetyCertificateOutlined, UserOutlined } from "@ant-design/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Form, Input, Typography } from "antd";
-import { Navigate, useNavigate } from "react-router";
+import { useEffect } from "react";
 
 import { adminApi } from "@/lib/api/admin";
 import { errorMessage } from "@/lib/api/http";
+import { navigate } from "@/lib/navigation";
 
 type LoginValues = { username: string; password: string };
 
-export function LoginPage({ authenticated }: { authenticated: boolean }) {
-  const navigate = useNavigate();
+export function LoginPage({ authenticated = false }: { authenticated?: boolean }) {
   const queryClient = useQueryClient();
+  useEffect(() => {
+    if (authenticated) navigate("/users");
+  }, [authenticated]);
   const login = useMutation({
     mutationFn: (values: LoginValues) => adminApi.login(values),
-    onSuccess: async (session) => {
+    onSuccess: (session) => {
       queryClient.setQueryData(["admin-me"], session.principal);
-      await navigate("/users", { replace: true });
+      navigate("/users");
+      if (process.env.NODE_ENV !== "test") window.location.reload();
     },
   });
 
-  if (authenticated) return <Navigate to="/users" replace />;
+  if (authenticated) {
+    return null;
+  }
 
   return (
     <main className="login-screen">
@@ -27,7 +33,7 @@ export function LoginPage({ authenticated }: { authenticated: boolean }) {
         <div className="login-panel__mark"><SafetyCertificateOutlined /></div>
         <Typography.Title id="login-title" level={2}>管理控制台</Typography.Title>
         <Typography.Paragraph type="secondary">使用管理员账号进入安全工作区</Typography.Paragraph>
-        {login.isError && <Alert showIcon type="error" message={errorMessage(login.error)} />}
+        {login.isError && <Alert showIcon type="error" title={errorMessage(login.error)} />}
         <Form<LoginValues> layout="vertical" requiredMark={false} onFinish={(values) => login.mutate(values)}>
           <Form.Item label="用户名" name="username" rules={[{ required: true, message: "请输入用户名" }]}>
             <Input autoComplete="username" prefix={<UserOutlined />} size="large" />
@@ -41,3 +47,5 @@ export function LoginPage({ authenticated }: { authenticated: boolean }) {
     </main>
   );
 }
+
+export default LoginPage;

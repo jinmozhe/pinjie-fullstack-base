@@ -26,9 +26,11 @@ node_modules/
 out/
 /apps/web/next-env.d.ts
 
-# Vite（apps/admin）
+# Umi Max / 前端构建产物
 dist/
 .vite/
+.umi/
+.umi-production/
 
 # Turborepo
 .turbo/

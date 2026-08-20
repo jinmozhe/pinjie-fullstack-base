@@ -78,7 +78,7 @@ export function UsersPage() {
       )}
 
       <Modal open={Boolean(editing)} title="编辑用户资料" okText="保存" onCancel={() => setEditing(null)} confirmLoading={editMutation.isPending} onOk={() => editForm.submit()}>
-        {editMutation.isError && <Alert showIcon type="error" message={errorMessage(editMutation.error)} />}
+        {editMutation.isError && <Alert showIcon type="error" title={errorMessage(editMutation.error)} />}
         <Form form={editForm} layout="vertical" onFinish={(values) => editMutation.mutate(values)}>
           <Form.Item label="显示名称" name="display_name"><Input maxLength={100} /></Form.Item>
           <Form.Item label="邮箱" name="email" rules={[{ type: "email", message: "请输入有效邮箱" }]}><Input maxLength={320} /></Form.Item>
@@ -99,7 +99,7 @@ export function UsersPage() {
         </Form>
       </Modal>
 
-      <Drawer open={Boolean(selected)} width={560} title={selected ? `${selected.username} 的会话` : "用户会话"} onClose={() => setSelected(null)} extra={selected && canAccess(current, "users:sessions:revoke") ? <Button danger onClick={() => beginConfirmation("users:sessions:revoke", "撤销该用户全部会话", async (token) => { await adminApi.revokeUserSessions(selected.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
+      <Drawer open={Boolean(selected)} styles={{ wrapper: { width: 560 } }} title={selected ? `${selected.username} 的会话` : "用户会话"} onClose={() => setSelected(null)} extra={selected && canAccess(current, "users:sessions:revoke") ? <Button danger onClick={() => beginConfirmation("users:sessions:revoke", "撤销该用户全部会话", async (token) => { await adminApi.revokeUserSessions(selected.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
         <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.length === 0} onRetry={() => void sessions.refetch()} />
         {sessions.data?.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · 最近活动 {formatTime(session.last_seen_at)}</Typography.Text></div>)}
       </Drawer>

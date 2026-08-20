@@ -15,7 +15,7 @@
 Windows 本机
 ├── Backend：uv + 标准 CPython 3.14 + 项目 .venv，端口 8000
 ├── Web：pnpm + Next.js，端口 3000
-├── Admin：pnpm + Vite，端口 3001
+├── Admin：pnpm + Umi Max，端口 3001
 └── PostgreSQL：本机服务，端口 5432
 
 Docker Desktop

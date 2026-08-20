@@ -1,56 +1,58 @@
 import type { AdminRead } from "@pinjie/api-client";
-import {
-  AuditOutlined,
-  DashboardOutlined,
-  KeyOutlined,
-  LogoutOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  SafetyCertificateOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Avatar, Button, Drawer, Dropdown, Flex, Form, Grid, Input, Layout, Menu, Result, Skeleton, Typography, message } from "antd";
+import { KeyOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { history, Link } from "@umijs/max";
+import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
+import { Alert, Avatar, Button, ConfigProvider, Drawer, Dropdown, Form, Input, Result, Typography, message } from "antd";
+import zhCN from "antd/locale/zh_CN";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router";
+import { useState } from "react";
 
-import { AdminsPage } from "@/features/admins/AdminsPage";
-import { LoginPage } from "@/features/auth/LoginPage";
-import { AdminContext, canAccess } from "@/features/auth/auth-context";
-import { RolesPage } from "@/features/roles/RolesPage";
-import { SecurityPage } from "@/features/security/SecurityPage";
-import { SystemStatusPage } from "@/features/system/SystemStatusPage";
-import { UsersPage } from "@/features/users/UsersPage";
-import { adminApi } from "@/lib/api/admin";
-import { ApiError, errorMessage } from "@/lib/api/http";
+import defaultSettings from "../config/defaultSettings";
+import { AdminContext } from "./features/auth/auth-context";
+import { adminApi } from "./lib/api/admin";
+import { ApiError, errorMessage } from "./lib/api/http";
+import "./styles.css";
 
-const { Header, Sider, Content } = Layout;
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, staleTime: 15_000 }, mutations: { retry: false } },
+});
 
-type NavItem = { key: string; label: string; icon: ReactNode; permission?: string };
-const NAV_ITEMS: NavItem[] = [
-  { key: "/users", label: "用户", icon: <UserOutlined />, permission: "users:read" },
-  { key: "/admins", label: "管理员", icon: <TeamOutlined />, permission: "admins:read" },
-  { key: "/roles", label: "角色权限", icon: <SafetyCertificateOutlined />, permission: "roles:read" },
-  { key: "/security", label: "安全日志", icon: <AuditOutlined />, permission: "security:login-events:read" },
-  { key: "/system", label: "系统状态", icon: <DashboardOutlined /> },
-];
+export type AdminInitialState = {
+  currentAdmin?: AdminRead;
+  bootstrapError?: string;
+  settings: typeof defaultSettings;
+};
 
-function Guard({ admin, permission, children }: { admin: AdminRead; permission?: string; children: ReactNode }) {
-  if (permission && !canAccess(admin, permission)) return <Result status="403" title="无权访问" subTitle="当前管理员缺少此页面所需权限。" />;
-  return children;
+export async function getInitialState(): Promise<AdminInitialState> {
+  const settings = defaultSettings;
+  if (history.location.pathname === "/login") return { settings };
+  try {
+    return { currentAdmin: await adminApi.me(), settings };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      const { pathname, search, hash } = history.location;
+      history.replace(`/login?redirect=${encodeURIComponent(pathname + search + hash)}`);
+      return { settings };
+    }
+    return { settings, bootstrapError: errorMessage(error) };
+  }
 }
 
-function AccountDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+function PasswordDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [form] = Form.useForm<{ current_password: string; new_password: string }>();
   const mutation = useMutation({
     mutationFn: (values: { current_password: string; new_password: string }) => adminApi.changePassword(values.current_password, values.new_password),
-    onSuccess: () => { message.success("密码已修改，请使用新密码重新登录"); form.resetFields(); onClose(); window.location.assign("/login"); },
+    onSuccess: () => {
+      message.success("密码已修改，请使用新密码重新登录");
+      form.resetFields();
+      onClose();
+      history.replace("/login");
+      window.location.reload();
+    },
   });
-  return <Drawer open={open} title="账户安全" width={420} onClose={onClose}>
+  return <Drawer open={open} title="账户安全" styles={{ wrapper: { width: 420 } }} onClose={onClose}>
     <Typography.Paragraph type="secondary">修改密码会撤销当前管理员的全部会话。</Typography.Paragraph>
-    {mutation.isError && <Alert showIcon type="error" message={errorMessage(mutation.error)} />}
+    {mutation.isError && <Alert showIcon type="error" title={errorMessage(mutation.error)} />}
     <Form form={form} layout="vertical" onFinish={(values) => mutation.mutate(values)}>
       <Form.Item label="当前密码" name="current_password" rules={[{ required: true }, { max: 64, message: "密码最多 64 个字符" }]}><Input.Password autoComplete="current-password" maxLength={64} /></Form.Item>
       <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
@@ -59,73 +61,65 @@ function AccountDrawer({ open, onClose }: { open: boolean; onClose: () => void }
   </Drawer>;
 }
 
-function AdminShell({ admin }: { admin: AdminRead }) {
-  const screens = Grid.useBreakpoint();
-  const mobile = !screens.lg;
-  const [collapsed, setCollapsed] = useState(mobile);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+function AccountMenu({ admin }: { admin: AdminRead }) {
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const logout = useMutation({
     mutationFn: adminApi.logout,
-    onSettled: async () => { queryClient.clear(); await navigate("/login", { replace: true }); },
+    onSettled: () => {
+      queryClient.clear();
+      history.replace("/login");
+      window.location.reload();
+    },
   });
-  const navigation = useMemo(() => NAV_ITEMS.filter((item) => !item.permission || canAccess(admin, item.permission)), [admin]);
-
-  return <AdminContext.Provider value={admin}>
-    <Layout className="admin-shell">
-      <Sider breakpoint="lg" collapsed={collapsed} collapsedWidth={mobile ? 0 : 72} theme="light" width={224} onBreakpoint={(broken) => setCollapsed(broken)}>
-        <div className="brand-mark"><span className="brand-mark__symbol">P</span>{!collapsed && <span>Pinjie Console</span>}</div>
-        <Menu mode="inline" selectedKeys={[navigation.find((item) => location.pathname.startsWith(item.key))?.key ?? "/system"]} items={navigation.map((item) => ({ key: item.key, icon: item.icon, label: <Link to={item.key}>{item.label}</Link> }))} />
-      </Sider>
-      <Layout>
-        <Header className="admin-header">
-          <Button className="menu-trigger" type="text" aria-label={collapsed ? "展开导航" : "收起导航"} icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed((value) => !value)} />
-          <div className="admin-header__spacer" />
-          <Dropdown menu={{ items: [
-            { key: "password", icon: <KeyOutlined />, label: "修改密码", onClick: () => setAccountOpen(true) },
-            { type: "divider" },
-            { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, onClick: () => logout.mutate() },
-          ] }}>
-            <Button
-              type="text"
-              className="account-trigger"
-              aria-label={`账户菜单：${admin.display_name || admin.username}`}
-            >
-              <Avatar size="small" icon={<UserOutlined />} />
-              <span>{admin.display_name || admin.username}</span>
-            </Button>
-          </Dropdown>
-        </Header>
-        <Content className="admin-content">
-          <Routes>
-            <Route path="/users" element={<Guard admin={admin} permission="users:read"><UsersPage /></Guard>} />
-            <Route path="/admins" element={<Guard admin={admin} permission="admins:read"><AdminsPage /></Guard>} />
-            <Route path="/roles" element={<Guard admin={admin} permission="roles:read"><RolesPage /></Guard>} />
-            <Route path="/security" element={<Guard admin={admin} permission="security:login-events:read"><SecurityPage /></Guard>} />
-            <Route path="/system" element={<SystemStatusPage />} />
-            <Route path="*" element={<Navigate to={navigation[0]?.key ?? "/system"} replace />} />
-          </Routes>
-        </Content>
-      </Layout>
-      <AccountDrawer open={accountOpen} onClose={() => setAccountOpen(false)} />
-    </Layout>
-  </AdminContext.Provider>;
+  return <>
+    <Dropdown menu={{ items: [
+      { key: "password", icon: <KeyOutlined />, label: "修改密码", onClick: () => setPasswordOpen(true) },
+      { type: "divider" },
+      { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, onClick: () => logout.mutate() },
+    ] }}>
+      <Button type="text" className="account-trigger" aria-label={`账户菜单：${admin.display_name || admin.username}`}>
+        <Avatar size="small" icon={<UserOutlined />} />
+        <span>{admin.display_name || admin.username}</span>
+      </Button>
+    </Dropdown>
+    <PasswordDrawer open={passwordOpen} onClose={() => setPasswordOpen(false)} />
+  </>;
 }
 
-export default function App() {
-  const location = useLocation();
-  const me = useQuery({
-    queryKey: ["admin-me"],
-    queryFn: adminApi.me,
-    enabled: location.pathname !== "/login",
-    retry: false,
-  });
-  const unauthenticated = me.error instanceof ApiError && me.error.status === 401;
-  if (location.pathname === "/login") return <LoginPage authenticated={Boolean(me.data)} />;
-  if (me.isLoading) return <main className="bootstrap-state"><Flex vertical gap={18}><Skeleton.Avatar active size={56} /><Skeleton active paragraph={{ rows: 4 }} /></Flex></main>;
-  if (unauthenticated) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  if (me.isError) return <main className="bootstrap-state"><Result status="warning" title="管理服务暂不可用" subTitle={errorMessage(me.error)} extra={<Button type="primary" onClick={() => void me.refetch()}>重试</Button>} /></main>;
-  return <AdminShell admin={me.data!} />;
+function AdminLayoutFrame({ initialState, children }: { initialState: AdminInitialState; children: ReactNode }) {
+  if (initialState.bootstrapError) {
+    return <main className="bootstrap-state"><Result status="warning" title="管理服务暂不可用" subTitle={initialState.bootstrapError} extra={<Button type="primary" onClick={() => window.location.reload()}>重试</Button>} /></main>;
+  }
+  if (!initialState.currentAdmin) return <main className="bootstrap-state"><Typography.Text>正在初始化管理工作区</Typography.Text></main>;
+  return <AdminContext.Provider value={initialState.currentAdmin}>{children}</AdminContext.Provider>;
+}
+
+export const layout = ({ initialState }: { initialState?: unknown }) => {
+  const state = initialState as AdminInitialState | undefined;
+  return {
+    title: "Pinjie Console",
+    menuItemRender: (item: { path?: string }, dom: ReactNode) => item.path ? <Link to={item.path}>{dom}</Link> : dom,
+    menuHeaderRender: (_: unknown, title: ReactNode) => <div className="brand-mark"><span className="brand-mark__symbol">P</span>{title}</div>,
+    avatarProps: state?.currentAdmin ? {
+      title: state.currentAdmin.display_name || state.currentAdmin.username,
+      render: () => state.currentAdmin ? <AccountMenu admin={state.currentAdmin} /> : null,
+    } : undefined,
+    actionsRender: () => [],
+    footerRender: () => <Typography.Text type="secondary">Pinjie Console</Typography.Text>,
+    childrenRender: (children: ReactNode) => <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>{children}</AdminLayoutFrame>,
+    ...state?.settings,
+  };
+};
+
+export function rootContainer(container: ReactNode) {
+  return <ConfigProvider locale={zhCN} theme={{ token: {
+    colorError: "#b42318",
+    colorPrimary: "#0958d9",
+    colorSuccess: "#135200",
+    colorSuccessBg: "#f6ffed",
+    colorSuccessBorder: "#95de64",
+    colorSuccessText: "#135200",
+    colorTextDescription: "#595959",
+    colorTextSecondary: "#595959",
+  } }}><QueryClientProvider client={queryClient}>{container}</QueryClientProvider></ConfigProvider>;
 }
