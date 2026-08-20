@@ -255,7 +255,7 @@ describe("stage C admin workspace", () => {
     server.use(
       http.get("http://localhost:3000/api/v1/admin/security/login-events", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000015", principal_type: "admin", principal_id: null, event_type: "login", succeeded: false, reason_code: "invalid_credentials", ip_address: null, user_agent_summary: null, request_id: "test-request", occurred_at: now }], page: 1, page_size: 20, total: 1, total_pages: 1 })),
       http.get("http://localhost:3000/api/v1/admin/security/audit-events", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000016", actor_id: current.id, action: "roles:update", target_type: "role", target_id: null, result: "started", changed_fields: {}, request_id: "test-request", occurred_at: now, completed_at: null }], page: 1, page_size: 20, total: 1, total_pages: 1 })),
-      http.get("http://localhost:3000/api/v1/admin/system/request-logs", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000017", request_id: "test-request", trace_id: "test-trace", method: "POST", route_template: "/api/v1/admin/roles", status_code: 500, duration_ms: 12, principal_type: "admin", release_version: "test", occurred_at: now }], page: 1, page_size: 20, total: 1, total_pages: 1 })),
+      http.get("http://localhost:3000/api/v1/admin/system/request-logs", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000017", request_id: "test-request", trace_id: "test-trace", method: "POST", route_template: "/api/v1/admin/roles", status_code: 500, duration_ms: 12, principal_type: "admin", release_version: "test", occurred_at: now, request_body: '{"password":"***"}' }], page: 1, page_size: 20, total: 1, total_pages: 1 })),
     );
     const user = userEvent.setup();
     renderPage(<SecurityPage />);
@@ -264,6 +264,8 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("started")).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "请求元数据" }));
     expect(await screen.findByText("500")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "查看入参" }));
+    expect(await screen.findByText('{"password":"***"}')).toBeInTheDocument();
   });
 
   it("explains when request metadata logging is disabled", async () => {

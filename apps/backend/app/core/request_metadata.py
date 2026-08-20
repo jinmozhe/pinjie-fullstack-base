@@ -71,6 +71,7 @@ async def publish_request_log(
     status_code: int,
     duration_ms: int,
     route_template: str,
+    request_body: str | None = None,
 ) -> None:
     settings = request.app.state.settings
     if settings.request_log_mode != "metadata":
@@ -103,6 +104,8 @@ async def publish_request_log(
         "release_version": settings.release_version or "",
         "occurred_at": datetime.now(UTC).isoformat(),
     }
+    if request_body is not None:
+        fields["request_body"] = request_body
     try:
         await resources.redis.xadd(
             cache_keys(settings).request_log_stream(),

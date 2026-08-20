@@ -384,6 +384,26 @@ async def test_request_log_disabled_missing_redis_and_publish_failure() -> None:
 
 
 @pytest.mark.asyncio
+async def test_request_log_includes_sanitized_body_only_when_provided() -> None:
+    redis = SimpleNamespace(xadd=AsyncMock())
+    request = _request(
+        settings=_settings(REQUEST_LOG_MODE="metadata"),
+        resources=SimpleNamespace(redis=redis),
+    )
+
+    await publish_request_log(
+        request,
+        status_code=422,
+        duration_ms=3,
+        route_template="/api/v1/users",
+        request_body='{"password":"***"}',
+    )
+
+    fields = redis.xadd.await_args.args[1]
+    assert fields["request_body"] == '{"password":"***"}'
+
+
+@pytest.mark.asyncio
 async def test_resources_close_and_creation_guards() -> None:
     engine = SimpleNamespace(dispose=AsyncMock())
     redis = SimpleNamespace(aclose=AsyncMock())

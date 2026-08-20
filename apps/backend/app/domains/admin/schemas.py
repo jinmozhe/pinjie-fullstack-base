@@ -244,6 +244,7 @@ class RequestLogRead(BaseModel):
     principal_type: str | None
     release_version: str | None
     occurred_at: datetime
+    request_body: str | None
 
 
 AdminPage = PageResult[AdminRead]

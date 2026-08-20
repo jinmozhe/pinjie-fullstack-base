@@ -3885,6 +3885,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Occurred At"
+          },
+          "request_body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Body"
           }
         },
         "additionalProperties": false,
@@ -3899,7 +3910,8 @@
           "duration_ms",
           "principal_type",
           "release_version",
-          "occurred_at"
+          "occurred_at",
+          "request_body"
         ],
         "title": "RequestLogRead"
       },

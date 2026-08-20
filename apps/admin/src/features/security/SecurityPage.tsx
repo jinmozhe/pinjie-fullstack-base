@@ -1,6 +1,7 @@
 import type { AuditEventRead, LoginEventRead, RequestLogRead } from "@pinjie/api-client";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Table, Tabs, Tag, Typography } from "antd";
+import { Alert, Button, Drawer, Table, Tabs, Tag, Typography } from "antd";
+import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
 import { adminApi } from "@/lib/api/admin";
@@ -30,16 +31,70 @@ function AuditEvents() {
 }
 
 function RequestLogs() {
+  const [selectedBody, setSelectedBody] = useState<{ requestId: string; body: string } | null>(null);
   const query = useQuery({ queryKey: ["request-logs"], queryFn: () => adminApi.requestLogs(), retry: false });
-  if (query.error instanceof ApiError && query.error.status === 409) return <Alert showIcon type="info" title="请求元数据日志当前未启用" description="生产需要时将 REQUEST_LOG_MODE 设置为 metadata，并运行独立消费者。" />;
-  return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} empty={query.data?.items.length === 0} onRetry={() => void query.refetch()} />{query.data && <Table<RequestLogRead> rowKey="id" dataSource={query.data.items} pagination={false} scroll={{ x: 980 }} columns={[
-    { title: "时间", dataIndex: "occurred_at", width: 170, render: formatTime },
-    { title: "方法", dataIndex: "method", width: 80 },
-    { title: "路由模板", dataIndex: "route_template", width: 280 },
-    { title: "状态", dataIndex: "status_code", width: 90, render: (value) => <Tag color={value < 400 ? "success" : "error"}>{value}</Tag> },
-    { title: "耗时", dataIndex: "duration_ms", width: 100, render: (value) => `${value} ms` },
-    { title: "Request ID", dataIndex: "request_id", render: (value) => <Typography.Text code copyable>{value}</Typography.Text> },
-  ]} />}</>;
+  if (query.error instanceof ApiError && query.error.status === 409) {
+    return <Alert showIcon type="info" title="请求元数据日志当前未启用" description="生产需要时将 REQUEST_LOG_MODE 设置为 metadata，并运行独立消费者。" />;
+  }
+  return (
+    <>
+      <QueryState
+        loading={query.isLoading}
+        error={query.isError ? errorMessage(query.error) : undefined}
+        empty={query.data?.items.length === 0}
+        onRetry={() => void query.refetch()}
+      />
+      {query.data && (
+        <Table<RequestLogRead>
+          rowKey="id"
+          dataSource={query.data.items}
+          pagination={false}
+          scroll={{ x: 1080 }}
+          columns={[
+            { title: "时间", dataIndex: "occurred_at", width: 170, render: formatTime },
+            { title: "方法", dataIndex: "method", width: 80 },
+            { title: "路由模板", dataIndex: "route_template", width: 280 },
+            {
+              title: "状态",
+              dataIndex: "status_code",
+              width: 90,
+              render: (value) => <Tag color={value < 400 ? "success" : "error"}>{value}</Tag>,
+            },
+            { title: "耗时", dataIndex: "duration_ms", width: 100, render: (value) => `${value} ms` },
+            {
+              title: "错误入参",
+              key: "request_body",
+              width: 110,
+              render: (_, row) =>
+                row.request_body ? (
+                  <Button
+                    type="link"
+                    onClick={() => setSelectedBody({ requestId: row.request_id, body: row.request_body ?? "" })}
+                  >
+                    查看入参
+                  </Button>
+                ) : (
+                  "-"
+                ),
+            },
+            {
+              title: "Request ID",
+              dataIndex: "request_id",
+              render: (value) => <Typography.Text code copyable>{value}</Typography.Text>,
+            },
+          ]}
+        />
+      )}
+      <Drawer title="错误请求入参" open={selectedBody !== null} onClose={() => setSelectedBody(null)} size={560}>
+        <Typography.Paragraph>
+          Request ID：<Typography.Text code copyable>{selectedBody?.requestId}</Typography.Text>
+        </Typography.Paragraph>
+        <pre style={{ maxHeight: "60vh", overflow: "auto", whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+          {selectedBody?.body}
+        </pre>
+      </Drawer>
+    </>
+  );
 }
 
 export function SecurityPage() {

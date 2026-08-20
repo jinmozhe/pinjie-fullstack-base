@@ -44,6 +44,7 @@ def _request_log(fields: StreamFields) -> RequestLog:
         principal_digest=fields.get("principal_digest") or None,
         release_version=fields.get("release_version") or None,
         occurred_at=datetime.fromisoformat(fields["occurred_at"]),
+        request_body=fields.get("request_body") or None,
     )
 
 

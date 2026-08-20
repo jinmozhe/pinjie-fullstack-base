@@ -608,6 +608,10 @@ export type RequestLogRead = {
      * Occurred At
      */
     occurred_at: string;
+    /**
+     * Request Body
+     */
+    request_body: string | null;
 };
 
 /**

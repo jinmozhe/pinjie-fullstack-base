@@ -7,6 +7,7 @@ from loguru import logger
 
 from .context import request_id_context, trace_id_context
 from .identifiers import new_uuid7
+from .payload_sanitizer import capture_error_request_body
 from .request_metadata import publish_request_log
 
 _REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
@@ -47,11 +48,17 @@ async def request_context_middleware(request: Request, call_next: Callable[[Requ
             response.status_code,
             duration_ms,
         )
+        request_body = await capture_error_request_body(
+            request,
+            status_code=response.status_code,
+            route_template=route_template,
+        )
         await publish_request_log(
             request,
             status_code=response.status_code,
             duration_ms=duration_ms,
             route_template=route_template,
+            request_body=request_body,
         )
         return response
     finally:

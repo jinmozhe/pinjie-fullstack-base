@@ -38,7 +38,7 @@ Backend 使用统一的 Loguru 入口同时支持标准错误流和可选本地�
 
 ### 4.1 阶段 C 安全与请求信号
 
-- 普通请求由 Middleware 输出结构化白名单字段，包含方法、规范化路由、状态、耗时和 `request_id`，不记录请求体、响应体、Cookie、Authorization 或 Token。
+- 普通请求由 Middleware 输出结构化白名单字段，包含方法、规范化路由、状态、耗时和 `request_id`；2xx/3xx 请求不记录请求体。错误 JSON 请求仅在非敏感路由捕获，敏感字段递归脱敏并限制为 4096 个字符，响应体、Cookie、Authorization 和 Token 不进入请求日志。
 - 登录安全事件写入 PostgreSQL，属于认证结果的一部分。写入失败时登录、刷新或凭据变更失败关闭。
 - 高风险管理操作使用审计意图、结果与 `request_id` 关联。成功业务变更与审计结果在同一事务提交；拒绝或异常由独立终结器记录，终结失败输出 critical 信号。
 - `REQUEST_LOG_MODE=metadata` 只持久化请求白名单元数据。Middleware 发布到 Redis Stream，独立 Consumer Group Worker 负责 pending reclaim、幂等入库、ACK 和 DLQ；队列故障不改变普通请求结果，但必须输出 critical 日志。

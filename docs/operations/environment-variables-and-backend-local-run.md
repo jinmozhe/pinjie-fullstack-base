@@ -253,7 +253,7 @@ uv run python -m scripts.cleanup_security_logs --apply --confirm-database pinjie
 uv run python -m scripts.consume_request_logs
 ```
 
-本地排查可以增加 `--once`、`--batch-size` 或 `--reclaim-idle-ms`。该 Worker 只持久化白名单元数据，不能保存请求体、响应体、Cookie、Authorization 或 Token。
+本地排查可以增加 `--once`、`--batch-size` 或 `--reclaim-idle-ms`。该 Worker 持久化白名单元数据；错误 JSON 请求的入参最多保存 4096 个字符，敏感字段会替换为 `***`，登录、改密和二次确认等敏感路由不会保存入参。响应体、Cookie、Authorization 和 Token 永不进入日志。
 
 ## 7. VS Code 配置
 

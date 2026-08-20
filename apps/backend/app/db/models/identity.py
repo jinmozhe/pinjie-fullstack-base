@@ -259,7 +259,7 @@ class RequestLog(UUIDPrimaryKeyMixin, Base):
     __table_args__ = (
         CheckConstraint("duration_ms >= 0", name="ck_request_logs_duration_nonnegative"),
         Index("ix_request_logs_occurred", "occurred_at"),
-        {"comment": "可选请求元数据日志，不保存正文和凭据"},
+        {"comment": "可选请求元数据日志，仅保存脱敏后的错误请求入参"},
     )
 
     request_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
@@ -272,6 +272,7 @@ class RequestLog(UUIDPrimaryKeyMixin, Base):
     principal_digest: Mapped[str | None] = mapped_column(String(64), nullable=True)
     release_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    request_body: Mapped[str | None] = mapped_column(Text, nullable=True, comment="脱敏后的错误请求入参")
 
 
 __all__ = [

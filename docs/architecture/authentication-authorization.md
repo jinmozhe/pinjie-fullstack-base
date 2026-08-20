@@ -76,7 +76,7 @@
 
 审计记录至少关联操作者、动作、目标、结果、时间和 `request_id`。高风险业务通过 `AuditCoordinator` 建立审计意图，成功变更与审计结果在同一事务提交；拒绝和异常由独立终结器记录。登录安全事件属于认证结果，写入失败时认证失败关闭。
 
-普通访问日志使用结构化输出。可选请求持久化只支持 `REQUEST_LOG_MODE=metadata`，由 Redis Stream、Consumer Group、pending reclaim、DLQ 和 PostgreSQL `request_id` 唯一约束组成。请求体、响应体、Cookie、Authorization 和 Token 永不进入请求日志。
+普通访问日志使用结构化输出。可选请求持久化只支持 `REQUEST_LOG_MODE=metadata`，由 Redis Stream、Consumer Group、pending reclaim、DLQ 和 PostgreSQL `request_id` 唯一约束组成。正常请求不保存请求体；错误 JSON 请求只在非敏感路由捕获，递归脱敏敏感字段并限制为 4096 字符。登录、改密、二次确认等敏感路由、响应体、Cookie、Authorization 和 Token 永不进入请求日志。
 
 登录安全事件和审计事件默认保留 180 天，请求元数据默认保留 30 天。清理由显式 dry-run/`--apply` 脚本执行，不在请求进程内自动删除。应用日志、审计日志、指标和 Trace 各自承担独立职责。
 

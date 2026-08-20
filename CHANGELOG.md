@@ -6,6 +6,7 @@
 
 ### Added
 
+- 增加错误请求入参捕获与脱敏管道：仅对非敏感路由的错误 JSON 请求捕获入参，递归脱敏敏感字段，最多保存 4096 个字符并通过 Redis Stream、PostgreSQL 和 Admin 只读抽屉提供排障入口。
 - 增加 Backend Loguru 本地文件日志能力：支持环境变量控制的开关、路径、50 MB 轮转、10 天保留、ZIP 压缩和异步写入；只读容器可关闭文件 Sink。
 - 完成阶段 C 通用业务核心能力：C/B 独立 Browser Cookie Profile、Argon2id、JWT、Session 绑定 CSRF、PostgreSQL 权威 Refresh Rotation、重放撤销、Redis 原子限流和严格 Origin 校验。
 - 增加用户、管理员、角色、权限、会话、Refresh、安全登录事件、审计和可选请求元数据模型及 Alembic 迁移，并提供初始化管理员、权限同步、日志保留清理和 Redis Stream 消费脚本。
