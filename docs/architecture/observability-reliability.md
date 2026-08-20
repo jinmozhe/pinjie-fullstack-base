@@ -34,6 +34,8 @@ Liveness 不应依赖可短时故障的外部系统，避免依赖抖动导致�
 
 日志用于事件细节，指标用于趋势和告警，Trace 用于跨组件路径。三者职责不同，不能互相替代。
 
+Backend 使用统一的 Loguru 入口同时支持标准错误流和可选本地文件 Sink。文件 Sink 默认启用异步队列，按 50 MB 轮转、保留 10 天并压缩为 ZIP；文件路径、开关和生命周期策略由 Backend `Settings` 读取的环境变量控制。只读容器或仅允许 stdout/stderr 的部署必须设置 `LOG_FILE_ENABLED=false`。日志目录和具体日志文件不进入 Git。
+
 ### 4.1 阶段 C 安全与请求信号
 
 - 普通请求由 Middleware 输出结构化白名单字段，包含方法、规范化路由、状态、耗时和 `request_id`，不记录请求体、响应体、Cookie、Authorization 或 Token。

@@ -66,6 +66,9 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `WEB_TOKEN_HMAC_KEY` 与 `ADMIN_TOKEN_HMAC_KEY`
 - `AUTH_COOKIE_SECURE`、注册模式、Token 与 Session 期限
 - 请求元数据模式及安全日志保留期
+- Loguru 控制台与本地文件日志开关、路径、轮转大小和保留周期
+
+文件日志默认写入 Backend 工作目录下的 `logs/app_{time:YYYY-MM-DD}.log`，使用异步队列、50 MB 轮转、10 天保留和 ZIP 压缩。日志文件不进入 Git；只读容器或只允许标准错误流的部署必须显式设置 `LOG_FILE_ENABLED=false`。
 
 生产 `compose.prod.yml` 当前明确通过以下配置把该文件注入 Backend 容器：
 

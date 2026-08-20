@@ -41,7 +41,7 @@
 | --- | --- | --- | --- |
 | `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
 | `plans/2026-08-20_请求日志错误入参捕获与脱敏管道计划.md` | 待确认 | Backend、Admin、API Client、Database、Documentation | 落地错误请求入参捕获、敏感字段脱敏与 4KB 截断兜底的最佳实践管道 |
-| `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 待确认 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
+| `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 已结束 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
 
 ## 计划文档登记
 
@@ -69,13 +69,13 @@
 | `plans/2026-08-17_Web首页登录态操作按钮计划.md` | 已结束 | 已完成 | Web、Documentation | Web 首页根据服务端真实登录态隐藏登录和创建账户按钮，并补充登录前后浏览器验证 |
 | `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | Admin Umi Max/Ant Design 6 迁移、运行时修复、质量门禁和浏览器冒烟已完成；完整跨栈/容器验证受本机环境限制 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
 | `plans/2026-08-20_请求日志错误入参捕获与脱敏管道计划.md` | 待确认 | 方案设计完成，暂缓实施 | Backend、Admin、API Client、Database、Documentation | 落地错误请求入参捕获、敏感字段脱敏与 4KB 截断兜底的最佳实践管道 |
-| `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 待确认 | 方案设计完成，等待确认 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
+| `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 已结束 | 已完成；默认开启文件日志，支持只读容器关闭 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
 
 ## 当前系统状态
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；新密码统一为 6 至 64 个字符，API 顶层消息和 OpenAPI 描述使用中文；默认 pytest 对 `app` 执行 90% 行与分支覆盖率门禁 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；Loguru 支持环境变量控制的异步本地文件日志；新密码统一为 6 至 64 个字符，API 顶层消息和 OpenAPI 描述使用中文；默认 pytest 对 `app` 执行 90% 行与分支覆盖率门禁 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
 | Admin | 已完成官方 Ant Design Pro v6/Umi Max 迁移，包含登录、受保护 ProLayout、权限导航、用户、管理员、角色权限、安全日志、系统状态、MSW/RTL、Umi 端口/环境变量/initialState 接线和桌面/移动登录页冒烟；真实跨栈/非 Root 容器需完整环境复核 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf` |
 | Web | 注册登录、SSR 用户中心、资料、统一密码约束、会话、退出、注销、首页登录态操作、中文错误代理、组件测试和 standalone 容器已实现 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，中文描述和密码约束已重新生成，Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |

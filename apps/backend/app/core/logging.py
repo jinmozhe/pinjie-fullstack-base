@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 from loguru import logger
 
@@ -15,3 +16,17 @@ def configure_logging(settings: Settings) -> None:
         diagnose=False,
         enqueue=False,
     )
+    if settings.log_file_enabled and settings.log_file_path:
+        log_path = Path(settings.log_file_path)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.add(
+            settings.log_file_path,
+            level=settings.log_level,
+            rotation=settings.log_file_rotation,
+            retention=settings.log_file_retention,
+            compression="zip",
+            encoding="utf-8",
+            enqueue=True,
+            backtrace=False,
+            diagnose=False,
+        )

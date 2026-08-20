@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     api_docs_enabled: bool | None = Field(default=None, validation_alias="API_DOCS_ENABLED")
     release_version: str | None = Field(default=None, validation_alias="RELEASE_VERSION")
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
+    log_file_enabled: bool = Field(default=True, validation_alias="LOG_FILE_ENABLED")
+    log_file_path: str | None = Field(
+        default="logs/app_{time:YYYY-MM-DD}.log",
+        validation_alias="LOG_FILE_PATH",
+    )
+    log_file_rotation: str = Field(default="50 MB", validation_alias="LOG_FILE_ROTATION")
+    log_file_retention: str = Field(default="10 days", validation_alias="LOG_FILE_RETENTION")
     db_pool_size: int = Field(default=5, validation_alias="DB_POOL_SIZE", ge=1, le=50)
     db_max_overflow: int = Field(default=5, validation_alias="DB_MAX_OVERFLOW", ge=0, le=50)
     db_pool_timeout: float = Field(default=5.0, validation_alias="DB_POOL_TIMEOUT", gt=0, le=60)
