@@ -61,26 +61,21 @@ test.describe("stage C cross-stack journeys", () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test("Admin records privileged work and rejects an administrator without permissions", async ({ page }) => {
+  test("Admin records privileged work and rejects an administrator without permissions", async ({ page, request }) => {
     test.skip(!test.info().project.name.startsWith("admin"), "Admin journey runs in Admin projects");
     const limitedUsername = uniqueUsername("limited", test.info().project.name);
     await page.goto("/login");
-    let loginStatus = 0;
-    let loginBody: unknown;
-    await page.route("**/api/v1/admin/auth/login", async (route) => {
-      const response = await route.fetch();
-      const body = await response.body();
-      loginStatus = response.status();
-      loginBody = JSON.parse(body.toString("utf8"));
-      await route.fulfill({ response, body });
+    const origin = new URL(page.url()).origin;
+    const loginResponse = await request.post(`${origin}/api/v1/admin/auth/login`, {
+      headers: { Origin: origin },
+      data: { username: adminUsername, password: adminPassword },
     });
+    expect(loginResponse.ok()).toBe(true);
+    expect(JSON.stringify(await loginResponse.json())).not.toMatch(/access_token|refresh_token/i);
     await page.getByLabel("用户名").fill(adminUsername);
     await page.getByLabel("密码").fill(adminPassword);
     await page.getByRole("button", { name: /登\s*录/ }).click();
     await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
-    expect(loginStatus).toBe(200);
-    expect(JSON.stringify(loginBody)).not.toMatch(/access_token|refresh_token/i);
-    await page.unroute("**/api/v1/admin/auth/login");
 
     const csrf = await expectCookieProfile(page, {
       access: "pinjie_admin_access",
@@ -90,7 +85,6 @@ test.describe("stage C cross-stack journeys", () => {
     await expectNoClientTokenPersistence(page);
     await expectPageQuality(page);
 
-    const origin = new URL(page.url()).origin;
     const commonHeaders = { Origin: origin, "X-CSRF-Token": csrf };
     const confirmResponse = await page.request.post(`${origin}/api/v1/admin/auth/confirm`, {
       headers: commonHeaders,
