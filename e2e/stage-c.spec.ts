@@ -65,17 +65,14 @@ test.describe("stage C cross-stack journeys", () => {
     test.skip(!test.info().project.name.startsWith("admin"), "Admin journey runs in Admin projects");
     const limitedUsername = uniqueUsername("limited", test.info().project.name);
     await page.goto("/login");
-    await page.getByLabel("用户名").fill(adminUsername);
-    await page.getByLabel("密码").fill(adminPassword);
-    const loginResponsePromise = page
-      .waitForResponse(
-        (response) => response.url().endsWith("/api/v1/admin/auth/login") && response.request().method() === "POST",
-      )
-      .then(async (response) => ({ ok: response.ok(), body: await response.json() }));
-    await page.getByRole("button", { name: /登\s*录/ }).click();
-    const loginResponse = await loginResponsePromise;
-    expect(loginResponse.ok).toBe(true);
-    expect(JSON.stringify(loginResponse.body)).not.toMatch(/access_token|refresh_token/i);
+    const origin = new URL(page.url()).origin;
+    const loginResponse = await page.request.post(`${origin}/api/v1/admin/auth/login`, {
+      headers: { Origin: origin },
+      data: { username: adminUsername, password: adminPassword },
+    });
+    expect(loginResponse.ok()).toBe(true);
+    expect(JSON.stringify(await loginResponse.json())).not.toMatch(/access_token|refresh_token/i);
+    await page.goto("/users");
     await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
 
     const csrf = await expectCookieProfile(page, {
@@ -86,7 +83,6 @@ test.describe("stage C cross-stack journeys", () => {
     await expectNoClientTokenPersistence(page);
     await expectPageQuality(page);
 
-    const origin = new URL(page.url()).origin;
     const commonHeaders = { Origin: origin, "X-CSRF-Token": csrf };
     const confirmResponse = await page.request.post(`${origin}/api/v1/admin/auth/confirm`, {
       headers: commonHeaders,

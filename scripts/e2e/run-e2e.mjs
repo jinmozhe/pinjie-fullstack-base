@@ -18,7 +18,7 @@ for (const requiredPath of [webServer, adminCLI, playwrightCLI]) {
 async function isAvailable(url) {
   try {
     const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(1_000) });
-    return response.status >= 200 && response.status < 500;
+    return response.ok;
   } catch {
     return false;
   }
@@ -111,7 +111,7 @@ try {
   );
   await ensureService(
     "Admin preview server",
-    "http://127.0.0.1:3001",
+    "http://127.0.0.1:3001/umi.js",
     [adminCLI, "dev", "--host", "127.0.0.1"],
     resolve(root, "apps", "admin"),
     { BACKEND_INTERNAL_URL: backendURL, PORT: "3001" },
