@@ -4,6 +4,8 @@ import routes from "./routes";
 const backendURL = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:8000";
 
 export default defineConfig({
+  title: "Pinjie Console",
+  plugins: ["./config/html-accessibility"],
   antd: {},
   access: {},
   model: {},

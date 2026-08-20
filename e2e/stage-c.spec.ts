@@ -21,13 +21,15 @@ test.describe("stage C cross-stack journeys", () => {
     await page.getByLabel(/显示名称/).fill("Stage C Browser User");
     await page.getByLabel(/邮箱/).fill(`${username}@example.test`);
     await page.getByLabel("密码").fill(userPassword);
-    const registrationResponsePromise = page.waitForResponse(
-      (response) => response.url().endsWith("/api/v1/auth/register") && response.request().method() === "POST",
-    );
+    const registrationResponsePromise = page
+      .waitForResponse(
+        (response) => response.url().endsWith("/api/v1/auth/register") && response.request().method() === "POST",
+      )
+      .then(async (response) => ({ ok: response.ok(), body: await response.json() }));
     await page.getByRole("button", { name: /注册并登录/ }).click();
     const registrationResponse = await registrationResponsePromise;
-    expect(registrationResponse.ok()).toBe(true);
-    const registrationBody = JSON.stringify(await registrationResponse.json());
+    expect(registrationResponse.ok).toBe(true);
+    const registrationBody = JSON.stringify(registrationResponse.body);
     expect(registrationBody).not.toMatch(/access_token|refresh_token/i);
     await expect(page).toHaveURL(/\/account$/);
     await expect(page.getByRole("heading", { name: "用户中心" })).toBeVisible();
@@ -65,13 +67,15 @@ test.describe("stage C cross-stack journeys", () => {
     await page.goto("/login");
     await page.getByLabel("用户名").fill(adminUsername);
     await page.getByLabel("密码").fill(adminPassword);
-    const loginResponsePromise = page.waitForResponse(
-      (response) => response.url().endsWith("/api/v1/admin/auth/login") && response.request().method() === "POST",
-    );
+    const loginResponsePromise = page
+      .waitForResponse(
+        (response) => response.url().endsWith("/api/v1/admin/auth/login") && response.request().method() === "POST",
+      )
+      .then(async (response) => ({ ok: response.ok(), body: await response.json() }));
     await page.getByRole("button", { name: /登\s*录/ }).click();
     const loginResponse = await loginResponsePromise;
-    expect(loginResponse.ok()).toBe(true);
-    expect(JSON.stringify(await loginResponse.json())).not.toMatch(/access_token|refresh_token/i);
+    expect(loginResponse.ok).toBe(true);
+    expect(JSON.stringify(loginResponse.body)).not.toMatch(/access_token|refresh_token/i);
     await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
 
     const csrf = await expectCookieProfile(page, {

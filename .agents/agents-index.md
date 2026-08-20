@@ -42,7 +42,7 @@
 | `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
 | `plans/2026-08-20_请求日志错误入参捕获与脱敏管道计划.md` | 已结束 | Backend、Admin、API Client、Database、Documentation | 落地错误请求入参捕获、敏感字段脱敏与 4KB 截断兜底的最佳实践管道 |
 | `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 已结束 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
-| `plans/2026-08-20_GitHub CI线上失败修复计划.md` | 已结束 | Backend、Admin、Database、CI、Documentation | 修复 Alembic 表注释漂移和 Linux Admin Backend 代理来源校验问题 |
+| `plans/2026-08-20_GitHub CI线上失败修复计划.md` | 已结束 | Backend、Admin、Database、CI、Documentation | 修复 Alembic 漂移、Admin 代理校验、E2E 响应读取时序和 HTML 可访问性问题 |
 
 ## 计划文档登记
 
@@ -52,7 +52,7 @@
 | --- | --- | --- | --- | --- |
 | `plans/2026-08-20_Admin技术栈文档一致性审计计划.md` | 已结束 | 已完成；当前性文档、历史边界和项目结构索引已同步 | Admin、Deployment、Documentation | 全量核对 Admin 技术栈、入口、命令、端口和验证文档与实现一致 |
 | `plans/2026-08-20_CI失败修复计划.md` | 已结束 | 已完成本机复验；Linux CI 兼容性仍待线上复验 | Backend、Web、依赖安全、CI、Documentation | 修复线上 CI 暴露的格式、类型和依赖漏洞门禁问题 |
-| `plans/2026-08-20_GitHub CI线上失败修复计划.md` | 已结束 | 已完成；完整浏览器断言待线上工作流复验 | Backend、Admin、Database、CI、Documentation | 修复 Alembic 表注释漂移和 Linux Admin Backend 代理来源校验问题 |
+| `plans/2026-08-20_GitHub CI线上失败修复计划.md` | 已结束 | 已完成；本机受影响检查通过，完整 Browser E2E 由线上工作流复验 | Backend、Admin、Database、CI、Documentation | 修复 Alembic 漂移、Admin 代理校验、E2E 响应读取时序和 HTML 可访问性问题 |
 | `plans/README.md` | 生效 | 计划规范 | 全仓库 | 定义全栈计划格式、状态、生命周期和保护规则 |
 | `plans/2026-08-12_全项目索引与计划治理计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立总索引、计划治理和派生项目继承基线 |
 | `plans/2026-08-12_产品需求基线建设计划.md` | 已结束 | 已完成 | 全栈产品基线、文档 | 建立母版目标用户、能力范围、非目标和验收基线 |
