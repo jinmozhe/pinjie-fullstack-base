@@ -9,7 +9,6 @@ import {
 
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "stage-admin";
 const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "stage-c-admin-password-2026";
-const backendURL = process.env.E2E_BACKEND_URL ?? "http://127.0.0.1:8000";
 const userPassword = "stage-c-user-password-2026";
 const limitedAdminPassword = "stage-c-limited-password-2026";
 
@@ -66,15 +65,18 @@ test.describe("stage C cross-stack journeys", () => {
     test.skip(!test.info().project.name.startsWith("admin"), "Admin journey runs in Admin projects");
     const limitedUsername = uniqueUsername("limited", test.info().project.name);
     await page.goto("/login");
-    const origin = new URL(page.url()).origin;
-    const loginResponse = await page.request.post(`${backendURL}/api/v1/admin/auth/login`, {
-      headers: { Origin: origin },
-      data: { username: adminUsername, password: adminPassword },
+    let loginBody: unknown;
+    await page.route("**/api/v1/admin/auth/login", async (route) => {
+      const response = await route.fetch();
+      loginBody = await response.json();
+      await route.fulfill({ response });
     });
-    expect(loginResponse.ok()).toBe(true);
-    expect(JSON.stringify(await loginResponse.json())).not.toMatch(/access_token|refresh_token/i);
-    await page.goto("/users");
+    await page.getByLabel("用户名").fill(adminUsername);
+    await page.getByLabel("密码").fill(adminPassword);
+    await page.getByRole("button", { name: /登\s*录/ }).click();
     await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
+    expect(JSON.stringify(loginBody)).not.toMatch(/access_token|refresh_token/i);
+    await page.unroute("**/api/v1/admin/auth/login");
 
     const csrf = await expectCookieProfile(page, {
       access: "pinjie_admin_access",
@@ -84,6 +86,7 @@ test.describe("stage C cross-stack journeys", () => {
     await expectNoClientTokenPersistence(page);
     await expectPageQuality(page);
 
+    const origin = new URL(page.url()).origin;
     const commonHeaders = { Origin: origin, "X-CSRF-Token": csrf };
     const confirmResponse = await page.request.post(`${origin}/api/v1/admin/auth/confirm`, {
       headers: commonHeaders,
