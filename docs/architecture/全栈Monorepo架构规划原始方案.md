@@ -1,5 +1,7 @@
 # 全栈 Monorepo 架构与 1Panel 部署规划方案
 
+> 历史原始方案：本文记录 2026-08-10 的规划背景和当时评估过的技术选型，不代表当前 Admin 实现。当前 Admin 技术栈、运行入口和迁移后的约束以 [ADR 0011：Admin 采用 Ant Design Pro v6 与 Umi Max](../adr/0011-Admin采用AntDesignProV6与UmiMax决策.md)、`apps/admin/AGENTS.md` 和 [Admin 本地运行与验证排障手册](../operations/admin-local-development-and-validation-troubleshooting.md) 为准。
+
 ## 1. 方案背景与概述
 
 随着业务场景的发展，后端骨架 `pinjie-standard` 需要扩展为包含 B 端后台管理前端与 C 端用户展示前端的全栈应用形态。为了保证代码的高效复用、类型安全以及部署运维的便利性，系统规划采用全栈 Monorepo 模式进行组织。

@@ -11,13 +11,13 @@
 VS Code 打开整个全栈仓库作为工作区，当前本机路径为：
 
 ```text
-E:\fastapi\pinjie-fullstack-base
+D:\Projects\pinjie-fullstack-base
 ```
 
 Backend 项目目录为：
 
 ```text
-E:\fastapi\pinjie-fullstack-base\apps\backend
+D:\Projects\pinjie-fullstack-base\apps\backend
 ```
 
 日常保持 VS Code 工作区根目录不变。需要运行后端命令时，只在对应终端进入 `apps\backend`，无需把 VS Code 重新打开到 Backend 子目录。
@@ -31,7 +31,7 @@ E:\fastapi\pinjie-fullstack-base\apps\backend
 | 部署层 | 根 `.env.example` | 根 `.env` | Docker Compose、生产部署脚本 | 选择三端不可变镜像 digest 并初始化 PostgreSQL 容器 |
 | Backend | `apps/backend/.env.example` | `apps/backend/.env` | Backend 配置系统、Backend 容器与运维脚本 | 数据库、Redis、认证 Secret、Cookie、安全边界和日志保留 |
 | Web | `apps/web/.env.example` | `apps/web/.env.local` | Next.js 开发、构建及服务端运行过程 | 服务端 Backend 地址和浏览器公开 API 地址 |
-| Admin | `apps/admin/.env.example` | `apps/admin/.env.local` | Vite 开发与构建过程 | 浏览器公开 API 地址 |
+| Admin | `apps/admin/.env.example` | `apps/admin/.env.local` | Umi Max 开发与构建过程 | 浏览器公开 API 地址 |
 
 `.env.example` 只保存可公开模板值并提交到 Git。`.env` 和 `.env.local` 保存当前环境的真实值，禁止提交、写入日志或复制到文档。
 
@@ -90,7 +90,7 @@ Web 生产容器通过 Compose 的 `BACKEND_INTERNAL_URL=http://backend:8000` �
 
 ### 3.4 Admin `.env.local`
 
-Admin 使用 Vite，`VITE_*` 变量会进入浏览器可读的静态 JavaScript，主要在构建阶段生效。修改已构建容器中的 `.env.local` 通常不能改变现有静态产物。
+Admin 使用 Umi Max，`VITE_*` 变量会进入浏览器可读的静态 JavaScript，主要在构建阶段由 `config/config.ts` 注入。修改已构建容器中的 `.env.local` 通常不能改变现有静态产物。
 
 Admin 使用同域相对路径 `/api/v1`，开发服务器和生产 Nginx 都代理到 Backend。
 
@@ -103,7 +103,7 @@ Admin 生产镜像不依赖运行时公开 API 环境变量，代理目标由容
 ### 4.1 启动本地 Redis
 
 ```powershell
-Set-Location E:\fastapi\pinjie-fullstack-base
+Set-Location D:\Projects\pinjie-fullstack-base
 docker compose up -d redis
 docker compose exec redis redis-cli ping
 ```
@@ -113,7 +113,7 @@ docker compose exec redis redis-cli ping
 ### 4.2 进入 Backend 目录
 
 ```powershell
-Set-Location E:\fastapi\pinjie-fullstack-base\apps\backend
+Set-Location D:\Projects\pinjie-fullstack-base\apps\backend
 ```
 
 从仓库根目录使用相对路径也可以：
@@ -228,7 +228,7 @@ uv run alembic check
 全仓库治理检查从根目录运行：
 
 ```powershell
-Set-Location E:\fastapi\pinjie-fullstack-base
+Set-Location D:\Projects\pinjie-fullstack-base
 pnpm check:governance
 ```
 
@@ -260,7 +260,7 @@ uv run python -m scripts.consume_request_logs
 VS Code 保持打开全栈仓库根目录，并将 Python 解释器选择为：
 
 ```text
-E:\fastapi\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
+D:\Projects\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
 ```
 
 该设置只影响编辑器的补全、类型分析和调试。终端命令仍使用 `uv run`，避免终端激活状态、系统 Python、Conda 和项目 `.venv` 混用。
@@ -301,7 +301,7 @@ Web 和 Admin 的生产接线已经固定为同域 `/api/v1` 代理与 Web 的 `
 - 每次启动前手动激活 `.venv`，随后又使用系统 Python 或 Conda 命令，形成环境混用。
 - 把根 `.env` 当作 Backend 密钥文件，混入数据库密码。
 - 认为根 `.env` 中的变量会自动进入所有容器。
-- 认为修改 Vite 容器旁的 `.env.local` 可以改变已构建的 Admin 静态文件。
+- 认为修改 Umi 构建容器旁的 `.env.local` 可以改变已构建的 Admin 静态文件。
 - 把 `NEXT_PUBLIC_*`、`VITE_*` 当作安全变量，它们对浏览器用户可见。
 - 复用 C/B JWT Secret 或 Token HMAC Key，或者把模板值直接带入生产。
 - 只启动 Backend 请求进程，却忘记在 `REQUEST_LOG_MODE=metadata` 时运行请求日志消费者。

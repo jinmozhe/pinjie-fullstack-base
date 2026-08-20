@@ -56,7 +56,7 @@ pinjie-fullstack-base/
 | --- | --- |
 | `/AGENTS.md` | 项目定位、Monorepo 边界、通用编码规则、文件格式、安全红线、生成文件、验证和交付要求 |
 | `/apps/backend/AGENTS.md` | FastAPI 分层、Service 事务边界、SQLAlchemy async、Alembic、Ruff、Mypy 和 Pytest 规则 |
-| `/apps/admin/AGENTS.md` | React、Vite、Ant Design、API SDK、类型检查、构建验证和 B 端界面规则 |
+| `/apps/admin/AGENTS.md` | Ant Design Pro v6/Umi Max、React、TypeScript、Ant Design、API SDK、类型检查、构建验证和 B 端界面规则 |
 | `/apps/web/AGENTS.md` | Next.js、Server/Client Components、standalone、Tailwind、shadcn/ui、SEO 和浏览器验收规则 |
 
 根 `AGENTS.md` 必须包含作用域路由说明：修改 `apps/backend/**`、`apps/admin/**` 或 `apps/web/**` 前，确保对应子目录 `AGENTS.md` 已加载；如果已经处于活动指令中，不重复读取。

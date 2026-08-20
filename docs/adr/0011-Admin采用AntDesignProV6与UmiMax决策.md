@@ -7,7 +7,7 @@
 
 ## 背景
 
-当前 Admin 使用 Vite、React Router、Ant Design 5 和自建布局、请求、权限及应用入口。管理端已经具备登录、用户、管理员、角色权限、安全日志和系统状态能力，但新增管理页面仍需重复拼装路由、菜单、布局、表格、表单和状态处理。
+迁移前 Admin 使用 Vite、React Router、Ant Design 5 和自建布局、请求、权限及应用入口。管理端已经具备登录、用户、管理员、角色权限、安全日志和系统状态能力，但新增管理页面仍需重复拼装路由、菜单、布局、表格、表单和状态处理。
 
 官方 Ant Design Pro v6 以 `@umijs/max`、Ant Design 6、ProComponents 3、配置式路由、ProLayout、Access、Request、Locale 和 React Query 组成完整管理端工程方案。用户已确认采用官方 Pro v6 作为 Admin 的长期标准，以降低后续管理端基础设施开发量。
 

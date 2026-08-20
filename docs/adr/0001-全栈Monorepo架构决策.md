@@ -18,12 +18,14 @@
 ```text
 apps/backend   FastAPI 后端（Python / uv）
 apps/web       C 端用户前端（Next.js）
-apps/admin     B 端管理前端（Vite + React）
+apps/admin     B 端管理前端（Ant Design Pro v6 / Umi Max）
 packages/      共享包（api-client、eslint-config、typescript-config）
 docs/          项目知识库（ADR、架构设计、运营手册、业务蓝图）
 plans/         实施计划文档
 openapi.json   后端导出的 OpenAPI 规范（根目录，前端 SDK 生成唯一来源）
 ```
+
+Admin 的当前实现基线由 [ADR 0011：Admin 采用 Ant Design Pro v6 与 Umi Max](0011-Admin采用AntDesignProV6与UmiMax决策.md) 定义，包括 `@umijs/max` 配置式路由、运行时 `src/app.tsx`、ProLayout、Access 和 Ant Design 6。本文的 Monorepo 目录决策仍然有效。
 
 ## 共享边界规则
 

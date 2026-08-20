@@ -49,6 +49,8 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-20_Admin技术栈文档一致性审计计划.md` | 已结束 | 已完成；当前性文档、历史边界和项目结构索引已同步 | Admin、Deployment、Documentation | 全量核对 Admin 技术栈、入口、命令、端口和验证文档与实现一致 |
+| `plans/2026-08-20_CI失败修复计划.md` | 已结束 | 已完成本机复验；Linux CI 兼容性仍待线上复验 | Backend、Web、依赖安全、CI、Documentation | 修复线上 CI 暴露的格式、类型和依赖漏洞门禁问题 |
 | `plans/README.md` | 生效 | 计划规范 | 全仓库 | 定义全栈计划格式、状态、生命周期和保护规则 |
 | `plans/2026-08-12_全项目索引与计划治理计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立总索引、计划治理和派生项目继承基线 |
 | `plans/2026-08-12_产品需求基线建设计划.md` | 已结束 | 已完成 | 全栈产品基线、文档 | 建立母版目标用户、能力范围、非目标和验收基线 |
@@ -81,7 +83,7 @@
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，中文描述、密码约束和 `RequestLogRead.request_body` 已重新生成，Client 已由 Admin/Web 消费并完成无漂移复核 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，新增 `20260820_01` 为 `request_logs.request_body` 提供 nullable Text 字段；真实 PostgreSQL 空库/增量升级需本机测试数据库复核 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/tests/` |
 | Deployment | Backend 固定官方 CPython 3.14.7 slim-trixie 完整基础镜像 digest；三张本地 Linux x86_64 非 Root 镜像构建和健康运行成功，生产 Compose、同域代理、请求日志 Profile 和桌面/移动 Chromium 真实跨栈 E2E 已验证；未执行镜像发布与生产部署 | `apps/backend/Dockerfile`、`compose.prod.yml`、`.github/workflows/ci-e2e.yml`、`playwright.config.ts` |
-| Documentation | 目录结构已按 2026-08-17 的 271 个项目文件、64 个含文件目录同步，阶段 B/C、密码与 API 中文化、Web 首页登录态计划、ADR、架构、测试、运维、索引和 Changelog 与实现一致 | `docs/architecture/project-structure.md`、`plans/2026-08-17_Web首页登录态操作按钮计划.md`、`CHANGELOG.md` |
+| Documentation | 目录结构已按 2026-08-20 的 290 个项目文件、67 个含文件目录同步；Admin 当前技术栈、入口、端口、环境变量和验证文档统一指向 Ant Design Pro v6/Umi Max | `docs/architecture/project-structure.md`、`docs/adr/0011-Admin采用AntDesignProV6与UmiMax决策.md`、`docs/operations/admin-local-development-and-validation-troubleshooting.md` |
 
 ## 权威来源
 

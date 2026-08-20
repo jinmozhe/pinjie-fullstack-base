@@ -215,7 +215,7 @@ pnpm generate-api      # 重新生成 api-client（根目录命令）
 pnpm dev
 
 # Turborepo 读取 pnpm-workspace.yaml，识别所有子包并并行启动
-# admin → vite dev server
+# admin → Umi Max dev server（Ant Design Pro v6）
 # web   → next dev
 ```
 

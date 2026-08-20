@@ -7,7 +7,7 @@
 ## 技术栈
 
 - **后端**：FastAPI + SQLAlchemy 2.0 async + PostgreSQL + Redis
-- **管理端**：Vite + React + Ant Design 5.x + ProComponents
+- **管理端**：Ant Design Pro v6（Umi Max + React 19 + TypeScript + Ant Design 6 + ProComponents 3 + TanStack Query）
 - **用户端**：Next.js App Router + Tailwind CSS + shadcn/ui
 - **共享 SDK**：OpenAPI 自动生成 TypeScript 类型安全请求客户端
 - **部署**：Docker + 1Panel OpenResty + GitHub Actions CI/CD
@@ -24,7 +24,7 @@
 apps/
   backend/              FastAPI 标准后端（领域驱动架构）
   web/                  C 端用户前端（Next.js）
-  admin/                B 端管理前端（Vite + React）
+  admin/                B 端管理前端（Ant Design Pro v6 / Umi Max）
 
 packages/
   api-client/           自动生成的 TypeScript SDK（禁止手改）

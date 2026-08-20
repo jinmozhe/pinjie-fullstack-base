@@ -114,9 +114,7 @@ async def test_large_content_length_short_circuits_to_marker() -> None:
 @pytest.mark.asyncio
 async def test_serialized_body_is_truncated_to_maximum_length() -> None:
     request = _request(b'{"comment":"' + b"x" * 5000 + b'"}')
-    request.scope["headers"] = [
-        header for header in request.scope["headers"] if header[0] != b"content-length"
-    ]
+    request.scope["headers"] = [header for header in request.scope["headers"] if header[0] != b"content-length"]
 
     result = await capture_error_request_body(request, status_code=500, route_template="/api/v1/comments")
 

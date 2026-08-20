@@ -176,7 +176,7 @@ Frontend 工作流分别验证 Web 和 Admin 两个独立应用，覆盖代码�
 适用场景包括：
 
 - 修改 Next.js Web 应用。
-- 修改 Vite、React、Ant Design Admin 应用。
+- 修改 Umi Max、React、Ant Design Admin 应用。
 - 修改共享前端包或根依赖。
 - OpenAPI 变化后验证两个消费者仍能构建。
 
