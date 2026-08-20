@@ -22,7 +22,9 @@ def upgrade() -> None:
         "request_logs",
         sa.Column("request_body", sa.Text(), nullable=True, comment="脱敏后的错误请求入参"),
     )
+    op.execute("COMMENT ON TABLE request_logs IS '可选请求元数据日志，仅保存脱敏后的错误请求入参'")
 
 
 def downgrade() -> None:
+    op.execute("COMMENT ON TABLE request_logs IS '可选请求元数据日志，不保存正文和凭据'")
     op.drop_column("request_logs", "request_body")

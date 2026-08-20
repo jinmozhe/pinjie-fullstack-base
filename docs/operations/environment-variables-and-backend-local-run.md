@@ -92,7 +92,7 @@ Web 生产容器通过 Compose 的 `BACKEND_INTERNAL_URL=http://backend:8000` �
 
 Admin 使用 Umi Max，`VITE_*` 变量会进入浏览器可读的静态 JavaScript，主要在构建阶段由 `config/config.ts` 注入。修改已构建容器中的 `.env.local` 通常不能改变现有静态产物。
 
-Admin 使用同域相对路径 `/api/v1`，开发服务器和生产 Nginx 都代理到 Backend。
+Admin 使用同域相对路径 `/api/v1`，开发服务器和生产 Nginx 都代理到 Backend。Admin 本地或 CI 开发服务器可通过 `BACKEND_INTERNAL_URL` 指定 Backend 地址，默认使用 `http://127.0.0.1:8000`；代理保留浏览器 `Origin`，以满足 Backend 的严格来源校验。
 
 Admin 生产镜像不依赖运行时公开 API 环境变量，代理目标由容器网络中的 `backend` 服务名确定。
 

@@ -1,6 +1,8 @@
 import { defineConfig } from "@umijs/max";
 import routes from "./routes";
 
+const backendURL = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:8000";
+
 export default defineConfig({
   antd: {},
   access: {},
@@ -14,8 +16,8 @@ export default defineConfig({
   npmClient: "pnpm",
   proxy: {
     "/api/v1": {
-      target: "http://localhost:8000",
-      changeOrigin: true,
+      target: backendURL,
+      changeOrigin: false,
     },
   },
   define: {

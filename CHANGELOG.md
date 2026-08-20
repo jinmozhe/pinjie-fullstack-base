@@ -43,6 +43,7 @@
 ### Fixed
 
 - 修复 CI 暴露的 Backend Ruff 格式不一致和 Web 测试 matcher 类型缺失问题；Web TypeScript 现在显式加载 Vitest 与 Testing Library matcher 类型。
+- 修复 GitHub CI 的 Alembic `request_logs` 表注释漂移，并修正 Admin Umi 代理在 Linux CI 下改写 Origin 导致登录 403 的问题。
 - 修复 Web Vitest 运行时未注册 Testing Library DOM matcher 的问题；显式扩展 Vitest `expect` 后 Web 17 项测试全部通过。
 - 修复 Node 传递依赖的高危漏洞门禁：通过精确 pnpm overrides 提升 `immer`、`node-fetch`、`axios`、`image-size` 和 `vite`，本地 `pnpm audit --audit-level high` 不再报告 High 或 Critical 漏洞。
 - 修复 Web 首页在用户已经登录后仍显示“登录”和“创建账户”入口的问题；首页通过服务端当前用户接口确认真实会话，匿名或身份服务暂不可用时继续保留入口。
