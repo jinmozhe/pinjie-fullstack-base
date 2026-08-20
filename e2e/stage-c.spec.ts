@@ -9,6 +9,7 @@ import {
 
 const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "stage-admin";
 const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "stage-c-admin-password-2026";
+const backendURL = process.env.E2E_BACKEND_URL ?? "http://127.0.0.1:8000";
 const userPassword = "stage-c-user-password-2026";
 const limitedAdminPassword = "stage-c-limited-password-2026";
 
@@ -66,7 +67,7 @@ test.describe("stage C cross-stack journeys", () => {
     const limitedUsername = uniqueUsername("limited", test.info().project.name);
     await page.goto("/login");
     const origin = new URL(page.url()).origin;
-    const loginResponse = await page.request.post(`${origin}/api/v1/admin/auth/login`, {
+    const loginResponse = await page.request.post(`${backendURL}/api/v1/admin/auth/login`, {
       headers: { Origin: origin },
       data: { username: adminUsername, password: adminPassword },
     });

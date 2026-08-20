@@ -6,6 +6,7 @@ const backendURL = process.env.BACKEND_INTERNAL_URL ?? "http://127.0.0.1:8000";
 export default defineConfig({
   title: "Pinjie Console",
   plugins: ["./config/html-accessibility"],
+  ...(process.env.E2E_DISABLE_MFSU === "1" ? { mfsu: false } : {}),
   antd: {},
   access: {},
   model: {},

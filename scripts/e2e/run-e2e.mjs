@@ -114,7 +114,7 @@ try {
     "http://127.0.0.1:3001/umi.js",
     [adminCLI, "dev", "--host", "127.0.0.1"],
     resolve(root, "apps", "admin"),
-    { BACKEND_INTERNAL_URL: backendURL, PORT: "3001" },
+    { BACKEND_INTERNAL_URL: backendURL, E2E_DISABLE_MFSU: "1", PORT: "3001" },
   );
 
   runner = spawn(process.execPath, [playwrightCLI, "test", ...process.argv.slice(2)], {
