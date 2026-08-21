@@ -39,7 +39,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
-| `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 实施中 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
+| `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 已结束 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
 | `plans/2026-08-21_母版开发总结与一致性收尾计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 修复生产阻断、契约说明和文档漂移，补齐迁移、恢复、边界与跨栈验收 |
 | `plans/2026-08-21_BrowserE2E人工触发与发布解耦计划.md` | 已结束 | Deployment、Documentation | 将 Browser E2E 改为人工触发，并取消镜像发布对 E2E 成功记录的依赖 |
 | `plans/2026-08-21_BrowserE2E就绪探测修复计划.md` | 已结束 | Admin、Deployment、Documentation | 修复 Umi 首次编译期间 2xx HTML 回退页导致 Browser E2E 过早启动的问题 |
@@ -54,7 +54,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 实施中 | 文件日志、首次线上 E2E、远端治理和 favicon 本地验收已完成，等待最终提交的线上门禁 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
+| `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 已结束 | 已完成；文件日志、线上 E2E、远端治理、favicon、历史记录和最终门禁均通过 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
 | `plans/2026-08-21_母版开发总结与一致性收尾计划.md` | 已结束 | 已完成；生产边界、OpenAPI 中文字段说明、依赖图、数据库恢复、三端质量、容器、文件日志和 Browser E2E 均通过验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 修复生产阻断、契约说明和文档漂移，补齐迁移、恢复、边界与跨栈验收 |
 | `plans/2026-08-21_BrowserE2E人工触发与发布解耦计划.md` | 已结束 | 已完成 | Deployment、Documentation | 将 Browser E2E 改为人工触发，并取消镜像发布对 E2E 成功记录的依赖 |
 | `plans/2026-08-21_BrowserE2E就绪探测修复计划.md` | 已结束 | 已完成 | Admin、Deployment、Documentation | 修复 Umi 首次编译期间 2xx HTML 回退页导致 Browser E2E 过早启动的问题 |
