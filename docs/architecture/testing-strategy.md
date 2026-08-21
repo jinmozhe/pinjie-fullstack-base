@@ -79,7 +79,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
-- Pull Request 默认运行标准 Playwright Chromium。Firefox 与 WebKit 进入定时或发布验证；派生项目明确支持 Safari 时，WebKit 必须进入发布门禁。
+- Push 和 Pull Request 不自动运行 Playwright。标准 Chromium E2E 默认在本地执行，需要干净 Ubuntu 环境时人工触发 GitHub Browser E2E；是否运行由操作人员按改动风险决定，其结果不参与镜像发布门禁。Firefox 与 WebKit 只在明确需要时人工验证；派生项目明确支持 Safari 时，发布前应人工完成 WebKit 验证并记录结果。
 - CI 失败保留首个失败重试的 Trace、必要截图和 HTML Report。重试只用于采集诊断信息，初次失败仍按不稳定测试处理，禁止依靠重试把套件标记为健康。
 - 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
 

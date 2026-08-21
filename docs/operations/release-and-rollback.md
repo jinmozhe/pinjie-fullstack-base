@@ -33,7 +33,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 使用独立的 `Publish Images` 工作流，输入完整 Commit SHA。工作流必须：
 
 1. 检出指定提交并再次核对 `git rev-parse HEAD`。
-2. 确认指定提交属于仓库默认分支，且同一 Commit SHA 的 Governance、Backend、Frontend、Browser E2E 和 Security 五个 push 工作流全部成功。
+2. 确认指定提交属于仓库默认分支，且同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四个 Push 工作流全部成功；Browser E2E 为人工按需复核，不参与镜像发布门禁。
 3. 以最小权限登录 GHCR；`sha-<完整提交>` 已存在且指向同一 digest 时允许验证通过，指向不同 digest 时立即失败，禁止覆盖。
 4. 构建 Backend、Web 和 Admin 独立镜像，先按内容 digest 推送候选内容，不提前创建发布标签。
 5. 生成 SBOM 与构建来源证明，并对候选 digest 执行漏洞扫描，达到阻断等级时失败。

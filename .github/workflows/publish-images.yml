@@ -60,7 +60,7 @@ jobs:
           EXPECTED_SHA: ${{ steps.input.outputs.commit_sha }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for workflow in ci-governance.yml ci-backend.yml ci-frontend.yml ci-e2e.yml security.yml; do
+          for workflow in ci-governance.yml ci-backend.yml ci-frontend.yml security.yml; do
             response="$(curl --fail-with-body --silent --show-error \
               -H "Accept: application/vnd.github+json" \
               -H "Authorization: Bearer $GH_TOKEN" \

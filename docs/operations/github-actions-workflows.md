@@ -26,24 +26,25 @@ flowchart TD
     B --> C["CI - Governance"]
     B --> D["CI - Backend"]
     B --> E["CI - Frontend"]
-    B --> F["CI - Browser E2E"]
     B --> G["Security"]
-    C --> H["同一 Commit SHA 的 5 个 push 工作流全部成功"]
+    C --> H["同一 Commit SHA 的 4 个 Push 工作流全部成功"]
     D --> H
     E --> H
-    F --> H
     G --> H
     H --> I["人工授权 Publish Images"]
     I --> J["构建、扫描并发布 3 张 GHCR 镜像"]
     J --> K["人工授权 Deploy Production"]
     K --> L["固定 3 个镜像 digest 部署生产环境"]
+    M["人工按需触发"] --> F["CI - Browser E2E"]
+    F --> N["独立复核结果，不参与镜像发布门禁"]
 ```
 
-流程坚持三项边界：
+流程坚持四项边界：
 
 1. `git push` 只触发质量和安全检查，不发布镜像，不接触生产服务器。
-2. 镜像发布必须人工触发，并且只接受已经通过全部 push 工作流的完整 Commit SHA。
-3. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
+2. Browser E2E 只允许人工按需触发，不随 Push 或 Pull Request 自动运行，也不参与镜像发布门禁。
+3. 镜像发布必须人工触发，并且只接受已经通过四个自动 Push 工作流的完整 Commit SHA。
+4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
 
 ## 3. 触发条件总表
 
@@ -52,12 +53,14 @@ flowchart TD
 | CI - Governance | 是 | 是 | 否 | 否 |
 | CI - Backend | 是 | 是 | 否 | 否 |
 | CI - Frontend | 是 | 是 | 否 | 否 |
-| CI - Browser E2E | 是 | 是 | 否 | 否 |
+| CI - Browser E2E | 否 | 否 | 否 | 是 |
 | Security | 是 | 是 | 每周一次 | 否 |
 | Publish Images | 否 | 否 | 否 | 是 |
 | Deploy Production | 否 | 否 | 否 | 是 |
 
-五个自动工作流没有配置分支过滤或路径过滤，因此向任意分支推送提交都会触发。当前仓库远程只保留 `main`，日常实际触发点是向 `main` 推送。
+四个自动工作流没有配置分支过滤或路径过滤，因此向任意分支推送提交都会触发。当前仓库远程只保留 `main`，日常实际触发点是向 `main` 推送。
+
+`CI - Browser E2E` 只支持从 GitHub Actions 页面人工触发。是否运行由操作人员按改动风险决定，它的结果不影响 `Publish Images`。
 
 `Security` 的定时表达式是 `23 3 * * 1`，即每周一 `03:23 UTC`。在中国标准时间下对应每周一 `11:23`。
 
@@ -65,15 +68,14 @@ flowchart TD
 
 ## 4. Push 后的执行顺序
 
-GitHub 收到新提交后，会为同一个 Commit SHA 创建五个相互独立的 Workflow Run：
+GitHub 收到新提交后，会为同一个 Commit SHA 创建四个相互独立的 Workflow Run：
 
 1. `CI - Governance`
 2. `CI - Backend`
 3. `CI - Frontend`
-4. `CI - Browser E2E`
-5. `Security`
+4. `Security`
 
-五个工作流通常并行排队和执行。它们之间没有 `workflow_run` 自动串联，因此一个工作流成功不会自动启动另一个工作流。
+四个工作流通常并行排队和执行。它们之间没有 `workflow_run` 自动串联，因此一个工作流成功不会自动启动另一个工作流。
 
 同一工作流内部可以通过 `needs` 建立 Job 依赖。例如 Backend 和 Frontend 先判断应用状态，再决定是否运行完整质量检查。GitHub Runner 配额、依赖下载速度和服务容器启动速度会影响完成先后顺序。
 
@@ -82,8 +84,10 @@ GitHub 收到新提交后，会为同一个 Commit SHA 创建五个相互独立�
 - 该 Commit SHA 的整体检查状态会出现失败。
 - GitHub 可能按个人通知设置发送 Actions 失败邮件。
 - 其他已经开始的工作流通常继续运行。
-- `Publish Images` 会拒绝使用该 Commit SHA，因为它要求五个 push 工作流都有成功记录。
+- `Publish Images` 会拒绝使用该 Commit SHA，因为它要求四个自动 Push 工作流都有成功记录。
 - 不会自动回退本地代码，也不会自动修改远程分支。
+
+人工运行的 Browser E2E 失败只表示该次跨栈复核未通过，不改变 Commit SHA 的镜像发布资格。
 
 ## 5. CI - Governance
 
@@ -208,13 +212,13 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 
 ### 7.5 结果含义
 
-成功表示两个前端应用可以通过各自的静态检查、测试和生产构建。真实浏览器中的 Backend、Web、Admin 联动由 Browser E2E 工作流继续验证。
+成功表示两个前端应用可以通过各自的静态检查、测试和生产构建。需要复核真实浏览器中的 Backend、Web、Admin 联动时，在本地运行 E2E，或人工触发 Browser E2E 工作流。
 
 ## 8. CI - Browser E2E
 
 ### 8.1 作用和使用场景
 
-Browser E2E 在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，构建两个前端，再用 Chromium 执行完整用户流程。
+Browser E2E 只支持 `workflow_dispatch` 人工触发。它在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，构建两个前端，再用 Chromium 执行完整用户流程。
 
 受控启动器等待 Web 服务返回 2xx，并且只在 Admin `/umi.js` 返回 JavaScript Content-Type 后放行 Playwright，避免 Umi 首次编译期间的 2xx HTML 回退页被误判为应用就绪。
 
@@ -225,6 +229,8 @@ Browser E2E 在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，�
 - OpenAPI Client 与真实 HTTP 响应不一致。
 - 页面路由、表单、权限导航和浏览器运行错误。
 - 多个应用分别构建成功，但组合运行失败。
+
+日常以本地 `pnpm test:e2e` 为主。需要排除 Windows、本机缓存或本地服务差异时，可以人工运行该工作流获得干净 Ubuntu 环境的复核结果。该结果不参与 Pull Request、Push 或镜像发布门禁。
 
 ### 8.2 执行步骤
 
@@ -240,7 +246,7 @@ Browser E2E 在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，�
 
 ### 8.3 资源特征
 
-该工作流会下载浏览器、启动数据库和 Redis，并构建两个前端，通常是五个自动工作流中耗时和资源占用较高的一项。
+该工作流会下载浏览器、启动数据库和 Redis，并构建两个前端，耗时和资源占用较高，因此只在人工确认有必要时运行。
 
 ## 9. Security
 
@@ -324,7 +330,7 @@ CI 固定安装 Semgrep CE `1.173.0`，不配置 Semgrep Token，不创建云端
 
 ## 10. Pull Request 流程差异
 
-Pull Request 会运行同样的五个自动工作流，并额外启用两项差异检查：
+Pull Request 会运行同样的四个自动工作流，并额外启用两项差异检查：
 
 1. Backend 的 `OpenAPI breaking changes` 比较目标分支与 PR 契约。
 2. Security 的 `Dependency review` 检查 PR 新增或改变的依赖。
@@ -335,7 +341,7 @@ Pull Request 检查用于合并前评审。push 检查用于验证某个已经�
 
 ### 11.1 作用和使用场景
 
-`Publish Images` 把一个已经通过全部检查的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变 GHCR 镜像。
+`Publish Images` 把一个已经通过四个自动门禁的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变 GHCR 镜像。
 
 典型使用场景：
 
@@ -352,11 +358,10 @@ Pull Request 检查用于合并前评审。push 检查用于验证某个已经�
 1. Commit SHA 必须匹配 40 位小写十六进制格式。
 2. 检出的 `HEAD` 必须与输入 SHA 完全一致。
 3. 目标提交必须属于仓库默认分支历史。
-4. 同一 SHA 必须存在以下五个成功、已完成的 push Run：
+4. 同一 SHA 必须存在以下四个成功、已完成的 Push Run：
    - `CI - Governance`
    - `CI - Backend`
    - `CI - Frontend`
-   - `CI - Browser E2E`
    - `Security`
 5. Backend、Web 和 Admin 状态必须全部为 `ready`。
 6. 模块边界必须再次通过。
@@ -481,7 +486,7 @@ Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对
 -> git add
 -> git commit
 -> git push
--> 5 个自动工作流并行运行
+-> 4 个自动工作流并行运行
 -> 查看失败 Job 或确认全部成功
 ```
 
@@ -492,17 +497,17 @@ Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对
 ```text
 推送开发分支
 -> 创建或更新 Pull Request
--> 5 个工作流运行
+-> 4 个工作流运行
 -> 额外执行 OpenAPI breaking changes 和 Dependency review
 -> 评审通过后合并
--> 合并提交再次触发 5 个 push 工作流
+-> 合并提交再次触发 4 个 Push 工作流
 ```
 
 ### 13.3 正式镜像发布
 
 ```text
 选择 main 上的完整 Commit SHA
--> 确认该 SHA 的 5 个 push 工作流全部成功
+-> 确认该 SHA 的 4 个 Push 工作流全部成功
 -> 取得镜像发布授权
 -> 人工触发 Publish Images
 -> 等待 validate、3 个 publish 矩阵和 finalize 全部成功
@@ -545,7 +550,7 @@ Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对
 | Frontend quality 失败 | Web 或 Admin Job | lint、类型、测试、构建、生成 Client 漂移 |
 | Browser E2E 失败 | Backend 启动日志或 Playwright 输出 | 服务启动、迁移、浏览器流程或跨栈契约问题 |
 | Security 失败 | 具体扫描 Job | 密钥、依赖漏洞、源码风险或扫描器运行错误 |
-| Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、五个 push Run 或应用状态不满足 |
+| Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、四个 Push Run 或应用状态不满足 |
 | Publish matrix 失败 | 对应应用矩阵 | 镜像构建、容器漏洞、证明或 GHCR 权限问题 |
 | Publish finalize 失败 | Publish verified immutable tags | digest 证据缺失或不可变标签冲突 |
 | Deploy 验证失败 | Validate 或 Verify 步骤 | 输入格式、环境开关、路径、标签与 digest 不一致 |
@@ -564,12 +569,14 @@ Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对
 GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发布工作流要求以下能力必须有成功证据：
 
 - 仓库治理和模块边界检查。
-- Backend、Frontend 和真实浏览器质量检查。
+- Backend 和 Frontend 质量检查。
 - 密钥、依赖漏洞和源码静态安全检查。
 - 镜像漏洞扫描、SBOM 和构建来源证明。
 - 固定 Commit SHA 和镜像 digest 的生产追溯。
 
 具体工具未来可以通过已确认计划替换，但不能直接删除能力或静默跳过。任何门禁调整都应同步工作流配置、安全策略、本文、发布手册和相关计划。
+
+真实浏览器跨栈 E2E 继续作为本地测试和 GitHub 人工复核能力保留，由操作人员根据改动风险决定是否执行，不属于自动或镜像发布门禁。
 
 ## 16. 操作检查清单
 
@@ -582,8 +589,8 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 
 ### Push 后
 
-- [ ] 五个自动工作流均对应预期 Commit SHA。
-- [ ] Governance、Backend、Frontend、Browser E2E 和 Security 全部成功。
+- [ ] 四个自动工作流均对应预期 Commit SHA。
+- [ ] Governance、Backend、Frontend 和 Security 全部成功。
 - [ ] 没有把 `skipped` 误判成应用质量通过。
 - [ ] 失败时已定位具体 Job 和第一条有效错误。
 
@@ -591,7 +598,7 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 
 - [ ] 已取得独立镜像发布授权。
 - [ ] 使用完整 40 位 Commit SHA。
-- [ ] 五个 push 工作流都有同一 SHA 的成功记录。
+- [ ] 四个 Push 工作流都有同一 SHA 的成功记录。
 - [ ] 三个应用状态均为 `ready`。
 
 ### 部署生产前
