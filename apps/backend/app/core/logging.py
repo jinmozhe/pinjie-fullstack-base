@@ -22,6 +22,7 @@ def configure_logging(settings: Settings) -> None:
         logger.add(
             settings.log_file_path,
             level=settings.log_level,
+            serialize=True,
             rotation=settings.log_file_rotation,
             retention=settings.log_file_retention,
             compression="zip",

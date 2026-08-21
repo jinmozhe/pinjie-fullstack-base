@@ -45,6 +45,7 @@
 
 ### Fixed
 
+- 修复 Backend 文件日志默认文本格式遗漏 Loguru 绑定字段的问题；文件 Sink 改为 UTF-8 JSON Lines，请求记录稳定包含 `request_id`、`trace_id`、HTTP 方法、规范化路由、状态码和耗时，并由真实文件写入测试覆盖。
 - 修复 Admin 五个受保护页面只提供命名导出，导致 Umi production lazy route 触发 React 306 错误的问题；用户、管理员、角色、安全和系统状态页面现同时提供路由所需的默认导出。
 - 修复 Web 主动退出期间迟到的用户或会话请求 401 覆盖预期 `/login` 跳转的问题；退出发起前显式中止在途读取并增加竞态回归测试。
 - 修复 CI 暴露的 Backend Ruff 格式不一致和 Web 测试 matcher 类型缺失问题；Web TypeScript 现在显式加载 Vitest 与 Testing Library matcher 类型。

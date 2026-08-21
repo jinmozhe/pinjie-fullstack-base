@@ -1,3 +1,4 @@
+import json
 import sys
 
 import pytest
@@ -63,6 +64,7 @@ def test_configure_logging_adds_async_file_sink_when_enabled(tmp_path, monkeypat
     sink, options = added[1]
     assert sink == settings.log_file_path
     assert options["enqueue"] is True
+    assert options["serialize"] is True
     assert options["rotation"] == "50 MB"
     assert options["retention"] == "10 days"
     assert options["compression"] == "zip"
@@ -82,3 +84,38 @@ def test_configure_logging_skips_file_sink_when_disabled(tmp_path, monkeypatch) 
 
     assert added == [sys.stderr]
     assert not (tmp_path / "logs").exists()
+
+
+@pytest.mark.asyncio
+async def test_file_logging_writes_structured_request_context_and_utf8(tmp_path, client) -> None:
+    log_file = tmp_path / "logs" / "app.log"
+    settings = Settings(LOG_FILE_ENABLED=True, LOG_FILE_PATH=str(log_file))
+    configure_logging(settings)
+
+    try:
+        response = await client.get("/health/live")
+        logger.info("中文日志可正常解析")
+        logger.complete()
+
+        assert response.status_code == 200
+        records = [json.loads(line) for line in log_file.read_text(encoding="utf-8").splitlines()]
+        request_record = next(
+            record for record in records if record["record"]["message"].startswith("request completed")
+        )
+        request_extra = request_record["record"]["extra"]
+        assert request_extra == {
+            "request_id": response.headers["x-request-id"],
+            "trace_id": response.headers["x-trace-id"],
+            "method": "GET",
+            "route": "/health/live",
+            "duration_ms": request_extra["duration_ms"],
+            "status_code": 200,
+        }
+        assert isinstance(request_extra["duration_ms"], int)
+        assert request_extra["duration_ms"] >= 0
+
+        plain_record = next(record for record in records if record["record"]["message"] == "中文日志可正常解析")
+        assert plain_record["record"]["extra"] == {}
+    finally:
+        logger.remove()
+        configure_logging(Settings(LOG_FILE_ENABLED=False))

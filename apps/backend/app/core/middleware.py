@@ -39,6 +39,8 @@ async def request_context_middleware(request: Request, call_next: Callable[[Requ
         logger.bind(
             request_id=request_id,
             trace_id=trace_id,
+            method=request.method,
+            route=route_template,
             duration_ms=duration_ms,
             status_code=response.status_code,
         ).info(
