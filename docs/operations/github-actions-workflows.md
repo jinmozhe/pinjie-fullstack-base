@@ -216,6 +216,8 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 
 Browser E2E 在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，构建两个前端，再用 Chromium 执行完整用户流程。
 
+受控启动器等待 Web 服务返回 2xx，并且只在 Admin `/umi.js` 返回 JavaScript Content-Type 后放行 Playwright，避免 Umi 首次编译期间的 2xx HTML 回退页被误判为应用就绪。
+
 它主要发现单元测试难以覆盖的问题：
 
 - Backend 与数据库或 Redis 的真实连接问题。

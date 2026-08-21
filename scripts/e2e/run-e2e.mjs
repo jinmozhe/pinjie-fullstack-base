@@ -15,10 +15,12 @@ for (const requiredPath of [webServer, adminCLI, playwrightCLI]) {
   }
 }
 
-async function isAvailable(url) {
+async function isAvailable(url, expectedContentType) {
   try {
     const response = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(1_000) });
-    return response.ok;
+    if (!response.ok) return false;
+    const contentType = response.headers.get("content-type") ?? "";
+    return !expectedContentType || expectedContentType.test(contentType);
   } catch {
     return false;
   }
@@ -36,10 +38,10 @@ function startService(name, args, cwd, env) {
   return child;
 }
 
-async function waitForService(name, url, child) {
+async function waitForService(name, url, child, expectedContentType) {
   const deadline = Date.now() + 120_000;
   while (Date.now() < deadline) {
-    if (await isAvailable(url)) return;
+    if (await isAvailable(url, expectedContentType)) return;
     if (child.exitCode !== null || child.signalCode !== null) {
       throw new Error(`${name} exited before becoming available.`);
     }
@@ -48,10 +50,10 @@ async function waitForService(name, url, child) {
   throw new Error(`${name} did not become available within 120 seconds.`);
 }
 
-async function ensureService(name, url, args, cwd, env) {
-  if (await isAvailable(url)) return;
+async function ensureService(name, url, args, cwd, env, expectedContentType) {
+  if (await isAvailable(url, expectedContentType)) return;
   const child = startService(name, args, cwd, env);
-  await waitForService(name, url, child);
+  await waitForService(name, url, child, expectedContentType);
 }
 
 async function waitForExit(child, timeoutMs) {
@@ -115,6 +117,7 @@ try {
     [adminCLI, "dev", "--host", "127.0.0.1"],
     resolve(root, "apps", "admin"),
     { BACKEND_INTERNAL_URL: backendURL, E2E_DISABLE_MFSU: "1", PORT: "3001" },
+    /javascript/i,
   );
 
   runner = spawn(process.execPath, [playwrightCLI, "test", ...process.argv.slice(2)], {

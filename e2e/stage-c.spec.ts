@@ -71,6 +71,7 @@ test.describe("stage C cross-stack journeys", () => {
       data: { username: adminUsername, password: adminPassword },
     });
     expect(loginResponse.ok()).toBe(true);
+    expect(loginResponse.headers()["content-type"]).toContain("application/json");
     expect(JSON.stringify(await loginResponse.json())).not.toMatch(/access_token|refresh_token/i);
     await page.getByLabel("用户名").fill(adminUsername);
     await page.getByLabel("密码").fill(adminPassword);
