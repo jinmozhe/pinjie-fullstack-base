@@ -23,6 +23,7 @@
 - 关键数据库行为使用 PostgreSQL，不使用 SQLite 替代。
 - Model 变化必须验证空库升级、已有结构升级和重复升级。
 - 数据迁移验证行数、约束和关键数据摘要，不能只检查命令退出码。
+- 备份恢复演练必须在本机独立 `_test` 数据库执行，核对 Alembic revision、public 表清单、逐表行数、约束数量和未验证约束；`SELECT 1` 不能替代恢复校验。
 - 不可逆迁移必须先验证备份和恢复路径，并取得专项授权。
 
 ## 4. 契约测试
@@ -40,7 +41,8 @@ Backend 进入 `ready` 后，CI 必须：
 ## 5. 架构和静态质量
 
 - Backend 验证 Router、Service、Repository、Model 和领域依赖方向。
-- Frontend 验证应用隔离、Feature 公共入口和循环依赖。
+- Frontend 通过 TypeScript Compiler API 依赖图验证应用隔离、Feature 公共入口、静态导入、可解析的动态导入和循环依赖。
+- 架构门禁必须有正反例，证明合法公开入口通过且动态越界、循环依赖和跨应用引用失败。
 - Ruff、Mypy、ESLint 和 TypeScript 错误均为阻断项。
 - `any`、无依据断言、忽略类型错误和跳过测试需要显式评审，不能靠全局关闭规则解决。
 

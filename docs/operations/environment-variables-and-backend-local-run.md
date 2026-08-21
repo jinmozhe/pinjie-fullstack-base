@@ -59,7 +59,9 @@ POSTGRES_DB=pinjie_fullstack_prod
 `apps/backend/.env` 保存 Backend 运行所需的真实配置，例如：
 
 - `DATABASE_URL`
+- `TEST_DATABASE_URL`
 - `REDIS_URL`
+- `TEST_REDIS_URL`
 - `ENVIRONMENT`
 - `BACKEND_CORS_ORIGINS`
 - `WEB_JWT_SECRET` 与 `ADMIN_JWT_SECRET`
@@ -70,12 +72,16 @@ POSTGRES_DB=pinjie_fullstack_prod
 
 文件日志默认写入 Backend 工作目录下的 `logs/app_{time:YYYY-MM-DD}.log`，使用异步队列、50 MB 轮转、10 天保留和 ZIP 压缩。日志文件不进入 Git；只读容器或只允许标准错误流的部署必须显式设置 `LOG_FILE_ENABLED=false`。
 
-生产 `compose.prod.yml` 当前明确通过以下配置把该文件注入 Backend 容器：
+生产 `compose.prod.yml` 当前通过以下配置把该文件注入 Backend 容器，并强制覆盖文件日志开关：
 
 ```yaml
 env_file:
   - apps/backend/.env
+environment:
+  LOG_FILE_ENABLED: "false"
 ```
+
+该覆盖同时应用于 request-log-consumer。需要生产文件落盘时，必须修改 Compose 并提供明确的可写持久挂载、非 Root 权限、轮转和容量告警，不能只改 Backend `.env`。
 
 根 `.env` 决定启动哪个 Backend 镜像，`apps/backend/.env` 决定这个 Backend 容器如何连接数据库、Redis及如何运行。两者不能合并，避免部署版本和应用秘密形成同一职责边界。
 
@@ -215,6 +221,7 @@ uv run pytest tests/ -v
 ```
 
 涉及数据库的测试必须连接名称以 `_test` 结尾的独立测试数据库。禁止使用开发数据库或生产数据库充当自动化测试数据库。
+集成测试同时使用 `TEST_REDIS_URL=redis://localhost:6379/15` 隔离 Redis 数据；测试 DB 15 不得与开发用途混用。
 默认 pytest 配置会同时统计 `app` 的行与分支覆盖率，综合结果低于 90% 时命令失败；本地和 Backend CI 使用同一门禁。
 
 涉及迁移时还需在隔离 `_test` 数据库执行两次升级与一致性检查：
@@ -224,6 +231,19 @@ uv run alembic upgrade head
 uv run alembic upgrade head
 uv run alembic check
 ```
+
+需要同时验证空库迁移和备份恢复时，使用专用脚本：
+
+```powershell
+uv run python -m scripts.verify_local_database_recovery `
+  --migration-database pinjie_migration_test `
+  --restore-database pinjie_restore_test `
+  --confirm-source-database pinjie_fullstack_test `
+  --confirm-migration-database pinjie_migration_test `
+  --confirm-restore-database pinjie_restore_test
+```
+
+测试 PostgreSQL 角色必须仅在本机具有创建专用演练数据库的权限。完整安全边界见[数据库备份与恢复手册](database-backup-restore.md)。
 
 全仓库治理检查从根目录运行：
 
@@ -294,6 +314,8 @@ D:\Projects\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
 Web 和 Admin 的生产接线已经固定为同域 `/api/v1` 代理与 Web 的 `BACKEND_INTERNAL_URL`，禁止依赖未声明的自动注入。
 
 应用启动不会自动执行 Alembic、同步权限或创建管理员。生产发布必须在启动新版本前执行受控迁移与权限同步；初始管理员只通过一次性显式命令创建。启用请求元数据时，Compose 还需开启 `request-logs` Profile 运行独立消费者。
+
+完整的生产配置、迁移、健康检查、OpenResty、日志、备份和回滚步骤见[1Panel 单机生产运行手册](1panel-production-runbook.md)。
 
 ## 9. 常见误区
 

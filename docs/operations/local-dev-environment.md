@@ -151,8 +151,13 @@ psql -U postgres
 ```sql
 CREATE USER pinjie_fullstack WITH PASSWORD 'your_local_password';
 CREATE DATABASE pinjie_fullstack_dev OWNER pinjie_fullstack;
+CREATE USER pinjie_fullstack_test WITH PASSWORD 'your_test_password' CREATEDB;
+CREATE DATABASE pinjie_fullstack_test OWNER pinjie_fullstack_test;
 GRANT ALL PRIVILEGES ON DATABASE pinjie_fullstack_dev TO pinjie_fullstack;
+GRANT ALL PRIVILEGES ON DATABASE pinjie_fullstack_test TO pinjie_fullstack_test;
 ```
+
+`CREATEDB` 只授予本机测试角色，用于创建和删除名称以 `_test` 结尾的临时迁移与恢复数据库。开发角色和生产角色不需要该权限。
 
 退出 `psql`：
 
@@ -174,7 +179,9 @@ Copy-Item apps/admin/.env.example apps/admin/.env.local
 
 ```dotenv
 DATABASE_URL=postgresql+asyncpg://pinjie_fullstack:your_local_password@localhost:5432/pinjie_fullstack_dev
+TEST_DATABASE_URL=postgresql+asyncpg://pinjie_fullstack_test:your_test_password@localhost:5432/pinjie_fullstack_test
 REDIS_URL=redis://localhost:6379/0
+TEST_REDIS_URL=redis://localhost:6379/15
 ```
 
 前端公开变量会进入浏览器构建产物，禁止在 `NEXT_PUBLIC_` 或 `VITE_` 变量中保存密钥。

@@ -1,6 +1,8 @@
 # 全栈 Monorepo 架构与 1Panel 部署规划方案
 
 > 历史原始方案：本文记录 2026-08-10 的规划背景和当时评估过的技术选型，不代表当前 Admin 实现。当前 Admin 技术栈、运行入口和迁移后的约束以 [ADR 0011：Admin 采用 Ant Design Pro v6 与 Umi Max](../adr/0011-Admin采用AntDesignProV6与UmiMax决策.md)、`apps/admin/AGENTS.md` 和 [Admin 本地运行与验证排障手册](../operations/admin-local-development-and-validation-troubleshooting.md) 为准。
+>
+> 本文中的 `apps/frontend`、Vite Admin、Bearer Token、本地 Token Store、电商领域、自动迁移、应用商店数据库和日志文件挂载均为历史候选方案，不能作为当前实现或生产操作依据。当前事实以 [项目结构](project-structure.md)、[认证授权边界](authentication-authorization.md)、[模块边界](module-boundaries.md)、[容器运行手册](../operations/container-build-and-run.md)和 [1Panel 单机生产运行手册](../operations/1panel-production-runbook.md) 为准。
 
 ## 1. 方案背景与概述
 

@@ -6,6 +6,9 @@
 
 ### Added
 
+- 增加基于 TypeScript Compiler API 的前端依赖图门禁，覆盖跨应用引用、Feature 内部越界、循环依赖和可静态解析的动态导入，并提供正反例。
+- 增加 PostgreSQL 本地迁移与备份恢复演练工具，强制使用独立 `_test` 数据库并校验 revision、表、行数和约束。
+- 增加 1Panel 单机生产运行手册，覆盖不可变镜像、环境变量、迁移、健康检查、日志、备份恢复和回滚边界。
 - 增加错误请求入参捕获与脱敏管道：仅对非敏感路由的错误 JSON 请求捕获入参，递归脱敏敏感字段，最多保存 4096 个字符并通过 Redis Stream、PostgreSQL 和 Admin 只读抽屉提供排障入口。
 - 增加 Backend Loguru 本地文件日志能力：支持环境变量控制的开关、路径、50 MB 轮转、10 天保留、ZIP 压缩和异步写入；只读容器可关闭文件 Sink。
 - 完成阶段 C 通用业务核心能力：C/B 独立 Browser Cookie Profile、Argon2id、JWT、Session 绑定 CSRF、PostgreSQL 权威 Refresh Rotation、重放撤销、Redis 原子限流和严格 Origin 校验。
@@ -48,6 +51,8 @@
 - 修复 Web Vitest 运行时未注册 Testing Library DOM matcher 的问题；显式扩展 Vitest `expect` 后 Web 17 项测试全部通过。
 - 修复 Node 传递依赖的高危漏洞门禁：通过精确 pnpm overrides 提升 `immer`、`node-fetch`、`axios`、`image-size` 和 `vite`，本地 `pnpm audit --audit-level high` 不再报告 High 或 Critical 漏洞。
 - 修复 Web 首页在用户已经登录后仍显示“登录”和“创建账户”入口的问题；首页通过服务端当前用户接口确认真实会话，匿名或身份服务暂不可用时继续保留入口。
+- 修复 PostgreSQL 18 生产命名卷挂载路径，并在生产 Compose 中默认关闭 Backend 与请求日志消费者的文件日志，避免非 Root 只读运行时写入失败。
+- 修复 OpenAPI 公开 Schema 字段缺少中文说明的问题，238 个字段现由 Backend Schema 源码生成中文描述，根契约与共享 API Client 已同步。
 - 修复 Governance 文本检查在 Linux PowerShell 中无法读取点文件、正反例脚本遗留预期失败退出码的问题。
 - 修复生产部署摘要直接向 Bash 插入 GitHub 表达式的注入风险，并修正 Admin Nginx 健康响应的内容类型声明。
 - 修复根 `.env.example` 的乱码、粘连和职责错位，只保留 `compose.prod.yml` 使用的公开部署变量模板。
@@ -76,3 +81,4 @@
 
 - 增加 Admin 本地运行与验证排障手册，明确 Umi 启动目录和端口、生成缓存、jsdom 测试、浏览器兜底验证、真实跨栈前置条件，以及 Windows 系统故障与应用故障的证据边界；同步根和 Admin 级长期规则。
 - 完成 Admin 技术栈文档一致性审计：根 README、架构 ADR、环境变量手册、项目结构索引和历史原始方案均已区分当前 Ant Design Pro v6/Umi Max 实现与旧方案记录。
+- 完成母版开发总结和一致性文档收尾：同步根与三端 README、项目结构、依赖白名单来源、历史方案边界、数据库恢复、生产运行文档、67 项需求追踪及 13 条母版验收矩阵；当前未执行的质量、容器和 Browser E2E 保持待验证。

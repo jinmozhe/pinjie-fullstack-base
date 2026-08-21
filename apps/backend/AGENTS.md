@@ -21,7 +21,7 @@
 ## 固定技术栈与目录
 
 - 后端采用标准 CPython 3.14、FastAPI、Pydantic v2、Pydantic Settings、SQLAlchemy 2 async、asyncpg、Alembic、PostgreSQL、Redis、Loguru 和 uv。禁止使用 free-threaded `3.14t`；完整版本边界以 [Python 运行时基线决策](../../docs/adr/0009-Python运行时基线决策.md)为准。
-- 当前依赖声明以 `apps/backend/pyproject.toml` 为准，精确安装版本以待生成的 `apps/backend/uv.lock` 为准。新增或改变运行依赖必须进入已确认计划，禁止把开发依赖当作生产运行能力。
+- 当前依赖声明以 `apps/backend/pyproject.toml` 为准，精确安装版本以已生成的 `apps/backend/uv.lock` 为准。新增或改变运行依赖必须进入已确认计划，禁止把开发依赖当作生产运行能力。
 - 新增实现遵守 `app/api`、`app/core`、`app/db`、`app/domains`、`app/services` 的规划边界；目录尚未落地时，按 `docs/architecture/project-structure.md` 和当前计划创建最小必要结构。
 - `app/core` 和 `app/db` 不得反向依赖领域、应用编排或传输层。Python 包目录包含 `__init__.py`，禁止通过导入副作用启动数据库连接、后台任务或外部客户端。
 

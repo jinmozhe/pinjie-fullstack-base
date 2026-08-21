@@ -2933,7 +2933,8 @@
           "completed": {
             "type": "boolean",
             "title": "Completed",
-            "default": true
+            "default": true,
+            "description": "操作是否已经完成"
           }
         },
         "additionalProperties": false,
@@ -2943,27 +2944,32 @@
       "AdminAuthSessionOut": {
         "properties": {
           "principal": {
-            "$ref": "#/components/schemas/AdminRead"
+            "$ref": "#/components/schemas/AdminRead",
+            "description": "当前认证主体信息"
           },
           "session_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Session Id"
+            "title": "Session Id",
+            "description": "登录会话唯一标识"
           },
           "access_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Access Expires At"
+            "title": "Access Expires At",
+            "description": "访问凭据过期时间"
           },
           "idle_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Idle Expires At"
+            "title": "Idle Expires At",
+            "description": "会话空闲过期时间"
           },
           "absolute_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Absolute Expires At"
+            "title": "Absolute Expires At",
+            "description": "会话绝对过期时间"
           }
         },
         "additionalProperties": false,
@@ -2987,7 +2993,8 @@
             "description": "当前密码，最多 64 个字符"
           },
           "action": {
-            "$ref": "#/components/schemas/ConfirmationAction"
+            "$ref": "#/components/schemas/ConfirmationAction",
+            "description": "操作代码"
           }
         },
         "additionalProperties": false,
@@ -3002,15 +3009,18 @@
         "properties": {
           "confirmation_token": {
             "type": "string",
-            "title": "Confirmation Token"
+            "title": "Confirmation Token",
+            "description": "敏感操作短期确认凭据"
           },
           "action": {
-            "$ref": "#/components/schemas/ConfirmationAction"
+            "$ref": "#/components/schemas/ConfirmationAction",
+            "description": "操作代码"
           },
           "expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Expires At"
+            "title": "Expires At",
+            "description": "凭据过期时间"
           }
         },
         "additionalProperties": false,
@@ -3026,7 +3036,8 @@
         "properties": {
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "description": "登录用户名"
           },
           "initial_password": {
             "type": "string",
@@ -3045,17 +3056,20 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "展示名称"
           },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
-            "default": true
+            "default": true,
+            "description": "资源当前是否启用"
           },
           "is_superuser": {
             "type": "boolean",
             "title": "Is Superuser",
-            "default": false
+            "default": false,
+            "description": "管理员是否拥有超级管理员身份"
           },
           "role_ids": {
             "items": {
@@ -3063,7 +3077,8 @@
               "format": "uuid"
             },
             "type": "array",
-            "title": "Role Ids"
+            "title": "Role Ids",
+            "description": "分配给管理员的角色唯一标识列表"
           }
         },
         "additionalProperties": false,
@@ -3078,7 +3093,8 @@
         "properties": {
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "description": "登录用户名"
           },
           "password": {
             "type": "string",
@@ -3101,11 +3117,13 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "description": "登录用户名"
           },
           "display_name": {
             "anyOf": [
@@ -3116,39 +3134,46 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "展示名称"
           },
           "is_active": {
             "type": "boolean",
-            "title": "Is Active"
+            "title": "Is Active",
+            "description": "资源当前是否启用"
           },
           "is_superuser": {
             "type": "boolean",
-            "title": "Is Superuser"
+            "title": "Is Superuser",
+            "description": "管理员是否拥有超级管理员身份"
           },
           "roles": {
             "items": {
               "$ref": "#/components/schemas/RoleSummary"
             },
             "type": "array",
-            "title": "Roles"
+            "title": "Roles",
+            "description": "管理员当前拥有的角色列表"
           },
           "permissions": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Permissions"
+            "title": "Permissions",
+            "description": "当前主体拥有的权限代码列表"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "创建时间"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "最近更新时间"
           }
         },
         "additionalProperties": false,
@@ -3174,7 +3199,8 @@
               "format": "uuid"
             },
             "type": "array",
-            "title": "Role Ids"
+            "title": "Role Ids",
+            "description": "分配给管理员的角色唯一标识列表"
           }
         },
         "additionalProperties": false,
@@ -3196,7 +3222,8 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "展示名称"
           },
           "is_superuser": {
             "anyOf": [
@@ -3207,7 +3234,8 @@
                 "type": "null"
               }
             ],
-            "title": "Is Superuser"
+            "title": "Is Superuser",
+            "description": "管理员是否拥有超级管理员身份"
           }
         },
         "additionalProperties": false,
@@ -3219,7 +3247,8 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "actor_id": {
             "anyOf": [
@@ -3231,15 +3260,18 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Id"
+            "title": "Actor Id",
+            "description": "操作管理员唯一标识"
           },
           "action": {
             "type": "string",
-            "title": "Action"
+            "title": "Action",
+            "description": "操作代码"
           },
           "target_type": {
             "type": "string",
-            "title": "Target Type"
+            "title": "Target Type",
+            "description": "操作目标类型"
           },
           "target_id": {
             "anyOf": [
@@ -3251,25 +3283,30 @@
                 "type": "null"
               }
             ],
-            "title": "Target Id"
+            "title": "Target Id",
+            "description": "操作目标唯一标识"
           },
           "result": {
             "type": "string",
-            "title": "Result"
+            "title": "Result",
+            "description": "操作结果代码"
           },
           "changed_fields": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Changed Fields"
+            "title": "Changed Fields",
+            "description": "本次操作涉及的字段摘要"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Occurred At"
+            "title": "Occurred At",
+            "description": "事件发生时间"
           },
           "completed_at": {
             "anyOf": [
@@ -3281,7 +3318,8 @@
                 "type": "null"
               }
             ],
-            "title": "Completed At"
+            "title": "Completed At",
+            "description": "操作完成时间"
           }
         },
         "additionalProperties": false,
@@ -3324,7 +3362,8 @@
               "$ref": "#/components/schemas/ValidationError"
             },
             "type": "array",
-            "title": "Detail"
+            "title": "Detail",
+            "description": "请求参数校验错误详情列表"
           }
         },
         "type": "object",
@@ -3335,7 +3374,8 @@
           "status": {
             "type": "string",
             "const": "alive",
-            "title": "Status"
+            "title": "Status",
+            "description": "当前状态代码"
           }
         },
         "additionalProperties": false,
@@ -3350,11 +3390,13 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "principal_type": {
             "type": "string",
-            "title": "Principal Type"
+            "title": "Principal Type",
+            "description": "认证主体类型"
           },
           "principal_id": {
             "anyOf": [
@@ -3366,19 +3408,23 @@
                 "type": "null"
               }
             ],
-            "title": "Principal Id"
+            "title": "Principal Id",
+            "description": "认证主体唯一标识"
           },
           "event_type": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Event Type",
+            "description": "安全事件类型代码"
           },
           "succeeded": {
             "type": "boolean",
-            "title": "Succeeded"
+            "title": "Succeeded",
+            "description": "安全事件是否成功"
           },
           "reason_code": {
             "type": "string",
-            "title": "Reason Code"
+            "title": "Reason Code",
+            "description": "事件原因代码"
           },
           "ip_address": {
             "anyOf": [
@@ -3389,7 +3435,8 @@
                 "type": "null"
               }
             ],
-            "title": "Ip Address"
+            "title": "Ip Address",
+            "description": "请求来源 IP 地址"
           },
           "user_agent_summary": {
             "anyOf": [
@@ -3400,16 +3447,19 @@
                 "type": "null"
               }
             ],
-            "title": "User Agent Summary"
+            "title": "User Agent Summary",
+            "description": "脱敏后的客户端标识摘要"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Occurred At"
+            "title": "Occurred At",
+            "description": "事件发生时间"
           }
         },
         "additionalProperties": false,
@@ -3435,28 +3485,33 @@
               "$ref": "#/components/schemas/AdminRead"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "当前分页中的资源列表"
           },
           "page": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Page"
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
           },
           "page_size": {
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Page Size"
+            "title": "Page Size",
+            "description": "每页资源数量"
           },
           "total": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total"
+            "title": "Total",
+            "description": "符合条件的资源总数"
           },
           "total_pages": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total Pages"
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
           }
         },
         "additionalProperties": false,
@@ -3477,28 +3532,33 @@
               "$ref": "#/components/schemas/AuditEventRead"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "当前分页中的资源列表"
           },
           "page": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Page"
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
           },
           "page_size": {
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Page Size"
+            "title": "Page Size",
+            "description": "每页资源数量"
           },
           "total": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total"
+            "title": "Total",
+            "description": "符合条件的资源总数"
           },
           "total_pages": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total Pages"
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
           }
         },
         "additionalProperties": false,
@@ -3519,28 +3579,33 @@
               "$ref": "#/components/schemas/LoginEventRead"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "当前分页中的资源列表"
           },
           "page": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Page"
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
           },
           "page_size": {
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Page Size"
+            "title": "Page Size",
+            "description": "每页资源数量"
           },
           "total": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total"
+            "title": "Total",
+            "description": "符合条件的资源总数"
           },
           "total_pages": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total Pages"
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
           }
         },
         "additionalProperties": false,
@@ -3561,28 +3626,33 @@
               "$ref": "#/components/schemas/RequestLogRead"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "当前分页中的资源列表"
           },
           "page": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Page"
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
           },
           "page_size": {
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Page Size"
+            "title": "Page Size",
+            "description": "每页资源数量"
           },
           "total": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total"
+            "title": "Total",
+            "description": "符合条件的资源总数"
           },
           "total_pages": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total Pages"
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
           }
         },
         "additionalProperties": false,
@@ -3603,28 +3673,33 @@
               "$ref": "#/components/schemas/RoleRead"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "当前分页中的资源列表"
           },
           "page": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Page"
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
           },
           "page_size": {
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Page Size"
+            "title": "Page Size",
+            "description": "每页资源数量"
           },
           "total": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total"
+            "title": "Total",
+            "description": "符合条件的资源总数"
           },
           "total_pages": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total Pages"
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
           }
         },
         "additionalProperties": false,
@@ -3645,28 +3720,33 @@
               "$ref": "#/components/schemas/UserPrincipalOut"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Items",
+            "description": "当前分页中的资源列表"
           },
           "page": {
             "type": "integer",
             "minimum": 1.0,
-            "title": "Page"
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
           },
           "page_size": {
             "type": "integer",
             "maximum": 100.0,
             "minimum": 1.0,
-            "title": "Page Size"
+            "title": "Page Size",
+            "description": "每页资源数量"
           },
           "total": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total"
+            "title": "Total",
+            "description": "符合条件的资源总数"
           },
           "total_pages": {
             "type": "integer",
             "minimum": 0.0,
-            "title": "Total Pages"
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
           }
         },
         "additionalProperties": false,
@@ -3727,15 +3807,18 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "资源名称"
           },
           "description": {
             "anyOf": [
@@ -3746,15 +3829,18 @@
                 "type": "null"
               }
             ],
-            "title": "Description"
+            "title": "Description",
+            "description": "资源说明文本"
           },
           "is_active": {
             "type": "boolean",
-            "title": "Is Active"
+            "title": "Is Active",
+            "description": "资源当前是否启用"
           },
           "catalog_version": {
             "type": "string",
-            "title": "Catalog Version"
+            "title": "Catalog Version",
+            "description": "权限目录版本"
           }
         },
         "additionalProperties": false,
@@ -3777,14 +3863,16 @@
               "ready",
               "unavailable"
             ],
-            "title": "Status"
+            "title": "Status",
+            "description": "当前状态代码"
           },
           "checks": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Checks"
+            "title": "Checks",
+            "description": "各项就绪依赖的安全状态摘要"
           }
         },
         "additionalProperties": false,
@@ -3800,22 +3888,26 @@
           "session_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Session Id"
+            "title": "Session Id",
+            "description": "登录会话唯一标识"
           },
           "access_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Access Expires At"
+            "title": "Access Expires At",
+            "description": "访问凭据过期时间"
           },
           "idle_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Idle Expires At"
+            "title": "Idle Expires At",
+            "description": "会话空闲过期时间"
           },
           "absolute_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Absolute Expires At"
+            "title": "Absolute Expires At",
+            "description": "会话绝对过期时间"
           }
         },
         "additionalProperties": false,
@@ -3833,31 +3925,38 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           },
           "trace_id": {
             "type": "string",
-            "title": "Trace Id"
+            "title": "Trace Id",
+            "description": "用于关联跨组件调用链的唯一标识"
           },
           "method": {
             "type": "string",
-            "title": "Method"
+            "title": "Method",
+            "description": "HTTP 请求方法"
           },
           "route_template": {
             "type": "string",
-            "title": "Route Template"
+            "title": "Route Template",
+            "description": "规范化后的 API 路由模板"
           },
           "status_code": {
             "type": "integer",
-            "title": "Status Code"
+            "title": "Status Code",
+            "description": "HTTP 响应状态码"
           },
           "duration_ms": {
             "type": "integer",
-            "title": "Duration Ms"
+            "title": "Duration Ms",
+            "description": "请求处理耗时，单位为毫秒"
           },
           "principal_type": {
             "anyOf": [
@@ -3868,7 +3967,8 @@
                 "type": "null"
               }
             ],
-            "title": "Principal Type"
+            "title": "Principal Type",
+            "description": "认证主体类型"
           },
           "release_version": {
             "anyOf": [
@@ -3879,12 +3979,14 @@
                 "type": "null"
               }
             ],
-            "title": "Release Version"
+            "title": "Release Version",
+            "description": "处理请求的应用发布版本"
           },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Occurred At"
+            "title": "Occurred At",
+            "description": "事件发生时间"
           },
           "request_body": {
             "anyOf": [
@@ -3895,7 +3997,8 @@
                 "type": "null"
               }
             ],
-            "title": "Request Body"
+            "title": "Request Body",
+            "description": "脱敏并截断后的错误 JSON 请求体"
           }
         },
         "additionalProperties": false,
@@ -3919,18 +4022,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/ActionResult"
+            "$ref": "#/components/schemas/ActionResult",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -3947,18 +4054,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/AdminAuthSessionOut"
+            "$ref": "#/components/schemas/AdminAuthSessionOut",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -3975,18 +4086,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/AdminConfirmOut"
+            "$ref": "#/components/schemas/AdminConfirmOut",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4003,18 +4118,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/AdminRead"
+            "$ref": "#/components/schemas/AdminRead",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4031,18 +4150,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/PageResult_AdminRead_"
+            "$ref": "#/components/schemas/PageResult_AdminRead_",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4059,18 +4182,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/PageResult_AuditEventRead_"
+            "$ref": "#/components/schemas/PageResult_AuditEventRead_",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4087,18 +4214,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/PageResult_LoginEventRead_"
+            "$ref": "#/components/schemas/PageResult_LoginEventRead_",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4115,18 +4246,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/PageResult_RequestLogRead_"
+            "$ref": "#/components/schemas/PageResult_RequestLogRead_",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4143,18 +4278,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/PageResult_RoleRead_"
+            "$ref": "#/components/schemas/PageResult_RoleRead_",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4171,18 +4310,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/PageResult_UserPrincipalOut_"
+            "$ref": "#/components/schemas/PageResult_UserPrincipalOut_",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4199,18 +4342,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/RefreshSessionOut"
+            "$ref": "#/components/schemas/RefreshSessionOut",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4227,18 +4374,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/RoleRead"
+            "$ref": "#/components/schemas/RoleRead",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4255,18 +4406,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/SystemStatus"
+            "$ref": "#/components/schemas/SystemStatus",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4283,18 +4438,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/UserAuthSessionOut"
+            "$ref": "#/components/schemas/UserAuthSessionOut",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4311,18 +4470,22 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
-            "$ref": "#/components/schemas/UserPrincipalOut"
+            "$ref": "#/components/schemas/UserPrincipalOut",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4339,19 +4502,23 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
             "type": "boolean",
-            "title": "Data"
+            "title": "Data",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4368,22 +4535,26 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
             "items": {
               "$ref": "#/components/schemas/PermissionRead"
             },
             "type": "array",
-            "title": "Data"
+            "title": "Data",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4400,22 +4571,26 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "message": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
           },
           "data": {
             "items": {
               "$ref": "#/components/schemas/SessionRead"
             },
             "type": "array",
-            "title": "Data"
+            "title": "Data",
+            "description": "响应业务数据"
           },
           "request_id": {
             "type": "string",
-            "title": "Request Id"
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
           }
         },
         "additionalProperties": false,
@@ -4432,13 +4607,15 @@
         "properties": {
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "name": {
             "type": "string",
             "maxLength": 100,
             "minLength": 1,
-            "title": "Name"
+            "title": "Name",
+            "description": "资源名称"
           },
           "description": {
             "anyOf": [
@@ -4449,12 +4626,14 @@
                 "type": "null"
               }
             ],
-            "title": "Description"
+            "title": "Description",
+            "description": "资源说明文本"
           },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
-            "default": true
+            "default": true,
+            "description": "资源当前是否启用"
           }
         },
         "additionalProperties": false,
@@ -4472,7 +4651,8 @@
               "type": "string"
             },
             "type": "array",
-            "title": "Permission Codes"
+            "title": "Permission Codes",
+            "description": "分配给角色的权限代码列表"
           }
         },
         "additionalProperties": false,
@@ -4487,15 +4667,18 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "资源名称"
           },
           "description": {
             "anyOf": [
@@ -4506,28 +4689,33 @@
                 "type": "null"
               }
             ],
-            "title": "Description"
+            "title": "Description",
+            "description": "资源说明文本"
           },
           "is_active": {
             "type": "boolean",
-            "title": "Is Active"
+            "title": "Is Active",
+            "description": "资源当前是否启用"
           },
           "permissions": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Permissions"
+            "title": "Permissions",
+            "description": "当前主体拥有的权限代码列表"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "创建时间"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "最近更新时间"
           }
         },
         "additionalProperties": false,
@@ -4549,15 +4737,18 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "code": {
             "type": "string",
-            "title": "Code"
+            "title": "Code",
+            "description": "稳定程序代码"
           },
           "name": {
             "type": "string",
-            "title": "Name"
+            "title": "Name",
+            "description": "资源名称"
           }
         },
         "additionalProperties": false,
@@ -4582,7 +4773,8 @@
                 "type": "null"
               }
             ],
-            "title": "Name"
+            "title": "Name",
+            "description": "资源名称"
           },
           "description": {
             "anyOf": [
@@ -4593,7 +4785,8 @@
                 "type": "null"
               }
             ],
-            "title": "Description"
+            "title": "Description",
+            "description": "资源说明文本"
           },
           "is_active": {
             "anyOf": [
@@ -4604,7 +4797,8 @@
                 "type": "null"
               }
             ],
-            "title": "Is Active"
+            "title": "Is Active",
+            "description": "资源当前是否启用"
           }
         },
         "additionalProperties": false,
@@ -4616,7 +4810,8 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "device_name": {
             "anyOf": [
@@ -4627,7 +4822,8 @@
                 "type": "null"
               }
             ],
-            "title": "Device Name"
+            "title": "Device Name",
+            "description": "登录设备名称"
           },
           "ip_masked": {
             "anyOf": [
@@ -4638,7 +4834,8 @@
                 "type": "null"
               }
             ],
-            "title": "Ip Masked"
+            "title": "Ip Masked",
+            "description": "脱敏后的请求来源 IP 地址"
           },
           "user_agent_summary": {
             "anyOf": [
@@ -4649,31 +4846,37 @@
                 "type": "null"
               }
             ],
-            "title": "User Agent Summary"
+            "title": "User Agent Summary",
+            "description": "脱敏后的客户端标识摘要"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "创建时间"
           },
           "last_seen_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Last Seen At"
+            "title": "Last Seen At",
+            "description": "会话最近活动时间"
           },
           "idle_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Idle Expires At"
+            "title": "Idle Expires At",
+            "description": "会话空闲过期时间"
           },
           "absolute_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Absolute Expires At"
+            "title": "Absolute Expires At",
+            "description": "会话绝对过期时间"
           },
           "is_current": {
             "type": "boolean",
-            "title": "Is Current"
+            "title": "Is Current",
+            "description": "是否为当前登录会话"
           },
           "revoked_at": {
             "anyOf": [
@@ -4685,7 +4888,8 @@
                 "type": "null"
               }
             ],
-            "title": "Revoked At"
+            "title": "Revoked At",
+            "description": "会话撤销时间"
           }
         },
         "additionalProperties": false,
@@ -4708,7 +4912,8 @@
         "properties": {
           "is_active": {
             "type": "boolean",
-            "title": "Is Active"
+            "title": "Is Active",
+            "description": "资源当前是否启用"
           }
         },
         "additionalProperties": false,
@@ -4726,7 +4931,8 @@
               "available",
               "unavailable"
             ],
-            "title": "Status"
+            "title": "Status",
+            "description": "当前状态代码"
           }
         },
         "additionalProperties": false,
@@ -4739,27 +4945,32 @@
       "UserAuthSessionOut": {
         "properties": {
           "principal": {
-            "$ref": "#/components/schemas/UserPrincipalOut"
+            "$ref": "#/components/schemas/UserPrincipalOut",
+            "description": "当前认证主体信息"
           },
           "session_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Session Id"
+            "title": "Session Id",
+            "description": "登录会话唯一标识"
           },
           "access_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Access Expires At"
+            "title": "Access Expires At",
+            "description": "访问凭据过期时间"
           },
           "idle_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Idle Expires At"
+            "title": "Idle Expires At",
+            "description": "会话空闲过期时间"
           },
           "absolute_expires_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Absolute Expires At"
+            "title": "Absolute Expires At",
+            "description": "会话绝对过期时间"
           }
         },
         "additionalProperties": false,
@@ -4777,7 +4988,8 @@
         "properties": {
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "description": "登录用户名"
           },
           "password": {
             "type": "string",
@@ -4800,11 +5012,13 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "title": "Id"
+            "title": "Id",
+            "description": "资源唯一标识"
           },
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "description": "登录用户名"
           },
           "display_name": {
             "anyOf": [
@@ -4815,7 +5029,8 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "展示名称"
           },
           "email": {
             "anyOf": [
@@ -4826,21 +5041,25 @@
                 "type": "null"
               }
             ],
-            "title": "Email"
+            "title": "Email",
+            "description": "电子邮箱地址"
           },
           "is_active": {
             "type": "boolean",
-            "title": "Is Active"
+            "title": "Is Active",
+            "description": "资源当前是否启用"
           },
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "description": "创建时间"
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "description": "最近更新时间"
           }
         },
         "additionalProperties": false,
@@ -4860,7 +5079,8 @@
         "properties": {
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "description": "登录用户名"
           },
           "password": {
             "type": "string",
@@ -4879,7 +5099,8 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "展示名称"
           },
           "email": {
             "anyOf": [
@@ -4891,7 +5112,8 @@
                 "type": "null"
               }
             ],
-            "title": "Email"
+            "title": "Email",
+            "description": "电子邮箱地址"
           }
         },
         "additionalProperties": false,
@@ -4914,7 +5136,8 @@
                 "type": "null"
               }
             ],
-            "title": "Display Name"
+            "title": "Display Name",
+            "description": "展示名称"
           },
           "email": {
             "anyOf": [
@@ -4926,7 +5149,8 @@
                 "type": "null"
               }
             ],
-            "title": "Email"
+            "title": "Email",
+            "description": "电子邮箱地址"
           }
         },
         "additionalProperties": false,
@@ -4947,22 +5171,27 @@
               ]
             },
             "type": "array",
-            "title": "Location"
+            "title": "Location",
+            "description": "错误字段在请求中的位置"
           },
           "msg": {
             "type": "string",
-            "title": "Message"
+            "title": "Message",
+            "description": "参数校验错误消息"
           },
           "type": {
             "type": "string",
-            "title": "Error Type"
+            "title": "Error Type",
+            "description": "参数校验错误类型"
           },
           "input": {
-            "title": "Input"
+            "title": "Input",
+            "description": "引发校验错误的输入值，敏感内容可能被省略"
           },
           "ctx": {
             "type": "object",
-            "title": "Context"
+            "title": "Context",
+            "description": "参数校验错误的补充上下文"
           }
         },
         "type": "object",

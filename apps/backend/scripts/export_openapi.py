@@ -13,10 +13,14 @@ if str(BACKEND_ROOT) not in sys.path:
 
 
 def export_openapi(output: Path) -> None:
-    from app.main import app
+    from app.core.config import Settings
+    from app.main import create_app
 
+    # Contract generation uses declared defaults and must not depend on local runtime secrets or overrides.
+    settings = Settings.model_construct()
+    schema = create_app(settings).openapi()
     output.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(app.openapi(), ensure_ascii=False, indent=2) + "\n"
+    payload = json.dumps(schema, ensure_ascii=False, indent=2) + "\n"
     descriptor, temporary_name = tempfile.mkstemp(prefix=f"{output.name}.", suffix=".tmp", dir=output.parent)
     try:
         with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:

@@ -72,9 +72,12 @@ ADMIN_TOKEN_HMAC_KEY=<至少32字节的独立密钥>
 AUTH_COOKIE_SECURE=true
 REGISTRATION_MODE=closed
 REQUEST_LOG_MODE=disabled
+LOG_FILE_ENABLED=false
 ```
 
-真实密码、域名和镜像 digest 不得写入仓库。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
+真实密码、域名和镜像 digest 不得写入仓库。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
+
+PostgreSQL 18 的命名卷挂载到 `/var/lib/postgresql`。已有 PostgreSQL 17 及以下数据卷不能通过直接改挂载路径完成升级，必须先验证备份，再按独立迁移方案恢复到 PostgreSQL 18 新卷。
 
 ## 5. 迁移、权限与初始管理员
 
@@ -129,3 +132,5 @@ docker compose --env-file .env -f compose.prod.yml run --rm backend python -m sc
 ## 7. 停止与回滚边界
 
 验证用途的本地容器可执行 `docker compose down`。生产环境只使用发布与部署工作流提供的固定 digest，禁止使用 `latest`、分支标签或临时重建旧版本。数据库迁移和恢复需要单独的备份、评审与授权。
+
+1Panel 的完整目录、配置、迁移、OpenResty、日志、备份和回滚步骤见[1Panel 单机生产运行手册](1panel-production-runbook.md)。

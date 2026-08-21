@@ -86,11 +86,19 @@ Route / Page
 
 ## 7. 自动门禁
 
-阶段 A 使用 `scripts/ci/check-module-boundaries.ps1` 检查可以从静态路径和导入语句确定的违规：
+仓库使用两层机械门禁：
+
+- `scripts/ci/check-module-boundaries.ps1` 检查目录、依赖声明和可由文本路径确认的违规。
+- `scripts/ci/check-typescript-boundaries.mjs` 使用 Web 已安装的 TypeScript 5.9 Compiler API 构建 Admin、Web 静态依赖图。
+
+当前门禁检查：
 
 - 应用之间的直接源码引用。
 - Frontend Feature 之间的内部路径引用。
 - Backend 领域之间对 Repository、Model 和内部 Service 的直接引用。
 - `packages/` 反向依赖 `apps/`。
+- Frontend Feature 只能通过目标 Feature 的 `index` 公开入口协作。
+- 静态 `import`、`export`、可解析的 `import()` 和 `require()` 不能绕过应用或 Feature 边界。
+- Admin 和 Web 依赖图不得形成循环。
 
-后续代码结构进入 `ready` 后，工程基础设施计划必须补充 Python 架构测试和 TypeScript 依赖图检查，验证动态导入、路径别名、循环依赖和公开入口。脚本无法证明的语义边界继续由测试和评审承担，不能把简单文本扫描表述成完整架构验证。
+Backend 继续由 import-linter 合同验证 Python 依赖方向。`pnpm check:boundaries` 顺序运行两层仓库门禁，`pnpm check:guards` 使用合法公开入口、动态越界、循环依赖和跨应用引用正反例验证门禁本身。运行时拼接路径、远程模块和业务语义仍由测试与评审承担。

@@ -22,6 +22,8 @@ export type AccountDeleteIn = {
 export type ActionResult = {
     /**
      * Completed
+     *
+     * 操作是否已经完成
      */
     completed?: boolean;
 };
@@ -30,21 +32,32 @@ export type ActionResult = {
  * AdminAuthSessionOut
  */
 export type AdminAuthSessionOut = {
+    /**
+     * 当前认证主体信息
+     */
     principal: AdminRead;
     /**
      * Session Id
+     *
+     * 登录会话唯一标识
      */
     session_id: string;
     /**
      * Access Expires At
+     *
+     * 访问凭据过期时间
      */
     access_expires_at: string;
     /**
      * Idle Expires At
+     *
+     * 会话空闲过期时间
      */
     idle_expires_at: string;
     /**
      * Absolute Expires At
+     *
+     * 会话绝对过期时间
      */
     absolute_expires_at: string;
 };
@@ -59,6 +72,9 @@ export type AdminConfirmIn = {
      * 当前密码，最多 64 个字符
      */
     current_password: string;
+    /**
+     * 操作代码
+     */
     action: ConfirmationAction;
 };
 
@@ -68,11 +84,18 @@ export type AdminConfirmIn = {
 export type AdminConfirmOut = {
     /**
      * Confirmation Token
+     *
+     * 敏感操作短期确认凭据
      */
     confirmation_token: string;
+    /**
+     * 操作代码
+     */
     action: ConfirmationAction;
     /**
      * Expires At
+     *
+     * 凭据过期时间
      */
     expires_at: string;
 };
@@ -83,6 +106,8 @@ export type AdminConfirmOut = {
 export type AdminCreateIn = {
     /**
      * Username
+     *
+     * 登录用户名
      */
     username: string;
     /**
@@ -93,18 +118,26 @@ export type AdminCreateIn = {
     initial_password: string;
     /**
      * Display Name
+     *
+     * 展示名称
      */
     display_name?: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active?: boolean;
     /**
      * Is Superuser
+     *
+     * 管理员是否拥有超级管理员身份
      */
     is_superuser?: boolean;
     /**
      * Role Ids
+     *
+     * 分配给管理员的角色唯一标识列表
      */
     role_ids?: Array<string>;
 };
@@ -115,6 +148,8 @@ export type AdminCreateIn = {
 export type AdminLoginIn = {
     /**
      * Username
+     *
+     * 登录用户名
      */
     username: string;
     /**
@@ -131,38 +166,56 @@ export type AdminLoginIn = {
 export type AdminRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Username
+     *
+     * 登录用户名
      */
     username: string;
     /**
      * Display Name
+     *
+     * 展示名称
      */
     display_name: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active: boolean;
     /**
      * Is Superuser
+     *
+     * 管理员是否拥有超级管理员身份
      */
     is_superuser: boolean;
     /**
      * Roles
+     *
+     * 管理员当前拥有的角色列表
      */
     roles: Array<RoleSummary>;
     /**
      * Permissions
+     *
+     * 当前主体拥有的权限代码列表
      */
     permissions: Array<string>;
     /**
      * Created At
+     *
+     * 创建时间
      */
     created_at: string;
     /**
      * Updated At
+     *
+     * 最近更新时间
      */
     updated_at: string;
 };
@@ -173,6 +226,8 @@ export type AdminRead = {
 export type AdminRoleAssignIn = {
     /**
      * Role Ids
+     *
+     * 分配给管理员的角色唯一标识列表
      */
     role_ids: Array<string>;
 };
@@ -183,10 +238,14 @@ export type AdminRoleAssignIn = {
 export type AdminUpdateIn = {
     /**
      * Display Name
+     *
+     * 展示名称
      */
     display_name?: string | null;
     /**
      * Is Superuser
+     *
+     * 管理员是否拥有超级管理员身份
      */
     is_superuser?: boolean | null;
 };
@@ -197,44 +256,64 @@ export type AdminUpdateIn = {
 export type AuditEventRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Actor Id
+     *
+     * 操作管理员唯一标识
      */
     actor_id: string | null;
     /**
      * Action
+     *
+     * 操作代码
      */
     action: string;
     /**
      * Target Type
+     *
+     * 操作目标类型
      */
     target_type: string;
     /**
      * Target Id
+     *
+     * 操作目标唯一标识
      */
     target_id: string | null;
     /**
      * Result
+     *
+     * 操作结果代码
      */
     result: string;
     /**
      * Changed Fields
+     *
+     * 本次操作涉及的字段摘要
      */
     changed_fields: {
         [key: string]: unknown;
     };
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
     /**
      * Occurred At
+     *
+     * 事件发生时间
      */
     occurred_at: string;
     /**
      * Completed At
+     *
+     * 操作完成时间
      */
     completed_at: string | null;
 };
@@ -250,6 +329,8 @@ export type ConfirmationAction = 'users:disable' | 'users:credentials:reset' | '
 export type HttpValidationError = {
     /**
      * Detail
+     *
+     * 请求参数校验错误详情列表
      */
     detail?: Array<ValidationError>;
 };
@@ -260,6 +341,8 @@ export type HttpValidationError = {
 export type LiveStatus = {
     /**
      * Status
+     *
+     * 当前状态代码
      */
     status: 'alive';
 };
@@ -270,42 +353,62 @@ export type LiveStatus = {
 export type LoginEventRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Principal Type
+     *
+     * 认证主体类型
      */
     principal_type: string;
     /**
      * Principal Id
+     *
+     * 认证主体唯一标识
      */
     principal_id: string | null;
     /**
      * Event Type
+     *
+     * 安全事件类型代码
      */
     event_type: string;
     /**
      * Succeeded
+     *
+     * 安全事件是否成功
      */
     succeeded: boolean;
     /**
      * Reason Code
+     *
+     * 事件原因代码
      */
     reason_code: string;
     /**
      * Ip Address
+     *
+     * 请求来源 IP 地址
      */
     ip_address: string | null;
     /**
      * User Agent Summary
+     *
+     * 脱敏后的客户端标识摘要
      */
     user_agent_summary: string | null;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
     /**
      * Occurred At
+     *
+     * 事件发生时间
      */
     occurred_at: string;
 };
@@ -316,22 +419,32 @@ export type LoginEventRead = {
 export type PageResultAdminRead = {
     /**
      * Items
+     *
+     * 当前分页中的资源列表
      */
     items: Array<AdminRead>;
     /**
      * Page
+     *
+     * 当前页码，从 1 开始
      */
     page: number;
     /**
      * Page Size
+     *
+     * 每页资源数量
      */
     page_size: number;
     /**
      * Total
+     *
+     * 符合条件的资源总数
      */
     total: number;
     /**
      * Total Pages
+     *
+     * 符合条件的总页数
      */
     total_pages: number;
 };
@@ -342,22 +455,32 @@ export type PageResultAdminRead = {
 export type PageResultAuditEventRead = {
     /**
      * Items
+     *
+     * 当前分页中的资源列表
      */
     items: Array<AuditEventRead>;
     /**
      * Page
+     *
+     * 当前页码，从 1 开始
      */
     page: number;
     /**
      * Page Size
+     *
+     * 每页资源数量
      */
     page_size: number;
     /**
      * Total
+     *
+     * 符合条件的资源总数
      */
     total: number;
     /**
      * Total Pages
+     *
+     * 符合条件的总页数
      */
     total_pages: number;
 };
@@ -368,22 +491,32 @@ export type PageResultAuditEventRead = {
 export type PageResultLoginEventRead = {
     /**
      * Items
+     *
+     * 当前分页中的资源列表
      */
     items: Array<LoginEventRead>;
     /**
      * Page
+     *
+     * 当前页码，从 1 开始
      */
     page: number;
     /**
      * Page Size
+     *
+     * 每页资源数量
      */
     page_size: number;
     /**
      * Total
+     *
+     * 符合条件的资源总数
      */
     total: number;
     /**
      * Total Pages
+     *
+     * 符合条件的总页数
      */
     total_pages: number;
 };
@@ -394,22 +527,32 @@ export type PageResultLoginEventRead = {
 export type PageResultRequestLogRead = {
     /**
      * Items
+     *
+     * 当前分页中的资源列表
      */
     items: Array<RequestLogRead>;
     /**
      * Page
+     *
+     * 当前页码，从 1 开始
      */
     page: number;
     /**
      * Page Size
+     *
+     * 每页资源数量
      */
     page_size: number;
     /**
      * Total
+     *
+     * 符合条件的资源总数
      */
     total: number;
     /**
      * Total Pages
+     *
+     * 符合条件的总页数
      */
     total_pages: number;
 };
@@ -420,22 +563,32 @@ export type PageResultRequestLogRead = {
 export type PageResultRoleRead = {
     /**
      * Items
+     *
+     * 当前分页中的资源列表
      */
     items: Array<RoleRead>;
     /**
      * Page
+     *
+     * 当前页码，从 1 开始
      */
     page: number;
     /**
      * Page Size
+     *
+     * 每页资源数量
      */
     page_size: number;
     /**
      * Total
+     *
+     * 符合条件的资源总数
      */
     total: number;
     /**
      * Total Pages
+     *
+     * 符合条件的总页数
      */
     total_pages: number;
 };
@@ -446,22 +599,32 @@ export type PageResultRoleRead = {
 export type PageResultUserPrincipalOut = {
     /**
      * Items
+     *
+     * 当前分页中的资源列表
      */
     items: Array<UserPrincipalOut>;
     /**
      * Page
+     *
+     * 当前页码，从 1 开始
      */
     page: number;
     /**
      * Page Size
+     *
+     * 每页资源数量
      */
     page_size: number;
     /**
      * Total
+     *
+     * 符合条件的资源总数
      */
     total: number;
     /**
      * Total Pages
+     *
+     * 符合条件的总页数
      */
     total_pages: number;
 };
@@ -502,26 +665,38 @@ export type PasswordResetIn = {
 export type PermissionRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Name
+     *
+     * 资源名称
      */
     name: string;
     /**
      * Description
+     *
+     * 资源说明文本
      */
     description: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active: boolean;
     /**
      * Catalog Version
+     *
+     * 权限目录版本
      */
     catalog_version: string;
 };
@@ -532,10 +707,14 @@ export type PermissionRead = {
 export type ReadinessStatus = {
     /**
      * Status
+     *
+     * 当前状态代码
      */
     status: 'ready' | 'unavailable';
     /**
      * Checks
+     *
+     * 各项就绪依赖的安全状态摘要
      */
     checks: {
         [key: string]: string;
@@ -548,18 +727,26 @@ export type ReadinessStatus = {
 export type RefreshSessionOut = {
     /**
      * Session Id
+     *
+     * 登录会话唯一标识
      */
     session_id: string;
     /**
      * Access Expires At
+     *
+     * 访问凭据过期时间
      */
     access_expires_at: string;
     /**
      * Idle Expires At
+     *
+     * 会话空闲过期时间
      */
     idle_expires_at: string;
     /**
      * Absolute Expires At
+     *
+     * 会话绝对过期时间
      */
     absolute_expires_at: string;
 };
@@ -570,46 +757,68 @@ export type RefreshSessionOut = {
 export type RequestLogRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
     /**
      * Trace Id
+     *
+     * 用于关联跨组件调用链的唯一标识
      */
     trace_id: string;
     /**
      * Method
+     *
+     * HTTP 请求方法
      */
     method: string;
     /**
      * Route Template
+     *
+     * 规范化后的 API 路由模板
      */
     route_template: string;
     /**
      * Status Code
+     *
+     * HTTP 响应状态码
      */
     status_code: number;
     /**
      * Duration Ms
+     *
+     * 请求处理耗时，单位为毫秒
      */
     duration_ms: number;
     /**
      * Principal Type
+     *
+     * 认证主体类型
      */
     principal_type: string | null;
     /**
      * Release Version
+     *
+     * 处理请求的应用发布版本
      */
     release_version: string | null;
     /**
      * Occurred At
+     *
+     * 事件发生时间
      */
     occurred_at: string;
     /**
      * Request Body
+     *
+     * 脱敏并截断后的错误 JSON 请求体
      */
     request_body: string | null;
 };
@@ -620,15 +829,24 @@ export type RequestLogRead = {
 export type ResponseModelActionResult = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: ActionResult;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -639,15 +857,24 @@ export type ResponseModelActionResult = {
 export type ResponseModelAdminAuthSessionOut = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: AdminAuthSessionOut;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -658,15 +885,24 @@ export type ResponseModelAdminAuthSessionOut = {
 export type ResponseModelAdminConfirmOut = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: AdminConfirmOut;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -677,15 +913,24 @@ export type ResponseModelAdminConfirmOut = {
 export type ResponseModelAdminRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: AdminRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -696,15 +941,24 @@ export type ResponseModelAdminRead = {
 export type ResponseModelPageResultAdminRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: PageResultAdminRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -715,15 +969,24 @@ export type ResponseModelPageResultAdminRead = {
 export type ResponseModelPageResultAuditEventRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: PageResultAuditEventRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -734,15 +997,24 @@ export type ResponseModelPageResultAuditEventRead = {
 export type ResponseModelPageResultLoginEventRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: PageResultLoginEventRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -753,15 +1025,24 @@ export type ResponseModelPageResultLoginEventRead = {
 export type ResponseModelPageResultRequestLogRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: PageResultRequestLogRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -772,15 +1053,24 @@ export type ResponseModelPageResultRequestLogRead = {
 export type ResponseModelPageResultRoleRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: PageResultRoleRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -791,15 +1081,24 @@ export type ResponseModelPageResultRoleRead = {
 export type ResponseModelPageResultUserPrincipalOut = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: PageResultUserPrincipalOut;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -810,15 +1109,24 @@ export type ResponseModelPageResultUserPrincipalOut = {
 export type ResponseModelRefreshSessionOut = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: RefreshSessionOut;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -829,15 +1137,24 @@ export type ResponseModelRefreshSessionOut = {
 export type ResponseModelRoleRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: RoleRead;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -848,15 +1165,24 @@ export type ResponseModelRoleRead = {
 export type ResponseModelSystemStatus = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: SystemStatus;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -867,15 +1193,24 @@ export type ResponseModelSystemStatus = {
 export type ResponseModelUserAuthSessionOut = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: UserAuthSessionOut;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -886,15 +1221,24 @@ export type ResponseModelUserAuthSessionOut = {
 export type ResponseModelUserPrincipalOut = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
+    /**
+     * 响应业务数据
+     */
     data: UserPrincipalOut;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -905,18 +1249,26 @@ export type ResponseModelUserPrincipalOut = {
 export type ResponseModelBool = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
     /**
      * Data
+     *
+     * 响应业务数据
      */
     data: boolean;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -927,18 +1279,26 @@ export type ResponseModelBool = {
 export type ResponseModelListPermissionRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
     /**
      * Data
+     *
+     * 响应业务数据
      */
     data: Array<PermissionRead>;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -949,18 +1309,26 @@ export type ResponseModelListPermissionRead = {
 export type ResponseModelListSessionRead = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Message
+     *
+     * 面向调用方的中文结果消息
      */
     message: string;
     /**
      * Data
+     *
+     * 响应业务数据
      */
     data: Array<SessionRead>;
     /**
      * Request Id
+     *
+     * 用于定位本次请求的唯一标识
      */
     request_id: string;
 };
@@ -971,18 +1339,26 @@ export type ResponseModelListSessionRead = {
 export type RoleCreateIn = {
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Name
+     *
+     * 资源名称
      */
     name: string;
     /**
      * Description
+     *
+     * 资源说明文本
      */
     description?: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active?: boolean;
 };
@@ -993,6 +1369,8 @@ export type RoleCreateIn = {
 export type RolePermissionAssignIn = {
     /**
      * Permission Codes
+     *
+     * 分配给角色的权限代码列表
      */
     permission_codes: Array<string>;
 };
@@ -1003,34 +1381,50 @@ export type RolePermissionAssignIn = {
 export type RoleRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Name
+     *
+     * 资源名称
      */
     name: string;
     /**
      * Description
+     *
+     * 资源说明文本
      */
     description: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active: boolean;
     /**
      * Permissions
+     *
+     * 当前主体拥有的权限代码列表
      */
     permissions: Array<string>;
     /**
      * Created At
+     *
+     * 创建时间
      */
     created_at: string;
     /**
      * Updated At
+     *
+     * 最近更新时间
      */
     updated_at: string;
 };
@@ -1041,14 +1435,20 @@ export type RoleRead = {
 export type RoleSummary = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Code
+     *
+     * 稳定程序代码
      */
     code: string;
     /**
      * Name
+     *
+     * 资源名称
      */
     name: string;
 };
@@ -1059,14 +1459,20 @@ export type RoleSummary = {
 export type RoleUpdateIn = {
     /**
      * Name
+     *
+     * 资源名称
      */
     name?: string | null;
     /**
      * Description
+     *
+     * 资源说明文本
      */
     description?: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active?: boolean | null;
 };
@@ -1077,42 +1483,62 @@ export type RoleUpdateIn = {
 export type SessionRead = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Device Name
+     *
+     * 登录设备名称
      */
     device_name: string | null;
     /**
      * Ip Masked
+     *
+     * 脱敏后的请求来源 IP 地址
      */
     ip_masked: string | null;
     /**
      * User Agent Summary
+     *
+     * 脱敏后的客户端标识摘要
      */
     user_agent_summary: string | null;
     /**
      * Created At
+     *
+     * 创建时间
      */
     created_at: string;
     /**
      * Last Seen At
+     *
+     * 会话最近活动时间
      */
     last_seen_at: string;
     /**
      * Idle Expires At
+     *
+     * 会话空闲过期时间
      */
     idle_expires_at: string;
     /**
      * Absolute Expires At
+     *
+     * 会话绝对过期时间
      */
     absolute_expires_at: string;
     /**
      * Is Current
+     *
+     * 是否为当前登录会话
      */
     is_current: boolean;
     /**
      * Revoked At
+     *
+     * 会话撤销时间
      */
     revoked_at: string | null;
 };
@@ -1123,6 +1549,8 @@ export type SessionRead = {
 export type StatusUpdateIn = {
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active: boolean;
 };
@@ -1133,6 +1561,8 @@ export type StatusUpdateIn = {
 export type SystemStatus = {
     /**
      * Status
+     *
+     * 当前状态代码
      */
     status: 'available' | 'unavailable';
 };
@@ -1141,21 +1571,32 @@ export type SystemStatus = {
  * UserAuthSessionOut
  */
 export type UserAuthSessionOut = {
+    /**
+     * 当前认证主体信息
+     */
     principal: UserPrincipalOut;
     /**
      * Session Id
+     *
+     * 登录会话唯一标识
      */
     session_id: string;
     /**
      * Access Expires At
+     *
+     * 访问凭据过期时间
      */
     access_expires_at: string;
     /**
      * Idle Expires At
+     *
+     * 会话空闲过期时间
      */
     idle_expires_at: string;
     /**
      * Absolute Expires At
+     *
+     * 会话绝对过期时间
      */
     absolute_expires_at: string;
 };
@@ -1166,6 +1607,8 @@ export type UserAuthSessionOut = {
 export type UserLoginIn = {
     /**
      * Username
+     *
+     * 登录用户名
      */
     username: string;
     /**
@@ -1182,30 +1625,44 @@ export type UserLoginIn = {
 export type UserPrincipalOut = {
     /**
      * Id
+     *
+     * 资源唯一标识
      */
     id: string;
     /**
      * Username
+     *
+     * 登录用户名
      */
     username: string;
     /**
      * Display Name
+     *
+     * 展示名称
      */
     display_name: string | null;
     /**
      * Email
+     *
+     * 电子邮箱地址
      */
     email: string | null;
     /**
      * Is Active
+     *
+     * 资源当前是否启用
      */
     is_active: boolean;
     /**
      * Created At
+     *
+     * 创建时间
      */
     created_at: string;
     /**
      * Updated At
+     *
+     * 最近更新时间
      */
     updated_at: string;
 };
@@ -1216,6 +1673,8 @@ export type UserPrincipalOut = {
 export type UserRegisterIn = {
     /**
      * Username
+     *
+     * 登录用户名
      */
     username: string;
     /**
@@ -1226,10 +1685,14 @@ export type UserRegisterIn = {
     password: string;
     /**
      * Display Name
+     *
+     * 展示名称
      */
     display_name?: string | null;
     /**
      * Email
+     *
+     * 电子邮箱地址
      */
     email?: string | null;
 };
@@ -1240,10 +1703,14 @@ export type UserRegisterIn = {
 export type UserUpdateIn = {
     /**
      * Display Name
+     *
+     * 展示名称
      */
     display_name?: string | null;
     /**
      * Email
+     *
+     * 电子邮箱地址
      */
     email?: string | null;
 };
@@ -1254,22 +1721,32 @@ export type UserUpdateIn = {
 export type ValidationError = {
     /**
      * Location
+     *
+     * 错误字段在请求中的位置
      */
     loc: Array<string | number>;
     /**
      * Message
+     *
+     * 参数校验错误消息
      */
     msg: string;
     /**
      * Error Type
+     *
+     * 参数校验错误类型
      */
     type: string;
     /**
      * Input
+     *
+     * 引发校验错误的输入值，敏感内容可能被省略
      */
     input?: unknown;
     /**
      * Context
+     *
+     * 参数校验错误的补充上下文
      */
     ctx?: {
         [key: string]: unknown;

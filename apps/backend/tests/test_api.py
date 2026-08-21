@@ -77,6 +77,17 @@ def _documentation_texts(node: Any) -> list[str]:
     return values
 
 
+def _schema_property_descriptions(schema: dict[str, Any]) -> list[tuple[str, str, str | None]]:
+    descriptions: list[tuple[str, str, str | None]] = []
+    for schema_name, component in schema.get("components", {}).get("schemas", {}).items():
+        if not isinstance(component, dict):
+            continue
+        for field_name, field_schema in component.get("properties", {}).items():
+            description = field_schema.get("description") if isinstance(field_schema, dict) else None
+            descriptions.append((schema_name, field_name, description))
+    return descriptions
+
+
 def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
     from app.main import app
 
@@ -84,6 +95,13 @@ def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
     texts = _documentation_texts(schema)
     assert texts
     assert all(re.search(r"[\u3400-\u4dbf\u4e00-\u9fff]", text) for text in texts), texts
+    property_descriptions = _schema_property_descriptions(schema)
+    assert property_descriptions
+    missing = [(schema_name, field_name) for schema_name, field_name, text in property_descriptions if not text]
+    assert not missing
+    assert all(
+        re.search(r"[\u3400-\u4dbf\u4e00-\u9fff]", text) for _, _, text in property_descriptions if text is not None
+    )
     assert {tag["name"] for tag in schema["tags"]} == {
         "用户认证",
         "用户账户",

@@ -53,6 +53,31 @@
 
 验证不能只执行 `SELECT 1`。派生项目必须定义不泄露敏感数据的关键行数、约束状态、引用完整性和业务摘要检查。
 
+### 5.1 母版本地演练入口
+
+`apps/backend/scripts/verify_local_database_recovery.py` 从 Backend Settings 读取 `TEST_DATABASE_URL`，只接受本机 PostgreSQL 和以 `_test` 结尾的数据库。测试角色必须仅在本地具有创建演练数据库的权限。
+
+在 `apps/backend` 目录执行：
+
+```powershell
+uv run python -m scripts.verify_local_database_recovery `
+  --migration-database pinjie_migration_test `
+  --restore-database pinjie_restore_test `
+  --confirm-source-database pinjie_fullstack_test `
+  --confirm-migration-database pinjie_migration_test `
+  --confirm-restore-database pinjie_restore_test
+```
+
+脚本按顺序验证：
+
+1. 源测试库升级、重复升级和 `alembic check`。
+2. 新建空迁移库并执行升级、重复升级和 `alembic check`。
+3. 调用 `scripts/operations/test-postgres-backup-restore.ps1` 完成 custom format 备份和恢复。
+4. 比对 Alembic revision、public 表清单、逐表行数、约束数量和未验证约束。
+5. 默认删除自己创建的迁移库、恢复库和临时 dump。
+
+源库、迁移库和恢复库必须互不相同，三个确认值必须逐字匹配。目标恢复库已经存在时脚本拒绝覆盖。脚本不会输出密码，凭据只通过子进程环境传递。
+
 ## 6. 生产恢复
 
 生产恢复前必须确认：

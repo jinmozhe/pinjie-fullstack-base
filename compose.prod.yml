@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
@@ -35,6 +35,8 @@ services:
       - "127.0.0.1:8000:8000"
     env_file:
       - apps/backend/.env
+    environment:
+      LOG_FILE_ENABLED: "false"
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,6 +54,8 @@ services:
     command: ["python", "-m", "scripts.consume_request_logs"]
     env_file:
       - apps/backend/.env
+    environment:
+      LOG_FILE_ENABLED: "false"
     depends_on:
       postgres:
         condition: service_healthy
