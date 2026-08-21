@@ -66,6 +66,24 @@ flowchart TD
 
 `git push` 只上传已经提交的 Git 对象。本地未提交修改和未跟踪文件不会进入 GitHub，也不会被对应 Actions Run 检查。
 
+### 3.1 远端仓库治理基线
+
+截至 2026-08-21，GitHub 远端按单维护者基线配置：
+
+- Dependabot vulnerability alerts、Secret Scanning、Push Protection 和 Private
+  Vulnerability Reporting 已启用；Dependabot security updates 按人工依赖 PR 决策保持关闭。
+- Actions 只允许 GitHub-owned Actions，以及仓库现有工作流使用的 9 个明确第三方
+  Action；`sha_pinning_required=true`，所有 Action 必须固定完整 Commit SHA。
+- active Ruleset `Protect main`（ID `21152538`）作用于默认分支，禁止删除和非快进更新，
+  要求 Pull Request、会话解决和 13 个自动状态检查。
+- Ruleset 审批数为 0，用户 `jinmozhe` 保留 always bypass。当前只有一位维护者，无法提供
+  独立 PR 审批；增加第二位可信维护者后，应要求至少 1 次独立审批并重新评估 bypass。
+- `production` Environment（ID `20337656537`）只允许受保护分支，必要 Reviewer 为
+  `jinmozhe`，`prevent_self_review=false`，当前 Secrets 和 Variables 均为 0。
+
+单维护者基线提供自动门禁和明确恢复路径，但不等同于职责分离。生产部署仍需单独授权；
+当前 Environment 自审、管理员 bypass 和 Ruleset bypass 均属于已知剩余风险。
+
 ## 4. Push 后的执行顺序
 
 GitHub 收到新提交后，会为同一个 Commit SHA 创建四个相互独立的 Workflow Run：

@@ -41,6 +41,11 @@
 - 私有仓库静态代码扫描使用固定版本的 Semgrep Community Edition 和官方 `p/default` 规则集，在 CI Runner 内本地执行，不依赖云端账号或源码上传；`--error --strict` 确保安全发现、规则或解析警告和内部错误都使门禁失败，`--metrics off` 禁止使用指标上报。
 - Python 和 Node.js 新发布依赖默认经过七天冷却期后才可进入新的解析结果；pnpm 同时拒绝奇异传递依赖和包信任等级降级。历史依赖只允许精确包版本例外，紧急安全更新必须单独评审，不得永久关闭整项供应链策略。
 - 已知高危问题不得通过无期限豁免、`continue-on-error` 或静默降级绕过。
+- GitHub 远端启用漏洞告警、Secret Scanning、Push Protection 和 Private Vulnerability
+  Reporting；Dependabot security updates 保持关闭，依赖修复继续通过人工计划、评审和验证交付。
+- Actions 仅允许 GitHub-owned Actions 与当前工作流明确列出的第三方 Action，并要求完整
+  Commit SHA Pinning；`main` Ruleset 和 `production` Environment 的单维护者审批风险以
+  [GitHub Actions 工作流说明](docs/operations/github-actions-workflows.md)为当前事实来源。
 
 详细边界见：
 

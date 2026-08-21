@@ -6,6 +6,8 @@
 
 ### Added
 
+- 增加 Web App Router PNG favicon，使用 Next.js `ImageResponse` 生成业务中立的 Pinjie 图标，并通过 production build、桌面和移动浏览器及真实资源响应检查。
+- 建立 GitHub 单维护者远端治理基线：启用漏洞告警、Secret Scanning、Push Protection 和私密漏洞报告，限制 Actions 来源并要求完整 SHA Pinning，为 `main` 配置 Ruleset，并预创建不含 Secrets 或 Variables 的 `production` Environment。
 - 增加基于 TypeScript Compiler API 的前端依赖图门禁，覆盖跨应用引用、Feature 内部越界、循环依赖和可静态解析的动态导入，并提供正反例。
 - 增加 PostgreSQL 本地迁移与备份恢复演练工具，强制使用独立 `_test` 数据库并校验 revision、表、行数和约束。
 - 增加 1Panel 单机生产运行手册，覆盖不可变镜像、环境变量、迁移、健康检查、日志、备份恢复和回滚边界。
