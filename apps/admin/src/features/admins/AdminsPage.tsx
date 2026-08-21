@@ -78,3 +78,5 @@ export function AdminsPage() {
     </PageFrame>
   );
 }
+
+export default AdminsPage;

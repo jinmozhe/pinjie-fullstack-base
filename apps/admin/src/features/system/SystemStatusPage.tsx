@@ -37,3 +37,5 @@ export function SystemStatusPage() {
     </main>
   );
 }
+
+export default SystemStatusPage;

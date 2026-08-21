@@ -78,3 +78,5 @@ export function RolesPage() {
     </PageFrame>
   );
 }
+
+export default RolesPage;

@@ -45,6 +45,8 @@
 
 ### Fixed
 
+- 修复 Admin 五个受保护页面只提供命名导出，导致 Umi production lazy route 触发 React 306 错误的问题；用户、管理员、角色、安全和系统状态页面现同时提供路由所需的默认导出。
+- 修复 Web 主动退出期间迟到的用户或会话请求 401 覆盖预期 `/login` 跳转的问题；退出发起前显式中止在途读取并增加竞态回归测试。
 - 修复 CI 暴露的 Backend Ruff 格式不一致和 Web 测试 matcher 类型缺失问题；Web TypeScript 现在显式加载 Vitest 与 Testing Library matcher 类型。
 - 修复 GitHub CI 的 Alembic `request_logs` 表注释漂移，并修正 Admin Umi 代理在 Linux CI 下改写 Origin 导致登录 403 的问题。
 - 修复 Browser E2E 在 Admin 登录跳转后读取已释放响应体和过早启动的问题，为 Umi 初始 HTML 补齐页面标题、中文语言属性和允许缩放的 viewport；E2E 模式关闭 MFSU，只在 `/umi.js` 返回 JavaScript Content-Type 后启动浏览器测试，并在解析登录响应前校验 JSON Content-Type。
@@ -81,4 +83,4 @@
 
 - 增加 Admin 本地运行与验证排障手册，明确 Umi 启动目录和端口、生成缓存、jsdom 测试、浏览器兜底验证、真实跨栈前置条件，以及 Windows 系统故障与应用故障的证据边界；同步根和 Admin 级长期规则。
 - 完成 Admin 技术栈文档一致性审计：根 README、架构 ADR、环境变量手册、项目结构索引和历史原始方案均已区分当前 Ant Design Pro v6/Umi Max 实现与旧方案记录。
-- 完成母版开发总结和一致性文档收尾：同步根与三端 README、项目结构、依赖白名单来源、历史方案边界、数据库恢复、生产运行文档、67 项需求追踪及 13 条母版验收矩阵；当前未执行的质量、容器和 Browser E2E 保持待验证。
+- 完成母版开发总结和一致性收尾：同步根与三端 README、项目结构、依赖白名单来源、历史方案边界、数据库恢复、生产运行文档、67 项需求追踪及 13 条母版验收矩阵，并完成三端质量、容器、文件日志和桌面/移动 Browser E2E 最终验收。

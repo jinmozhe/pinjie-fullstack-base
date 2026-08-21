@@ -19,6 +19,10 @@ export class ApiError extends Error {
 let refreshPromise: Promise<boolean> | null = null;
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+function throwIfCancelled(signal?: globalThis.AbortSignal): void {
+  if (signal?.aborted) throw signal.reason ?? new Error("Request cancelled");
+}
+
 function readCookie(name: string): string | undefined {
   const prefix = `${encodeURIComponent(name)}=`;
   const item = document.cookie.split("; ").find((value) => value.startsWith(prefix));
@@ -52,7 +56,13 @@ async function refreshSession(): Promise<boolean> {
   return refreshPromise;
 }
 
-export async function webRequest<T>(path: string, init: RequestInit = {}, retryAuth = true): Promise<T> {
+export async function webRequest<T>(
+  path: string,
+  init: RequestInit = {},
+  retryAuth = true,
+  cancellationSignal?: globalThis.AbortSignal,
+): Promise<T> {
+  throwIfCancelled(cancellationSignal);
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -62,8 +72,11 @@ export async function webRequest<T>(path: string, init: RequestInit = {}, retryA
     if (csrf) headers.set("X-CSRF-Token", csrf);
   }
   const response = await fetch(new URL(path, window.location.origin), { ...init, method, headers, credentials: "include" });
+  throwIfCancelled(cancellationSignal);
   if (response.status === 401 && retryAuth && !path.startsWith("/api/v1/auth/")) {
-    if (await refreshSession()) return webRequest<T>(path, init, false);
+    const refreshed = await refreshSession();
+    throwIfCancelled(cancellationSignal);
+    if (refreshed) return webRequest<T>(path, init, false, cancellationSignal);
   }
   if (response.status === 401 && !path.startsWith("/api/v1/auth/")) {
     window.dispatchEvent(new Event("pinjie:session-expired"));

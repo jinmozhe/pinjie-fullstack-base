@@ -108,3 +108,5 @@ export function UsersPage() {
     </PageFrame>
   );
 }
+
+export default UsersPage;

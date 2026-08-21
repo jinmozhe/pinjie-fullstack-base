@@ -11,6 +11,7 @@ import { server } from "@/test/setup";
 import { Providers } from "../app/providers";
 import { AccountCenter } from "./account/AccountCenter";
 import { AuthForm } from "./auth/AuthForm";
+import { webAuthApi } from "./auth/api";
 
 const replace = vi.fn();
 const refresh = vi.fn();
@@ -121,6 +122,25 @@ describe("stage C web account", () => {
     await user.click(screen.getByRole("button", { name: "撤销其他设备" }));
     await user.click(screen.getByRole("button", { name: "退出" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
+  });
+
+  it("aborts an in-flight session request before signing out", async () => {
+    let sessionSignal: globalThis.AbortSignal | undefined;
+    const sessions = vi.spyOn(webAuthApi, "sessions").mockImplementation((signal) => {
+      sessionSignal = signal;
+      return new Promise(() => undefined);
+    });
+    try {
+      const user = userEvent.setup();
+      renderWithQuery(<AccountCenter initialUser={initialUser} />);
+      await user.click(screen.getByRole("button", { name: /登录设备/ }));
+      await waitFor(() => expect(sessionSignal).toBeDefined());
+      await user.click(screen.getByRole("button", { name: "退出" }));
+      await waitFor(() => expect(sessionSignal?.aborted).toBe(true));
+      await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
+    } finally {
+      sessions.mockRestore();
+    }
   });
 
   it("shows and revokes other active sessions while retaining revoked history", async () => {

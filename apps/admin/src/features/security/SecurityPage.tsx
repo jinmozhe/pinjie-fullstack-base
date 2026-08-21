@@ -104,3 +104,5 @@ export function SecurityPage() {
     { key: "request", label: "请求元数据", children: <RequestLogs /> },
   ]} /></PageFrame>;
 }
+
+export default SecurityPage;

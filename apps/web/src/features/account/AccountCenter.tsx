@@ -6,7 +6,7 @@ import { AlertTriangle, Check, KeyRound, Laptop, LogOut, ShieldCheck, Trash2, Us
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { webAuthApi } from "@/features/auth";
 import { errorMessage } from "@/lib/api/http";
@@ -32,15 +32,19 @@ function StatusMessage({ error, success }: { error?: unknown; success?: string }
 export function AccountCenter({ initialUser }: { initialUser: UserPrincipalOut }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const requestController = useRef(new globalThis.AbortController());
   const [section, setSection] = useState<Section>("profile");
   const [notice, setNotice] = useState<string>();
   const logout = useMutation({
     mutationFn: webAuthApi.logout,
-    onMutate: () => queryClient.cancelQueries(),
+    onMutate: () => {
+      requestController.current.abort();
+      return queryClient.cancelQueries();
+    },
     onSettled: () => { queryClient.clear(); router.replace("/login"); router.refresh(); },
   });
-  const user = useQuery({ queryKey: ["web-me"], queryFn: webAuthApi.me, initialData: initialUser, enabled: !logout.isPending });
-  const sessions = useQuery({ queryKey: ["web-sessions"], queryFn: webAuthApi.sessions, enabled: section === "sessions" && !logout.isPending });
+  const user = useQuery({ queryKey: ["web-me"], queryFn: () => webAuthApi.me(requestController.current.signal), initialData: initialUser, enabled: !logout.isPending });
+  const sessions = useQuery({ queryKey: ["web-sessions"], queryFn: () => webAuthApi.sessions(requestController.current.signal), enabled: section === "sessions" && !logout.isPending });
   const update = useMutation({ mutationFn: webAuthApi.update, onSuccess: (next) => { queryClient.setQueryData(["web-me"], next); setNotice("个人资料已保存"); router.refresh(); } });
   const password = useMutation({ mutationFn: ({ current, next }: { current: string; next: string }) => webAuthApi.changePassword(current, next), onSuccess: () => { queryClient.clear(); router.replace("/login?reason=password-changed"); router.refresh(); } });
   const remove = useMutation({ mutationFn: webAuthApi.revokeSession, onSuccess: () => void sessions.refetch() });
