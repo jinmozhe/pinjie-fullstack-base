@@ -72,7 +72,7 @@ flowchart TD
 
 - Dependabot vulnerability alerts、Secret Scanning、Push Protection 和 Private
   Vulnerability Reporting 已启用；Dependabot security updates 按人工依赖 PR 决策保持关闭。
-- Actions 只允许 GitHub-owned Actions，以及仓库现有工作流使用的 9 个明确第三方
+- Actions 只允许 GitHub-owned Actions，以及仓库现有工作流使用的 11 个明确第三方
   Action；`sha_pinning_required=true`，所有 Action 必须固定完整 Commit SHA。
 - active Ruleset `Protect main`（ID `21152538`）作用于默认分支，禁止删除和非快进更新，
   要求 Pull Request、会话解决和 13 个自动状态检查。
