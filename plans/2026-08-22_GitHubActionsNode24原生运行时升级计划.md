@@ -4,8 +4,8 @@
 
 | 字段 | 当前值 |
 | --- | --- |
-| 状态 | 实施中 |
-| 结果 | 未结束 |
+| 状态 | 已结束 |
+| 结果 | 已完成 |
 | 创建日期 | 2026-08-22 |
 | 影响范围 | Deployment、Documentation |
 
@@ -124,7 +124,7 @@ Docker 运行方式，以下十个固定提交直接声明 `node20`：
 - [x] `pnpm lint:md` 通过。
 - [x] `pnpm check:governance`、`pnpm check:workspace` 和 `pnpm check:boundaries` 通过。
 - [x] 本任务差异只包含计划授权的工作流、文档、索引和计划；工作区既有其他修改保持原样。
-- [ ] 推送后的四个自动工作流成功且 Node.js 20 annotations 为 0；需要独立提交和推送授权。
+- [x] 推送后的四个自动工作流成功且 Node.js 20 annotations 为 0。
 - [x] PR 专属、Browser E2E、Publish Images 和 Deploy Production 的未执行边界如实记录。
 
 ## 待确认问题
@@ -135,6 +135,7 @@ Docker 运行方式，以下十个固定提交直接声明 `node20`：
 
 - 2026-08-22：用户确认要消除 Node.js 20 兼容执行和告警，并要求执行修复。由于全量审计发现范围包含十个跨 Major Action，等待用户确认本计划列出的完整升级边界后开始修改工作流。
 - 2026-08-22：用户确认按计划一次性升级全部十个 Node.js 20 Action，计划进入“实施中”。
+- 2026-08-22：用户调用 `$git-sync`，明确授权提交并推送本任务修改。
 
 ## 实施结果
 
@@ -147,11 +148,15 @@ Docker 运行方式，以下十个固定提交直接声明 `node20`：
   版本一致，未设置 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`。
 - `pnpm lint:md`、`pnpm check:governance`、`pnpm check:workspace`、
   `pnpm check:boundaries` 和 `git diff --check` 均通过。
-- 未提交、未推送、未发布镜像、未部署生产，也未操作生产数据库。
-
-## 剩余问题
-
-- 需要在取得独立提交和推送授权后运行四个自动 Push 工作流，确认线上 Job annotations 中
+- 实施提交 `8e4a225bc5ff1d04b507379497fbc8356e7c7757` 已推送到 `origin/main`。
+  Governance `32543607320`、Security `32543607358`、Backend `32543607369` 和
+  Frontend `32543607366` 全部成功；13 项 Check Run 无失败，全部 annotations 为 0，
   Node.js 20 迁移告警为 0。
+- 未发布镜像、未创建 Tag 或 Release、未部署生产，也未操作生产数据库。
+
+## 剩余风险
+
+- 本计划范围内没有未完成的实施项。
 - PR 专属 Dependency Review、人工 Browser E2E、Publish Images 和 Deploy Production
-  本轮未执行；静态元数据审计覆盖这些工作流，不能替代其后续真实运行验证。
+  本轮未执行；静态元数据审计覆盖这些工作流，其真实执行仍应在对应 PR、跨栈复核、发布
+  或部署授权成立时验证。
