@@ -343,3 +343,17 @@ docker compose exec redis redis-cli ping
 pnpm install
 pnpm typecheck
 ```
+
+## 十一、Codex Windows 沙箱基线
+
+本项目使用 Windows 原生 ChatGPT/Codex 桌面端和 PowerShell，不以 Docker 或 WSL 作为 Codex 文件操作的默认运行边界。OpenAI 官方将 `elevated` 作为更强的首选沙箱，将 `unelevated` 作为从当前用户派生受限 Token 的备选实现。
+
+本项目长期使用 `elevated`。`CodexSandbox*` Owner 在 DACL 正常且工具操作成功时不属于故障，不通过 `unelevated`、`danger-full-access` 或全仓库递归 `FullControl` 消除 Owner 差异。本机验证中，`unelevated` 虽解决 Owner 与 uv Cache 写入，但 Node 子进程出现 `EPERM`，且隔离弱于官方首选，因此已回滚。
+
+本项目 pnpm Store 应保持在仓库内被 Git 忽略的 `.pnpm-store/`。uv Cache 通过 `uv cache dir` 获取；只有确认该准确目录因沙箱越界反复失败时，才把它加入 `sandbox_workspace_write.writable_roots`，不得放行整个用户目录或 `AppData`。添加后，当前任务必须在输入框下方选择“自定义（`config.toml`）”，普通权限预设不会采用该额外根。
+
+宿主机使用 `HTTP_PROXY`、`HTTPS_PROXY` 或 `ALL_PROXY` 指向本地回环代理时，必须通过 `shell_environment_policy.filters` 阻止 Codex 子进程继承这些变量，避免回环代理绕过默认断网；不修改宿主系统代理。修改沙箱模式或环境策略后必须完全重启桌面端并新建任务复验。
+
+桌面端智能体环境保持“Windows 原生”，集成终端 Shell 建议选择 PowerShell。“设置 -> 常规”只保留默认权限，关闭“完整访问权限”开关；该开关只控制菜单可用模式，不代表当前任务已经选择某种权限。
+
+配置示例、权限模式关系、Owner/ACL 分类、正反向验证和 Git 授权边界统一见 [AI 助手开发与文档读取指南的 Windows 原生 Codex 权限章节](ai-assisted-development-workflow.md#26-windows-原生-codex-权限与-acl-长期治理)。

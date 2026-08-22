@@ -27,7 +27,7 @@
 | `plans/README.md` | 生效 | 全栈计划创建、状态、模板、完成和永久保护规则 |
 | `docs/PROJECT_REQUIREMENTS.md` | 生效 | 母版目标用户、场景、目标能力、非目标、派生规则和验收基线 |
 | `docs/README.md` | 生效 | `docs/` 下全部项目文档的专项索引 |
-| `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则发现、按需读取、计划实施、验证交付和独立授权的操作指南 |
+| `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则读取、计划交付、独立授权，以及 Codex Windows 沙箱、ACL、缓存和 Git 治理指南 |
 | `docs/operations/github-actions-workflows.md` | 生效 | GitHub Actions 自动检查、人工镜像发布和生产部署的逐工作流说明 |
 | `SECURITY.md` | 生效 | 漏洞报告、安全响应目标和安全开发要求 |
 | `scripts/ci/` | 生效 | 三态完整性、模块边界、文本卫生和门禁正反例检查 |
@@ -40,6 +40,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-22_CodexWindowsACL长期治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已完成 Codex 原生沙箱、NTFS Owner/ACL、Git 审批、缓存越界和回环代理的长期治理 |
 | `plans/2026-08-22_Admin框架边界与开发范式治理计划.md` | 已结束 | Admin、Documentation | 已完成 Umi/Pro 框架边界、项目安全请求管道、依赖准入和组件选择规则治理，文档与门禁全部通过 |
 | `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 已结束 | Admin、Web、Deployment、Documentation | 四项传递依赖已修复，三项上游风险已限时接受，Dependabot 为 0 Open、7 Closed，四个自动工作流全部成功 |
 | `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md` | 已结束 | Deployment、Documentation | 十个 Action 已升级到原生 Node.js 24，线上四个自动工作流成功且 annotations 为 0 |
@@ -58,6 +59,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-22_CodexWindowsACL长期治理计划.md` | 已结束 | 已完成；采用 `elevated + Custom`、精确 uv Cache 根和代理环境过滤，Owner、uv、Node 子进程、工作区外写入和网络正反例均通过，未执行无实际故障的 Owner 归一 | Documentation、Windows 本地开发治理 | 解决 Codex 持续维护中的 Owner 混杂、ACL 误判、缓存越界和 Git 重复审批 |
 | `plans/2026-08-22_Admin框架边界与开发范式治理计划.md` | 已结束 | 已完成；Admin 宪法、工程标准、ADR、导航、索引和治理门禁均已同步通过 | Admin、Documentation | 固化 Umi/Pro 框架边界、项目安全请求管道、依赖准入和组件选择规则，修正文档与实现漂移 |
 | `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 已结束 | 已完成；四项传递依赖修复、三项限时风险接受、完整回归、Dependabot 重扫和四个线上自动工作流均通过 | Admin、Web、Deployment、Documentation | 修复四项可安全升级的传递依赖，对三项暂无安全升级路径的上游风险建立限时接受和复核闭环 |
 | `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md` | 已结束 | 已完成；十个 Action 原生 Node.js 24 升级、完整 SHA Pinning、本地门禁和线上四个自动工作流均通过，annotations 为 0 | Deployment、Documentation | 将七个工作流中的十个 Action 升级到原生 Node.js 24 的固定 SHA |
@@ -116,6 +118,7 @@
 | Backend 工程实施标准 | `docs/architecture/backend-engineering-standard.md` | 保存 Backend 具体实现方式、禁止模式和门禁；专题架构语义继续由对应文档负责 |
 | Admin 工程实施标准 | `docs/architecture/admin-engineering-standard.md` | 保存 Admin Umi/Pro、Feature、请求、状态、组件选择和依赖准入的实施方式；长期红线继续由 Admin AGENTS 负责 |
 | Markdown 格式规则与检查 | 根 `.markdownlint.json`、`package.json` 的 `lint:md` | GFM 语法基线、统一具体写法及固定版本的全仓库命令行检查 |
+| Codex Windows 权限与 ACL 治理 | `docs/operations/ai-assisted-development-workflow.md` 第 26 节 | 保存原生沙箱、Owner/ACL、缓存、Git 审批、验证和最小修复步骤；本机具体实施进度留在活动计划 |
 | Git 提交与追溯 | Git 历史、根 `AGENTS.md` | 普通提交由 Git 保存精确历史，跨系统记录保存完整 Commit SHA 或不可变 Tag |
 | OpenAPI 契约 | 根 `openapi.json` | 由后端导出，禁止手工修改 |
 | TypeScript API Client | `packages/api-client/src/` | 由根契约生成，禁止手工修改 |

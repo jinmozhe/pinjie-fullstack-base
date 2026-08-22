@@ -88,6 +88,7 @@
 
 ### Documentation
 
+- 建立 Codex Windows 原生沙箱长期治理流程，区分 Owner 混杂、真实 NTFS ACL、工作区边界和命令审批；采用 `elevated + Custom (config.toml)`、最小 uv Cache 可写根、回环代理环境过滤和正反向验证，不对无实际故障的 `CodexSandbox*` Owner 做周期性归一。
 - 建立 Admin Umi/Pro 框架边界与工程实施标准，明确 Umi 公共入口、Feature 目录、项目唯一安全 HTTP 管道、Access 与服务端授权、ProComponents 场景化选择及依赖分层准入规则。
 - 增加 Admin 本地运行与验证排障手册，明确 Umi 启动目录和端口、生成缓存、jsdom 测试、浏览器兜底验证、真实跨栈前置条件，以及 Windows 系统故障与应用故障的证据边界；同步根和 Admin 级长期规则。
 - 完成 Admin 技术栈文档一致性审计：根 README、架构 ADR、环境变量手册、项目结构索引和历史原始方案均已区分当前 Ant Design Pro v6/Umi Max 实现与旧方案记录。
