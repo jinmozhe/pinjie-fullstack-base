@@ -8,7 +8,7 @@
 
 ## 一、当前完整文件结构
 
-以下清单以 2026-08-22 当前工作区为准，共 309 个项目文件、68 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。Admin 当前结构为 Umi Max 工程，入口是 `src/app.tsx`，配置位于 `config/`，启动包装器位于 `scripts/run-umi.mjs`。
+以下清单以 2026-08-22 当前工作区为准，共 311 个项目文件、68 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。Admin 当前结构为 Umi Max 工程，入口是 `src/app.tsx`，配置位于 `config/`，启动包装器位于 `scripts/run-umi.mjs`。
 
 ```text
 . :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
@@ -65,7 +65,7 @@ apps/web/src/lib/api :: client.ts, http.ts, server.test.ts, server.ts
 apps/web/src/test :: server.ts, setup.ts
 docs :: PROJECT_REQUIREMENTS.md, README.md
 docs/adr :: 0001-全栈Monorepo架构决策.md, 0002-Codex与Antigravity指令兼容决策.md, 0003-本地开发环境架构决策.md, 0004-全项目索引与计划生命周期决策.md, 0005-GitHub Wiki停用与文档单一来源决策.md, 0006-模块化单体与领域依赖边界决策.md, 0007-受控迁移兼容策略决策.md, 0008-不可变发布与生产追溯决策.md, 0009-Python运行时基线决策.md, 0010-浏览器认证会话RBAC与审计决策.md, 0011-Admin采用AntDesignProV6与UmiMax决策.md
-docs/architecture :: 全栈Monorepo架构规划原始方案.md, authentication-authorization.md, backend-engineering-standard.md, error-model.md, module-boundaries.md, observability-reliability.md, project-structure.md, testing-strategy.md
+docs/architecture :: 全栈Monorepo架构规划原始方案.md, admin-engineering-standard.md, authentication-authorization.md, backend-engineering-standard.md, error-model.md, module-boundaries.md, observability-reliability.md, project-structure.md, testing-strategy.md
 docs/blueprints/commerce :: README.md
 docs/operations :: 1panel-production-runbook.md, admin-local-development-and-validation-troubleshooting.md, ai-assisted-development-workflow.md, container-build-and-run.md, database-backup-restore.md, docker-desktop-redis使用指南.md, environment-variables-and-backend-local-run.md, github-actions-workflows.md, incident-response.md, local-dev-environment.md, pnpm使用指南.md, release-and-rollback.md, uv使用指南.md
 e2e :: helpers.ts, stage-c.spec.ts, system-status.spec.ts
@@ -75,7 +75,7 @@ packages/api-client/src/client :: client.gen.ts, index.ts, types.gen.ts, utils.g
 packages/api-client/src/core :: auth.gen.ts, bodySerializer.gen.ts, params.gen.ts, pathSerializer.gen.ts, queryKeySerializer.gen.ts, serverSentEvents.gen.ts, types.gen.ts, utils.gen.ts
 packages/eslint-config :: index.js, package.json
 packages/typescript-config :: base.json, nextjs.json, package.json, vite.json
-plans :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, 2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md, 2026-08-16_CI跨平台与CodeQL权限修复计划.md, 2026-08-17_初始管理员默认用户名计划.md, 2026-08-17_密码规则与API中文化计划.md, 2026-08-17_Web首页登录态操作按钮计划.md, 2026-08-19_Admin升级AntDesign6计划.md, 2026-08-20_后端文件日志与环境变量配置化计划.md, 2026-08-20_请求日志错误入参捕获与脱敏管道计划.md, 2026-08-20_Admin本地运行与故障排查文档治理计划.md, 2026-08-20_Admin技术栈文档一致性审计计划.md, 2026-08-20_CI失败修复计划.md, 2026-08-20_GitHub CI线上失败修复计划.md, 2026-08-21_母版开发总结与一致性收尾计划.md, 2026-08-21_BrowserE2E就绪探测修复计划.md, 2026-08-21_BrowserE2E人工触发与发布解耦计划.md, 2026-08-21_验收缺口修复与远端治理计划.md, 2026-08-22_Dependabot中低危依赖治理计划.md, 2026-08-22_GitHubActionsNode24原生运行时升级计划.md, README.md
+plans :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, 2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md, 2026-08-16_CI跨平台与CodeQL权限修复计划.md, 2026-08-17_初始管理员默认用户名计划.md, 2026-08-17_密码规则与API中文化计划.md, 2026-08-17_Web首页登录态操作按钮计划.md, 2026-08-19_Admin升级AntDesign6计划.md, 2026-08-20_后端文件日志与环境变量配置化计划.md, 2026-08-20_请求日志错误入参捕获与脱敏管道计划.md, 2026-08-20_Admin本地运行与故障排查文档治理计划.md, 2026-08-20_Admin技术栈文档一致性审计计划.md, 2026-08-20_CI失败修复计划.md, 2026-08-20_GitHub CI线上失败修复计划.md, 2026-08-21_母版开发总结与一致性收尾计划.md, 2026-08-21_BrowserE2E就绪探测修复计划.md, 2026-08-21_BrowserE2E人工触发与发布解耦计划.md, 2026-08-21_验收缺口修复与远端治理计划.md, 2026-08-22_Admin框架边界与开发范式治理计划.md, 2026-08-22_Dependabot中低危依赖治理计划.md, 2026-08-22_GitHubActionsNode24原生运行时升级计划.md, README.md
 scripts/ci :: check-module-boundaries.ps1, check-production-compose.ps1, check-text-files.ps1, check-typescript-boundaries.mjs, check-workspace-state.ps1, test-governance-guards.ps1, test-production-compose-guard.ps1, test-typescript-boundary-guard.mjs
 scripts/e2e :: run-e2e.mjs
 scripts/operations :: test-postgres-backup-restore.ps1
@@ -251,7 +251,7 @@ Next.js 有三种输出模式：
 | --- | --- | --- |
 | `docs/` | 产品需求基线和完整文档索引 | 产品文档达到至少三份且职责独立时再评估 `docs/product/` |
 | `docs/adr/` | `0001` 至 `0009` 架构决策记录 | 出现新的重大且长期技术取舍时新增 ADR |
-| `docs/architecture/` | 项目结构、Backend 工程标准、模块边界、错误、认证授权、测试、可靠性和原始规划 | 当前系统机制变化时就地更新对应文档 |
+| `docs/architecture/` | 项目结构、Backend/Admin 工程标准、模块边界、错误、认证授权、测试、可靠性和原始规划 | 当前系统机制变化时就地更新对应文档 |
 | `docs/blueprints/commerce/` | Commerce 派生蓝图入口 | 真实派生需求确认后增加领域模型和业务流程设计 |
 | `docs/operations/` | AI 协作、本地环境、依赖、容器、发布回滚、备份恢复和事故响应手册 | 出现可执行的新运维流程时就地增加或更新手册 |
 
