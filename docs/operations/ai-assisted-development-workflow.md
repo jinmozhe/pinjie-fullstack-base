@@ -730,138 +730,21 @@ codex --cd apps/backend --ask-for-approval never "Show which instruction files a
 
 ## 26. Windows 原生 Codex 权限与 ACL 长期治理
 
-本节是本项目 Codex 沙箱、NTFS Owner/ACL、缓存越界和 Git 审批问题的详细操作来源。本机开发架构仍以 [Windows 本地开发环境手册](local-dev-environment.md)为准。
+本节只负责 AI 任务路由。配置位置、推荐模板、UI 模式、同机多项目、跨电脑迁移、Owner/ACL 分类、正反向验证、最小修复和回滚统一以 [Codex Windows 配置与 ACL 治理标准](codex-windows-config-acl-governance.md)为权威来源。
 
-### 26.1 先确认运行机制
+### 26.1 何时必须读取专项标准
 
-根据 2026-08-22 核验的 [OpenAI 官方 Windows sandbox 文档](https://learn.chatgpt.com/docs/windows/windows-sandbox)，Windows 桌面端 Codex 可以直接在 PowerShell 和原生 Windows 沙箱中运行，不要求 Docker、WSL 或 Linux 容器。不能把容器 UID/GID 与 Windows SID 映射冲突当作本项目问题的默认解释。
+出现以下任一任务时，除本指南外继续读取专项标准：
 
-原生 Windows 沙箱有两种实现：
+- 解释或修改用户级、项目级 `config.toml`。
+- 切换 Custom、`elevated`、`unelevated`、沙箱、审批或网络设置。
+- 处理 Owner、ACL、`EPERM`、`os error 5`、Cache 越界或工作区外写入。
+- 在同一电脑复用配置，或把开发环境迁移到另一台电脑。
+- 对 `.git/`、`.agents/`、`.codex/` 等受保护路径申请升级授权。
+- 评估 Owner/DACL 修复、完整访问权限或递归 `icacls` 操作。
 
-- `elevated` 是官方首选，使用专用低权限沙箱用户、文件权限边界和防火墙规则，隔离更强，但沙箱创建或原子替换的文件可能由 `CodexSandbox*` 账户持有。
-- `unelevated` 是较弱的备选，使用当前 Windows 用户派生的受限 Token 和 ACL 边界，能够减少当前用户与沙箱账户之间的 Owner 混杂。
+### 26.2 当前项目基线
 
-本项目长期基线使用 `elevated`。`unelevated` 只用于排查无法完成管理员批准设置的兼容问题，不能仅为避免 `CodexSandbox*` Owner 而长期启用。任何回退评估都必须同时验证工作区外写入和 shell 网络反例。
+本项目使用 Windows 原生 Codex、PowerShell 和 `elevated + Custom (config.toml)`，保留 `workspace-write`、默认断网、精确 uv Cache 可写根和代理环境过滤。Owner 为 `CodexSandbox*` 但操作正常时不属于故障；提交、推送、发布和部署仍分别授权。
 
-### 26.2 不要把四类问题都叫作 ACL
-
-| 类别 | 判断证据 | 处理方式 |
-| --- | --- | --- |
-| Owner 混杂 | `Get-Acl` 显示 Owner 为 `CodexSandbox*`，但当前用户仍可读写 | 这是 `elevated` 的预期结果之一；没有实际失败时不改 Owner |
-| 真实 NTFS ACL 失败 | 准确路径出现 `Access is denied`、`UnauthorizedAccessException` 或 Windows `os error 5`，并能在 DACL、继承或 Delete 权限中定位原因 | 只修复失败路径，不递归重置整个仓库 |
-| Codex 沙箱边界 | 写入工作区外、`.git/`、`.codex/` 或未授权缓存路径被拒绝 | 调整工作流或增加最小可写根，不能用改 Owner 代替产品边界 |
-| 命令审批边界 | 命令因 Git 写入、网络、规则或高风险动作请求批准 | 按动作授权；审批不等于文件 ACL 失败 |
-
-Owner 不同本身不证明 DACL 已损坏。先记录失败命令、准确路径和 Windows 错误码，再运行：
-
-```powershell
-$targetPath = Resolve-Path -LiteralPath "path-to-failed-file"
-Get-Acl -LiteralPath $targetPath | Format-List Owner, AreAccessRulesProtected, AccessToString
-```
-
-禁止把 `icacls /reset /T`、全仓库递归 `FullControl`、删除 `CodexSandboxUsers` 或清理未知 SID ACE 作为通用修复。这些操作会扩大权限、破坏继承证据，并且不能解决 Codex 的工作区和审批边界。
-
-### 26.3 本机推荐配置基线
-
-配置字段以 [OpenAI 官方配置参考](https://learn.chatgpt.com/docs/config-file/config-reference)为准。本机验证后的长期配置如下；尖括号内容必须替换为本机实际值，不能原样粘贴：
-
-```toml
-approval_policy = "on-request"
-approvals_reviewer = "auto_review"
-sandbox_mode = "workspace-write"
-
-[sandbox_workspace_write]
-network_access = false
-writable_roots = [
-  "C:\\Users\\<current-user>\\AppData\\Local\\uv\\cache",
-]
-
-[shell_environment_policy.filters]
-HTTP_PROXY = "exclude"
-HTTPS_PROXY = "exclude"
-ALL_PROXY = "exclude"
-
-[windows]
-sandbox = "elevated"
-```
-
-这组配置的边界是：
-
-- `workspace-write` 只允许工作区和明确的额外根目录写入，禁止 `danger-full-access`。
-- `network_access = false` 保留默认断网；需要联网的命令仍按任务申请授权。
-- Windows 防火墙允许回环通信。若宿主机通过 `HTTP_PROXY`、`HTTPS_PROXY` 或 `ALL_PROXY` 指向本地代理，沙箱命令可能经回环代理转发出网；必须使用大小写不敏感的 `shell_environment_policy.filters` 阻止子进程继承这些变量，不修改或关闭宿主系统代理。需要代理的联网命令仍须按任务单独申请授权和显式配置。
-- `approvals_reviewer = "auto_review"` 只改变审批审查方，不扩大文件系统或网络边界，也不代表已授权提交、推送、发布或部署。
-- uv Cache 目录必须先通过 `uv cache dir` 取得，只允许该准确目录；不得放行整个 `USERPROFILE`、`AppData` 或全局工具目录。
-- pnpm Store 通过 `pnpm store path` 核验。本项目 Store 位于被 Git 忽略的工作区 `.pnpm-store/` 时，不增加额外可写根。
-
-桌面端还必须与配置保持一致：
-
-- 当前任务的权限菜单选择“自定义（`config.toml`）”。“请批准”和“帮我批准”使用各自预设的工作区边界，不采用上述额外 `writable_roots`。
-- “设置 -> 常规 -> 权限”中的开关只控制模式是否出现在菜单中，不会选择模式或改变现有任务。保留默认权限，关闭“完整访问权限”，避免误选不受工作区和网络边界保护的模式。
-- 智能体环境保持“Windows 原生”。集成终端 Shell 与智能体环境相互独立；本项目建议选择 PowerShell，与本地开发命令基线一致。
-
-修改用户级 `config.toml` 时只改上述非敏感字段，保留模型、插件、MCP、项目和 Provider 等无关配置。不得读取、复制、记录或回写其中可能存在的 Token。回滚只需恢复修改前的字段值，不创建包含凭据的仓库内备份。
-
-### 26.4 模式切换后的验证
-
-修改 `[windows].sandbox` 或 `shell_environment_policy` 后必须完全重启 ChatGPT/Codex 桌面端，并在新任务中核对实际运行上下文；只看到配置文本变化不算生效。
-
-先在仓库内创建专用临时目录，验证创建、覆盖、重命名和删除，并检查 Owner：
-
-```powershell
-$probeRoot = Join-Path (Get-Location) ".codex-acl-probe"
-New-Item -ItemType Directory -Path $probeRoot
-$probeFile = Join-Path $probeRoot "owner.txt"
-Set-Content -LiteralPath $probeFile -Value "create" -Encoding utf8NoBOM
-Set-Content -LiteralPath $probeFile -Value "overwrite" -Encoding utf8NoBOM
-Rename-Item -LiteralPath $probeFile -NewName "renamed.txt"
-Get-Acl -LiteralPath (Join-Path $probeRoot "renamed.txt") | Select-Object Owner
-Remove-Item -LiteralPath $probeRoot -Recurse -Force
-```
-
-然后执行以下正向验证：
-
-```powershell
-git status --short
-git diff --check
-pnpm store path
-uv cache dir
-uv run --project apps/backend python -c "import sys; print(sys.executable)"
-```
-
-同时执行反向验证：
-
-- 在不申请越界授权的前提下尝试写入一个明确位于工作区和额外可写根之外的可删除测试路径，预期被拒绝。
-- 先确认 `HTTP_PROXY`、`HTTPS_PROXY` 和 `ALL_PROXY` 未进入命令环境，再在不申请联网授权的前提下运行默认代理路径和显式直连两种最小网络探测；两者都应被阻断或进入审批，不能只验证 `-NoProxy` 直连。
-- 不把 `.git/` 加入 `writable_roots`。`git add`、`git commit` 和 `git push` 继续遵守项目独立授权；验证阶段只运行只读 Git 命令。
-
-本机 2026-08-22 的 A/B 结果是：`unelevated` 下文件 Owner、uv Cache 和工作区外写入边界符合预期，但 Node 子进程出现 `EPERM`，且该实现是官方较弱的 fallback，因此回滚为 `elevated`。两种模式下默认网络探测都曾经通过 `127.0.0.1` 宿主代理返回 200；显式直连被 `elevated` 防火墙阻断，移除代理变量后默认探测也被阻断，最终方案因此增加精确的代理环境变量过滤。以后任何评估只要有一项正向能力失败或反向边界放宽，都必须采用同样的失败关闭结论。
-
-### 26.5 Owner 清单与修复边界
-
-`elevated` 使用专用沙箱账户，后续创建或原子替换的文件仍可能由 `CodexSandbox*` 持有。只要继承正常、当前用户具备所需权限且 Git、编辑器和工具操作成功，就不执行 Owner 归一；否则一次性修改也会在后续任务中再次产生混杂。
-
-需要审计时，只读生成 Git 已跟踪文件清单：
-
-```powershell
-$repoRoot = (Get-Location).Path
-$unexpectedOwners = foreach ($relativePath in git ls-files) {
-  $fullPath = Join-Path $repoRoot $relativePath
-  if (Test-Path -LiteralPath $fullPath) {
-    $owner = (Get-Acl -LiteralPath $fullPath).Owner
-    if ($owner -like "*\\CodexSandbox*") {
-      [PSCustomObject]@{ Path = $fullPath; Owner = $owner }
-    }
-  }
-}
-$unexpectedOwners | Format-Table -AutoSize
-```
-
-只有准确路径已经复现真实 NTFS 访问失败、DACL 证据确认 Owner 是必要修复条件，并且用户再次确认具体清单时，才可以逐项执行 `icacls /setowner`。不修改正常文件、不改变 DACL、不处理未跟踪依赖目录；修复后重新统计 Owner，复核 `git status --short` 和 `git diff`。管理员权限只用于这一份已确认清单，不形成长期放行。
-
-### 26.6 日常开发和 Git 收敛
-
-- 实施中使用 `git status`、`git diff`、`git log` 和 `git show` 核对事实，不为中间步骤反复写 `.git/`。
-- 依赖命令失败时先检查实际 Store 或 Cache 路径；只有稳定的工作区外缓存才进入最小 `writable_roots`。
-- 任务交付阶段在用户明确授权后集中执行暂存、提交和推送。Git 提交与推送仍是两个独立动作。
-- 再次遇到拒绝时按本节四类模型记录证据。未经分类，不修改沙箱模式、Owner 或 DACL。
+详细实施证据保留在 [Codex Windows ACL 长期治理计划](../../plans/2026-08-22_CodexWindowsACL长期治理计划.md)，标准文档的建立与后续维护记录保留在 [Codex Windows 配置与 ACL 标准文档计划](../../plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md)。
