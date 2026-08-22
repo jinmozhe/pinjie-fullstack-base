@@ -46,6 +46,10 @@ Backend 使用统一的 Loguru 入口同时支持标准错误流和可选本地�
 
 Readiness 当前检查 PostgreSQL 与认证必需的 Redis。请求元数据功能关闭时不要求 Worker 存活；启用后必须单独监控 Stream backlog、pending 数、DLQ 增长和消费者心跳。
 
+**`REQUEST_LOG_MODE=metadata` 启用决策指引**：以下场景适合启用该模式：（1）需要按 `request_id` 关联后台日志与前端错误的排障场景；（2）有合规要求需要保存 API 访问记录但不需要完整请求体的系统；（3）管理端运维人员需要查看错误请求入参的系统。以下场景不建议启用：系统流量极低或 Redis 资源受限的个人项目；对 Redis Stream 背压、Worker 进程和 DLQ 缺乏运维能力的场景。关闭时（默认），Middleware 仍输出结构化访问日志到 stdout/文件 Sink，只是不做 PostgreSQL 持久化和 Admin 抽屉展示。
+
+**多实例部署 Redis 共享要求**：当 Backend 以多实例方式运行时，以下能力**必须**共享同一 Redis 实例或 Redis Cluster，不得各实例独立使用独立 Redis：限流计数器（`rate_limit`）、登录安全事件并发锁、CSRF 比较摘要、Session 缓存、请求元数据 Stream（`REQUEST_LOG_MODE=metadata`）。使用独立 Redis 会导致同一用户的限流计数分散、CSRF 校验跨实例不一致。单机可恢复模式部署只有一个 Backend 实例，不存在此约束。派生项目选择多实例部署时，必须在架构文档中明确 Redis 拓扑（单节点 / 哨兵 / Cluster）及其对 Readiness 检查和故障转移的影响。
+
 ## 5. SLI 与 SLO
 
 派生项目优先从用户可观察结果定义 SLI，例如：

@@ -81,7 +81,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
-- Push 和 Pull Request 不自动运行 Playwright。标准 Chromium E2E 默认在本地执行，需要干净 Ubuntu 环境时人工触发 GitHub Browser E2E；是否运行由操作人员按改动风险决定，其结果不参与镜像发布门禁。Firefox 与 WebKit 只在明确需要时人工验证；派生项目明确支持 Safari 时，发布前应人工完成 WebKit 验证并记录结果。
+- Push 和 Pull Request 不自动运行 Playwright。标准 Chromium E2E 默认在本地执行，需要干净 Ubuntu 环境时人工触发 GitHub Browser E2E；是否运行由操作人员按改动风险决定，其结果不参与镜像发布门禁。Firefox 与 WebKit 在以下情况之一时应人工验证：（1）涉及 CSS 布局、动画、字体渲染、焦点样式或滚动行为的 UI 变更；（2）引入了依赖浏览器原生 API（如 Clipboard、File、WebAuthn）的交互；（3）派生项目将 Firefox 或 Safari 列为明确支持的目标浏览器。派生项目明确支持 Safari 时，发布前必须人工完成 WebKit 验证并在对应计划中记录结果；母版维护阶段不强制要求定期 WebKit 验证。
 - CI 失败保留首个失败重试的 Trace、必要截图和 HTML Report。重试只用于采集诊断信息，初次失败仍按不稳定测试处理，禁止依靠重试把套件标记为健康。
 - 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
 
@@ -119,4 +119,4 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 一项实现只有在计划内全部适用门禁通过、未适用项有依据、跳过项被明确记录并且代码与文档同步后才能宣称完成。Backend 当前最低覆盖率为 90%；Admin 与 Web 的语句、分支、函数和行覆盖率最低为 80%。
 
-当前验证基线为 Backend 66 项自动化测试通过，行与分支综合覆盖率 `90.34%`；Admin 与 Web 保持各维度 80% 门禁。真实 PostgreSQL 18.4、Redis 8.10.0、Alembic、三端生产构建和三张 Linux x86_64 非 Root 容器均已完成本地验证，完整命令与结果保存在阶段 B 和阶段 C 计划。
+当前验证基线为 Backend 106 项自动化测试通过，行与分支综合覆盖率 `90.55%`；Admin 与 Web 保持各维度 80% 门禁。真实 PostgreSQL 18.4、Redis 8.10.0、Alembic、三端生产构建和三张 Linux x86_64 非 Root 容器均已完成本地验证，完整命令与结果保存在阶段 B 和阶段 C 计划。

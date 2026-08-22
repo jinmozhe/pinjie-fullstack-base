@@ -9,7 +9,7 @@
 - **后端**：FastAPI + SQLAlchemy 2.0 async + PostgreSQL + Redis
 - **管理端**：Ant Design Pro v6（Umi Max + React 19 + TypeScript + Ant Design 6 + ProComponents 3 + TanStack Query）
 - **用户端**：Next.js App Router + Tailwind CSS + shadcn/ui
-- **共享 SDK**：OpenAPI 自动生成 TypeScript 类型安全请求客户端
+- **共享包**：OpenAPI 自动生成 TypeScript 类型安全请求客户端（`api-client`）、共享 ESLint 配置（`eslint-config`）、共享 TypeScript 配置（`typescript-config`）
 - **部署**：Docker + 1Panel OpenResty + GitHub Actions CI/CD
 
 ## 快速开始

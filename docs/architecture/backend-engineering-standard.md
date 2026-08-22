@@ -40,7 +40,7 @@
 
 1. 直接依赖写入 `apps/backend/pyproject.toml`，精确解析结果写入 `apps/backend/uv.lock`。
 2. 使用 `uv add <package>` 或 `uv add --dev <package>`，禁止手工制造与锁文件不一致的安装状态。
-3. 生产代码导入的包必须是运行依赖。当前 `httpx` 只在开发依赖中，未来生产外部 HTTP 能力必须先通过计划将其加入运行依赖。
+3. 生产代码导入的包必须是运行依赖。当前 `httpx` 只在开发依赖中，未来生产外部 HTTP 能力必须先通过计划将其加入运行依赖：执行 `uv add httpx`（不带 `--dev`）使其出现在 `[project].dependencies`，重新生成 `uv.lock`，并同步更新 Backend Dockerfile 的依赖安装层和相关测试。派生项目仅在真实生产外部调用成立后再做此升级，母版阶段 `httpx` 保留开发依赖以支持 pytest `httpx.AsyncClient` 测试入口。
 4. import-linter 已纳入 Backend 开发依赖和门禁。引入 Psycopg 3 或其他尚未声明的工具时必须经过计划、锁定依赖并补充相应验证。
 5. 外部参考项目只作为设计证据，禁止绝对路径导入、符号链接、Git 子模块或运行时读取参考项目文件。
 
