@@ -67,6 +67,7 @@
 
 ### Changed
 
+- 将七个 GitHub Actions 工作流中的十个旧版 JavaScript Action 升级到原生 Node.js 24 的正式版本；全部引用继续固定完整 Commit SHA，不再依赖 GitHub Runner 对 `node20` Action 的兼容覆盖。
 - Browser E2E 改为 GitHub Actions 人工按需触发，不再随 Push 或 Pull Request 自动运行；Publish Images 取消 E2E 成功记录依赖，继续校验同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四项自动门禁。
 - Admin 全面迁移到官方 Ant Design Pro v6/Umi Max：采用 `@umijs/max`、Ant Design 6、ProComponents 3、Icons 6、ProLayout、Umi 配置式路由和运行时 Access；保留 Cookie/CSRF/Refresh/RBAC、共享 API Client、危险操作二次确认和现有管理页面。
 - 完成 Admin Umi 运行时收尾：通过跨平台 `PORT=3001` 启动包装器固定端口，修复 Umi 环境变量和 initialState 接线，适配 Ant Design 6 弃用属性，并完成桌面/移动登录页浏览器冒烟。

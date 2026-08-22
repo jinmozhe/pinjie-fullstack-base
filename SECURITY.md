@@ -43,8 +43,10 @@
 - 已知高危问题不得通过无期限豁免、`continue-on-error` 或静默降级绕过。
 - GitHub 远端启用漏洞告警、Secret Scanning、Push Protection 和 Private Vulnerability
   Reporting；Dependabot security updates 保持关闭，依赖修复继续通过人工计划、评审和验证交付。
-- Actions 仅允许 GitHub-owned Actions 与当前工作流明确列出的第三方 Action，并要求完整
-  Commit SHA Pinning；`main` Ruleset 和 `production` Environment 的单维护者审批风险以
+- Actions 仅允许 GitHub-owned Actions、仓库所有者 Actions 与当前工作流明确列出的第三方
+  Action，并要求完整 Commit SHA Pinning；直接引用的 JavaScript Action 必须原生声明
+  `runs.using: node24`，不得依赖旧 Node.js 运行时兼容覆盖；`main` Ruleset 和
+  `production` Environment 的单维护者审批风险以
   [GitHub Actions 工作流说明](docs/operations/github-actions-workflows.md)为当前事实来源。
 
 详细边界见：

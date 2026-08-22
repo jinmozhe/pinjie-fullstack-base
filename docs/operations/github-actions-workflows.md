@@ -68,12 +68,13 @@ flowchart TD
 
 ### 3.1 远端仓库治理基线
 
-截至 2026-08-21，GitHub 远端按单维护者基线配置：
+截至 2026-08-22，GitHub 远端按单维护者基线配置：
 
 - Dependabot vulnerability alerts、Secret Scanning、Push Protection 和 Private
   Vulnerability Reporting 已启用；Dependabot security updates 按人工依赖 PR 决策保持关闭。
-- Actions 只允许 GitHub-owned Actions，以及仓库现有工作流使用的 11 个明确第三方
-  Action；`sha_pinning_required=true`，所有 Action 必须固定完整 Commit SHA。
+- Actions 只允许 GitHub-owned Actions、仓库所有者 `jinmozhe` 下的 Actions，以及仓库现有
+  工作流使用的 11 条明确第三方匹配规则；`sha_pinning_required=true`，所有 Action 必须固定
+  完整 Commit SHA。
 - active Ruleset `Protect main`（ID `21152538`）作用于默认分支，禁止删除和非快进更新，
   要求 Pull Request、会话解决和 13 个自动状态检查。
 - Ruleset 审批数为 0，用户 `jinmozhe` 保留 always bypass。当前只有一位维护者，无法提供
@@ -83,6 +84,18 @@ flowchart TD
 
 单维护者基线提供自动门禁和明确恢复路径，但不等同于职责分离。生产部署仍需单独授权；
 当前 Environment 自审、管理员 bypass 和 Ruleset bypass 均属于已知剩余风险。
+
+### 3.2 项目 Node.js 与 Action 运行时
+
+工作流中 `actions/setup-node` 的 `node-version: "24"` 管理后续 `pnpm`、构建、测试和仓库脚本
+使用的项目 Node.js。它不会改变其他 JavaScript Action 自身的运行时。
+
+JavaScript Action 的执行版本由该 Action 固定提交中的 `action.yml` 或 `action.yaml` 的
+`runs.using` 声明。仓库不能在调用方工作流中省略或改写这个值；只删除版本注释也不会改变
+实际运行时。截至 2026-08-22，七个工作流直接引用的 JavaScript Action 均已升级到原生
+`node24` 的正式版本并固定完整 Commit SHA，其余直接 Action 为 Composite 或 Docker Action。
+仓库不设置 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`，也不依赖 GitHub Runner 将旧
+`node20` Action 兼容覆盖到 Node.js 24。
 
 ## 4. Push 后的执行顺序
 
