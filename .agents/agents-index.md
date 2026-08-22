@@ -39,6 +39,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 实施中 | Admin、Web、Deployment、Documentation | 修复四项可安全升级的传递依赖，对三项暂无安全升级路径的上游风险建立限时接受和复核闭环 |
 | `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md` | 已结束 | Deployment、Documentation | 十个 Action 已升级到原生 Node.js 24，线上四个自动工作流成功且 annotations 为 0 |
 | `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 已结束 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
 | `plans/2026-08-21_母版开发总结与一致性收尾计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 修复生产阻断、契约说明和文档漂移，补齐迁移、恢复、边界与跨栈验收 |
@@ -55,6 +56,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 实施中 | 用户已确认；正在实施依赖替换、完整回归和远端告警处置 | Admin、Web、Deployment、Documentation | 修复四项可安全升级的传递依赖，对三项暂无安全升级路径的上游风险建立限时接受和复核闭环 |
 | `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md` | 已结束 | 已完成；十个 Action 原生 Node.js 24 升级、完整 SHA Pinning、本地门禁和线上四个自动工作流均通过，annotations 为 0 | Deployment、Documentation | 将七个工作流中的十个 Action 升级到原生 Node.js 24 的固定 SHA |
 | `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 已结束 | 已完成；文件日志、线上 E2E、远端治理、favicon、历史记录和最终门禁均通过 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
 | `plans/2026-08-21_母版开发总结与一致性收尾计划.md` | 已结束 | 已完成；生产边界、OpenAPI 中文字段说明、依赖图、数据库恢复、三端质量、容器、文件日志和 Browser E2E 均通过验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 修复生产阻断、契约说明和文档漂移，补齐迁移、恢复、边界与跨栈验收 |

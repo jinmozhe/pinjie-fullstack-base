@@ -47,6 +47,7 @@
 
 ### Fixed
 
+- 修复 Umi 工具链四项可安全升级的传递依赖漏洞：范围受控地将 `@babel/core`、`@babel/runtime`、`esbuild` 和 `send` 提升到修复版本，旧漏洞解析已从根锁文件移除，并通过 Admin、Web 和真实跨栈回归。
 - 修复 Backend 文件日志默认文本格式遗漏 Loguru 绑定字段的问题；文件 Sink 改为 UTF-8 JSON Lines，请求记录稳定包含 `request_id`、`trace_id`、HTTP 方法、规范化路由、状态码和耗时，并由真实文件写入测试覆盖。
 - 修复 Admin 五个受保护页面只提供命名导出，导致 Umi production lazy route 触发 React 306 错误的问题；用户、管理员、角色、安全和系统状态页面现同时提供路由所需的默认导出。
 - 修复 Web 主动退出期间迟到的用户或会话请求 401 覆盖预期 `/login` 跳转的问题；退出发起前显式中止在途读取并增加竞态回归测试。
@@ -67,6 +68,8 @@
 
 ### Changed
 
+- 对 Umi 固定的 React Router `6.3.0` 两条 Medium 告警和暂无修复版本的 `elliptic 6.6.1` Low 告警建立截至 2026-09-21 的限时风险接受；GitHub 使用 `tolerable_risk` 保留依赖链、可达性、负责人和复核条件，本地低级别原始审计继续报告这些未修复上游风险。
+- 将内部自用单维护者的自审、管理员 bypass 和 Ruleset bypass 明确为已接受治理模型；不增加第二维护者，继续保留自动状态检查、不可变发布、操作审计以及提交、推送、发布和部署的独立授权边界。
 - 将七个 GitHub Actions 工作流中的十个旧版 JavaScript Action 升级到原生 Node.js 24 的正式版本；全部引用继续固定完整 Commit SHA，不再依赖 GitHub Runner 对 `node20` Action 的兼容覆盖。
 - Browser E2E 改为 GitHub Actions 人工按需触发，不再随 Push 或 Pull Request 自动运行；Publish Images 取消 E2E 成功记录依赖，继续校验同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四项自动门禁。
 - Admin 全面迁移到官方 Ant Design Pro v6/Umi Max：采用 `@umijs/max`、Ant Design 6、ProComponents 3、Icons 6、ProLayout、Umi 配置式路由和运行时 Access；保留 Cookie/CSRF/Refresh/RBAC、共享 API Client、危险操作二次确认和现有管理页面。

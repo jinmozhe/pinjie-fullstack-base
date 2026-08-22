@@ -72,18 +72,26 @@ flowchart TD
 
 - Dependabot vulnerability alerts、Secret Scanning、Push Protection 和 Private
   Vulnerability Reporting 已启用；Dependabot security updates 按人工依赖 PR 决策保持关闭。
+- 2026-08-22 的 Medium/Low 治理已在本地锁文件修复 `@babel/core`、`@babel/runtime`、
+  `esbuild` 和 `send` 四条告警。React Router 告警 `#4`、`#7` 与 `elliptic` 告警 `#5`
+  因当前没有受 Umi 支持的安全升级路径，已使用 `tolerable_risk` 记录依赖链、不可达性证据、
+  负责人和 2026-09-21 复核日期；这三条属于限时风险接受，不属于漏洞修复。本地锁文件提交并
+  推送前，GitHub 仍显示其余四条可修复告警为开放状态。
 - Actions 只允许 GitHub-owned Actions、仓库所有者 `jinmozhe` 下的 Actions，以及仓库现有
   工作流使用的 11 条明确第三方匹配规则；`sha_pinning_required=true`，所有 Action 必须固定
   完整 Commit SHA。
 - active Ruleset `Protect main`（ID `21152538`）作用于默认分支，禁止删除和非快进更新，
   要求 Pull Request、会话解决和 13 个自动状态检查。
-- Ruleset 审批数为 0，用户 `jinmozhe` 保留 always bypass。当前只有一位维护者，无法提供
-  独立 PR 审批；增加第二位可信维护者后，应要求至少 1 次独立审批并重新评估 bypass。
+- Ruleset 审批数为 0，用户 `jinmozhe` 保留 always bypass。仓库为内部自用且只有一位维护者，
+  用户已确认继续保留自审、管理员 bypass 和 Ruleset bypass；这是当前治理模型，不是待增加
+  第二维护者的未完成事项。若仓库转为多人协作、对外服务或承载更高风险生产数据，再重新评估
+  独立审批和 bypass 范围。
 - `production` Environment（ID `20337656537`）只允许受保护分支，必要 Reviewer 为
   `jinmozhe`，`prevent_self_review=false`，当前 Secrets 和 Variables 均为 0。
 
-单维护者基线提供自动门禁和明确恢复路径，但不等同于职责分离。生产部署仍需单独授权；
-当前 Environment 自审、管理员 bypass 和 Ruleset bypass 均属于已知剩余风险。
+单维护者基线提供自动门禁和明确恢复路径，但不等同于职责分离。该边界已按内部自用场景接受，
+不再作为待加固事项；提交、推送、镜像发布和生产部署仍需分别取得明确授权，并保留自动状态检查、
+不可变发布和审计记录。
 
 ### 3.2 项目 Node.js 与 Action 运行时
 

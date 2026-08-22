@@ -8,7 +8,7 @@
 
 ## 一、当前完整文件结构
 
-以下清单以 2026-08-22 当前工作区为准，共 308 个项目文件、68 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。Admin 当前结构为 Umi Max 工程，入口是 `src/app.tsx`，配置位于 `config/`，启动包装器位于 `scripts/run-umi.mjs`。
+以下清单以 2026-08-22 当前工作区为准，共 309 个项目文件、68 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。Admin 当前结构为 Umi Max 工程，入口是 `src/app.tsx`，配置位于 `config/`，启动包装器位于 `scripts/run-umi.mjs`。
 
 ```text
 . :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
@@ -75,7 +75,7 @@ packages/api-client/src/client :: client.gen.ts, index.ts, types.gen.ts, utils.g
 packages/api-client/src/core :: auth.gen.ts, bodySerializer.gen.ts, params.gen.ts, pathSerializer.gen.ts, queryKeySerializer.gen.ts, serverSentEvents.gen.ts, types.gen.ts, utils.gen.ts
 packages/eslint-config :: index.js, package.json
 packages/typescript-config :: base.json, nextjs.json, package.json, vite.json
-plans :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, 2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md, 2026-08-16_CI跨平台与CodeQL权限修复计划.md, 2026-08-17_初始管理员默认用户名计划.md, 2026-08-17_密码规则与API中文化计划.md, 2026-08-17_Web首页登录态操作按钮计划.md, 2026-08-19_Admin升级AntDesign6计划.md, 2026-08-20_后端文件日志与环境变量配置化计划.md, 2026-08-20_请求日志错误入参捕获与脱敏管道计划.md, 2026-08-20_Admin本地运行与故障排查文档治理计划.md, 2026-08-20_Admin技术栈文档一致性审计计划.md, 2026-08-20_CI失败修复计划.md, 2026-08-20_GitHub CI线上失败修复计划.md, 2026-08-21_母版开发总结与一致性收尾计划.md, 2026-08-21_BrowserE2E就绪探测修复计划.md, 2026-08-21_BrowserE2E人工触发与发布解耦计划.md, 2026-08-21_验收缺口修复与远端治理计划.md, 2026-08-22_GitHubActionsNode24原生运行时升级计划.md, README.md
+plans :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, 2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md, 2026-08-16_CI跨平台与CodeQL权限修复计划.md, 2026-08-17_初始管理员默认用户名计划.md, 2026-08-17_密码规则与API中文化计划.md, 2026-08-17_Web首页登录态操作按钮计划.md, 2026-08-19_Admin升级AntDesign6计划.md, 2026-08-20_后端文件日志与环境变量配置化计划.md, 2026-08-20_请求日志错误入参捕获与脱敏管道计划.md, 2026-08-20_Admin本地运行与故障排查文档治理计划.md, 2026-08-20_Admin技术栈文档一致性审计计划.md, 2026-08-20_CI失败修复计划.md, 2026-08-20_GitHub CI线上失败修复计划.md, 2026-08-21_母版开发总结与一致性收尾计划.md, 2026-08-21_BrowserE2E就绪探测修复计划.md, 2026-08-21_BrowserE2E人工触发与发布解耦计划.md, 2026-08-21_验收缺口修复与远端治理计划.md, 2026-08-22_Dependabot中低危依赖治理计划.md, 2026-08-22_GitHubActionsNode24原生运行时升级计划.md, README.md
 scripts/ci :: check-module-boundaries.ps1, check-production-compose.ps1, check-text-files.ps1, check-typescript-boundaries.mjs, check-workspace-state.ps1, test-governance-guards.ps1, test-production-compose-guard.ps1, test-typescript-boundary-guard.mjs
 scripts/e2e :: run-e2e.mjs
 scripts/operations :: test-postgres-backup-restore.ps1
