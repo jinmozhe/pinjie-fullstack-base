@@ -39,7 +39,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
-| `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 实施中 | Admin、Web、Deployment、Documentation | 修复四项可安全升级的传递依赖，对三项暂无安全升级路径的上游风险建立限时接受和复核闭环 |
+| `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 已结束 | Admin、Web、Deployment、Documentation | 四项传递依赖已修复，三项上游风险已限时接受，Dependabot 为 0 Open、7 Closed，四个自动工作流全部成功 |
 | `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md` | 已结束 | Deployment、Documentation | 十个 Action 已升级到原生 Node.js 24，线上四个自动工作流成功且 annotations 为 0 |
 | `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 已结束 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
 | `plans/2026-08-21_母版开发总结与一致性收尾计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 修复生产阻断、契约说明和文档漂移，补齐迁移、恢复、边界与跨栈验收 |
@@ -56,7 +56,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 实施中 | 用户已确认；正在实施依赖替换、完整回归和远端告警处置 | Admin、Web、Deployment、Documentation | 修复四项可安全升级的传递依赖，对三项暂无安全升级路径的上游风险建立限时接受和复核闭环 |
+| `plans/2026-08-22_Dependabot中低危依赖治理计划.md` | 已结束 | 已完成；四项传递依赖修复、三项限时风险接受、完整回归、Dependabot 重扫和四个线上自动工作流均通过 | Admin、Web、Deployment、Documentation | 修复四项可安全升级的传递依赖，对三项暂无安全升级路径的上游风险建立限时接受和复核闭环 |
 | `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md` | 已结束 | 已完成；十个 Action 原生 Node.js 24 升级、完整 SHA Pinning、本地门禁和线上四个自动工作流均通过，annotations 为 0 | Deployment、Documentation | 将七个工作流中的十个 Action 升级到原生 Node.js 24 的固定 SHA |
 | `plans/2026-08-21_验收缺口修复与远端治理计划.md` | 已结束 | 已完成；文件日志、线上 E2E、远端治理、favicon、历史记录和最终门禁均通过 | Backend、Web、Deployment、Documentation | 修复文件日志关联字段，补齐线上 Browser E2E、GitHub 远端治理、favicon 和历史记录一致性 |
 | `plans/2026-08-21_母版开发总结与一致性收尾计划.md` | 已结束 | 已完成；生产边界、OpenAPI 中文字段说明、依赖图、数据库恢复、三端质量、容器、文件日志和 Browser E2E 均通过验收 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 修复生产阻断、契约说明和文档漂移，补齐迁移、恢复、边界与跨栈验收 |
@@ -96,8 +96,8 @@
 | Web | 注册登录、SSR 用户中心、资料、统一密码约束、会话、退出、注销、首页登录态操作、中文错误代理、PNG favicon、组件测试和 standalone 容器已实现；本轮 typecheck、lint、18 项 Vitest、覆盖率、production build、非 Root 容器和桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，238 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成，非文档契约结构保持一致，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL 18.4 空库、重复升级、`alembic check` 和独立 `_test` 数据库备份恢复演练已通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/verify_local_database_recovery.py` |
-| Deployment | 生产 Compose 已修正 PostgreSQL 18 卷路径并默认关闭 Backend 文件日志，生产配置正反例和 1Panel 手册已建立；三端镜像、非 Root、健康检查和线上 Browser E2E 通过；GitHub 安全功能、Actions 精确允许列表、完整 SHA Pinning、直接 JavaScript Action 原生 Node.js 24、`main` Ruleset 与 `production` Environment 已按单维护者基线配置；未执行发布或生产部署 | `apps/backend/Dockerfile`、`compose.prod.yml`、`scripts/ci/check-production-compose.ps1`、`docs/operations/github-actions-workflows.md` |
-| Documentation | 目录结构已按 2026-08-22 的 308 个项目文件、68 个含文件目录同步；技术栈、运行边界、恢复、1Panel、67 项需求追踪和 13 条母版验收均已回写并通过最终 Markdown、文本卫生与交叉检查 | `docs/architecture/project-structure.md`、`docs/README.md`、`plans/2026-08-21_母版开发总结与一致性收尾计划.md` |
+| Deployment | 生产 Compose 已修正 PostgreSQL 18 卷路径并默认关闭 Backend 文件日志，生产配置正反例和 1Panel 手册已建立；三端镜像、非 Root、健康检查和线上 Browser E2E 通过；GitHub 安全功能、Actions 精确允许列表、完整 SHA Pinning、直接 JavaScript Action 原生 Node.js 24、`main` Ruleset 与 `production` Environment 已按单维护者基线配置；Dependabot 为 0 Open、7 Closed，三项上游风险限时接受；未执行发布或生产部署 | `apps/backend/Dockerfile`、`compose.prod.yml`、`scripts/ci/check-production-compose.ps1`、`docs/operations/github-actions-workflows.md` |
+| Documentation | 目录结构已按 2026-08-22 的 309 个项目文件、68 个含文件目录同步；技术栈、运行边界、恢复、1Panel、67 项需求追踪、13 条母版验收和 Dependabot 风险治理均已回写并通过最终文档检查 | `docs/architecture/project-structure.md`、`docs/README.md`、`plans/2026-08-22_Dependabot中低危依赖治理计划.md` |
 
 ## 权威来源
 

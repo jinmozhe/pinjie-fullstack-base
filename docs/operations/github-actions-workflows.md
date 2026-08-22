@@ -72,11 +72,11 @@ flowchart TD
 
 - Dependabot vulnerability alerts、Secret Scanning、Push Protection 和 Private
   Vulnerability Reporting 已启用；Dependabot security updates 按人工依赖 PR 决策保持关闭。
-- 2026-08-22 的 Medium/Low 治理已在本地锁文件修复 `@babel/core`、`@babel/runtime`、
-  `esbuild` 和 `send` 四条告警。React Router 告警 `#4`、`#7` 与 `elliptic` 告警 `#5`
-  因当前没有受 Umi 支持的安全升级路径，已使用 `tolerable_risk` 记录依赖链、不可达性证据、
-  负责人和 2026-09-21 复核日期；这三条属于限时风险接受，不属于漏洞修复。本地锁文件提交并
-  推送前，GitHub 仍显示其余四条可修复告警为开放状态。
+- 2026-08-22 的 Medium/Low 治理已通过锁文件修复 `@babel/core`、`@babel/runtime`、
+  `esbuild` 和 `send` 四条告警，推送后由 Dependabot 重扫自动关闭。React Router 告警
+  `#4`、`#7` 与 `elliptic` 告警 `#5` 因当前没有受 Umi 支持的安全升级路径，已使用
+  `tolerable_risk` 记录依赖链、不可达性证据、负责人和 2026-09-21 复核日期；这三条属于
+  限时风险接受，不属于漏洞修复。完成时 GitHub Dependabot 为 0 Open、7 Closed。
 - Actions 只允许 GitHub-owned Actions、仓库所有者 `jinmozhe` 下的 Actions，以及仓库现有
   工作流使用的 11 条明确第三方匹配规则；`sha_pinning_required=true`，所有 Action 必须固定
   完整 Commit SHA。

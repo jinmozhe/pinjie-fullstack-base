@@ -2,8 +2,8 @@
 
 ## 当前状态和结果
 
-- 状态：实施中
-- 结果：四项可修复传递依赖已完成本地替换和完整回归，三项上游风险已按 `tolerable_risk` 限时接受；四条 GitHub 开放告警等待本地锁文件提交并推送后重扫关闭。
+- 状态：已结束
+- 结果：已完成；四项可修复传递依赖已升级并通过完整回归，三项上游风险已按 `tolerable_risk` 限时接受，Dependabot 重扫为 0 Open、7 Closed，四个自动工作流全部成功。
 
 ## 关联需求
 
@@ -149,7 +149,7 @@ GitHub 开放告警数变为 0 只表示 4 条已修复、3 条已显式接受�
 - [x] `pnpm lint:md` 通过。
 - [x] API Client 生成目录没有意外漂移。
 - [x] 真实 PostgreSQL/Redis 与 Backend 下的 Admin/Web 桌面、移动 Browser E2E 通过，无控制台错误或横向溢出。
-- [ ] GitHub 4 条可修复告警因新锁文件关闭，3 条告警以 `tolerable_risk` 和完整备注关闭，开放告警数为 0。
+- [x] GitHub 4 条可修复告警因新锁文件关闭，3 条告警以 `tolerable_risk` 和完整备注关闭，开放告警数为 0。
 - [x] 最终工作区只包含本计划范围内的预期修改，没有验证遗留监听、缓存或临时产物。
 
 ## 待确认问题
@@ -161,6 +161,7 @@ GitHub 开放告警数变为 0 只表示 4 条已修复、3 条已显式接受�
 - 2026-08-22：用户要求开始执行原建议中的第 2 项 Dependabot Medium/Low 依赖风险治理。
 - 2026-08-22：用户明确第 3 项不需要，项目内部自用且仅由一人维护，不增加额外维护者。
 - 2026-08-22：用户确认执行本计划，包括 4 个范围 override、3 条截至 2026-09-21 的限时风险接受和完整回归范围。
+- 2026-08-22：用户调用 `git-sync`，明确授权提交并推送本计划修改。
 
 ## 实施结果
 
@@ -169,10 +170,11 @@ GitHub 开放告警数变为 0 只表示 4 条已修复、3 条已显式接受�
 - Admin lint、typecheck、17 项 Vitest、production build 与 Web lint、typecheck、18 项 Vitest、production build 全部通过；API Client 重新生成无漂移，仓库治理检查通过。
 - 使用真实 PostgreSQL 18、Redis、Backend、Admin、Web 和完整 Chromium 完成桌面/移动跨栈 E2E。最终 8 个适用用例通过，8 个按项目范围正常跳过；未修改超时或跳过规则。
 - GitHub 告警 `#4`、`#7` 和 `#5` 已按 `Risk is tolerable to this project` 关闭，备注记录依赖链、源码不可达性、负责人、2026-09-21 复核日期和提前复核条件。`#5` 首次关闭原因选择错误后已重开并按正确原因重新关闭，GitHub 审计时间线保留了纠正过程。
-- 当前 GitHub Dependabot 列表为 4 Open、3 Closed。开放的 `#1`、`#2`、`#3`、`#6` 对应本地已修复的四项依赖，必须在本地修改提交并推送后等待 Dependabot 基于新锁文件重扫。
+- 提交 `79e3dbb195d010c44f4317b23e38fa2906258c3b` 推送后，Dependabot 基于新锁文件重扫并自动关闭 `#1`、`#2`、`#3`、`#6`；最终列表为 0 Open、7 Closed。
+- 同一提交的 Governance `32548703459`、Backend `32548703441`、Frontend `32548703468` 和 Security `32548703425` 全部成功；Frontend 中 Web quality 与 Admin quality 均通过。
 - Windows 下 standalone 产物因相对符号链接在沙箱中触发 `EPERM stat`；真实行为验证使用同一次 production build 的 `.next` 输出和 `next start` 完成，不影响构建成功或跨栈行为结论。
 - 最终 `pnpm lint:md`、`pnpm check:governance` 与 `git diff --check` 通过；E2E 报告和测试结果目录已清理，端口 3000、3001、8000 无遗留监听。
 
 ## 剩余问题
 
-- 等待用户另行授权提交并推送本计划修改。推送后需复核 Dependabot 将 `#1`、`#2`、`#3`、`#6` 自动关闭，再把开放告警数为 0、线上工作流结果和计划状态回写为最终完成事实。
+- 无。React Router 与 `elliptic` 三条已接受风险继续按 2026-09-21 复核日期管理。
