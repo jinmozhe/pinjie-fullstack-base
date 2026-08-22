@@ -6,6 +6,8 @@
 
 ### Added
 
+- 增加 Session 分页契约、Refresh Token 级联清理和默认 dry-run 的会话保留清理工具，支持显式 `--apply`、结果统计和隔离测试库验证。
+- 增加 Admin 认证 HTTP、启动生命周期、权限映射和 Web BFF/SSR 会话恢复回归测试，将高风险传输边界纳入前端覆盖率门禁。
 - 增加 Web App Router PNG favicon，使用 Next.js `ImageResponse` 生成业务中立的 Pinjie 图标，并通过 production build、桌面和移动浏览器及真实资源响应检查。
 - 建立 GitHub 单维护者远端治理基线：启用漏洞告警、Secret Scanning、Push Protection 和私密漏洞报告，限制 Actions 来源并要求完整 SHA Pinning，为 `main` 配置 Ruleset，并预创建不含 Secrets 或 Variables 的 `production` Environment。
 - 增加基于 TypeScript Compiler API 的前端依赖图门禁，覆盖跨应用引用、Feature 内部越界、循环依赖和可静态解析的动态导入，并提供正反例。
@@ -47,6 +49,11 @@
 
 ### Fixed
 
+- 修复 Web/Admin Cookie Profile 共享 Origin 与代理路径导致的跨端会话越权面；Backend 按 Profile 精确校验 Origin，Web BFF 和 Admin Nginx 只允许各自路径并过滤另一端 Cookie。
+- 修复最后超级管理员并发竞争、跨 `AsyncSession` 事务上下文误判，以及认证提交后 Redis 限流清理失败翻转成功结果的问题；真实 PostgreSQL 并发和 Redis 失败路径均已覆盖。
+- 修复 Admin/Web 刷新、退出和改密生命周期不一致，统一为单次 Refresh 与一次重放、失败保留当前页面、改密保留当前会话并轮换 Cookie。
+- 修复 Web canonical 在构建时固化 localhost、子页面标题重复品牌名，以及 Next.js 16.3 standalone 在 Windows 复制目录链接后无法启动的问题。
+- 修复 Browser E2E 仍使用旧统一 CORS 变量且未注入 Web 公开 Origin 的配置漂移；冷启动 wrapper 现可自行启动 Windows standalone、Umi 和四个桌面/移动项目。
 - 修复 Umi 工具链四项可安全升级的传递依赖漏洞：范围受控地将 `@babel/core`、`@babel/runtime`、`esbuild` 和 `send` 提升到修复版本，旧漏洞解析已从根锁文件移除，并通过 Admin、Web 和真实跨栈回归。
 - 修复 Backend 文件日志默认文本格式遗漏 Loguru 绑定字段的问题；文件 Sink 改为 UTF-8 JSON Lines，请求记录稳定包含 `request_id`、`trace_id`、HTTP 方法、规范化路由、状态码和耗时，并由真实文件写入测试覆盖。
 - 修复 Admin 五个受保护页面只提供命名导出，导致 Umi production lazy route 触发 React 306 错误的问题；用户、管理员、角色、安全和系统状态页面现同时提供路由所需的默认导出。
@@ -68,6 +75,9 @@
 
 ### Changed
 
+- 移除把 Umi bundler 的 Vite 4 强制覆盖到 Vite 6 的不兼容 override；锁文件现由 Umi 使用 `vite@4.5.2`，Admin Vitest 独立使用 `vite@6.4.3`。
+- Backend、Admin、Web、PostgreSQL 和 Redis 的生产基础镜像全部固定完整 digest，生产 Compose 门禁同时覆盖 Dockerfile、应用镜像变量、基础设施引用和可变引用反例。
+- 用户、用户管理和管理员管理的 Session 列表统一为有上限的服务端分页响应；根 OpenAPI 与共享 API Client 已重新生成并迁移全部消费者。
 - 对 Umi 固定的 React Router `6.3.0` 两条 Medium 告警和暂无修复版本的 `elliptic 6.6.1` Low 告警建立截至 2026-09-21 的限时风险接受；GitHub 使用 `tolerable_risk` 保留依赖链、可达性、负责人和复核条件，本地低级别原始审计继续报告这些未修复上游风险。
 - 将内部自用单维护者的自审、管理员 bypass 和 Ruleset bypass 明确为已接受治理模型；不增加第二维护者，继续保留自动状态检查、不可变发布、操作审计以及提交、推送、发布和部署的独立授权边界。
 - 将七个 GitHub Actions 工作流中的十个旧版 JavaScript Action 升级到原生 Node.js 24 的正式版本；全部引用继续固定完整 Commit SHA，不再依赖 GitHub Runner 对 `node20` Action 的兼容覆盖。

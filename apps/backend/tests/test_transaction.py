@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -25,16 +25,24 @@ async def test_outer_transaction_rolls_back_and_preserves_error() -> None:
 
 
 @pytest.mark.asyncio
-async def test_nested_transaction_uses_savepoint_without_commit() -> None:
-    session = MagicMock()
-    session.commit = AsyncMock()
-    session.rollback = AsyncMock()
-    savepoint = MagicMock()
-    session.begin_nested.return_value = savepoint
-    savepoint.__aenter__ = AsyncMock(return_value=session)
-    savepoint.__aexit__ = AsyncMock(return_value=None)
-    async with transaction_scope(session):
+async def test_nested_transaction_for_same_session_fails_explicitly() -> None:
+    session = AsyncMock()
+    with pytest.raises(RuntimeError, match="same session"):
         async with transaction_scope(session):
+            async with transaction_scope(session):
+                pass
+    session.commit.assert_not_awaited()
+    session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_nested_transaction_for_different_sessions_owns_each_transaction() -> None:
+    outer_session = AsyncMock()
+    inner_session = AsyncMock()
+    async with transaction_scope(outer_session):
+        async with transaction_scope(inner_session):
             pass
-    session.begin_nested.assert_called_once()
-    session.commit.assert_awaited_once()
+    outer_session.commit.assert_awaited_once()
+    outer_session.rollback.assert_not_awaited()
+    inner_session.commit.assert_awaited_once()
+    inner_session.rollback.assert_not_awaited()

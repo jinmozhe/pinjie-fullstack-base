@@ -200,7 +200,7 @@ async def test_user_browser_api_complete_account_lifecycle(coverage_app: FastAPI
 
         sessions = await client.get("/api/v1/users/me/sessions")
         assert sessions.status_code == 200
-        session_items = sessions.json()["data"]
+        session_items = sessions.json()["data"]["items"]
         assert len(session_items) >= 2
         other_session_id = next(item["id"] for item in session_items if not item["is_current"])
 

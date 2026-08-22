@@ -89,12 +89,14 @@ class _AuthBase:
         )
 
     async def clear_login_limit(self, identifier: str) -> None:
+        from loguru import logger
+
         if self.redis is None:
-            raise AppException(
-                status_code=503,
-                code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="认证服务暂时不可用",
-            )
+            logger.bind(
+                auth_profile="admin" if self.admin else "web",
+                request_id=self.metadata.request_id,
+            ).warning("login rate-limit cleanup skipped because Redis is unavailable")
+            return
         keys = (
             self.keys.login_identifier(token_digest(identifier, self.hmac_key), admin=self.admin),
             self.keys.login_ip(token_digest(self.metadata.ip_address or "unknown", self.hmac_key), admin=self.admin),
@@ -102,11 +104,10 @@ class _AuthBase:
         try:
             await self.redis.delete(*keys)
         except RedisError as exc:
-            raise AppException(
-                status_code=503,
-                code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="认证服务暂时不可用",
-            ) from exc
+            logger.bind(
+                auth_profile="admin" if self.admin else "web",
+                request_id=self.metadata.request_id,
+            ).opt(exception=exc).warning("login rate-limit cleanup failed after authentication succeeded")
 
     async def record_failure(
         self,

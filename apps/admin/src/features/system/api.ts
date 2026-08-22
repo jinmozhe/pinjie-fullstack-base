@@ -1,10 +1,7 @@
-import { getSystemStatusApiV1SystemStatusGet } from "@pinjie/api-client";
 import type { SystemStatus } from "@pinjie/api-client";
-import { client } from "@pinjie/api-client/client.gen";
 
-client.setConfig({ baseURL: process.env.VITE_API_URL || window.location.origin });
+import { apiRequest } from "@/lib/api/http";
 
 export async function fetchSystemStatus(): Promise<SystemStatus> {
-  const result = await getSystemStatusApiV1SystemStatusGet({ client, throwOnError: true });
-  return result.data.data;
+  return apiRequest<SystemStatus>("/api/v1/system/status");
 }

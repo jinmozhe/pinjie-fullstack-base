@@ -21,6 +21,8 @@ from app.db.models import (
     UserSession,
 )
 
+_SUPERUSER_GUARD_LOCK_KEY = 0x50494E4A49455355
+
 
 class UserRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -103,6 +105,9 @@ class AdminRepository:
             select(func.count()).select_from(Admin).where(Admin.is_active.is_(True), Admin.is_superuser.is_(True))
         )
         return int((await self.session.scalar(statement)) or 0)
+
+    async def lock_active_superuser_guard(self) -> None:
+        await self.session.execute(select(func.pg_advisory_xact_lock(_SUPERUSER_GUARD_LOCK_KEY)))
 
     async def get_roles(self, role_ids: list[uuid.UUID]) -> list[Role]:
         if not role_ids:
@@ -222,15 +227,29 @@ class SessionRepository:
         )
         return (await self.session.execute(statement)).scalar_one_or_none()
 
-    async def list_web(self, user_id: uuid.UUID) -> list[UserSession]:
-        statement = select(UserSession).where(UserSession.user_id == user_id).order_by(UserSession.created_at.desc())
-        return list((await self.session.scalars(statement)).all())
-
-    async def list_admin(self, admin_id: uuid.UUID) -> list[AdminSession]:
+    async def list_web(self, user_id: uuid.UUID, *, page: int, page_size: int) -> tuple[list[UserSession], int]:
+        predicate = UserSession.user_id == user_id
+        total = int((await self.session.scalar(select(func.count()).select_from(UserSession).where(predicate))) or 0)
         statement = (
-            select(AdminSession).where(AdminSession.admin_id == admin_id).order_by(AdminSession.created_at.desc())
+            select(UserSession)
+            .where(predicate)
+            .order_by(UserSession.created_at.desc(), UserSession.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
         )
-        return list((await self.session.scalars(statement)).all())
+        return list((await self.session.scalars(statement)).all()), total
+
+    async def list_admin(self, admin_id: uuid.UUID, *, page: int, page_size: int) -> tuple[list[AdminSession], int]:
+        predicate = AdminSession.admin_id == admin_id
+        total = int((await self.session.scalar(select(func.count()).select_from(AdminSession).where(predicate))) or 0)
+        statement = (
+            select(AdminSession)
+            .where(predicate)
+            .order_by(AdminSession.created_at.desc(), AdminSession.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list((await self.session.scalars(statement)).all()), total
 
     async def revoke_web_refresh_tokens(self, session_id: uuid.UUID, *, reason: str, now: datetime) -> None:
         await self.session.execute(

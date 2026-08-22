@@ -594,6 +594,42 @@ export type PageResultRoleRead = {
 };
 
 /**
+ * PageResult[SessionRead]
+ */
+export type PageResultSessionRead = {
+    /**
+     * Items
+     *
+     * 当前分页中的资源列表
+     */
+    items: Array<SessionRead>;
+    /**
+     * Page
+     *
+     * 当前页码，从 1 开始
+     */
+    page: number;
+    /**
+     * Page Size
+     *
+     * 每页资源数量
+     */
+    page_size: number;
+    /**
+     * Total
+     *
+     * 符合条件的资源总数
+     */
+    total: number;
+    /**
+     * Total Pages
+     *
+     * 符合条件的总页数
+     */
+    total_pages: number;
+};
+
+/**
  * PageResult[UserPrincipalOut]
  */
 export type PageResultUserPrincipalOut = {
@@ -1076,6 +1112,34 @@ export type ResponseModelPageResultRoleRead = {
 };
 
 /**
+ * ResponseModel[PageResult[SessionRead]]
+ */
+export type ResponseModelPageResultSessionRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: PageResultSessionRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
  * ResponseModel[PageResult[UserPrincipalOut]]
  */
 export type ResponseModelPageResultUserPrincipalOut = {
@@ -1295,36 +1359,6 @@ export type ResponseModelListPermissionRead = {
      * 响应业务数据
      */
     data: Array<PermissionRead>;
-    /**
-     * Request Id
-     *
-     * 用于定位本次请求的唯一标识
-     */
-    request_id: string;
-};
-
-/**
- * ResponseModel[list[SessionRead]]
- */
-export type ResponseModelListSessionRead = {
-    /**
-     * Code
-     *
-     * 稳定程序代码
-     */
-    code: string;
-    /**
-     * Message
-     *
-     * 面向调用方的中文结果消息
-     */
-    message: string;
-    /**
-     * Data
-     *
-     * 响应业务数据
-     */
-    data: Array<SessionRead>;
     /**
      * Request Id
      *
@@ -1956,7 +1990,16 @@ export type ChangePasswordApiV1UsersMePasswordPostResponse = ChangePasswordApiV1
 export type ListSessionsApiV1UsersMeSessionsGetData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
     url: '/api/v1/users/me/sessions';
 };
 
@@ -1973,7 +2016,7 @@ export type ListSessionsApiV1UsersMeSessionsGetResponses = {
     /**
      * 请求成功
      */
-    200: ResponseModelListSessionRead;
+    200: ResponseModelPageResultSessionRead;
 };
 
 export type ListSessionsApiV1UsersMeSessionsGetResponse = ListSessionsApiV1UsersMeSessionsGetResponses[keyof ListSessionsApiV1UsersMeSessionsGetResponses];
@@ -2361,7 +2404,16 @@ export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetData = {
          */
         user_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
     url: '/api/v1/admin/users/{user_id}/sessions';
 };
 
@@ -2378,7 +2430,7 @@ export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses = {
     /**
      * 请求成功
      */
-    200: ResponseModelListSessionRead;
+    200: ResponseModelPageResultSessionRead;
 };
 
 export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponse = ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses[keyof ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses];
@@ -2706,7 +2758,16 @@ export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData = {
          */
         admin_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
     url: '/api/v1/admin/admins/{admin_id}/sessions';
 };
 
@@ -2723,7 +2784,7 @@ export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses = {
     /**
      * 请求成功
      */
-    200: ResponseModelListSessionRead;
+    200: ResponseModelPageResultSessionRead;
 };
 
 export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponse = ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses[keyof ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses];

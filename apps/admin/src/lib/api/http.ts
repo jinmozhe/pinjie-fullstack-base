@@ -26,6 +26,11 @@ export class ApiError extends Error {
 
 const API_BASE = (process.env.VITE_API_URL || window.location.origin).replace(/\/$/, "");
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const AUTH_RETRY_EXCLUDED = new Set([
+  "/api/v1/admin/auth/login",
+  "/api/v1/admin/auth/refresh",
+  "/api/v1/admin/auth/logout",
+]);
 let refreshPromise: Promise<boolean> | null = null;
 
 function readCookie(name: string): string | undefined {
@@ -83,7 +88,7 @@ export async function apiRequest<T>(
   if (options.confirmationToken) headers.set("X-Admin-Confirmation", options.confirmationToken);
 
   const response = await fetch(`${API_BASE}${path}`, { ...init, method, headers, credentials: "include" });
-  if (response.status === 401 && options.retryAuth !== false && !path.startsWith("/api/v1/admin/auth/")) {
+  if (response.status === 401 && options.retryAuth !== false && !AUTH_RETRY_EXCLUDED.has(path)) {
     if (await refreshSession()) return apiRequest<T>(path, init, { ...options, retryAuth: false });
   }
   if (!response.ok) throw await parseError(response);

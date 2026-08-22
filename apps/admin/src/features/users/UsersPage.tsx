@@ -1,7 +1,7 @@
 import type { ConfirmationAction, UserPrincipalOut } from "@pinjie/api-client";
 import { EditOutlined, KeyOutlined, LaptopOutlined, PoweroffOutlined, SearchOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Drawer, Flex, Form, Input, Modal, Space, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Drawer, Flex, Form, Input, Modal, Pagination, Space, Table, Tag, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -17,6 +17,7 @@ export function UsersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<UserPrincipalOut | null>(null);
+  const [sessionPage, setSessionPage] = useState(1);
   const [editing, setEditing] = useState<UserPrincipalOut | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<UserPrincipalOut | null>(null);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
@@ -24,9 +25,9 @@ export function UsersPage() {
   const [passwordForm] = Form.useForm<{ new_password: string }>();
   const users = useQuery({ queryKey: ["admin-users", page, search], queryFn: () => adminApi.users(page, search || undefined) });
   const sessions = useQuery({
-    queryKey: ["admin-user-sessions", selected?.id],
-    queryFn: () => adminApi.userSessions(selected!.id),
-    enabled: Boolean(selected),
+    queryKey: ["admin-user-sessions", selected?.id, sessionPage],
+    queryFn: () => adminApi.userSessions(selected!.id, sessionPage),
+    enabled: Boolean(selected) && canAccess(current, "users:sessions:read"),
   });
   const invalidate = async () => queryClient.invalidateQueries({ queryKey: ["admin-users"] });
   const editMutation = useMutation({
@@ -69,7 +70,7 @@ export function UsersPage() {
                   const run = async (token?: string) => { await adminApi.setUserStatus(row.id, !row.is_active, token); message.success("账户状态已更新"); await invalidate(); };
                   if (row.is_active) beginConfirmation("users:disable", "停用用户", (token) => run(token)); else void run();
                 }}>{row.is_active ? "停用" : "启用"}</Button>}
-                {canAccess(current, "users:sessions:read") && <Button icon={<LaptopOutlined />} size="small" onClick={() => setSelected(row)}>会话</Button>}
+                {canAccess(current, "users:sessions:read") && <Button icon={<LaptopOutlined />} size="small" onClick={() => { setSessionPage(1); setSelected(row); }}>会话</Button>}
                 {canAccess(current, "users:credentials:reset") && <Button icon={<KeyOutlined />} size="small" onClick={() => { setPasswordTarget(row); passwordForm.resetFields(); }}>重置密码</Button>}
               </Space>
             ) },
@@ -99,9 +100,10 @@ export function UsersPage() {
         </Form>
       </Modal>
 
-      <Drawer open={Boolean(selected)} styles={{ wrapper: { width: 560 } }} title={selected ? `${selected.username} 的会话` : "用户会话"} onClose={() => setSelected(null)} extra={selected && canAccess(current, "users:sessions:revoke") ? <Button danger onClick={() => beginConfirmation("users:sessions:revoke", "撤销该用户全部会话", async (token) => { await adminApi.revokeUserSessions(selected.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
-        <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.length === 0} onRetry={() => void sessions.refetch()} />
-        {sessions.data?.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · 最近活动 {formatTime(session.last_seen_at)}</Typography.Text></div>)}
+      <Drawer open={Boolean(selected)} styles={{ wrapper: { width: 560 } }} title={selected ? `${selected.username} 的会话` : "用户会话"} onClose={() => { setSelected(null); setSessionPage(1); }} extra={selected && canAccess(current, "users:sessions:revoke") ? <Button danger onClick={() => beginConfirmation("users:sessions:revoke", "撤销该用户全部会话", async (token) => { await adminApi.revokeUserSessions(selected.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
+        <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.items.length === 0} onRetry={() => void sessions.refetch()} />
+        {sessions.data?.items.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · 最近活动 {formatTime(session.last_seen_at)}</Typography.Text></div>)}
+        {sessions.data && sessions.data.total_pages > 1 && <Pagination current={sessionPage} pageSize={sessions.data.page_size} total={sessions.data.total} showSizeChanger={false} onChange={setSessionPage} />}
       </Drawer>
 
       {confirmation && <ConfirmActionModal action={confirmation.action} open title={confirmation.title} onCancel={() => setConfirmation(null)} onConfirmed={confirmation.execute} />}

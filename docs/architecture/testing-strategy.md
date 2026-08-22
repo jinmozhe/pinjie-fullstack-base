@@ -119,4 +119,6 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 一项实现只有在计划内全部适用门禁通过、未适用项有依据、跳过项被明确记录并且代码与文档同步后才能宣称完成。Backend 当前最低覆盖率为 90%；Admin 与 Web 的语句、分支、函数和行覆盖率最低为 80%。
 
+前端覆盖率必须纳入承担 Cookie、CSRF、Refresh、权限启动和 BFF 转发的高风险入口。当前 Admin 统计 `src/features/**`、`src/lib/api/**`、`src/access.ts` 与 `src/app.tsx`；Web 统计 `src/features/**`、`src/lib/api/**` 与 BFF Route Handler。不得通过只统计页面组件排除传输和认证生命周期代码来满足 80% 门禁。
+
 当前验证基线为 Backend 106 项自动化测试通过，行与分支综合覆盖率 `90.55%`；Admin 与 Web 保持各维度 80% 门禁。真实 PostgreSQL 18.4、Redis 8.10.0、Alembic、三端生产构建和三张 Linux x86_64 非 Root 容器均已完成本地验证，完整命令与结果保存在阶段 B 和阶段 C 计划。

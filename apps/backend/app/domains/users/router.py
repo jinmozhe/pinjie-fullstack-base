@@ -1,7 +1,7 @@
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 
 from app.api.dependencies import (
     CurrentUser,
@@ -17,7 +17,7 @@ from app.core.response import ResponseModel, success_response
 from app.db.models import UserSession
 from app.domains.auth.schemas import RefreshSessionOut, UserPrincipalOut
 
-from .schemas import AccountDeleteIn, ActionResult, PasswordChangeIn, SessionRead, UserUpdateIn
+from .schemas import AccountDeleteIn, ActionResult, PasswordChangeIn, SessionPage, SessionRead, UserUpdateIn
 
 router = APIRouter(prefix="/users/me", tags=["用户账户"])
 
@@ -92,14 +92,21 @@ async def change_password(
     )
 
 
-@router.get("/sessions", response_model=ResponseModel[list[SessionRead]], summary="获取当前用户会话列表")
+@router.get("/sessions", response_model=ResponseModel[SessionPage], summary="获取当前用户会话列表")
 async def list_sessions(
     service: UserAccountServiceDependency,
     current: Annotated[CurrentUser, Depends(get_current_user)],
-) -> ResponseModel[list[SessionRead]]:
-    sessions = await service.list_sessions(current.user.id)
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> ResponseModel[SessionPage]:
+    sessions, total = await service.list_sessions(current.user.id, page=page, page_size=page_size)
     return success_response(
-        data=[_session_read(item, current.login_session.id) for item in sessions],
+        data=SessionPage.create(
+            items=[_session_read(item, current.login_session.id) for item in sessions],
+            page=page,
+            page_size=page_size,
+            total=total,
+        ),
         request_id=current_request_id(),
     )
 

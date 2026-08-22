@@ -145,10 +145,10 @@ describe("stage C admin workspace", () => {
     const ok = (data: unknown) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
     server.use(
       http.get("http://localhost:3000/api/v1/admin/users", () => ok({ items: [inactiveUser], page: 1, page_size: 20, total: 1, total_pages: 1 })),
-      http.get("http://localhost:3000/api/v1/admin/users/:id/sessions", () => ok([activeSession, revokedSession])),
+      http.get("http://localhost:3000/api/v1/admin/users/:id/sessions", () => ok({ items: [activeSession, revokedSession], page: 1, page_size: 20, total: 2, total_pages: 1 })),
       http.post("http://localhost:3000/api/v1/admin/users/:id/sessions/revoke-all", () => ok({ completed: true })),
       http.get("http://localhost:3000/api/v1/admin/admins", () => ok({ items: [inactiveAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 })),
-      http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () => ok([activeSession, revokedSession])),
+      http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () => ok({ items: [activeSession, revokedSession], page: 1, page_size: 20, total: 2, total_pages: 1 })),
       http.get("http://localhost:3000/api/v1/admin/roles", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000025", code: "auditors", name: "审计员", description: null, is_active: false, permissions: [], created_at: now, updated_at: now }], page: 1, page_size: 100, total: 1, total_pages: 1 })),
       http.get("http://localhost:3000/api/v1/admin/permissions", () => ok([{ id: "01900000-0000-7000-8000-000000000026", code: "users:read", name: "查看用户", description: null, is_active: false, catalog_version: "v1" }])),
     );
@@ -243,7 +243,7 @@ describe("stage C admin workspace", () => {
   it("switches between login, audit, and request metadata logs", async () => {
     const user = userEvent.setup();
     renderPage(<SecurityPage />);
-    expect(await screen.findByText("success")).toBeInTheDocument();
+    expect((await screen.findAllByText("成功")).length).toBeGreaterThan(0);
     await user.click(screen.getByRole("tab", { name: "审计事件" }));
     expect(await screen.findByText("users:update")).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "请求元数据" }));
@@ -261,7 +261,7 @@ describe("stage C admin workspace", () => {
     renderPage(<SecurityPage />);
     expect(await screen.findByText("拒绝")).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "审计事件" }));
-    expect(await screen.findByText("started")).toBeInTheDocument();
+    expect(await screen.findByText("处理中")).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "请求元数据" }));
     expect(await screen.findByText("500")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "查看入参" }));

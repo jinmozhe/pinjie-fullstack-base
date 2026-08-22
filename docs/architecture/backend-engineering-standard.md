@@ -148,7 +148,7 @@ Service、Domain 和 Repository 禁止依赖 FastAPI `Request`、`Response`、`D
 ### 7.2 事务所有权
 
 1. 一个业务动作只有一个最外层事务所有者，即公开写 Application Service 或跨领域用例。
-2. 同一 `AsyncSession` 的内部 Service 和 Repository 只执行操作及 `flush`，不得提交或回滚。
+2. 同一 `AsyncSession` 的内部 Service 和 Repository 只执行操作及 `flush`，不得提交或回滚。事务上下文必须绑定实际 `AsyncSession` 身份；同一 Session 的未定义嵌套写事务明确失败，不同 Session 各自拥有独立提交与回滚边界。
 3. 事务范围必须覆盖需要原子一致的业务写入、状态转换和审计意图。只读用例不为统一形式强行开启写事务。
 4. 禁止通过隐式嵌套事务掩盖所有权。Savepoint 只用于已经定义局部回滚语义的场景，并具有针对性测试。
 5. 提交失败后必须回滚并使用 `raise ... from exc` 或裸 `raise` 保留异常链，禁止记录后继续返回成功。
@@ -225,6 +225,7 @@ Service、Domain 和 Repository 禁止依赖 FastAPI `Request`、`Response`、`D
 6. Redis 承载身份、权限、验证码、限流、锁或其他安全一致性状态时，故障默认拒绝相关操作。禁止自动退回进程内状态或放行请求。
 7. 缓存写失败、删除失败和旧值使用的可见语义必须在用例中定义；禁止因缓存异常返回假成功或过期权威数据。
 8. Key 格式变化属于数据契约迁移，必须定义版本、旧 Key 处理、TTL 保留、冲突和删除时间，禁止静默覆盖。
+9. 认证限流、Refresh 锁和其他参与当前安全判断的 Redis 操作失败时默认拒绝请求。数据库认证事务已经提交后，清理历史登录限流键属于非权威派生操作；失败不得翻转已提交结果，但必须携带 Profile 与 `request_id` 记录可观测告警并具有专项测试。
 
 ## 12. 外部 HTTP 与异步 I/O
 

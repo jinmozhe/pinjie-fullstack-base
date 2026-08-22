@@ -11,7 +11,9 @@ const originalBackendURL = process.env.BACKEND_INTERNAL_URL;
 describe("server authentication state", () => {
   beforeEach(() => {
     process.env.BACKEND_INTERNAL_URL = "http://backend.test";
-    nextHeaders.cookies.mockResolvedValue({ toString: () => "pinjie_web_access=test-access" });
+    nextHeaders.cookies.mockResolvedValue({
+      toString: () => "pinjie_web_access=test-access; pinjie_admin_access=admin-access; unrelated=value",
+    });
   });
 
   afterEach(() => {
@@ -30,6 +32,8 @@ describe("server authentication state", () => {
       new URL("http://backend.test/api/v1/users/me"),
       expect.objectContaining({ headers: expect.objectContaining({ cookie: "pinjie_web_access=test-access" }) }),
     );
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    expect((init?.headers as Record<string, string>).cookie).not.toContain("pinjie_admin_access");
   });
 
   it("reports an anonymous visitor after the identity endpoint returns 401", async () => {

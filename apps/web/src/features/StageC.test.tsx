@@ -10,6 +10,7 @@ import { server } from "@/test/setup";
 
 import { Providers } from "../app/providers";
 import { AccountCenter } from "./account/AccountCenter";
+import { AccountSessionRecovery } from "./account/AccountSessionRecovery";
 import { AuthForm } from "./auth/AuthForm";
 import { webAuthApi } from "./auth/api";
 
@@ -38,6 +39,24 @@ describe("stage C web account", () => {
     act(() => window.dispatchEvent(new Event("pinjie:session-expired")));
     expect(replace).toHaveBeenCalledWith("/login?reason=session-expired");
     expect(refresh).toHaveBeenCalled();
+  });
+
+  it("refreshes an expired SSR account session once", async () => {
+    render(<AccountSessionRecovery />);
+    expect(screen.getByRole("status")).toHaveTextContent("正在恢复会话");
+    await waitFor(() => expect(refresh).toHaveBeenCalledOnce());
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it("redirects to login when SSR account session recovery fails", async () => {
+    server.use(
+      http.post("http://localhost:3000/api/v1/auth/refresh", () =>
+        HttpResponse.json({ code: "AUTH_REQUIRED", message: "会话已失效" }, { status: 401 }),
+      ),
+    );
+    render(<AccountSessionRecovery />);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?reason=session-required"));
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
   it("submits the login form and enters the account center", async () => {
@@ -111,7 +130,8 @@ describe("stage C web account", () => {
     await user.type(screen.getByLabelText("当前密码"), "stage-c-user-password");
     await user.type(screen.getByLabelText("新密码"), "stage-c-user-password-next");
     await user.click(screen.getByRole("button", { name: "确认修改" }));
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?reason=password-changed"));
+    expect(await screen.findByText("密码已修改，当前会话已更新，其他会话已撤销")).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalledWith("/login?reason=password-changed");
   });
 
   it("revokes sessions and signs out", async () => {
@@ -143,16 +163,35 @@ describe("stage C web account", () => {
     }
   });
 
+  it("keeps the account page available when logout fails", async () => {
+    server.use(
+      http.post("http://localhost:3000/api/v1/auth/logout", () =>
+        HttpResponse.json({ code: "LOGOUT_FAILED", message: "退出失败，请重试" }, { status: 503 }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithQuery(<AccountCenter initialUser={initialUser} />);
+    await user.click(screen.getByRole("button", { name: "退出" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("退出失败，请重试");
+    expect(replace).not.toHaveBeenCalledWith("/login");
+  });
+
   it("shows and revokes other active sessions while retaining revoked history", async () => {
     server.use(
       http.get("http://localhost:3000/api/v1/users/me/sessions", () => HttpResponse.json({
         code: "OK",
         message: "操作成功",
         request_id: "test-request",
-        data: [
-          { id: "01900000-0000-7000-8000-000000000004", device_name: null, ip_masked: null, user_agent_summary: null, created_at: now, last_seen_at: now, idle_expires_at: now, absolute_expires_at: now, is_current: false, revoked_at: null },
-          { id: "01900000-0000-7000-8000-000000000005", device_name: "Old device", ip_masked: "10.0.0.*", user_agent_summary: "Old browser", created_at: now, last_seen_at: now, idle_expires_at: now, absolute_expires_at: now, is_current: false, revoked_at: now },
-        ],
+        data: {
+          items: [
+            { id: "01900000-0000-7000-8000-000000000004", device_name: null, ip_masked: null, user_agent_summary: null, created_at: now, last_seen_at: now, idle_expires_at: now, absolute_expires_at: now, is_current: false, revoked_at: null },
+            { id: "01900000-0000-7000-8000-000000000005", device_name: "Old device", ip_masked: "10.0.0.*", user_agent_summary: "Old browser", created_at: now, last_seen_at: now, idle_expires_at: now, absolute_expires_at: now, is_current: false, revoked_at: now },
+          ],
+          page: 1,
+          page_size: 100,
+          total: 2,
+          total_pages: 1,
+        },
       })),
     );
     const user = userEvent.setup();

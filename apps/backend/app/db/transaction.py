@@ -4,23 +4,21 @@ from contextvars import ContextVar
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-_transaction_depth: ContextVar[int] = ContextVar("transaction_depth", default=0)
+_active_sessions: ContextVar[tuple[AsyncSession, ...]] = ContextVar("active_transaction_sessions", default=())
 
 
 @asynccontextmanager
 async def transaction_scope(session: AsyncSession) -> AsyncIterator[AsyncSession]:
-    depth = _transaction_depth.get()
-    token = _transaction_depth.set(depth + 1)
+    active_sessions = _active_sessions.get()
+    if any(active is session for active in active_sessions):
+        raise RuntimeError("transaction_scope does not allow nested transactions for the same session")
+    token = _active_sessions.set((*active_sessions, session))
     try:
-        if depth == 0:
-            try:
-                yield session
-                await session.commit()
-            except BaseException:
-                await session.rollback()
-                raise
-        else:
-            async with session.begin_nested():
-                yield session
+        try:
+            yield session
+            await session.commit()
+        except BaseException:
+            await session.rollback()
+            raise
     finally:
-        _transaction_depth.reset(token)
+        _active_sessions.reset(token)

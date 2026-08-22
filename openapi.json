@@ -417,6 +417,29 @@
         "operationId": "list_sessions_api_v1_users_me_sessions_get",
         "parameters": [
           {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
             "name": "pinjie_web_access",
             "in": "cookie",
             "required": false,
@@ -439,7 +462,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_list_SessionRead__"
+                  "$ref": "#/components/schemas/ResponseModel_PageResult_SessionRead__"
                 }
               }
             }
@@ -1275,6 +1298,29 @@
             }
           },
           {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -1297,7 +1343,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_list_SessionRead__"
+                  "$ref": "#/components/schemas/ResponseModel_PageResult_SessionRead__"
                 }
               }
             }
@@ -2036,6 +2082,29 @@
             }
           },
           {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -2058,7 +2127,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_list_SessionRead__"
+                  "$ref": "#/components/schemas/ResponseModel_PageResult_SessionRead__"
                 }
               }
             }
@@ -3713,6 +3782,53 @@
         ],
         "title": "PageResult[RoleRead]"
       },
+      "PageResult_SessionRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SessionRead"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "当前分页中的资源列表"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "每页资源数量"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "符合条件的资源总数"
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
+          "total_pages"
+        ],
+        "title": "PageResult[SessionRead]"
+      },
       "PageResult_UserPrincipalOut_": {
         "properties": {
           "items": {
@@ -4306,6 +4422,38 @@
         ],
         "title": "ResponseModel[PageResult[RoleRead]]"
       },
+      "ResponseModel_PageResult_SessionRead__": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResult_SessionRead_",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[PageResult[SessionRead]]"
+      },
       "ResponseModel_PageResult_UserPrincipalOut__": {
         "properties": {
           "code": {
@@ -4566,42 +4714,6 @@
           "request_id"
         ],
         "title": "ResponseModel[list[PermissionRead]]"
-      },
-      "ResponseModel_list_SessionRead__": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code",
-            "description": "稳定程序代码"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "面向调用方的中文结果消息"
-          },
-          "data": {
-            "items": {
-              "$ref": "#/components/schemas/SessionRead"
-            },
-            "type": "array",
-            "title": "Data",
-            "description": "响应业务数据"
-          },
-          "request_id": {
-            "type": "string",
-            "title": "Request Id",
-            "description": "用于定位本次请求的唯一标识"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "code",
-          "message",
-          "data",
-          "request_id"
-        ],
-        "title": "ResponseModel[list[SessionRead]]"
       },
       "RoleCreateIn": {
         "properties": {

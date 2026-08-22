@@ -2,11 +2,11 @@ import argparse
 import asyncio
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 
 from app.core.config import get_settings
 from app.core.resources import create_resources
-from app.db.models import AuditEvent, RequestLog, SecurityLoginEvent
+from app.db.models import AdminSession, AuditEvent, RequestLog, SecurityLoginEvent, UserSession
 from app.db.transaction import transaction_scope
 from scripts._database_target import validate_database_target
 
@@ -23,6 +23,7 @@ async def _run(args: argparse.Namespace) -> None:
     validate_database_target(settings, args.confirm_database)
     security_cutoff = datetime.now(UTC) - timedelta(days=settings.security_event_retention_days)
     request_cutoff = datetime.now(UTC) - timedelta(days=settings.request_log_retention_days)
+    session_cutoff = datetime.now(UTC) - timedelta(days=settings.session_retention_days)
     resources = create_resources(settings)
     try:
         async with resources.session_factory() as session:
@@ -52,7 +53,25 @@ async def _run(args: argparse.Namespace) -> None:
                 )
                 or 0
             )
-            print(f"login_events={login_count} audit_events={audit_count} request_logs={request_count}")
+            user_session_predicate = or_(
+                UserSession.absolute_expires_at < session_cutoff,
+                UserSession.revoked_at < session_cutoff,
+            )
+            admin_session_predicate = or_(
+                AdminSession.absolute_expires_at < session_cutoff,
+                AdminSession.revoked_at < session_cutoff,
+            )
+            user_session_count = int(
+                (await session.scalar(select(func.count()).select_from(UserSession).where(user_session_predicate))) or 0
+            )
+            admin_session_count = int(
+                (await session.scalar(select(func.count()).select_from(AdminSession).where(admin_session_predicate)))
+                or 0
+            )
+            print(
+                f"login_events={login_count} audit_events={audit_count} request_logs={request_count} "
+                f"user_sessions={user_session_count} admin_sessions={admin_session_count}"
+            )
             if not args.apply:
                 print("Dry run only; no rows deleted")
                 return
@@ -62,6 +81,8 @@ async def _run(args: argparse.Namespace) -> None:
                 )
                 await session.execute(delete(AuditEvent).where(AuditEvent.occurred_at < security_cutoff))
                 await session.execute(delete(RequestLog).where(RequestLog.occurred_at < request_cutoff))
+                await session.execute(delete(UserSession).where(user_session_predicate))
+                await session.execute(delete(AdminSession).where(admin_session_predicate))
             print("Retention cleanup applied")
     finally:
         await resources.close()

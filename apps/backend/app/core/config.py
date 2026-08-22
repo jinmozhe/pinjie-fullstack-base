@@ -27,9 +27,13 @@ class Settings(BaseSettings):
     test_database_url: str | None = Field(default=None, validation_alias="TEST_DATABASE_URL")
     redis_mode: RedisMode = Field(default="disabled", validation_alias="REDIS_MODE")
     redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")
-    cors_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "http://localhost:3001"],
-        validation_alias="BACKEND_CORS_ORIGINS",
+    web_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:3000"],
+        validation_alias="WEB_ORIGINS",
+    )
+    admin_origins: list[str] = Field(
+        default_factory=lambda: ["http://localhost:3001"],
+        validation_alias="ADMIN_ORIGINS",
     )
     trusted_hosts: list[str] = Field(
         default_factory=lambda: ["localhost", "127.0.0.1", "testserver"],
@@ -69,6 +73,7 @@ class Settings(BaseSettings):
     )
     refresh_idle_ttl_days: int = Field(default=7, validation_alias="REFRESH_IDLE_TTL_DAYS", ge=1, le=14)
     session_absolute_ttl_days: int = Field(default=30, validation_alias="SESSION_ABSOLUTE_TTL_DAYS", ge=2, le=90)
+    session_retention_days: int = Field(default=30, validation_alias="SESSION_RETENTION_DAYS", ge=1, le=365)
     password_hash_concurrency: int = Field(default=4, validation_alias="PASSWORD_HASH_CONCURRENCY", ge=1, le=16)
     request_log_mode: RequestLogMode = Field(default="disabled", validation_alias="REQUEST_LOG_MODE")
     security_event_retention_days: int = Field(
@@ -108,6 +113,28 @@ class Settings(BaseSettings):
             raise ValueError("LOG_LEVEL must be a supported standard logging level")
         return level
 
+    @field_validator("web_origins", "admin_origins")
+    @classmethod
+    def normalize_browser_origins(cls, values: list[str]) -> list[str]:
+        normalized: list[str] = []
+        for value in values:
+            origin = value[:-1] if value.endswith("/") else value
+            parsed = urlsplit(origin)
+            try:
+                port = parsed.port
+            except ValueError as exc:
+                raise ValueError("browser origins must use valid ports") from exc
+            if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.hostname == "*":
+                raise ValueError("browser origins must use explicit http(s) hosts")
+            if parsed.username is not None or parsed.password is not None:
+                raise ValueError("browser origins must not contain user information")
+            if parsed.path or parsed.query or parsed.fragment:
+                raise ValueError("browser origins must be absolute http(s) origins without paths")
+            if port is None and parsed.netloc.endswith(":"):
+                raise ValueError("browser origins must use valid ports")
+            normalized.append(origin)
+        return list(dict.fromkeys(normalized))
+
     def validate_runtime(self) -> None:
         self.validate_database_runtime()
         if self.redis_mode == "required":
@@ -119,6 +146,7 @@ class Settings(BaseSettings):
             raise ValueError("REDIS_MODE must be required while authentication is enabled")
         self._validate_authentication_secrets()
         self._validate_trusted_proxy_cidrs()
+        self._validate_browser_origins()
         if self.session_absolute_ttl_days <= self.refresh_idle_ttl_days:
             raise ValueError("SESSION_ABSOLUTE_TTL_DAYS must be greater than REFRESH_IDLE_TTL_DAYS")
         if self.environment == "production":
@@ -128,8 +156,6 @@ class Settings(BaseSettings):
                 raise ValueError("RELEASE_VERSION is required in production")
             if not self.trusted_hosts or "*" in self.trusted_hosts:
                 raise ValueError("TRUSTED_HOSTS must be explicit in production")
-            if not self.cors_origins or "*" in self.cors_origins:
-                raise ValueError("BACKEND_CORS_ORIGINS must be explicit in production")
             if not self.auth_cookie_secure:
                 raise ValueError("AUTH_COOKIE_SECURE must be true in production")
             if not self.trusted_proxy_cidrs:
@@ -173,6 +199,19 @@ class Settings(BaseSettings):
                 ipaddress.ip_network(value, strict=False)
             except ValueError as exc:
                 raise ValueError(f"TRUSTED_PROXY_CIDRS contains an invalid network: {value}") from exc
+
+    def _validate_browser_origins(self) -> None:
+        if not self.web_origins:
+            raise ValueError("WEB_ORIGINS must contain at least one explicit origin")
+        if not self.admin_origins:
+            raise ValueError("ADMIN_ORIGINS must contain at least one explicit origin")
+        overlap = set(self.web_origins) & set(self.admin_origins)
+        if overlap:
+            raise ValueError("WEB_ORIGINS and ADMIN_ORIGINS must not overlap")
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [*self.web_origins, *self.admin_origins]
 
     def authentication_secrets(self) -> tuple[str, str, str, str]:
         self._validate_authentication_secrets()

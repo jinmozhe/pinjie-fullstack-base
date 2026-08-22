@@ -81,6 +81,28 @@ async def test_login_rejects_missing_origin(client, fake_web_auth_service) -> No
 
 
 @pytest.mark.asyncio
+async def test_web_login_rejects_admin_origin(client, fake_web_auth_service) -> None:
+    response = await client.post(
+        "/api/v1/auth/login",
+        headers={"Origin": "http://localhost:3001"},
+        json={"username": "browser-user", "password": "password-value"},
+    )
+    assert response.status_code == 403
+    assert response.json()["code"] == "CSRF_REJECTED"
+
+
+@pytest.mark.asyncio
+async def test_web_login_requires_an_exact_origin_value(client, fake_web_auth_service) -> None:
+    response = await client.post(
+        "/api/v1/auth/login",
+        headers={"Origin": "http://localhost:3000/"},
+        json={"username": "browser-user", "password": "password-value"},
+    )
+    assert response.status_code == 403
+    assert response.json()["code"] == "CSRF_REJECTED"
+
+
+@pytest.mark.asyncio
 async def test_refresh_requires_matching_csrf_cookie_and_header(client, fake_web_auth_service) -> None:
     client.cookies.set("pinjie_web_refresh", "refresh-token")
     client.cookies.set("pinjie_web_csrf", "csrf-token")

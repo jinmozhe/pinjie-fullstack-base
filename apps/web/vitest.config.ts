@@ -16,7 +16,11 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      include: ["src/features/**/*.{ts,tsx}"],
+      include: [
+        "src/features/**/*.{ts,tsx}",
+        "src/lib/api/**/*.{ts,tsx}",
+        "src/app/api/v1/[...path]/route.ts",
+      ],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
       exclude: ["src/test/**"],
     },

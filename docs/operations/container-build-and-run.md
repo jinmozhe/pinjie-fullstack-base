@@ -8,8 +8,9 @@
 
 - 构建主机使用 Linux x86_64 或 Docker Desktop Linux 容器模式。
 - Backend 使用标准 CPython 3.14，当前构建与运行阶段固定官方 `python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`，工具来源固定 `uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c`，镜像内只安装 `uv.lock` 的运行依赖。
+- Web 与 Admin 构建阶段及 Web 运行阶段固定 `node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43`，Admin 运行阶段固定 `nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de`。
 - 根目录是三个 Dockerfile 的构建上下文，不能把应用子目录单独作为上下文。
-- 生产 PostgreSQL 固定为 `postgres:18.4-alpine`，Redis 固定为 `redis:8.10.0-alpine`。
+- 生产 PostgreSQL 固定为 `postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15`，Redis 固定为 `redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241`。
 
 ## 3. 本地构建
 
@@ -50,6 +51,7 @@ Backend、Web 和 Admin 应分别以非 root 用户运行。具体 UID 属于镜
 BACKEND_IMAGE=ghcr.io/example/pinjie-fullstack-backend@sha256:<64位十六进制摘要>
 WEB_IMAGE=ghcr.io/example/pinjie-fullstack-web@sha256:<64位十六进制摘要>
 ADMIN_IMAGE=ghcr.io/example/pinjie-fullstack-admin@sha256:<64位十六进制摘要>
+WEB_PUBLIC_ORIGIN=https://www.example.com
 POSTGRES_USER=pinjie_fullstack
 POSTGRES_PASSWORD=<生产密钥>
 POSTGRES_DB=pinjie_fullstack_prod
@@ -64,7 +66,9 @@ REDIS_MODE=required
 REDIS_URL=redis://redis:6379/0
 RELEASE_VERSION=<完整Commit SHA或发布版本>
 TRUSTED_HOSTS=["api.example.com","admin.example.com","www.example.com"]
-BACKEND_CORS_ORIGINS=["https://admin.example.com","https://www.example.com"]
+WEB_ORIGINS=["https://www.example.com"]
+ADMIN_ORIGINS=["https://admin.example.com"]
+SESSION_RETENTION_DAYS=30
 WEB_JWT_SECRET=<至少32字节的独立密钥>
 ADMIN_JWT_SECRET=<至少32字节的独立密钥>
 WEB_TOKEN_HMAC_KEY=<至少32字节的独立密钥>
@@ -75,7 +79,7 @@ REQUEST_LOG_MODE=disabled
 LOG_FILE_ENABLED=false
 ```
 
-真实密码、域名和镜像 digest 不得写入仓库。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
+真实密码、域名和应用镜像 digest 不得写入仓库。仓库中的基础镜像 digest 来自官方 registry manifest，并由生产配置正反例门禁检查所有 Dockerfile `FROM`、PostgreSQL、Redis 和应用镜像变量。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
 
 PostgreSQL 18 的命名卷挂载到 `/var/lib/postgresql`。已有 PostgreSQL 17 及以下数据卷不能通过直接改挂载路径完成升级，必须先验证备份，再按独立迁移方案恢复到 PostgreSQL 18 新卷。
 
@@ -127,6 +131,7 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 
 ```powershell
 docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.cleanup_security_logs --confirm-database pinjie_fullstack_prod
+docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.cleanup_security_logs --apply --confirm-database pinjie_fullstack_prod
 ```
 
 ## 7. 停止与回滚边界

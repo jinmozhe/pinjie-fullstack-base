@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 阶段 B、阶段 C、CI 跨平台、SAST、密码规则、API 中文化和母版一致性收尾均已完成；三端质量、容器、文件日志及桌面/移动 Browser E2E 验收通过 |
+| 当前阶段 | 母版不可变基线冻结整改与完整验证已完成；当前工作区满足冻结候选条件，提交、不可变 Tag、发布和部署仍需独立授权 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -41,6 +41,8 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 冻结阻断项已修复，三端质量、真实依赖、契约、容器门禁和桌面/移动跨栈验收通过 |
+| `plans/2026-08-22_immutable-baseline-remediation-plan.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 重复计划已由中文路径的活动计划替代，永久保留审计记录 |
 | `plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已建立 `config.toml`、`elevated + Custom`、同机复用、跨电脑迁移和 ACL 全链路的独立标准文档 |
 | `plans/2026-08-22_CodexWindowsACL长期治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已完成 Codex 原生沙箱、NTFS Owner/ACL、Git 审批、缓存越界和回环代理的长期治理 |
 | `plans/2026-08-22_Admin框架边界与开发范式治理计划.md` | 已结束 | Admin、Documentation | 已完成 Umi/Pro 框架边界、项目安全请求管道、依赖准入和组件选择规则治理，文档与门禁全部通过 |
@@ -61,6 +63,8 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | P1-01 至 P1-09 与同步处理项已完成；当前工作区满足冻结候选条件，尚未提交或创建不可变 Tag | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成母版不可变基线冻结前的安全、兼容、一致性、交付和文档整改 |
+| `plans/2026-08-22_immutable-baseline-remediation-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 保留补丁工具错误报告后产生的重复计划审计记录 |
 | `plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md` | 已结束 | 已完成；独立标准文档、既有入口去重、文档索引、全项目索引和 Changelog 已同步，全部文档与治理门禁通过 | Documentation、Windows 本地开发治理 | 建立 `config.toml`、`elevated + Custom`、初始化、迁移、验证、诊断、修复和回滚的完整标准 |
 | `plans/2026-08-22_CodexWindowsACL长期治理计划.md` | 已结束 | 已完成；采用 `elevated + Custom`、精确 uv Cache 根和代理环境过滤，Owner、uv、Node 子进程、工作区外写入和网络正反例均通过，未执行无实际故障的 Owner 归一 | Documentation、Windows 本地开发治理 | 解决 Codex 持续维护中的 Owner 混杂、ACL 误判、缓存越界和 Git 重复审批 |
 | `plans/2026-08-22_Admin框架边界与开发范式治理计划.md` | 已结束 | 已完成；Admin 宪法、工程标准、ADR、导航、索引和治理门禁均已同步通过 | Admin、Documentation | 固化 Umi/Pro 框架边界、项目安全请求管道、依赖准入和组件选择规则，修正文档与实现漂移 |
@@ -99,13 +103,13 @@
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Browser Cookie 认证、用户、管理员、RBAC、Session/Refresh、CSRF、限流、安全事件、审计和请求元数据已实现；Loguru 文件 Sink 使用 UTF-8 JSON Lines 并输出六个请求关联字段，生产 Compose 默认关闭；OpenAPI 字段已中文化；本轮 106 项 pytest 与真实 PostgreSQL/Redis 测试通过，覆盖率 90.55% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用已实现登录、RBAC、通用管理工作台和错误请求只读抽屉；Umi 托管路由、布局、生命周期与客户端 Access，项目 HTTP 层统一承担安全传输；本轮 typecheck、lint、17 项 Vitest、覆盖率、production build、非 Root 容器和桌面/移动跨栈 E2E 通过 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf`、`docs/architecture/admin-engineering-standard.md` |
-| Web | 注册登录、SSR 用户中心、资料、统一密码约束、会话、退出、注销、首页登录态操作、中文错误代理、PNG favicon、组件测试和 standalone 容器已实现；本轮 typecheck、lint、18 项 Vitest、覆盖率、production build、非 Root 容器和桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
+| Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、请求元数据、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 119 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.86% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用已实现单次 Refresh、失败可重试退出、改密保留当前会话、细粒度安全日志权限、服务端分页和唯一 HTTP 管道；typecheck、lint、33 项 Vitest、90.60% 语句覆盖率、production build 与桌面/移动跨栈 E2E 通过 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf`、`docs/architecture/admin-engineering-standard.md` |
+| Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、运行时 Metadata 和安全响应头已实现；typecheck、lint、26 项 Vitest、90.46% 语句覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，238 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成，非文档契约结构保持一致，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
-| Database | 阶段 C 身份、会话、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL 18.4 空库、重复升级、`alembic check` 和独立 `_test` 数据库备份恢复演练已通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/verify_local_database_recovery.py` |
-| Deployment | 生产 Compose 已修正 PostgreSQL 18 卷路径并默认关闭 Backend 文件日志，生产配置正反例和 1Panel 手册已建立；三端镜像、非 Root、健康检查和线上 Browser E2E 通过；GitHub 安全功能、Actions 精确允许列表、完整 SHA Pinning、直接 JavaScript Action 原生 Node.js 24、`main` Ruleset 与 `production` Environment 已按单维护者基线配置；Dependabot 为 0 Open、7 Closed，三项上游风险限时接受；未执行发布或生产部署 | `apps/backend/Dockerfile`、`compose.prod.yml`、`scripts/ci/check-production-compose.ps1`、`docs/operations/github-actions-workflows.md` |
-| Documentation | 目录结构已按 2026-08-22 的 311 个项目文件、68 个含文件目录同步；Admin 工程标准、技术栈、运行边界、恢复、1Panel、67 项需求追踪、13 条母版验收和 Dependabot 风险治理均已回写并通过最终文档检查 | `docs/architecture/project-structure.md`、`docs/README.md`、`plans/2026-08-22_Admin框架边界与开发范式治理计划.md` |
+| Database | 身份、分页会话、Refresh Token、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL advisory lock 并发保护、级联删除、dry-run/`--apply` 清理、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/cleanup_security_logs.py` |
+| Deployment | 三端 Dockerfile 与 PostgreSQL/Redis 均固定完整镜像 digest，生产 Compose 强制应用镜像 digest；正反例门禁、Compose config、Umi/Vite 兼容解析、Windows standalone 冷启动和桌面/移动 Browser E2E 通过；未执行提交、发布或生产部署 | `apps/backend/Dockerfile`、`apps/admin/Dockerfile`、`apps/web/Dockerfile`、`compose.prod.yml`、`scripts/ci/check-production-compose.ps1` |
+| Documentation | 目录结构已按 2026-08-22 的 321 个项目文件、68 个含文件目录同步；认证、Backend 标准、测试、容器、环境变量、ADR、README、Changelog、计划和索引已按冻结整改事实回写 | `docs/architecture/project-structure.md`、`docs/architecture/authentication-authorization.md`、`plans/2026-08-22_母版不可变基线冻结整改计划.md` |
 
 ## 权威来源
 

@@ -10,7 +10,7 @@ from app.api.dependencies import (
     get_request_settings,
     require_admin_csrf,
     require_admin_csrf_pair,
-    require_browser_origin,
+    require_admin_origin,
 )
 from app.core.context import current_request_id
 from app.core.cookies import ADMIN_COOKIES, clear_auth_cookies, set_auth_cookies
@@ -44,7 +44,7 @@ def _set_session_cookies(response: Response, request: Request, artifacts: Sessio
 @router.post(
     "/login",
     response_model=ResponseModel[AdminAuthSessionOut],
-    dependencies=[Depends(require_browser_origin)],
+    dependencies=[Depends(require_admin_origin)],
     summary="管理员登录",
 )
 async def login(

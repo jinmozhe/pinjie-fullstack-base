@@ -18,8 +18,8 @@ function renderPage() {
 describe("SystemStatusPage", () => {
   it("shows a loading state and then the real backend status", async () => {
     renderPage();
-    expect(screen.getByLabelText("Loading system status")).toBeInTheDocument();
-    expect(await screen.findByText("Available")).toBeInTheDocument();
+    expect(screen.getByLabelText("正在加载系统状态")).toBeInTheDocument();
+    expect(await screen.findByText("可用")).toBeInTheDocument();
   });
 
   it("shows an error and recovers after retry", async () => {
@@ -34,8 +34,8 @@ describe("SystemStatusPage", () => {
         HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "retry-request" }),
       ),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Retry status" }));
+    fireEvent.click(screen.getByRole("button", { name: "重新检查状态" }));
 
-    expect(await screen.findByText("Available")).toBeInTheDocument();
+    expect(await screen.findByText("可用")).toBeInTheDocument();
   });
 });

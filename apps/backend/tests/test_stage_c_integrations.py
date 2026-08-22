@@ -1,10 +1,14 @@
+import asyncio
 import os
 import uuid
+from argparse import Namespace
 from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
+from urllib.parse import urlsplit
 
 import pytest
 from redis.exceptions import ResponseError
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select, update
 
 from app.core.cache_keys import cache_keys
 from app.core.config import Settings
@@ -16,6 +20,7 @@ from app.core.request_metadata import RequestMetadata
 from app.core.resources import create_resources
 from app.db.models import (
     Admin,
+    AdminRefreshToken,
     AdminSession,
     AuditEvent,
     Permission,
@@ -31,6 +36,7 @@ from app.domains.admin.schemas import AdminUpdateIn, RolePermissionAssignIn
 from app.domains.auth.schemas import UserRegisterIn
 from app.services.admin_management import AdminManagementService
 from app.services.authentication import WebAuthService
+from scripts.cleanup_security_logs import _run as run_retention_cleanup
 from scripts.consume_request_logs import GROUP_NAME, _reclaim_pending
 from tests.conftest import TEST_SECRETS
 
@@ -322,6 +328,108 @@ async def test_denied_admin_change_rolls_back_business_fields_and_finishes_audit
 
 @pytest.mark.integration
 @pytest.mark.asyncio
+async def test_concurrent_superuser_demotion_preserves_one_active_superuser() -> None:
+    settings = _integration_settings()
+    resources = create_resources(settings)
+    actor_id = new_uuid7()
+    target_ids = [new_uuid7(), new_uuid7()]
+    request_ids: list[str] = []
+    existing_superusers: list[tuple[uuid.UUID, int, datetime]] = []
+    try:
+        async with resources.session_factory() as session, transaction_scope(session):
+            existing_superusers = list(
+                (
+                    await session.execute(
+                        select(Admin.id, Admin.credential_version, Admin.updated_at).where(
+                            Admin.is_active.is_(True), Admin.is_superuser.is_(True)
+                        )
+                    )
+                ).tuples()
+            )
+            if existing_superusers:
+                await session.execute(
+                    update(Admin)
+                    .where(Admin.id.in_([item[0] for item in existing_superusers]))
+                    .values(is_superuser=False)
+                )
+            session.add(
+                Admin(
+                    id=actor_id,
+                    username=f"guard-actor-{actor_id.hex[-12:]}",
+                    display_name="Guard Actor",
+                    password_hash="not-used-by-this-test",
+                    is_active=True,
+                    is_superuser=False,
+                    credential_version=1,
+                )
+            )
+            for target_id in target_ids:
+                session.add(
+                    Admin(
+                        id=target_id,
+                        username=f"guard-target-{target_id.hex[-12:]}",
+                        display_name="Guard Target",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        is_superuser=True,
+                        credential_version=1,
+                    )
+                )
+
+        async def demote(target_id: uuid.UUID) -> Admin | BaseException:
+            metadata = _request_metadata()
+            request_ids.append(metadata.request_id)
+            async with resources.session_factory() as session:
+                service = AdminManagementService(
+                    session=session,
+                    session_factory=resources.session_factory,
+                    settings=settings,
+                    password_manager=resources.password_manager,
+                    metadata=metadata,
+                    actor_id=actor_id,
+                )
+                try:
+                    return await service.update_admin(target_id, AdminUpdateIn(is_superuser=False))
+                except BaseException as exc:
+                    return exc
+
+        results = await asyncio.gather(*(demote(target_id) for target_id in target_ids))
+        assert sum(isinstance(result, Admin) for result in results) == 1
+        failures = [result for result in results if isinstance(result, AppException)]
+        assert len(failures) == 1
+        assert failures[0].code == ErrorCode.LAST_SUPERUSER_PROTECTED
+
+        async with resources.session_factory() as session:
+            active_superusers = int(
+                (
+                    await session.scalar(
+                        select(func.count())
+                        .select_from(Admin)
+                        .where(Admin.id.in_(target_ids), Admin.is_active.is_(True), Admin.is_superuser.is_(True))
+                    )
+                )
+                or 0
+            )
+            assert active_superusers == 1
+    finally:
+        async with resources.session_factory() as session, transaction_scope(session):
+            await session.execute(delete(AuditEvent).where(AuditEvent.request_id.in_(request_ids)))
+            await session.execute(delete(Admin).where(Admin.id.in_([actor_id, *target_ids])))
+            for admin_id, credential_version, updated_at in existing_superusers:
+                await session.execute(
+                    update(Admin)
+                    .where(Admin.id == admin_id)
+                    .values(
+                        is_superuser=True,
+                        credential_version=credential_version,
+                        updated_at=updated_at,
+                    )
+                )
+        await resources.close()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
 async def test_redis_rate_limit_is_atomic_and_has_ttl() -> None:
     settings = _integration_settings()
     resources = create_resources(settings)
@@ -340,6 +448,144 @@ async def test_redis_rate_limit_is_atomic_and_has_ttl() -> None:
     finally:
         await resources.redis.delete(key)
         await resources.close()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_security_retention_cleanup_dry_run_and_apply_cascade_refresh_tokens(capsys) -> None:
+    settings = _integration_settings().model_copy(
+        update={
+            "security_event_retention_days": 30,
+            "request_log_retention_days": 1,
+            "session_retention_days": 1,
+        }
+    )
+    database_name = urlsplit(settings.database_url or "").path.removeprefix("/")
+    old = datetime.now(UTC) - timedelta(days=3)
+    user_id = new_uuid7()
+    admin_id = new_uuid7()
+    user_session_id = new_uuid7()
+    admin_session_id = new_uuid7()
+    user_refresh_id = new_uuid7()
+    admin_refresh_id = new_uuid7()
+
+    seed_resources = create_resources(settings)
+    try:
+        async with seed_resources.session_factory() as session, transaction_scope(session):
+            session.add_all(
+                [
+                    User(
+                        id=user_id,
+                        username=f"retention-user-{user_id.hex[:12]}",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        credential_version=1,
+                    ),
+                    Admin(
+                        id=admin_id,
+                        username=f"retention-admin-{admin_id.hex[:12]}",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        is_superuser=False,
+                        credential_version=1,
+                    ),
+                ]
+            )
+            await session.flush()
+            session.add_all(
+                [
+                    UserSession(
+                        id=user_session_id,
+                        user_id=user_id,
+                        family_id=new_uuid7(),
+                        credential_profile="browser_cookie",
+                        client_id="pinjie-web",
+                        csrf_digest="a" * 64,
+                        last_seen_at=old,
+                        idle_expires_at=old,
+                        absolute_expires_at=old,
+                    ),
+                    AdminSession(
+                        id=admin_session_id,
+                        admin_id=admin_id,
+                        family_id=new_uuid7(),
+                        credential_profile="browser_cookie",
+                        client_id="pinjie-admin",
+                        csrf_digest="b" * 64,
+                        last_seen_at=old,
+                        idle_expires_at=old,
+                        absolute_expires_at=old,
+                    ),
+                ]
+            )
+            await session.flush()
+            session.add_all(
+                [
+                    UserRefreshToken(
+                        id=user_refresh_id,
+                        session_id=user_session_id,
+                        token_digest=user_refresh_id.hex * 2,
+                        issued_at=old,
+                        expires_at=old,
+                    ),
+                    AdminRefreshToken(
+                        id=admin_refresh_id,
+                        session_id=admin_session_id,
+                        token_digest=admin_refresh_id.hex * 2,
+                        issued_at=old,
+                        expires_at=old,
+                    ),
+                ]
+            )
+    finally:
+        await seed_resources.close()
+
+    try:
+        dry_run_resources = create_resources(settings)
+        with (
+            patch("scripts.cleanup_security_logs.get_settings", return_value=settings),
+            patch("scripts.cleanup_security_logs.create_resources", return_value=dry_run_resources),
+        ):
+            await run_retention_cleanup(Namespace(apply=False, confirm_database=database_name))
+        assert "Dry run only; no rows deleted" in capsys.readouterr().out
+
+        verification_resources = create_resources(settings)
+        try:
+            async with verification_resources.session_factory() as session:
+                assert await session.get(UserSession, user_session_id) is not None
+                assert await session.get(AdminSession, admin_session_id) is not None
+        finally:
+            await verification_resources.close()
+
+        apply_resources = create_resources(settings)
+        with (
+            patch("scripts.cleanup_security_logs.get_settings", return_value=settings),
+            patch("scripts.cleanup_security_logs.create_resources", return_value=apply_resources),
+        ):
+            await run_retention_cleanup(Namespace(apply=True, confirm_database=database_name))
+        assert "Retention cleanup applied" in capsys.readouterr().out
+
+        verification_resources = create_resources(settings)
+        try:
+            async with verification_resources.session_factory() as session:
+                assert await session.get(UserSession, user_session_id) is None
+                assert await session.get(AdminSession, admin_session_id) is None
+                assert await session.get(UserRefreshToken, user_refresh_id) is None
+                assert await session.get(AdminRefreshToken, admin_refresh_id) is None
+        finally:
+            await verification_resources.close()
+    finally:
+        cleanup_resources = create_resources(settings)
+        try:
+            async with cleanup_resources.session_factory() as session, transaction_scope(session):
+                await session.execute(delete(UserRefreshToken).where(UserRefreshToken.session_id == user_session_id))
+                await session.execute(delete(AdminRefreshToken).where(AdminRefreshToken.session_id == admin_session_id))
+                await session.execute(delete(UserSession).where(UserSession.id == user_session_id))
+                await session.execute(delete(AdminSession).where(AdminSession.id == admin_session_id))
+                await session.execute(delete(User).where(User.id == user_id))
+                await session.execute(delete(Admin).where(Admin.id == admin_id))
+        finally:
+            await cleanup_resources.close()
 
 
 @pytest.mark.integration

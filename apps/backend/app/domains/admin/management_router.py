@@ -16,7 +16,7 @@ from app.core.privacy import masked_ip
 from app.core.response import ResponseModel, success_response
 from app.db.models import AdminSession, UserSession
 from app.domains.auth.schemas import UserPrincipalOut
-from app.domains.users.schemas import ActionResult, SessionRead, UserUpdateIn
+from app.domains.users.schemas import ActionResult, SessionPage, SessionRead, UserUpdateIn
 
 from .permissions import PermissionCode
 from .presenters import admin_read, role_read
@@ -146,15 +146,21 @@ async def reset_user_password(
 
 @router.get(
     "/users/{user_id}/sessions",
-    response_model=ResponseModel[list[SessionRead]],
+    response_model=ResponseModel[SessionPage],
     dependencies=[Depends(require_permission(PermissionCode.USERS_SESSIONS_READ))],
     summary="获取用户会话列表",
 )
 async def list_user_sessions(
-    user_id: uuid.UUID, service: AdminManagementServiceDependency
-) -> ResponseModel[list[SessionRead]]:
+    user_id: uuid.UUID,
+    service: AdminManagementServiceDependency,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> ResponseModel[SessionPage]:
+    items, total = await service.list_user_sessions(user_id, page=page, page_size=page_size)
     return success_response(
-        data=[_session_read(item) for item in await service.list_user_sessions(user_id)],
+        data=SessionPage.create(
+            items=[_session_read(item) for item in items], page=page, page_size=page_size, total=total
+        ),
         request_id=current_request_id(),
     )
 
@@ -322,15 +328,21 @@ async def assign_admin_roles(
 
 @router.get(
     "/admins/{admin_id}/sessions",
-    response_model=ResponseModel[list[SessionRead]],
+    response_model=ResponseModel[SessionPage],
     dependencies=[Depends(require_permission(PermissionCode.ADMINS_SESSIONS_READ))],
     summary="获取管理员会话列表",
 )
 async def list_admin_sessions(
-    admin_id: uuid.UUID, service: AdminManagementServiceDependency
-) -> ResponseModel[list[SessionRead]]:
+    admin_id: uuid.UUID,
+    service: AdminManagementServiceDependency,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> ResponseModel[SessionPage]:
+    items, total = await service.list_admin_sessions(admin_id, page=page, page_size=page_size)
     return success_response(
-        data=[_session_read(item) for item in await service.list_admin_sessions(admin_id)],
+        data=SessionPage.create(
+            items=[_session_read(item) for item in items], page=page, page_size=page_size, total=total
+        ),
         request_id=current_request_id(),
     )
 

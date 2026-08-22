@@ -8,16 +8,16 @@
 
 ## 2. 工作区与应用目录
 
-VS Code 打开整个全栈仓库作为工作区，当前本机路径为：
+VS Code 打开整个全栈仓库作为工作区。下文以通用克隆路径为例：
 
 ```text
-D:\Projects\pinjie-fullstack-base
+C:\path\to\pinjie-fullstack-base
 ```
 
 Backend 项目目录为：
 
 ```text
-D:\Projects\pinjie-fullstack-base\apps\backend
+C:\path\to\pinjie-fullstack-base\apps\backend
 ```
 
 日常保持 VS Code 工作区根目录不变。需要运行后端命令时，只在对应终端进入 `apps\backend`，无需把 VS Code 重新打开到 Backend 子目录。
@@ -43,6 +43,7 @@ D:\Projects\pinjie-fullstack-base\apps\backend
 BACKEND_IMAGE=ghcr.io/example/backend@sha256:<64位十六进制摘要>
 WEB_IMAGE=ghcr.io/example/web@sha256:<64位十六进制摘要>
 ADMIN_IMAGE=ghcr.io/example/admin@sha256:<64位十六进制摘要>
+WEB_PUBLIC_ORIGIN=https://www.example.com
 POSTGRES_USER=pinjie_fullstack
 POSTGRES_PASSWORD=<生产密钥>
 POSTGRES_DB=pinjie_fullstack_prod
@@ -63,10 +64,10 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `REDIS_URL`
 - `TEST_REDIS_URL`
 - `ENVIRONMENT`
-- `BACKEND_CORS_ORIGINS`
+- `WEB_ORIGINS` 与 `ADMIN_ORIGINS`
 - `WEB_JWT_SECRET` 与 `ADMIN_JWT_SECRET`
 - `WEB_TOKEN_HMAC_KEY` 与 `ADMIN_TOKEN_HMAC_KEY`
-- `AUTH_COOKIE_SECURE`、注册模式、Token 与 Session 期限
+- `AUTH_COOKIE_SECURE`、注册模式、Token、Session 期限与 `SESSION_RETENTION_DAYS`
 - 请求元数据模式及安全日志保留期
 - Loguru 控制台与本地文件日志开关、路径、轮转大小和保留周期
 
@@ -89,8 +90,9 @@ environment:
 
 Web 使用 Next.js：
 
-- `BACKEND_URL` 供 Next.js 服务端使用，不应暴露给浏览器。
-- Web 浏览器使用同域 `/api/v1`，只有 `BACKEND_INTERNAL_URL` 由服务端读取，不进入浏览器公开变量。
+- `BACKEND_INTERNAL_URL` 供 Next.js 服务端和同域 Route Handler 使用，不应暴露给浏览器。
+- `WEB_PUBLIC_ORIGIN` 是 Metadata、canonical 和服务端认证恢复使用的 Web 对外 Origin，必须与 Backend 的 `WEB_ORIGINS` 对应。
+- Web 浏览器只使用同域 `/api/v1`，上述两个变量都不使用 `NEXT_PUBLIC_` 前缀。
 
 Web 生产容器通过 Compose 的 `BACKEND_INTERNAL_URL=http://backend:8000` 连接 Backend，浏览器仍访问同域 `/api/v1`。
 
@@ -109,7 +111,7 @@ Admin 生产镜像不依赖运行时公开 API 环境变量，代理目标由容
 ### 4.1 启动本地 Redis
 
 ```powershell
-Set-Location D:\Projects\pinjie-fullstack-base
+Set-Location C:\path\to\pinjie-fullstack-base
 docker compose up -d redis
 docker compose exec redis redis-cli ping
 ```
@@ -119,7 +121,7 @@ docker compose exec redis redis-cli ping
 ### 4.2 进入 Backend 目录
 
 ```powershell
-Set-Location D:\Projects\pinjie-fullstack-base\apps\backend
+Set-Location C:\path\to\pinjie-fullstack-base\apps\backend
 ```
 
 从仓库根目录使用相对路径也可以：
@@ -160,7 +162,7 @@ REDIS_MODE=required
 
 还必须为 `WEB_JWT_SECRET`、`ADMIN_JWT_SECRET`、`WEB_TOKEN_HMAC_KEY` 和 `ADMIN_TOKEN_HMAC_KEY` 设置四个彼此不同、至少 32 个 UTF-8 字节的随机值。生产值由 Secret 管理系统生成和注入；本地值也不能沿用模板、写入截图、Issue、聊天记录或 Git。
 
-生产环境还必须设置 `AUTH_COOKIE_SECURE=true`、明确的 `TRUSTED_HOSTS`、`BACKEND_CORS_ORIGINS`、`TRUSTED_PROXY_CIDRS` 和 `RELEASE_VERSION`。配置系统发现弱 Secret、通配域名、安全 Cookie 关闭或关键依赖缺失时拒绝启动。
+生产环境还必须设置 `AUTH_COOKIE_SECURE=true`、明确且互不重叠的 `WEB_ORIGINS` 与 `ADMIN_ORIGINS`、`TRUSTED_HOSTS`、`TRUSTED_PROXY_CIDRS` 和 `RELEASE_VERSION`。配置系统发现弱 Secret、带路径或重叠 Origin、通配域名、安全 Cookie 关闭或关键依赖缺失时拒绝启动。
 
 ## 5. Backend 启动顺序
 
@@ -248,7 +250,7 @@ uv run python -m scripts.verify_local_database_recovery `
 全仓库治理检查从根目录运行：
 
 ```powershell
-Set-Location D:\Projects\pinjie-fullstack-base
+Set-Location C:\path\to\pinjie-fullstack-base
 pnpm check:governance
 ```
 
@@ -280,7 +282,7 @@ uv run python -m scripts.consume_request_logs
 VS Code 保持打开全栈仓库根目录，并将 Python 解释器选择为：
 
 ```text
-D:\Projects\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
+C:\path\to\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
 ```
 
 该设置只影响编辑器的补全、类型分析和调试。终端命令仍使用 `uv run`，避免终端激活状态、系统 Python、Conda 和项目 `.venv` 混用。

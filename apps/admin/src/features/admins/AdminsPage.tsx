@@ -1,7 +1,7 @@
 import type { AdminCreateIn, AdminRead, ConfirmationAction } from "@pinjie/api-client";
 import { PlusOutlined, SafetyCertificateOutlined, TeamOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Select, Space, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, Select, Space, Table, Tag, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -18,12 +18,15 @@ export function AdminsPage() {
   const [creating, setCreating] = useState(false);
   const [roleTarget, setRoleTarget] = useState<AdminRead | null>(null);
   const [sessionTarget, setSessionTarget] = useState<AdminRead | null>(null);
+  const [sessionPage, setSessionPage] = useState(1);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [createForm] = Form.useForm<AdminCreateIn>();
   const [roleForm] = Form.useForm<{ role_ids: string[] }>();
   const admins = useQuery({ queryKey: ["admins", page], queryFn: () => adminApi.admins(page) });
-  const roles = useQuery({ queryKey: ["roles-options"], queryFn: () => adminApi.roles(1) });
-  const sessions = useQuery({ queryKey: ["admin-sessions", sessionTarget?.id], queryFn: () => adminApi.adminSessions(sessionTarget!.id), enabled: Boolean(sessionTarget) });
+  const canReadRoles = canAccess(current, "roles:read");
+  const canReadSessions = canAccess(current, "admins:sessions:read");
+  const roles = useQuery({ queryKey: ["roles-options"], queryFn: () => adminApi.roles(1), enabled: canReadRoles });
+  const sessions = useQuery({ queryKey: ["admin-sessions", sessionTarget?.id, sessionPage], queryFn: () => adminApi.adminSessions(sessionTarget!.id, sessionPage), enabled: Boolean(sessionTarget) && canReadSessions });
   const invalidate = async () => queryClient.invalidateQueries({ queryKey: ["admins"] });
   const begin = (action: ConfirmationAction, title: string, execute: (token: string) => Promise<void>) => setConfirmation({ action, title, execute });
   const create = useMutation({
@@ -44,9 +47,9 @@ export function AdminsPage() {
           { title: "状态", dataIndex: "is_active", width: 90, render: (value) => <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
           { title: "更新时间", dataIndex: "updated_at", width: 170, render: formatTime },
           { title: "操作", fixed: "right", width: 270, render: (_, row) => <Space size="small">
-            {canAccess(current, "admins:roles:assign") && <Button size="small" icon={<TeamOutlined />} onClick={() => { setRoleTarget(row); roleForm.setFieldsValue({ role_ids: row.roles.map((role) => role.id) }); }}>角色</Button>}
+            {canAccess(current, "admins:roles:assign") && canReadRoles && <Button size="small" icon={<TeamOutlined />} onClick={() => { setRoleTarget(row); roleForm.setFieldsValue({ role_ids: row.roles.map((role) => role.id) }); }}>角色</Button>}
             {canAccess(current, "admins:update") && <Button size="small" disabled={row.id === current.id} danger={row.is_active} onClick={() => begin("admins:status:change", `${row.is_active ? "停用" : "启用"}管理员`, async (token) => { await adminApi.setAdminStatus(row.id, !row.is_active, token); message.success("管理员状态已更新"); await invalidate(); })}>{row.is_active ? "停用" : "启用"}</Button>}
-            {canAccess(current, "admins:sessions:read") && <Button size="small" onClick={() => setSessionTarget(row)}>会话</Button>}
+            {canReadSessions && <Button size="small" onClick={() => { setSessionPage(1); setSessionTarget(row); }}>会话</Button>}
           </Space> },
         ]}
       />}
@@ -57,7 +60,7 @@ export function AdminsPage() {
           <Form.Item label="用户名" name="username" rules={[{ required: true }, { min: 3 }]}><Input autoComplete="off" /></Form.Item>
           <Form.Item label="显示名称" name="display_name"><Input maxLength={100} /></Form.Item>
           <Form.Item label="初始密码" name="initial_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
-          <Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item>
+          {canReadRoles && <Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item>}
           <Form.Item name="is_superuser" valuePropName="checked"><Checkbox>超级管理员</Checkbox></Form.Item>
         </Form>
       </Modal>
@@ -69,9 +72,10 @@ export function AdminsPage() {
         }}><Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item></Form>
       </Modal>
 
-      <Drawer open={Boolean(sessionTarget)} styles={{ wrapper: { width: 560 } }} title={sessionTarget ? `${sessionTarget.username} 的会话` : "管理员会话"} onClose={() => setSessionTarget(null)} extra={sessionTarget && canAccess(current, "admins:sessions:revoke") ? <Button danger disabled={sessionTarget.id === current.id} onClick={() => begin("admins:sessions:revoke", "撤销管理员全部会话", async (token) => { await adminApi.revokeAdminSessions(sessionTarget.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
-        <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.length === 0} onRetry={() => void sessions.refetch()} />
-        {sessions.data?.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · {formatTime(session.last_seen_at)}</Typography.Text></div>)}
+      <Drawer open={Boolean(sessionTarget)} styles={{ wrapper: { width: 560 } }} title={sessionTarget ? `${sessionTarget.username} 的会话` : "管理员会话"} onClose={() => { setSessionTarget(null); setSessionPage(1); }} extra={sessionTarget && canAccess(current, "admins:sessions:revoke") ? <Button danger disabled={sessionTarget.id === current.id} onClick={() => begin("admins:sessions:revoke", "撤销管理员全部会话", async (token) => { await adminApi.revokeAdminSessions(sessionTarget.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button> : null}>
+        <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.items.length === 0} onRetry={() => void sessions.refetch()} />
+        {sessions.data?.items.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · {formatTime(session.last_seen_at)}</Typography.Text></div>)}
+        {sessions.data && sessions.data.total_pages > 1 && <Pagination current={sessionPage} pageSize={sessions.data.page_size} total={sessions.data.total} showSizeChanger={false} onChange={setSessionPage} />}
       </Drawer>
 
       {confirmation && <ConfirmActionModal action={confirmation.action} open title={confirmation.title} onCancel={() => setConfirmation(null)} onConfirmed={confirmation.execute} />}

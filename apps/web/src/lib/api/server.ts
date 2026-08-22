@@ -4,6 +4,16 @@ import type { UserPrincipalOut } from "@pinjie/api-client";
 import { createClient } from "@pinjie/api-client/client";
 import { cookies } from "next/headers";
 
+const WEB_COOKIE_NAMES = new Set(["pinjie_web_access", "pinjie_web_refresh", "pinjie_web_csrf"]);
+
+function webCookies(cookieHeader: string): string {
+  return cookieHeader
+    .split(";")
+    .map((item) => item.trim())
+    .filter((item) => WEB_COOKIE_NAMES.has(item.split("=", 1)[0] ?? ""))
+    .join("; ");
+}
+
 export async function fetchInitialSystemStatus(): Promise<SystemStatus> {
   const baseURL = process.env.BACKEND_INTERNAL_URL;
   if (!baseURL) {
@@ -32,7 +42,7 @@ export async function fetchCurrentUser(): Promise<UserPrincipalOut> {
   const cookieStore = await cookies();
   const response = await fetch(new URL("/api/v1/users/me", baseURL), {
     cache: "no-store",
-    headers: { accept: "application/json", cookie: cookieStore.toString() },
+    headers: { accept: "application/json", cookie: webCookies(cookieStore.toString()) },
   });
   if (!response.ok) throw new ServerAuthError(response.status);
   const payload = (await response.json()) as { data: UserPrincipalOut };

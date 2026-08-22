@@ -3,6 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.core.pagination import PageResult
 from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 
 
@@ -62,4 +63,7 @@ class ActionResult(BaseModel):
     completed: bool = True
 
 
-__all__ = ["AccountDeleteIn", "ActionResult", "PasswordChangeIn", "SessionRead", "UserUpdateIn"]
+SessionPage = PageResult[SessionRead]
+
+
+__all__ = ["AccountDeleteIn", "ActionResult", "PasswordChangeIn", "SessionPage", "SessionRead", "UserUpdateIn"]

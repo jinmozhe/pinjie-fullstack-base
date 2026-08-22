@@ -21,7 +21,9 @@ export function RolesPage() {
   const [roleForm] = Form.useForm<RoleForm>();
   const [permissionForm] = Form.useForm<{ permission_codes: string[] }>();
   const roles = useQuery({ queryKey: ["roles"], queryFn: () => adminApi.roles() });
-  const permissions = useQuery({ queryKey: ["permissions"], queryFn: adminApi.permissions });
+  const canReadPermissions = canAccess(current, "permissions:read");
+  const canAssignPermissions = canAccess(current, "roles:permissions:assign") && canReadPermissions;
+  const permissions = useQuery({ queryKey: ["permissions"], queryFn: adminApi.permissions, enabled: canReadPermissions });
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["roles"] }),
@@ -49,7 +51,7 @@ export function RolesPage() {
           { title: "更新时间", dataIndex: "updated_at", width: 170, render: formatTime },
           { title: "操作", fixed: "right", width: 250, render: (_, row) => <Space size="small">
             {canAccess(current, "roles:update") && <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(row); roleForm.setFieldsValue({ code: row.code, name: row.name, description: row.description, is_active: row.is_active }); }}>编辑</Button>}
-            {canAccess(current, "roles:permissions:assign") && <Button size="small" icon={<SafetyOutlined />} onClick={() => { setPermissionTarget(row); permissionForm.setFieldsValue({ permission_codes: row.permissions }); }}>权限</Button>}
+            {canAssignPermissions && <Button size="small" icon={<SafetyOutlined />} onClick={() => { setPermissionTarget(row); permissionForm.setFieldsValue({ permission_codes: row.permissions }); }}>权限</Button>}
             {canAccess(current, "roles:delete") && <Button danger size="small" icon={<DeleteOutlined />} onClick={() => begin("roles:delete", "删除未使用角色", async (token) => { await adminApi.deleteRole(row.id, token); message.success("角色已删除"); await invalidate(); })}>删除</Button>}
           </Space> },
         ]}

@@ -3,7 +3,7 @@
 # 启动命令：docker compose -f compose.prod.yml up -d
 services:
   postgres:
-    image: postgres:18.4-alpine
+    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
@@ -18,7 +18,7 @@ services:
       retries: 6
 
   redis:
-    image: redis:8.10.0-alpine
+    image: redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
@@ -70,6 +70,7 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       BACKEND_INTERNAL_URL: http://backend:8000
+      WEB_PUBLIC_ORIGIN: ${WEB_PUBLIC_ORIGIN:?WEB_PUBLIC_ORIGIN must be set}
     depends_on:
       backend:
         condition: service_healthy

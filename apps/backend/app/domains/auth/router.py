@@ -5,8 +5,8 @@ from fastapi import APIRouter, Cookie, Depends, Request, Response
 from app.api.dependencies import (
     WebAuthServiceDependency,
     get_request_settings,
-    require_browser_origin,
     require_web_csrf_pair,
+    require_web_origin,
 )
 from app.core.context import current_request_id
 from app.core.cookies import WEB_COOKIES, clear_auth_cookies, set_auth_cookies
@@ -38,7 +38,7 @@ def _set_session_cookies(response: Response, request: Request, artifacts: Sessio
     "/register",
     response_model=ResponseModel[UserAuthSessionOut],
     status_code=201,
-    dependencies=[Depends(require_browser_origin)],
+    dependencies=[Depends(require_web_origin)],
     summary="注册用户账户",
 )
 async def register(
@@ -65,7 +65,7 @@ async def register(
 @router.post(
     "/login",
     response_model=ResponseModel[UserAuthSessionOut],
-    dependencies=[Depends(require_browser_origin)],
+    dependencies=[Depends(require_web_origin)],
     summary="用户登录",
 )
 async def login(

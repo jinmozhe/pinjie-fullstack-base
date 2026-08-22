@@ -109,7 +109,12 @@ try {
     "http://127.0.0.1:3000",
     [webServer],
     root,
-    { BACKEND_INTERNAL_URL: backendURL, HOSTNAME: "127.0.0.1", PORT: "3000" },
+    {
+      BACKEND_INTERNAL_URL: backendURL,
+      HOSTNAME: "127.0.0.1",
+      PORT: "3000",
+      WEB_PUBLIC_ORIGIN: "http://127.0.0.1:3000",
+    },
   );
   await ensureService(
     "Admin preview server",

@@ -148,9 +148,11 @@ class AdminManagementService:
             operation=operation,
         )
 
-    async def list_user_sessions(self, user_id: uuid.UUID) -> list[UserSession]:
+    async def list_user_sessions(
+        self, user_id: uuid.UUID, *, page: int, page_size: int
+    ) -> tuple[list[UserSession], int]:
         await self.get_user(user_id)
-        return await self.sessions.list_web(user_id)
+        return await self.sessions.list_web(user_id, page=page, page_size=page_size)
 
     async def revoke_user_session(self, user_id: uuid.UUID, session_id: uuid.UUID) -> None:
         async def operation() -> None:
@@ -332,9 +334,11 @@ class AdminManagementService:
             operation=operation,
         )
 
-    async def list_admin_sessions(self, admin_id: uuid.UUID) -> list[AdminSession]:
+    async def list_admin_sessions(
+        self, admin_id: uuid.UUID, *, page: int, page_size: int
+    ) -> tuple[list[AdminSession], int]:
         await self.get_admin(admin_id)
-        return await self.sessions.list_admin(admin_id)
+        return await self.sessions.list_admin(admin_id, page=page, page_size=page_size)
 
     async def revoke_all_admin_sessions(self, admin_id: uuid.UUID) -> None:
         async def operation() -> None:
@@ -494,6 +498,7 @@ class AdminManagementService:
         )
 
     async def _protect_last_superuser(self) -> None:
+        await self.admins.lock_active_superuser_guard()
         if await self.admins.count_active_superusers() <= 1:
             raise AppException(
                 status_code=409,

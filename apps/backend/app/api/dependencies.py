@@ -125,16 +125,23 @@ UserAccountServiceDependency = Annotated[UserAccountService, Depends(get_user_ac
 AdminAccountServiceDependency = Annotated[AdminAccountService, Depends(get_admin_account_service)]
 
 
-def require_browser_origin(request: Request) -> None:
-    settings = get_request_settings(request)
+def _require_browser_origin(request: Request, *, allowed_origins: list[str]) -> None:
     origin = request.headers.get("origin")
-    allowed = {item.rstrip("/") for item in settings.cors_origins}
-    if origin is None or origin.rstrip("/") not in allowed:
+    allowed = set(allowed_origins)
+    if origin is None or origin not in allowed:
         raise AppException(status_code=403, code=ErrorCode.CSRF_REJECTED, message="请求来源不在允许范围内")
 
 
-def _csrf_pair(request: Request, *, cookie_name: str) -> str:
-    require_browser_origin(request)
+def require_web_origin(request: Request) -> None:
+    _require_browser_origin(request, allowed_origins=get_request_settings(request).web_origins)
+
+
+def require_admin_origin(request: Request) -> None:
+    _require_browser_origin(request, allowed_origins=get_request_settings(request).admin_origins)
+
+
+def _csrf_pair(request: Request, *, cookie_name: str, allowed_origins: list[str]) -> str:
+    _require_browser_origin(request, allowed_origins=allowed_origins)
     header_token = request.headers.get("x-csrf-token")
     cookie_token = request.cookies.get(cookie_name)
     if not header_token or not cookie_token or not hmac.compare_digest(header_token, cookie_token):
@@ -143,11 +150,19 @@ def _csrf_pair(request: Request, *, cookie_name: str) -> str:
 
 
 def require_web_csrf_pair(request: Request) -> str:
-    return _csrf_pair(request, cookie_name=WEB_COOKIES.csrf)
+    return _csrf_pair(
+        request,
+        cookie_name=WEB_COOKIES.csrf,
+        allowed_origins=get_request_settings(request).web_origins,
+    )
 
 
 def require_admin_csrf_pair(request: Request) -> str:
-    return _csrf_pair(request, cookie_name=ADMIN_COOKIES.csrf)
+    return _csrf_pair(
+        request,
+        cookie_name=ADMIN_COOKIES.csrf,
+        allowed_origins=get_request_settings(request).admin_origins,
+    )
 
 
 async def get_current_user(
@@ -457,10 +472,11 @@ __all__ = [
     "require_admin_confirmation",
     "require_admin_csrf",
     "require_admin_csrf_pair",
-    "require_browser_origin",
+    "require_admin_origin",
     "require_permission",
     "require_web_csrf",
     "require_web_csrf_pair",
+    "require_web_origin",
     "UserAccountServiceDependency",
     "WebAuthServiceDependency",
 ]

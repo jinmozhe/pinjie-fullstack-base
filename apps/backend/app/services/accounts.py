@@ -147,8 +147,8 @@ class UserAccountService:
                 raise AppException(status_code=404, code=ErrorCode.NOT_FOUND, message="会话不存在")
             return await self.sessions.revoke_web_session(session_id, reason="user_revoked")
 
-    async def list_sessions(self, user_id: uuid.UUID) -> list[UserSession]:
-        return await self.sessions.list_web(user_id)
+    async def list_sessions(self, user_id: uuid.UUID, *, page: int, page_size: int) -> tuple[list[UserSession], int]:
+        return await self.sessions.list_web(user_id, page=page, page_size=page_size)
 
     async def revoke_other_sessions(self, *, user_id: uuid.UUID, current_session_id: uuid.UUID) -> None:
         async with transaction_scope(self.session):

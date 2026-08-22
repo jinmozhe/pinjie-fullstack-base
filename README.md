@@ -8,7 +8,7 @@
 
 - **后端**：FastAPI + SQLAlchemy 2.0 async + PostgreSQL + Redis
 - **管理端**：Ant Design Pro v6（Umi Max + React 19 + TypeScript + Ant Design 6 + ProComponents 3 + TanStack Query）
-- **用户端**：Next.js App Router + Tailwind CSS + shadcn/ui
+- **用户端**：Next.js App Router + React 19 + Tailwind CSS + TanStack Query + Zustand + Lucide
 - **共享包**：OpenAPI 自动生成 TypeScript 类型安全请求客户端（`api-client`）、共享 ESLint 配置（`eslint-config`）、共享 TypeScript 配置（`typescript-config`）
 - **部署**：Docker + 1Panel OpenResty + GitHub Actions CI/CD
 
@@ -37,7 +37,7 @@ plans/                  整个 Monorepo 的全栈实施计划
 
 openapi.json            后端导出的 OpenAPI 规范（根目录，前端 SDK 唯一来源）
 compose.yml             本地开发用（仅 Redis 容器）
-compose.prod.yml        生产部署用（backend/web/admin 三容器）
+compose.prod.yml        生产部署用（PostgreSQL、Redis、三端应用和可选日志消费者）
 CHANGELOG.md            已交付能力和版本变化
 SECURITY.md             漏洞报告和安全响应规则
 ```
@@ -78,8 +78,8 @@ SECURITY.md             漏洞报告和安全响应规则
 | 应用 | 母版包含 | 派生仓库扩展 |
 | --- | --- | --- |
 | `backend/domains/` | auth、users、admin、system | products、orders、payment 等 |
-| `web/features/` | auth、user | products、cart、checkout 等 |
-| `admin/pages/` | login、dashboard、system | products、orders、promotions 等 |
+| `web/features/` | auth、account、system | products、cart、checkout 等 |
+| `admin/features/` | auth、users、admins、roles、security、system | products、orders、promotions 等 |
 
 业务扩展参考 `docs/blueprints/` 目录下的蓝图文档。
 

@@ -18,10 +18,11 @@ from app.core.identifiers import new_uuid7
 from app.core.privacy import masked_ip
 from app.core.rate_limit import acquire_refresh_lock, enforce_rate_limit, release_refresh_lock
 from app.core.redis import check_redis, create_redis_client
-from app.core.request_metadata import publish_request_log, request_metadata, trusted_client_ip
+from app.core.request_metadata import RequestMetadata, publish_request_log, request_metadata, trusted_client_ip
 from app.core.resources import AppResources, create_resources
 from app.core.security import PasswordManager, create_access_token, decode_access_token
 from app.main import create_app
+from app.services.authentication import WebAuthService
 from tests.conftest import TEST_SECRETS
 
 DATABASE_URL = "postgresql+asyncpg://u:p@localhost:5432/app"
@@ -50,6 +51,20 @@ def test_settings_normalize_and_reject_log_levels() -> None:
 
 
 @pytest.mark.parametrize(
+    "origin",
+    [
+        "https://user@example.test",
+        "https://*:443",
+        "https://example.test:invalid",
+        "https://example.test/path",
+    ],
+)
+def test_settings_reject_non_origin_browser_urls(origin: str) -> None:
+    with pytest.raises(ValueError, match="browser origins"):
+        _settings(WEB_ORIGINS=[origin])
+
+
+@pytest.mark.parametrize(
     ("updates", "message"),
     [
         ({"REDIS_URL": "http://localhost:6379"}, "REDIS_URL"),
@@ -68,7 +83,9 @@ def test_settings_reject_invalid_runtime_combinations(updates: dict[str, object]
         ({"API_DOCS_ENABLED": True}, "API_DOCS_ENABLED"),
         ({"RELEASE_VERSION": None}, "RELEASE_VERSION"),
         ({"TRUSTED_HOSTS": []}, "TRUSTED_HOSTS"),
-        ({"BACKEND_CORS_ORIGINS": []}, "BACKEND_CORS_ORIGINS"),
+        ({"WEB_ORIGINS": []}, "WEB_ORIGINS"),
+        ({"ADMIN_ORIGINS": []}, "ADMIN_ORIGINS"),
+        ({"ADMIN_ORIGINS": ["https://web.example.test"]}, "must not overlap"),
         ({"AUTH_COOKIE_SECURE": False}, "AUTH_COOKIE_SECURE"),
         ({"TRUSTED_PROXY_CIDRS": []}, "TRUSTED_PROXY_CIDRS"),
     ],
@@ -79,7 +96,8 @@ def test_production_settings_fail_closed(updates: dict[str, object], message: st
         "API_DOCS_ENABLED": False,
         "RELEASE_VERSION": "coverage-test",
         "TRUSTED_HOSTS": ["example.test"],
-        "BACKEND_CORS_ORIGINS": ["https://example.test"],
+        "WEB_ORIGINS": ["https://web.example.test"],
+        "ADMIN_ORIGINS": ["https://admin.example.test"],
         "AUTH_COOKIE_SECURE": True,
         "TRUSTED_PROXY_CIDRS": ["127.0.0.1/32"],
     }
@@ -215,6 +233,33 @@ async def test_rate_limit_failure_and_lock_states() -> None:
     await release_refresh_lock(None, key="key", owner="owner")
     release = SimpleNamespace(eval=AsyncMock(side_effect=RedisError("offline")))
     await release_refresh_lock(release, key="key", owner="owner")  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "redis",
+    [None, SimpleNamespace(delete=AsyncMock(side_effect=RedisError("offline")))],
+)
+async def test_login_limit_cleanup_is_best_effort_after_authentication(redis: object | None) -> None:
+    service = WebAuthService(
+        session=MagicMock(),
+        session_factory=MagicMock(),
+        redis=redis,  # type: ignore[arg-type]
+        settings=_settings(),
+        password_manager=MagicMock(),
+        metadata=RequestMetadata(
+            request_id="cleanup-request",
+            trace_id="cleanup-trace",
+            ip_address="127.0.0.1",
+            user_agent_summary="pytest",
+            release_version="test",
+        ),
+    )
+
+    await service.clear_login_limit("browser-user")
+
+    if redis is not None:
+        redis.delete.assert_awaited_once()  # type: ignore[attr-defined]
 
 
 class _Connection:

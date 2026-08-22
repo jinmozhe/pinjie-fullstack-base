@@ -17,7 +17,9 @@ export const handlers = [
   http.patch("http://localhost:3000/api/v1/users/me", () => ok({ ...user, display_name: "Updated User" })),
   http.delete("http://localhost:3000/api/v1/users/me", () => ok({ completed: true })),
   http.post("http://localhost:3000/api/v1/users/me/password", () => ok({ completed: true })),
-  http.get("http://localhost:3000/api/v1/users/me/sessions", () => ok([session])),
+  http.get("http://localhost:3000/api/v1/users/me/sessions", () =>
+    ok({ items: [session], page: 1, page_size: 100, total: 1, total_pages: 1 }),
+  ),
   http.delete("http://localhost:3000/api/v1/users/me/sessions/:id", () => ok({ completed: true })),
   http.post("http://localhost:3000/api/v1/users/me/sessions/revoke-others", () => ok({ completed: true })),
 ];

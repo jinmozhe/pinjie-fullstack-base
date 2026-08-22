@@ -53,11 +53,15 @@ export const handlers = [
   http.patch("http://localhost:3000/api/v1/admin/users/:id", () => ok(user)),
   http.patch("http://localhost:3000/api/v1/admin/users/:id/status", () => ok({ ...user, is_active: false })),
   http.put("http://localhost:3000/api/v1/admin/users/:id/credentials/password", () => ok({ completed: true })),
-  http.get("http://localhost:3000/api/v1/admin/users/:id/sessions", () => ok([])),
+  http.get("http://localhost:3000/api/v1/admin/users/:id/sessions", () =>
+    ok({ items: [], page: 1, page_size: 20, total: 0, total_pages: 0 }),
+  ),
   http.post("http://localhost:3000/api/v1/admin/users/:id/sessions/revoke-all", () => ok({ completed: true })),
   http.get("http://localhost:3000/api/v1/admin/admins", () => ok({ items: [admin], page: 1, page_size: 20, total: 1, total_pages: 1 })),
   http.post("http://localhost:3000/api/v1/admin/admins", () => ok(admin)),
-  http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () => ok([])),
+  http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () =>
+    ok({ items: [], page: 1, page_size: 20, total: 0, total_pages: 0 }),
+  ),
   http.patch("http://localhost:3000/api/v1/admin/admins/:id/status", () => ok(admin)),
   http.put("http://localhost:3000/api/v1/admin/admins/:id/roles", () => ok(admin)),
   http.post("http://localhost:3000/api/v1/admin/admins/:id/sessions/revoke-all", () => ok({ completed: true })),

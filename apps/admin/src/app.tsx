@@ -43,15 +43,13 @@ function PasswordDrawer({ open, onClose }: { open: boolean; onClose: () => void 
   const mutation = useMutation({
     mutationFn: (values: { current_password: string; new_password: string }) => adminApi.changePassword(values.current_password, values.new_password),
     onSuccess: () => {
-      message.success("密码已修改，请使用新密码重新登录");
+      message.success("密码已修改，当前会话已更新，其他会话已撤销");
       form.resetFields();
       onClose();
-      history.replace("/login");
-      window.location.reload();
     },
   });
   return <Drawer open={open} title="账户安全" styles={{ wrapper: { width: 420 } }} onClose={onClose}>
-    <Typography.Paragraph type="secondary">修改密码会撤销当前管理员的全部会话。</Typography.Paragraph>
+    <Typography.Paragraph type="secondary">修改密码会保留当前会话并撤销其他会话。</Typography.Paragraph>
     {mutation.isError && <Alert showIcon type="error" title={errorMessage(mutation.error)} />}
     <Form form={form} layout="vertical" onFinish={(values) => mutation.mutate(values)}>
       <Form.Item label="当前密码" name="current_password" rules={[{ required: true }, { max: 64, message: "密码最多 64 个字符" }]}><Input.Password autoComplete="current-password" maxLength={64} /></Form.Item>
@@ -65,17 +63,18 @@ function AccountMenu({ admin }: { admin: AdminRead }) {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const logout = useMutation({
     mutationFn: adminApi.logout,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.clear();
       history.replace("/login");
       window.location.reload();
     },
+    onError: (error) => message.error(errorMessage(error)),
   });
   return <>
     <Dropdown menu={{ items: [
       { key: "password", icon: <KeyOutlined />, label: "修改密码", onClick: () => setPasswordOpen(true) },
       { type: "divider" },
-      { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, onClick: () => logout.mutate() },
+      { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, disabled: logout.isPending, onClick: () => logout.mutate() },
     ] }}>
       <Button type="text" className="account-trigger" aria-label={`账户菜单：${admin.display_name || admin.username}`}>
         <Avatar size="small" icon={<UserOutlined />} />
