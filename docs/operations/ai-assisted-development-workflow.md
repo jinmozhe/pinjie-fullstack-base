@@ -738,13 +738,13 @@ codex --cd apps/backend --ask-for-approval never "Show which instruction files a
 
 - 解释或修改用户级、项目级 `config.toml`。
 - 切换 Custom、`elevated`、`unelevated`、沙箱、审批或网络设置。
-- 处理 Owner、ACL、`EPERM`、`os error 5`、Cache 越界或工作区外写入。
+- 处理 Owner、ACL、`EPERM`、`os error 5`、`SEC_E_NO_CREDENTIALS`、Cache 越界、系统 HTTPS 客户端或工作区外写入。
 - 在同一电脑复用配置，或把开发环境迁移到另一台电脑。
 - 对 `.git/`、`.agents/`、`.codex/` 等受保护路径申请升级授权。
 - 评估 Owner/DACL 修复、完整访问权限或递归 `icacls` 操作。
 
 ### 26.2 当前项目基线
 
-本项目使用 Windows 原生 Codex、PowerShell 和 `elevated + Custom (config.toml)`，保留 `workspace-write`、默认断网、精确 uv Cache 可写根和代理环境过滤。Owner 为 `CodexSandbox*` 但操作正常时不属于故障；提交、推送、发布和部署仍分别授权。
+本项目由当前用户个人使用，Windows 原生 Codex 长期采用 `elevated + Custom (config.toml)`、`workspace-write`、默认联网、精确 uv Cache 可写根和代理环境过滤。Owner 为 `CodexSandbox*` 但操作正常时不属于故障。Windows `curl.exe` 或 PowerShell HTTPS 返回 `SEC_E_NO_CREDENTIALS` 时按专项标准分类，确需系统客户端时只升级准确宿主命令；提交、推送、发布和部署仍分别授权。
 
-详细实施证据保留在 [Codex Windows ACL 长期治理计划](../../plans/2026-08-22_CodexWindowsACL长期治理计划.md)，标准文档的建立与后续维护记录保留在 [Codex Windows 配置与 ACL 标准文档计划](../../plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md)。
+历史 ACL 实施证据保留在 [Codex Windows ACL 长期治理计划](../../plans/2026-08-22_CodexWindowsACL长期治理计划.md)，标准文档的建立记录保留在 [Codex Windows 配置与 ACL 标准文档计划](../../plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md)，当前默认联网和 Schannel 边界记录保留在 [Codex Windows 网络与 Schannel 边界治理计划](../../plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md)。

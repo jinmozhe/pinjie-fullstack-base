@@ -28,7 +28,7 @@
 | `docs/PROJECT_REQUIREMENTS.md` | 生效 | 母版目标用户、场景、目标能力、非目标、派生规则和验收基线 |
 | `docs/README.md` | 生效 | `docs/` 下全部项目文档的专项索引 |
 | `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则读取、任务路由、计划交付、验证和独立授权指南 |
-| `docs/operations/codex-windows-config-acl-governance.md` | 生效 | Codex Windows `config.toml`、沙箱、迁移、ACL 诊断、验证、最小修复和回滚的权威标准 |
+| `docs/operations/codex-windows-config-acl-governance.md` | 生效 | Codex Windows `config.toml`、默认联网、Schannel、沙箱、ACL 诊断、验证、最小修复和回滚的权威标准 |
 | `docs/operations/github-actions-workflows.md` | 生效 | GitHub Actions 自动检查、人工镜像发布和生产部署的逐工作流说明 |
 | `SECURITY.md` | 生效 | 漏洞报告、安全响应目标和安全开发要求 |
 | `scripts/ci/` | 生效 | 三态完整性、模块边界、文本卫生和门禁正反例检查 |
@@ -41,6 +41,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已将个人开发机默认联网、Schannel 已知边界、准确宿主升级兜底和升级复验条件写入权威文档与规则 |
 | `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 冻结阻断项已修复，三端质量、真实依赖、契约、容器门禁和桌面/移动跨栈验收通过 |
 | `plans/2026-08-22_immutable-baseline-remediation-plan.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 重复计划已由中文路径的活动计划替代，永久保留审计记录 |
 | `plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已建立 `config.toml`、`elevated + Custom`、同机复用、跨电脑迁移和 ACL 全链路的独立标准文档 |
@@ -63,6 +64,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | 已完成；默认联网、Schannel 对照诊断、准确宿主升级兜底、禁止规避措施和升级复验删除条件已同步，全部治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 Codex Windows 网络和系统 HTTPS 客户端边界 |
 | `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | P1-01 至 P1-09 与同步处理项已完成；当前工作区满足冻结候选条件，尚未提交或创建不可变 Tag | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成母版不可变基线冻结前的安全、兼容、一致性、交付和文档整改 |
 | `plans/2026-08-22_immutable-baseline-remediation-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 保留补丁工具错误报告后产生的重复计划审计记录 |
 | `plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md` | 已结束 | 已完成；独立标准文档、既有入口去重、文档索引、全项目索引和 Changelog 已同步，全部文档与治理门禁通过 | Documentation、Windows 本地开发治理 | 建立 `config.toml`、`elevated + Custom`、初始化、迁移、验证、诊断、修复和回滚的完整标准 |
@@ -125,7 +127,7 @@
 | Backend 工程实施标准 | `docs/architecture/backend-engineering-standard.md` | 保存 Backend 具体实现方式、禁止模式和门禁；专题架构语义继续由对应文档负责 |
 | Admin 工程实施标准 | `docs/architecture/admin-engineering-standard.md` | 保存 Admin Umi/Pro、Feature、请求、状态、组件选择和依赖准入的实施方式；长期红线继续由 Admin AGENTS 负责 |
 | Markdown 格式规则与检查 | 根 `.markdownlint.json`、`package.json` 的 `lint:md` | GFM 语法基线、统一具体写法及固定版本的全仓库命令行检查 |
-| Codex Windows 权限与 ACL 治理 | `docs/operations/codex-windows-config-acl-governance.md` | 保存 `config.toml`、原生沙箱、同机与跨电脑迁移、Owner/ACL、缓存、Git 审批、验证、最小修复和回滚标准 |
+| Codex Windows 权限、网络与 ACL 治理 | `docs/operations/codex-windows-config-acl-governance.md` | 保存 `config.toml`、默认联网、Schannel、原生沙箱、迁移、Owner/ACL、缓存、Git 审批、验证、最小修复和回滚标准 |
 | Git 提交与追溯 | Git 历史、根 `AGENTS.md` | 普通提交由 Git 保存精确历史，跨系统记录保存完整 Commit SHA 或不可变 Tag |
 | OpenAPI 契约 | 根 `openapi.json` | 由后端导出，禁止手工修改 |
 | TypeScript API Client | `packages/api-client/src/` | 由根契约生成，禁止手工修改 |

@@ -348,6 +348,8 @@ pnpm typecheck
 
 本项目使用 Windows 原生 ChatGPT/Codex 桌面端和 PowerShell，不以 Docker 或 WSL 作为 Codex 文件操作的默认运行边界。OpenAI 官方将 `elevated` 作为更强的首选沙箱，将 `unelevated` 作为从当前用户派生受限 Token 的备选实现。
 
-本项目长期使用 `elevated + Custom (config.toml)`，保留 `workspace-write`、默认断网、精确 uv Cache 可写根和代理环境过滤。`CodexSandbox*` Owner 在实际工具操作正常时不属于故障，不通过 `unelevated`、完整访问权限或递归 `FullControl` 消除 Owner 差异。
+本项目由当前用户个人使用，长期采用 `elevated + Custom (config.toml)`、`workspace-write`、默认联网、精确 uv Cache 可写根和代理环境过滤。网络开启不扩大文件写入范围，也不构成提交、推送、发布或部署授权。`CodexSandbox*` Owner 在实际工具操作正常时不属于故障，不通过 `unelevated`、完整访问权限或递归 `FullControl` 消除 Owner 差异。
+
+Windows `curl.exe` 或 PowerShell HTTPS 在专用沙箱账户下返回 `SEC_E_NO_CREDENTIALS` 时，先使用 Node 或 Python HTTPS 对照诊断。Node 或 Python 正常时按当前 Schannel 兼容边界处理，确需系统客户端时只升级准确宿主命令，不修改沙箱 Profile、注册表 Hive、证书或 TLS 校验。
 
 `config.toml` 位置、推荐模板、桌面端选项、同机多项目、跨电脑迁移、Cache、代理、受保护路径、正反向验证和最小 ACL 修复统一见 [Codex Windows 配置与 ACL 治理标准](codex-windows-config-acl-governance.md)。AI 任务读取和独立授权流程继续见 [AI 助手开发与文档读取指南](ai-assisted-development-workflow.md)。

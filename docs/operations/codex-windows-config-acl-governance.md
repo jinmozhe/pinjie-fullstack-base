@@ -2,7 +2,7 @@
 
 ## 1. 文档目的
 
-本文是本项目在 Windows 原生 ChatGPT/Codex 桌面端中使用 `config.toml`、Windows 沙箱、NTFS Owner/ACL、依赖缓存和 Git 受保护路径的唯一详细操作来源。
+本文是本项目在 Windows 原生 ChatGPT/Codex 桌面端中使用 `config.toml`、Windows 沙箱、网络与 Schannel、NTFS Owner/ACL、依赖缓存和 Git 受保护路径的唯一详细操作来源。
 
 本文解决以下长期问题：
 
@@ -11,20 +11,23 @@
 - 同一电脑的多个项目是否需要重复配置。
 - 换到另一台电脑时哪些内容可以迁移，哪些状态必须重新建立。
 - 如何区分 Owner 差异、真实 NTFS ACL 失败、Codex 沙箱越界、缓存越界、网络边界和命令审批。
+- 如何诊断沙箱内 Windows `curl.exe` 和 PowerShell HTTPS 的 Schannel `SEC_E_NO_CREDENTIALS`，并使用最小宿主升级兜底。
 - 如何验证、诊断、最小修复和回滚，避免周期性执行全仓库 ACL 重置。
 
 本项目使用 Windows 原生 Codex 和 PowerShell，不把 Docker、WSL2 或 Linux 容器的 UID/GID 问题作为默认解释。应用、数据库和依赖管理的完整本地基线仍见 [Windows 本地开发环境手册](local-dev-environment.md)。
 
 ## 2. 核心结论
 
-1. 用户级配置位于 `$env:USERPROFILE\.codex\config.toml`。当前用户名为 `pinjie` 时，对应 `C:\Users\pinjie\.codex\config.toml`。
-2. 本项目长期采用 `sandbox_mode = "workspace-write"`、`[windows].sandbox = "elevated"`，并在任务权限菜单中选择“自定义（`config.toml`）”。
+1. 用户级配置位于 `$env:USERPROFILE\.codex\config.toml`。使用 `$env:USERPROFILE` 动态定位，不在仓库中固定具体 Windows 用户名。
+2. 本项目长期采用 `sandbox_mode = "workspace-write"`、`network_access = true`、`[windows].sandbox = "elevated"`，并在任务权限菜单中选择“自定义（`config.toml`）”。本项目由当前用户个人使用，用户已明确接受沙箱命令默认联网风险。
 3. `elevated` 创建的文件可能由 `CodexSandbox*` 账户持有。只要实际读写、重命名和删除正常，这不是 ACL 故障，不需要 Owner 归一。
 4. 用户级配置默认适用于同一 Windows 用户下的其他项目。本仓库不需要项目级 `.codex/config.toml`。
 5. 换电脑时不要直接复制整份个人 `config.toml`。只迁移本文中的脱敏片段，并在新电脑重新确定用户名、uv Cache、登录、沙箱初始化和仓库信任状态。
 6. 拉取仓库代码不会迁移用户级 Codex 配置，也不能替代新电脑的 `elevated` 初始化和正反向验收。
 7. `.git/`、`.agents/` 和 `.codex/` 在可写工作区中仍属于 Codex 受保护路径。对这些路径的拒绝或审批不是 NTFS 损坏。
 8. 禁止使用 `danger-full-access`、全仓库 `icacls /reset /T` 或递归 `FullControl` 作为日常解决方案。
+9. 网络开启只允许沙箱内命令建立网络连接，不扩大文件写入范围，也不构成提交、推送、发布、部署或其他外部副作用授权。
+10. 沙箱内 Node 和 Python HTTPS 正常时，Windows `curl.exe` 或 PowerShell HTTPS 返回 `SEC_E_NO_CREDENTIALS` 应归类为当前 Schannel 兼容边界；需要这些系统客户端时，只对准确宿主命令申请升级执行。
 
 ## 3. 事实与证据分层
 
@@ -36,23 +39,31 @@
 - [Windows sandbox](https://learn.chatgpt.com/docs/windows/windows-sandbox)：`elevated` 是首选原生 Windows 沙箱，使用专用低权限账户、文件系统权限边界、防火墙规则和本地策略；`unelevated` 是隔离较弱的 fallback。
 - [Agent approvals & security](https://learn.chatgpt.com/docs/agent-approvals-security)：沙箱决定技术边界，审批策略决定何时请求批准；默认网络关闭；`.git/`、`.agents/` 和 `.codex/` 在 writable root 内仍受保护。
 - [Permissions](https://learn.chatgpt.com/docs/permissions)：beta permission profiles 不能与 `sandbox_mode`、`sandbox_workspace_write` 混用。
+- [Microsoft `LoadUserProfileW`](https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-loaduserprofilew)：需要用户 Profile 的调用方必须显式加载并在完成后卸载；该文档支持 Profile 相关诊断，但不能单独证明 Codex 的具体实现根因。
+- [Microsoft SSPI 状态码](https://learn.microsoft.com/en-us/windows/win32/secauthn/sspi-status-codes)：`SEC_E_NO_CREDENTIALS` 表示安全包中没有可用凭据，不能据此推导为普通 DNS、TCP 或证书错误。
 
 官方文档更新后，以最新 OpenAI Docs 为准。任何升级复核都必须重新验证本文引用的字段和 UI 行为。
 
 ### 3.2 本机验证事实
 
-2026-08-22 在 Windows 原生 ChatGPT/Codex 桌面端完成的 A/B 验证表明：
+2026-08-22 至 2026-08-23 在 Windows 原生 ChatGPT/Codex 桌面端完成的验证表明：
 
 - `unelevated` 可以让新文件 Owner 保持当前用户，并能访问精确加入的 uv Cache，但 Node 子进程出现 `EPERM`。
 - `elevated` 下 Node、uv、仓库文件操作和工作区外写入反例均正常，最终作为长期基线。
 - 宿主机的回环代理曾让默认请求通过 `127.0.0.1` 转发出网；排除 `HTTP_PROXY`、`HTTPS_PROXY` 和 `ALL_PROXY` 后，默认请求和显式直连均被沙箱网络边界阻断。
 - 桌面端预设权限模式不会自动采用用户配置中的额外 `writable_roots`；任务需要选择“自定义（`config.toml`）”。
+- 用户随后明确接受个人开发机的沙箱命令联网风险，将 `network_access = true` 设为当前长期基线；代理变量继续排除，防止网络路径被宿主回环代理隐式改变。
+- 当前 `CodexSandboxOnline` 身份下 DNS、TCP、HTTP 和 Node HTTPS 正常，Node HTTPS 访问公开测试站点返回 200。
+- Windows `curl.exe` 和 PowerShell HTTPS 在相同沙箱身份下返回 `SEC_E_NO_CREDENTIALS`，宿主用户执行相同请求返回 200。现有证据表明它与 Schannel、沙箱账户 Profile 和受限 Token 有关，底层根因仍等待上游确认。
+
+相关上游问题跟踪包括 [openai/codex#17458](https://github.com/openai/codex/issues/17458)、[openai/codex#17459](https://github.com/openai/codex/issues/17459) 和 [openai/codex#31073](https://github.com/openai/codex/issues/31073)。这些 Issue 用于升级复核和删除兜底，不能替代本机复现。
 
 这些是本机和当前桌面端版本的验证事实，不应替代未来升级后的复验。
 
 ### 3.3 项目约束
 
 - 本项目不提交个人 `config.toml`、认证状态、Token、Provider 秘密或本机绝对路径配置。
+- 本项目的个人开发机默认允许沙箱命令联网；网络目标、参数和输出仍不得泄露凭据、内网地址或生产数据。
 - 提交、推送、发布、部署和生产操作继续分别取得用户明确授权。
 - 只有可复现的真实 NTFS 失败才能触发 ACL 修复；沙箱审批和 Owner 差异不能触发递归权限修改。
 
@@ -86,7 +97,7 @@ Test-Path -LiteralPath $codexConfig
 <repo>/.codex/config.toml
 ```
 
-Codex 只在项目被信任后加载项目级配置。项目级配置适合保存经过团队评审、确实只对该仓库生效的最小覆盖，不适合保存机器秘密、认证状态或个人路径。
+Codex 只在项目被信任后加载项目级配置。项目级配置适合保存经过当前用户审查、确实只对该仓库生效的最小覆盖，不适合保存机器秘密、认证状态或个人路径。
 
 根据官方配置参考，Provider、认证、通知、Profile 选择和遥测路由等机器本地字段不能通过项目级配置覆盖。即便字段允许项目覆盖，也必须评估它是否会扩大工作区、网络或命令权限。
 
@@ -95,7 +106,8 @@ Codex 只在项目被信任后加载项目级配置。项目级配置适合保�
 当前不需要，原因如下：
 
 - `elevated`、审批策略和代理过滤属于当前用户的通用安全基线。
-- uv Cache 是当前用户机器上的路径，不应写入母版仓库。
+- 默认联网是当前用户已经明确接受风险的个人开发机基线。
+- uv Cache 是当前用户机器上的路径，不应写入仓库。
 - pnpm Store 位于各工作区内被 Git 忽略的 `.pnpm-store/`，不需要额外机器路径。
 - 本仓库已经通过 `AGENTS.md`、计划和运维文档管理项目规则，不依赖项目级 Codex 配置扩大权限。
 
@@ -125,7 +137,7 @@ approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
 
 [sandbox_workspace_write]
-network_access = false
+network_access = true
 writable_roots = [
   "C:\\Users\\<current-user>\\AppData\\Local\\uv\\cache",
 ]
@@ -146,7 +158,7 @@ sandbox = "elevated"
 | `approval_policy = "on-request"` | 越过既定边界前请求批准 | 不扩大沙箱文件或网络权限 |
 | `approvals_reviewer = "auto_review"` | 将符合条件的审批交给自动审查 | 不等于用户已授权提交、推送或发布 |
 | `sandbox_mode = "workspace-write"` | 默认只写工作区和额外可写根 | 不允许写 `.git/` 等受保护路径 |
-| `network_access = false` | 关闭沙箱命令的默认网络 | 不控制浏览器、连接器、MCP 或 Codex 客户端自身连接 |
+| `network_access = true` | 允许沙箱内命令默认联网 | 不扩大文件权限，不授权提交、推送、发布、部署或其他外部副作用 |
 | `writable_roots` | 精确放行工作区外的稳定缓存 | 不应放行整个用户目录或 `AppData` |
 | `shell_environment_policy.filters` | 阻止子进程继承指定代理变量 | 不修改宿主 Windows 代理设置 |
 | `windows.sandbox = "elevated"` | 使用官方首选的强 Windows 沙箱 | 不保证所有文件 Owner 都是当前用户 |
@@ -157,7 +169,7 @@ sandbox = "elevated"
 
 - 不能只为让 Owner 显示为当前用户而切换。
 - 只有管理员批准的 `elevated` 初始化受企业策略阻断时，才把它作为临时兼容方案。
-- 任何临时评估都必须验证 Node、uv、工作区外写入和网络反例；任一失败即回滚。
+- 任何临时评估都必须验证 Node、uv、工作区外写入和网络正例；任一失败即回滚。
 
 ### 5.4 为什么任务必须选择 Custom
 
@@ -235,7 +247,7 @@ pnpm store path
 - 项目使用稳定的工作区外构建缓存。
 - Monorepo 工作区根与启动目录不一致，导致预期目录未进入 writable root。
 - 项目必须调用本机特定 SDK 或工具目录，并且写入是必要行为。
-- 团队需要对该仓库统一限制某些 Codex 配置。
+- 当前用户需要对该仓库单独限制某些 Codex 配置。
 
 遇到例外时先证明准确路径和失败行为，再选择配置层级。不得为了省去审批把整个父目录加入 `writable_roots`。
 
@@ -294,7 +306,8 @@ pnpm store path
 | Codex 工作区边界 | 写入工作区外路径被拒绝 | 调整工作流；必要时增加最小可写根 |
 | Codex 受保护路径 | 写 `.git/`、`.agents/` 或 `.codex/` 被拒绝或要求升级 | 按产品边界和动作授权处理，不改 ACL |
 | 缓存越界 | uv、pnpm 或工具只在工作区外 Cache 失败 | 先定位实际 Cache，再精确配置 |
-| 网络边界 | 命令联网失败、请求审批或被防火墙阻断 | 默认保持断网；必要联网按任务授权 |
+| 网络配置边界 | Node 或 Python HTTPS 也无法访问公开测试站点，或者当前上下文显示网络关闭 | 核对 `network_access = true`、Custom 模式和新任务运行上下文 |
+| Schannel 兼容边界 | Node/Python HTTPS 正常，但 Windows `curl.exe` 或 PowerShell HTTPS 返回 `SEC_E_NO_CREDENTIALS` | 记录客户端和错误；确需系统客户端时只升级准确宿主命令，不改 ACL、Profile、证书或 TLS 校验 |
 | 回环代理绕过 | 默认请求成功，显式直连失败，命令环境存在代理变量 | 排除代理变量并重启复验 |
 | 命令审批 | Git 写入、网络、外部副作用或高风险命令请求批准 | 审批该动作；不能表述为 ACL 失败 |
 
@@ -319,6 +332,18 @@ pnpm store path
         +-- 否 -> 检查占用进程、只读属性、杀毒软件和工具锁
         +-- 是 -> 生成准确清单，取得授权后最小修复
 ```
+
+### 9.2 Schannel 分类
+
+`SEC_E_NO_CREDENTIALS` 不能按普通断网或 NTFS ACL 失败处理。按以下顺序分类：
+
+1. 确认当前任务使用 `elevated + Custom` 且 `network_access = true`。
+2. 使用公开测试站点验证 DNS、TCP 和 Node 或 Python HTTPS。
+3. 只有 Node 或 Python HTTPS 正常，而 Windows `curl.exe` 或 PowerShell HTTPS 失败时，才归类为当前 Schannel 兼容边界。
+4. 记录沙箱身份、客户端、目标站点类别和完整错误码，不记录包含凭据的 URL、Header 或响应正文。
+5. 任务确实依赖 Windows 系统客户端时，通过 Codex 审批机制只在宿主身份下重跑准确失败命令，不附加其他命令段，也不申请长期完整访问。
+
+当前底层原因尚未由 OpenAI 或 Microsoft 最终确认。文档只记录可复现行为和处理边界，不把 Profile 缺失或受限 Token 单独写成确定根因。
 
 ## 10. 配置生效验收
 
@@ -372,16 +397,24 @@ uv run --project apps/backend python -c "import sys; print(sys.executable)"
 
 不要用现有文件、用户目录根、系统目录或其他项目作为反例目标。
 
-### 10.4 网络反例
+### 10.4 网络与 HTTPS 客户端验收
 
-在不申请网络授权的前提下，分别验证默认请求和显式禁用代理的直连请求。两者都应失败或进入审批：
+先验证代理变量未进入命令环境，再使用公开测试站点验证 Node HTTPS。当前基线下 Node 请求应成功：
 
 ```powershell
-Invoke-WebRequest -Uri "https://example.com" -TimeoutSec 10
-Invoke-WebRequest -Uri "https://example.com" -NoProxy -TimeoutSec 10
+node -e "fetch('https://example.com').then(r => console.log(r.status)).catch(e => { console.error(e); process.exit(1) })"
 ```
 
-只验证公开测试站点，不使用内网、生产或带参数的敏感 URL。浏览器、连接器、MCP 和 Codex 客户端网络不受 `sandbox_workspace_write.network_access` 直接控制，不能用它们替代 shell 网络反例。
+然后分别验证 Windows 系统 HTTPS 客户端：
+
+```powershell
+curl.exe --noproxy "*" --head --max-time 10 "https://example.com"
+Invoke-WebRequest -Uri "https://example.com" -TimeoutSec 10
+```
+
+当前桌面端中，这两个 Schannel 客户端可能返回 `SEC_E_NO_CREDENTIALS`。该结果只表示已知兼容边界，不表示 `network_access = true` 未生效。确需它们完成任务时，对准确命令申请宿主升级执行；能够使用 Node、Python、pnpm 或 uv 完成时，继续在沙箱内执行。
+
+只验证公开测试站点，不使用内网、生产或带参数的敏感 URL。浏览器、连接器、MCP 和 Codex 客户端网络不受 `sandbox_workspace_write.network_access` 直接控制，不能用它们替代 shell 网络验收。
 
 ### 10.5 Git 和受保护路径
 
@@ -446,6 +479,7 @@ $sandboxOwned | Format-Table -AutoSize
 - 是否有编辑器、Node、Python、测试、索引器或杀毒软件占用文件。
 - 是否是 Windows 路径长度、符号链接或工具自己的锁文件错误。
 - 失败是否只发生在特定 Cache、临时目录或受保护路径。
+- HTTPS 失败是否只发生在使用 Schannel 的 Windows 系统客户端，并返回 `SEC_E_NO_CREDENTIALS`。
 - 相同路径能否由当前用户 PowerShell 完成四种文件操作。
 
 ## 12. 最小修复边界
@@ -457,6 +491,7 @@ $sandboxOwned | Format-Table -AutoSize
 - 只有 Owner 显示为 `CodexSandbox*`，没有实际操作失败。
 - 失败来自 `.git/`、`.agents/`、`.codex/` 或工作区外沙箱边界。
 - 失败来自命令审批、网络审批或用户未授权的 Git 写入。
+- 失败是 Windows 系统 HTTPS 客户端返回 `SEC_E_NO_CREDENTIALS`，而 Node 或 Python HTTPS 正常。
 - 尚未取得准确失败路径、错误码和 DACL 证据。
 - 文件正被进程占用或工具锁定。
 
@@ -507,6 +542,10 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - 禁止在另一台电脑直接覆盖整份个人配置并跳过初始化和验收。
 - 禁止同时使用 beta permission profiles 与 `sandbox_mode` 配置。
 - 禁止把 Auto-review 当作提交、推送、发布或部署授权。
+- 禁止为修复 `SEC_E_NO_CREDENTIALS` 而加载或常驻挂载沙箱账户 Profile、注册表 Hive。
+- 禁止读取、复制或导出沙箱秘密、用户证书私钥、`.sandbox-secrets` 或其他凭据材料。
+- 禁止关闭 TLS 证书校验、使用不安全协议或修改系统信任库来绕过当前 Schannel 边界。
+- 禁止为系统 HTTPS 客户端创建常驻计划任务、代理服务或长期宿主命令放行。
 
 ## 14. 回滚与升级复核
 
@@ -515,7 +554,7 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 配置变更失败时：
 
 1. 只恢复本次修改字段的旧值。
-2. 保留 `workspace-write` 和默认断网，不回退到完整访问。
+2. 保留 `workspace-write` 和 `network_access = true`，不回退到完整访问。
 3. 完全重启桌面端并创建新任务。
 4. 重跑第 10 节完整验收。
 
@@ -529,9 +568,10 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - OpenAI Docs 修改 `windows.sandbox`、权限 Profiles、受保护路径或网络语义。
 - Node、uv 或 pnpm 更新后重新出现 `EPERM` 或 Cache 越界。
 - 更换电脑、Windows 用户、仓库路径或企业安全策略。
-- 默认网络反例意外成功。
+- Node 或 Python HTTPS 正例失败。
+- Windows `curl.exe` 或 PowerShell HTTPS 不再出现 `SEC_E_NO_CREDENTIALS`，或者错误行为发生变化。
 
-复核时先查 OpenAI Docs，再运行配置解析、工作区正例、Cache、Node 子进程、工作区外写入和两种网络反例。
+复核时先查 OpenAI Docs，再运行配置解析、工作区正例、Cache、Node 子进程、工作区外写入、Node HTTPS 和两个 Windows 系统 HTTPS 客户端验收。两个系统客户端在沙箱内连续通过后，删除宿主升级兜底相关说明；不能为了保留旧流程而维持双轨。
 
 ## 15. 日常检查清单
 
@@ -544,7 +584,8 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - [ ] 已信任当前仓库并选择 Custom。
 - [ ] 工作区内文件、Node、uv 和 pnpm 正例通过。
 - [ ] 工作区外写入反例通过。
-- [ ] 代理变量不存在，默认请求与显式直连均被阻断或审批。
+- [ ] 代理变量不存在，Node HTTPS 正例通过。
+- [ ] 已记录 Windows `curl.exe` 和 PowerShell HTTPS 的实际结果；出现 `SEC_E_NO_CREDENTIALS` 时按 Schannel 边界处理。
 
 ### 日常任务
 
@@ -552,6 +593,7 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - [ ] 当前任务使用 Custom。
 - [ ] 依赖失败先检查实际 Store/Cache 路径。
 - [ ] 权限失败先分类，不直接改 Owner 或 ACL。
+- [ ] 系统 HTTPS 客户端失败先与 Node/Python 对照，不直接修改 Profile、证书或 TLS。
 - [ ] Git 写入只在交付阶段按授权集中执行。
 
 ### ACL 修复前
@@ -568,3 +610,4 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - [Windows 本地开发环境手册](local-dev-environment.md)：说明 uv、pnpm、本机 PostgreSQL、Docker Desktop Redis 和 Windows 原生开发基线。
 - [Codex Windows ACL 长期治理计划](../../plans/2026-08-22_CodexWindowsACL长期治理计划.md)：保存 2026-08-22 本机 A/B 验证和历史实施证据。
 - [Codex Windows 配置与 ACL 标准文档计划](../../plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md)：保存本文建立、确认、实施和验证记录。
+- [Codex Windows 网络与 Schannel 边界治理计划](../../plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md)：保存默认联网决策、系统 HTTPS 客户端边界和本次同步记录。
