@@ -1,7 +1,8 @@
 import type { ConfirmationAction, RoleCreateIn, RoleRead } from "@pinjie/api-client";
-import { DeleteOutlined, EditOutlined, PlusOutlined, SafetyOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SafetyOutlined } from "@ant-design/icons";
+import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Checkbox, Form, Input, Modal, Space, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Checkbox, Form, Input, Modal, Space, Tag, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -41,15 +42,18 @@ export function RolesPage() {
   return (
     <PageFrame title="角色与权限" description="角色可维护，权限目录由源码定义并以只读方式呈现。" action={canAccess(current, "roles:create") ? <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditing("new"); roleForm.resetFields(); roleForm.setFieldsValue({ is_active: true }); }}>新建角色</Button> : undefined}>
       <QueryState loading={roles.isLoading} error={roles.isError ? errorMessage(roles.error) : undefined} empty={roles.data?.items.length === 0} onRetry={() => void roles.refetch()} />
-      {roles.data && roles.data.items.length > 0 && <Table<RoleRead>
-        rowKey="id" dataSource={roles.data.items} scroll={{ x: 820 }} pagination={false}
+      {roles.data && roles.data.items.length > 0 && <ProTable<RoleRead>
+        rowKey="id" dataSource={roles.data.items} search={false} options={false} cardProps={false}
+        headerTitle="角色列表"
+        toolBarRender={() => [<Button key="refresh" aria-label="刷新角色列表" icon={<ReloadOutlined />} onClick={() => void roles.refetch()} />]}
+        pagination={false}
         columns={[
-          { title: "角色", dataIndex: "name", render: (_, row) => <><Typography.Text strong>{row.name}</Typography.Text><br /><Typography.Text code>{row.code}</Typography.Text></> },
-          { title: "说明", dataIndex: "description", ellipsis: true, render: (value) => value || "-" },
-          { title: "权限数", dataIndex: "permissions", width: 100, render: (items: string[]) => items.length },
+          { title: "角色", dataIndex: "name", render: (_, row) => <div className="table-primary-cell"><Typography.Text strong>{row.name}</Typography.Text><Typography.Text code>{row.code}</Typography.Text></div> },
+          { title: "说明", dataIndex: "description", ellipsis: true, responsive: ["lg"], render: (value) => value || "-" },
+          { title: "权限数", dataIndex: "permissions", width: 100, render: (_, row) => row.permissions.length },
           { title: "状态", dataIndex: "is_active", width: 90, render: (value) => <Tag color={value ? "success" : "default"}>{value ? "启用" : "停用"}</Tag> },
-          { title: "更新时间", dataIndex: "updated_at", width: 170, render: formatTime },
-          { title: "操作", fixed: "right", width: 250, render: (_, row) => <Space size="small">
+          { title: "更新时间", dataIndex: "updated_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.updated_at) },
+          { title: "操作", width: 250, render: (_, row) => <Space className="table-actions" size={[6, 6]} wrap>
             {canAccess(current, "roles:update") && <Button size="small" icon={<EditOutlined />} onClick={() => { setEditing(row); roleForm.setFieldsValue({ code: row.code, name: row.name, description: row.description, is_active: row.is_active }); }}>编辑</Button>}
             {canAssignPermissions && <Button size="small" icon={<SafetyOutlined />} onClick={() => { setPermissionTarget(row); permissionForm.setFieldsValue({ permission_codes: row.permissions }); }}>权限</Button>}
             {canAccess(current, "roles:delete") && <Button danger size="small" icon={<DeleteOutlined />} onClick={() => begin("roles:delete", "删除未使用角色", async (token) => { await adminApi.deleteRole(row.id, token); message.success("角色已删除"); await invalidate(); })}>删除</Button>}

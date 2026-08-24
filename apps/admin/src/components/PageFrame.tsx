@@ -1,18 +1,20 @@
+import { PageContainer } from "@ant-design/pro-components";
 import type { ReactNode } from "react";
-import { Alert, Button, Empty, Flex, Spin, Typography } from "antd";
+import { Alert, Button, Card, Empty, Spin, Typography } from "antd";
 
 export function PageFrame({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="workspace" aria-labelledby="page-heading">
-      <Flex align="flex-start" justify="space-between" gap={16} wrap>
-        <div>
-          <Typography.Title id="page-heading" level={3}>{title}</Typography.Title>
-          <Typography.Paragraph type="secondary">{description}</Typography.Paragraph>
-        </div>
-        {action}
-      </Flex>
-      {children}
-    </section>
+    <PageContainer
+      className="workspace-page"
+      title={<Typography.Title id="page-heading" className="page-title" level={1}>{title}</Typography.Title>}
+      content={description}
+      extra={action}
+      aria-labelledby="page-heading"
+    >
+      <Card className="workspace-panel" variant="borderless">
+        {children}
+      </Card>
+    </PageContainer>
   );
 }
 

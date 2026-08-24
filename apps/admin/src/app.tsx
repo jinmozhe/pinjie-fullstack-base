@@ -2,7 +2,7 @@ import type { AdminRead } from "@pinjie/api-client";
 import { KeyOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { history, Link } from "@umijs/max";
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
-import { Alert, Avatar, Button, ConfigProvider, Drawer, Dropdown, Form, Input, Result, Typography, message } from "antd";
+import { Alert, Avatar, Button, ConfigProvider, Drawer, Dropdown, Form, Input, Result, Typography, message, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -98,21 +98,58 @@ export const layout = ({ initialState }: { initialState?: unknown }) => {
   return {
     title: "Pinjie Console",
     menuItemRender: (item: { path?: string }, dom: ReactNode) => item.path ? <Link to={item.path}>{dom}</Link> : dom,
-    menuHeaderRender: (_: unknown, title: ReactNode) => <div className="brand-mark"><span className="brand-mark__symbol">P</span>{title}</div>,
+    menuHeaderRender: () => <div className="brand-mark"><span className="brand-mark__symbol">P</span><span className="brand-mark__title">Pinjie Console</span></div>,
     avatarProps: state?.currentAdmin ? {
       title: state.currentAdmin.display_name || state.currentAdmin.username,
       render: () => state.currentAdmin ? <AccountMenu admin={state.currentAdmin} /> : null,
     } : undefined,
     actionsRender: () => [],
-    footerRender: () => <Typography.Text type="secondary">Pinjie Console</Typography.Text>,
+    footerRender: () => <footer className="admin-footer">Pinjie Console</footer>,
     childrenRender: (children: ReactNode) => <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>{children}</AdminLayoutFrame>,
     ...state?.settings,
+    siderWidth: 224,
+    token: {
+      bgLayout: "#f5f7fa",
+      header: {
+        colorBgHeader: "#ffffff",
+        colorBgScrollHeader: "#ffffff",
+        colorHeaderTitle: "#101828",
+        colorTextRightActionsItem: "#344054",
+        heightLayoutHeader: 56,
+      },
+      sider: {
+        colorMenuBackground: "#001529",
+        colorBgCollapsedButton: "#0b1f33",
+        colorTextCollapsedButton: "#ffffff",
+        colorTextCollapsedButtonHover: "#ffffff",
+        colorBgMenuItemCollapsedElevated: "#0b1f33",
+        colorMenuItemDivider: "rgb(255 255 255 / 10%)",
+        colorBgMenuItemHover: "#14395c",
+        colorBgMenuItemActive: "#0958d9",
+        colorBgMenuItemSelected: "#0958d9",
+        colorTextMenuSelected: "#ffffff",
+        colorTextMenuItemHover: "#ffffff",
+        colorTextMenuActive: "#ffffff",
+        colorTextMenu: "#c7d2e0",
+        colorTextMenuSecondary: "#94a3b8",
+        colorTextMenuTitle: "#ffffff",
+        colorTextSubMenuSelected: "#ffffff",
+      },
+      pageContainer: {
+        colorBgPageContainer: "#f5f7fa",
+        colorBgPageContainerFixed: "#ffffff",
+      },
+    },
   };
 };
 
 export function rootContainer(container: ReactNode) {
-  return <ConfigProvider locale={zhCN} theme={{ token: {
+  return <ConfigProvider locale={zhCN} theme={{ algorithm: theme.defaultAlgorithm, token: {
+    borderRadius: 8,
+    borderRadiusLG: 8,
+    controlHeight: 36,
     colorError: "#b42318",
+    colorBgLayout: "#f5f7fa",
     colorPrimary: "#0958d9",
     colorSuccess: "#135200",
     colorSuccessBg: "#f6ffed",
@@ -120,5 +157,9 @@ export function rootContainer(container: ReactNode) {
     colorSuccessText: "#135200",
     colorTextDescription: "#595959",
     colorTextSecondary: "#595959",
+    fontFamily: '"Segoe UI", "Microsoft YaHei", sans-serif',
+  }, components: {
+    Card: { headerBg: "#ffffff" },
+    Table: { headerBg: "#f7f8fa", headerColor: "#344054", rowHoverBg: "#f5f9ff" },
   } }}><QueryClientProvider client={queryClient}>{container}</QueryClientProvider></ConfigProvider>;
 }

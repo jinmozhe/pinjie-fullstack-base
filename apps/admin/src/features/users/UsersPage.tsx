@@ -1,7 +1,8 @@
 import type { ConfirmationAction, UserPrincipalOut } from "@pinjie/api-client";
-import { EditOutlined, KeyOutlined, LaptopOutlined, PoweroffOutlined, SearchOutlined } from "@ant-design/icons";
+import { EditOutlined, KeyOutlined, LaptopOutlined, PoweroffOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Drawer, Flex, Form, Input, Modal, Pagination, Space, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Drawer, Flex, Form, Input, Modal, Pagination, Space, Tag, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -16,6 +17,7 @@ export function UsersPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [searchDraft, setSearchDraft] = useState("");
   const [selected, setSelected] = useState<UserPrincipalOut | null>(null);
   const [sessionPage, setSessionPage] = useState(1);
   const [editing, setEditing] = useState<UserPrincipalOut | null>(null);
@@ -38,33 +40,48 @@ export function UsersPage() {
   const beginConfirmation = (action: ConfirmationAction, title: string, execute: (token: string) => Promise<void>) => {
     setConfirmation({ action, title, execute });
   };
+  const submitSearch = () => {
+    setPage(1);
+    setSearch(searchDraft.trim());
+  };
+  const resetSearch = () => {
+    setPage(1);
+    setSearch("");
+    setSearchDraft("");
+  };
 
   return (
     <PageFrame title="用户管理" description="查询账户状态、维护基础资料并处理凭据与会话。">
-      <Flex gap={12} className="table-toolbar" wrap>
+      <Flex gap={8} className="table-toolbar" wrap>
         <Input
           allowClear
           aria-label="搜索用户"
           prefix={<SearchOutlined />}
           placeholder="用户名或显示名称"
-          value={search}
-          onChange={(event) => { setPage(1); setSearch(event.target.value); }}
+          value={searchDraft}
+          onChange={(event) => setSearchDraft(event.target.value)}
+          onPressEnter={submitSearch}
         />
+        <Button type="primary" icon={<SearchOutlined />} onClick={submitSearch}>搜索</Button>
+        <Button onClick={resetSearch}>重置</Button>
+        <Button aria-label="刷新用户列表" icon={<ReloadOutlined />} onClick={() => void users.refetch()} />
       </Flex>
       <QueryState loading={users.isLoading} error={users.isError ? errorMessage(users.error) : undefined} empty={users.data?.items.length === 0} onRetry={() => void users.refetch()} />
       {users.data && users.data.items.length > 0 && (
-        <Table<UserPrincipalOut>
+        <ProTable<UserPrincipalOut>
           rowKey="id"
           dataSource={users.data.items}
-          scroll={{ x: 820 }}
+          search={false}
+          options={false}
+          cardProps={false}
           pagination={{ current: page, pageSize: 20, total: users.data.total, showSizeChanger: false, onChange: setPage }}
           columns={[
-            { title: "用户", dataIndex: "username", render: (_, row) => <><Typography.Text strong>{row.display_name || row.username}</Typography.Text><br /><Typography.Text type="secondary">{row.username}</Typography.Text></> },
-            { title: "邮箱", dataIndex: "email", render: (value) => value || "-" },
+            { title: "用户", dataIndex: "username", render: (_, row) => <div className="table-primary-cell"><Typography.Text strong>{row.display_name || row.username}</Typography.Text><Typography.Text type="secondary">{row.username}</Typography.Text></div> },
+            { title: "邮箱", dataIndex: "email", responsive: ["lg"], render: (value) => value || "-" },
             { title: "状态", dataIndex: "is_active", width: 100, render: (value) => <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
-            { title: "创建时间", dataIndex: "created_at", width: 170, render: formatTime },
-            { title: "操作", key: "actions", fixed: "right", width: 270, render: (_, row) => (
-              <Space size="small">
+            { title: "创建时间", dataIndex: "created_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.created_at) },
+            { title: "操作", key: "actions", width: 300, render: (_, row) => (
+              <Space className="table-actions" size={[6, 6]} wrap>
                 {canAccess(current, "users:update") && <Button icon={<EditOutlined />} size="small" onClick={() => { setEditing(row); editForm.setFieldsValue({ display_name: row.display_name ?? undefined, email: row.email ?? undefined }); }}>编辑</Button>}
                 {canAccess(current, "users:update") && <Button icon={<PoweroffOutlined />} size="small" danger={row.is_active} onClick={() => {
                   const run = async (token?: string) => { await adminApi.setUserStatus(row.id, !row.is_active, token); message.success("账户状态已更新"); await invalidate(); };

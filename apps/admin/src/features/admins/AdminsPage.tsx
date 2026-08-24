@@ -1,7 +1,8 @@
 import type { AdminCreateIn, AdminRead, ConfirmationAction } from "@pinjie/api-client";
-import { PlusOutlined, SafetyCertificateOutlined, TeamOutlined } from "@ant-design/icons";
+import { PlusOutlined, ReloadOutlined, SafetyCertificateOutlined, TeamOutlined } from "@ant-design/icons";
+import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, Select, Space, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, Select, Space, Tag, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -38,15 +39,18 @@ export function AdminsPage() {
   return (
     <PageFrame title="管理员" description="维护管理身份、超级管理员状态、角色和活动会话。" action={canAccess(current, "admins:create") ? <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreating(true)}>新建管理员</Button> : undefined}>
       <QueryState loading={admins.isLoading} error={admins.isError ? errorMessage(admins.error) : undefined} empty={admins.data?.items.length === 0} onRetry={() => void admins.refetch()} />
-      {admins.data && admins.data.items.length > 0 && <Table<AdminRead>
-        rowKey="id" dataSource={admins.data.items} scroll={{ x: 900 }} pagination={{ current: page, pageSize: 20, total: admins.data.total, showSizeChanger: false, onChange: setPage }}
+      {admins.data && admins.data.items.length > 0 && <ProTable<AdminRead>
+        rowKey="id" dataSource={admins.data.items} search={false} options={false} cardProps={false}
+        headerTitle="管理员列表"
+        toolBarRender={() => [<Button key="refresh" aria-label="刷新管理员列表" icon={<ReloadOutlined />} onClick={() => void admins.refetch()} />]}
+        pagination={{ current: page, pageSize: 20, total: admins.data.total, showSizeChanger: false, onChange: setPage }}
         columns={[
-          { title: "管理员", dataIndex: "username", render: (_, row) => <><Typography.Text strong>{row.display_name || row.username}</Typography.Text><br /><Typography.Text type="secondary">{row.username}</Typography.Text></> },
-          { title: "身份", key: "identity", render: (_, row) => row.is_superuser ? <Tag color="gold" icon={<SafetyCertificateOutlined />}>超级管理员</Tag> : <Tag>管理员</Tag> },
-          { title: "角色", dataIndex: "roles", render: (items: AdminRead["roles"]) => items.length ? items.map((role) => <Tag key={role.id}>{role.name}</Tag>) : "-" },
+          { title: "管理员", dataIndex: "username", render: (_, row) => <div className="table-primary-cell"><Typography.Text strong>{row.display_name || row.username}</Typography.Text><Typography.Text type="secondary">{row.username}</Typography.Text></div> },
+          { title: "身份", key: "identity", render: (_, row) => row.is_superuser ? <Tag color="blue" icon={<SafetyCertificateOutlined />}>超级管理员</Tag> : <Tag>管理员</Tag> },
+          { title: "角色", dataIndex: "roles", render: (_, row) => row.roles.length ? row.roles.map((role) => <Tag key={role.id}>{role.name}</Tag>) : "-" },
           { title: "状态", dataIndex: "is_active", width: 90, render: (value) => <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
-          { title: "更新时间", dataIndex: "updated_at", width: 170, render: formatTime },
-          { title: "操作", fixed: "right", width: 270, render: (_, row) => <Space size="small">
+          { title: "更新时间", dataIndex: "updated_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.updated_at) },
+          { title: "操作", width: 270, render: (_, row) => <Space className="table-actions" size={[6, 6]} wrap>
             {canAccess(current, "admins:roles:assign") && canReadRoles && <Button size="small" icon={<TeamOutlined />} onClick={() => { setRoleTarget(row); roleForm.setFieldsValue({ role_ids: row.roles.map((role) => role.id) }); }}>角色</Button>}
             {canAccess(current, "admins:update") && <Button size="small" disabled={row.id === current.id} danger={row.is_active} onClick={() => begin("admins:status:change", `${row.is_active ? "停用" : "启用"}管理员`, async (token) => { await adminApi.setAdminStatus(row.id, !row.is_active, token); message.success("管理员状态已更新"); await invalidate(); })}>{row.is_active ? "停用" : "启用"}</Button>}
             {canReadSessions && <Button size="small" onClick={() => { setSessionPage(1); setSessionTarget(row); }}>会话</Button>}

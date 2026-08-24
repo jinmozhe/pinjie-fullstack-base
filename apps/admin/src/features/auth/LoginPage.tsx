@@ -31,7 +31,7 @@ export function LoginPage({ authenticated = false }: { authenticated?: boolean }
     <main className="login-screen">
       <section className="login-panel" aria-labelledby="login-title">
         <div className="login-panel__mark"><SafetyCertificateOutlined /></div>
-        <Typography.Title id="login-title" level={2}>管理控制台</Typography.Title>
+        <Typography.Title id="login-title" level={1}>管理控制台</Typography.Title>
         <Typography.Paragraph type="secondary">使用管理员账号进入安全工作区</Typography.Paragraph>
         {login.isError && <Alert showIcon type="error" title={errorMessage(login.error)} />}
         <Form<LoginValues> layout="vertical" requiredMark={false} onFinish={(values) => login.mutate(values)}>
