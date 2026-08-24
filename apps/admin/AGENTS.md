@@ -42,13 +42,14 @@
 
 - 路由、布局、运行时生命周期和客户端 Access 只通过 `@umijs/max`、Umi 配置与插件公开入口使用。禁止直接声明、接管或绕过 Umi 管理的 React Router、Bundler、Babel、esbuild 和运行时内部依赖，禁止通过 override 强制升级到 Umi 尚未支持的主版本；精确内部版本只属于当前锁文件事实，不写成永久规则。
 - Admin Access 只负责路由、菜单和控件的客户端体验，不是安全边界；所有授权、二次确认和审计仍由 Backend 最终执行。
-- Admin 开发服务使用 `scripts/run-umi.mjs` 通过 `PORT=3001` 启动；不要使用 `max dev --port` 替代项目脚本。直接调用 Umi 时必须从 `apps/admin` 目录运行。
+- Admin 开发服务使用 `scripts/run-umi.mjs` 通过 `HOST=127.0.0.1`、`PORT=3001` 启动；底层 Umi Webpack host 补丁必须保留。不要使用 `max dev --port` 替代项目脚本；直接调用 Umi 时必须从 `apps/admin` 目录运行并显式绑定 `127.0.0.1`。
 - Umi 的 `process.env.VITE_API_URL`、`initialState: {}` 和生成目录清理是运行时约束；不得在浏览器代码中直接使用 Vite 的 `import.meta.env`，不得提交 `src/.umi` 或 `src/.umi-production`。详细排障见 `docs/operations/admin-local-development-and-validation-troubleshooting.md`。
 
 ## 依赖准入
 
 - Umi、React、Ant Design、ProComponents 和官方插件只能按官方兼容组合升级；所有升级继续遵守根锁文件、七天冷却、安装脚本白名单、专项计划和受影响范围验证。
 - 安全 override 仅用于范围明确且有依赖链证据的兼容修复，并必须执行完整 Admin 与适用跨栈回归。没有兼容修复版本的 Medium 或 Low 上游风险按 `SECURITY.md` 建立限时风险接受，不得伪装为已修复。
+- 当前 Admin 只允许 Umi 默认 Webpack 构建链。移除 Vite 4 的精确 pnpm Hook、两个 Umi 补丁和依赖自检门禁必须同时保留；升级 Umi 或重新启用 Vite bundler 前必须创建专项计划，证明上游稳定组合已消除已知 High 漏洞并完成全量回归。
 - 母版只接收跨业务复用且有明确需求的外围能力。图表、富文本、Excel 和其他具体业务依赖默认由派生仓库按真实需求引入，不以“业务依赖自由升级”为准入理由。
 
 详细目录、请求、组件选择和依赖分层见 `docs/architecture/admin-engineering-standard.md`。

@@ -41,6 +41,8 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 实施中 | Admin、Deployment、Documentation | `main` 已移除永久 bypass，Umi Vite 4 已从本地依赖树移除，等待 PR 线上门禁 |
+| `plans/2026-08-24_ruleset-vite-security-remediation-plan.md` | 已结束 | Documentation | 重复计划已由中文路径活动计划替代，永久保留审计记录 |
 | `plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已固化认证型 `gh` 命令的 Windows Keyring 宿主执行、精确审批和远端副作用授权边界 |
 | `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已将个人开发机默认联网、Schannel 已知边界、准确宿主升级兜底和升级复验条件写入权威文档与规则 |
 | `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 冻结阻断项已修复，三端质量、真实依赖、契约、容器门禁和桌面/移动跨栈验收通过 |
@@ -65,6 +67,8 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 实施中 | 本地实现与验证已完成，等待 PR 线上门禁 | Admin、Deployment、Documentation | 收紧 `main` Ruleset 并消除 Umi 依赖链中的 Vite 4 高危漏洞 |
+| `plans/2026-08-24_ruleset-vite-security-remediation-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Documentation | 保留补丁工具异常后产生的重复计划审计记录 |
 | `plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md` | 已结束 | 已完成；根规则、权威运维文档、审批示例、安全边界和索引已同步，文档与治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 GitHub CLI 与 Windows Keyring 的宿主执行和审批边界 |
 | `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | 已完成；默认联网、Schannel 对照诊断、准确宿主升级兜底、禁止规避措施和升级复验删除条件已同步，全部治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 Codex Windows 网络和系统 HTTPS 客户端边界 |
 | `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | P1-01 至 P1-09 与同步处理项已完成；当前工作区满足冻结候选条件，尚未提交或创建不可变 Tag | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成母版不可变基线冻结前的安全、兼容、一致性、交付和文档整改 |
@@ -108,11 +112,11 @@
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
 | Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、请求元数据、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 119 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.86% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用已实现单次 Refresh、失败可重试退出、改密保留当前会话、细粒度安全日志权限、服务端分页和唯一 HTTP 管道；typecheck、lint、33 项 Vitest、90.60% 语句覆盖率、production build 与桌面/移动跨栈 E2E 通过 | `apps/admin/src/`、`apps/admin/Dockerfile`、`apps/admin/nginx.conf`、`docs/architecture/admin-engineering-standard.md` |
+| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留全部既有能力；当前固定 Webpack 构建，未使用的 Vite 4 已通过精确 Hook 与补丁移除，开发服务实际绑定 `127.0.0.1`；typecheck、lint、33 项 Vitest、2 项启动器测试、90.60% 语句覆盖率和 production build 通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、运行时 Metadata 和安全响应头已实现；typecheck、lint、26 项 Vitest、90.46% 语句覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，238 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成，非文档契约结构保持一致，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL advisory lock 并发保护、级联删除、dry-run/`--apply` 清理、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/cleanup_security_logs.py` |
-| Deployment | 三端 Dockerfile 与 PostgreSQL/Redis 均固定完整镜像 digest，生产 Compose 强制应用镜像 digest；正反例门禁、Compose config、Umi/Vite 兼容解析、Windows standalone 冷启动和桌面/移动 Browser E2E 通过；未执行提交、发布或生产部署 | `apps/backend/Dockerfile`、`apps/admin/Dockerfile`、`apps/web/Dockerfile`、`compose.prod.yml`、`scripts/ci/check-production-compose.ps1` |
+| Deployment | `Protect main` 已要求 Pull Request 和 13 项检查且 `current_user_can_bypass=never`；Security 门禁保持 High/Critical 阻断，本地锁文件已移除 Vite 4，等待工作分支 PR 线上复核；发布和生产部署未执行 | `.github/workflows/`、`pnpm-lock.yaml`、`scripts/ci/check-umi-vite-security.mjs`、GitHub Ruleset `21152538` |
 | Documentation | 目录结构已按 2026-08-22 的 321 个项目文件、68 个含文件目录同步；认证、Backend 标准、测试、容器、环境变量、ADR、README、Changelog、计划和索引已按冻结整改事实回写 | `docs/architecture/project-structure.md`、`docs/architecture/authentication-authorization.md`、`plans/2026-08-22_母版不可变基线冻结整改计划.md` |
 
 ## 权威来源

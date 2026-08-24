@@ -79,6 +79,8 @@ ProComponents 是提高标准管理场景效率的首选，不是形式上的强
 
 所有新解析继续受根 `pnpm-lock.yaml`、七天冷却、安装脚本白名单和供应链门禁约束。范围化安全 override 必须记录依赖链、受影响范围、兼容依据和回归结果；无兼容修复版本的 Medium 或 Low 风险按 `SECURITY.md` 建立限时风险接受。不得通过强制升级框架内部主版本、关闭审计或永久 override 换取表面无告警。
 
+当前 Umi `4.7.5` 的 Vite bundler 固定依赖存在 High 漏洞的 Vite 4，而 Admin 实际使用默认 Webpack。根 `.pnpmfile.cjs` 精确移除未使用的 Vite bundler，`patchedDependencies` 同时关闭 Vite 入口并修复 Webpack server 忽略 host 的监听行为，`scripts/ci/check-umi-vite-security.mjs` 拒绝版本漂移和补丁缺失。补丁负责人为仓库维护者，复核日期为 2026-09-21；上游稳定版提供安全组合后必须通过新计划删除临时补丁。
+
 ## 验证要求
 
 变更按风险运行最小充分检查。Admin 源码或依赖变化至少执行：

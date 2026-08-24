@@ -2,20 +2,36 @@ import { spawn } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const scriptPath = fileURLToPath(import.meta.url);
+const appRoot = resolve(dirname(scriptPath), "..");
 const maxCLI = resolve(appRoot, "node_modules", "@umijs", "max", "bin", "max.js");
-const child = spawn(process.execPath, [maxCLI, "dev", ...process.argv.slice(2)], {
-  cwd: appRoot,
-  env: { ...process.env, PORT: process.env.PORT ?? "3001" },
-  shell: false,
-  stdio: "inherit",
-  windowsHide: true,
-});
 
-child.once("error", (error) => {
-  process.stderr.write(`${error}\n`);
-  process.exitCode = 1;
-});
-child.once("exit", (code, signal) => {
-  process.exitCode = code ?? (signal ? 1 : 0);
-});
+export function createUmiEnvironment(environment = process.env) {
+  return {
+    ...environment,
+    HOST: environment.HOST ?? "127.0.0.1",
+    PORT: environment.PORT ?? "3001",
+  };
+}
+
+function run() {
+  const child = spawn(process.execPath, [maxCLI, "dev", ...process.argv.slice(2)], {
+    cwd: appRoot,
+    env: createUmiEnvironment(),
+    shell: false,
+    stdio: "inherit",
+    windowsHide: true,
+  });
+
+  child.once("error", (error) => {
+    process.stderr.write(`${error}\n`);
+    process.exitCode = 1;
+  });
+  child.once("exit", (code, signal) => {
+    process.exitCode = code ?? (signal ? 1 : 0);
+  });
+}
+
+if (process.argv[1] && resolve(process.argv[1]) === scriptPath) {
+  run();
+}
