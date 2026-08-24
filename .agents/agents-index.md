@@ -41,6 +41,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 实施中 | Deployment、Documentation | 保留 Ruleset，并自动完成分支、PR、rebase 合并、分支清理和本地同步，同时去除功能分支 Push 重复检查 |
 | `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md` | 已结束 | Backend、Documentation | 已隔离 VS Code 扩展内置 Ruff 与 Backend 虚拟环境 Ruff，避免 Windows 文件占用阻断 uv 同步 |
 | `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` | 已结束 | Admin、Documentation | 已完成官方 Ant Design 6、ProComponents 和 Umi Max ProLayout 全页面视觉交互升级 |
 | `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | Admin、Deployment、Documentation | `main` 无永久 bypass，Umi Vite 4 已移除，PR #7 与合并后四个工作流通过，Dependabot 为 0 Open |
@@ -69,6 +70,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 实施中 | 待完成 | Deployment、Documentation | 自动化 Ruleset 保护下的日常 Git 交付闭环，并去除功能分支 Push 重复检查 |
 | `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md` | 已结束 | 已完成工作区设置、uv 使用边界说明与治理验证 | Backend、Documentation | 隔离 VS Code 扩展内置 Ruff 与 Backend 虚拟环境 Ruff，避免 Windows 文件占用阻断 uv 同步 |
 | `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` | 已结束 | 已完成深色侧栏、浅色工作区、PageContainer、受控 ProTable、五视口与 axe 验收 | Admin、Documentation | 官方 Ant Design 6、ProComponents 与 Umi Max ProLayout 全页面视觉交互升级 |
 | `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | 已完成；PR #7 rebase 合并，Rule Suite 与合并后四个工作流通过，Dependabot 为 0 Open | Admin、Deployment、Documentation | 收紧 `main` Ruleset 并消除 Umi 依赖链中的 Vite 4 高危漏洞 |
@@ -120,7 +122,7 @@
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、运行时 Metadata 和安全响应头已实现；typecheck、lint、26 项 Vitest、90.46% 语句覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，238 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成，非文档契约结构保持一致，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL advisory lock 并发保护、级联删除、dry-run/`--apply` 清理、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/cleanup_security_logs.py` |
-| Deployment | `Protect main` 要求 Pull Request 和 13 项检查且 `current_user_can_bypass=never`；PR #7 与合并后四个工作流通过，锁文件已移除 Vite 4，Dependabot 为 0 Open；发布和生产部署未执行 | `.github/workflows/`、`pnpm-lock.yaml`、`scripts/ci/check-umi-vite-security.mjs`、GitHub Ruleset `21152538` |
+| Deployment | `Protect main` 要求 Pull Request 和 13 项检查且 `current_user_can_bypass=never`；Auto-merge、rebase merge 和合并后自动删分支已启用，四个自动工作流只监听目标为 `main` 的 PR、`main` push 与 Security 定时任务；发布和生产部署未执行 | `.github/workflows/`、GitHub 仓库设置、GitHub Ruleset `21152538` |
 | Documentation | 目录结构已按 2026-08-22 的 321 个项目文件、68 个含文件目录同步；认证、Backend 标准、测试、容器、环境变量、ADR、README、Changelog、计划和索引已按冻结整改事实回写 | `docs/architecture/project-structure.md`、`docs/architecture/authentication-authorization.md`、`plans/2026-08-22_母版不可变基线冻结整改计划.md` |
 
 ## 权威来源

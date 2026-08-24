@@ -22,18 +22,14 @@
 
 ```mermaid
 flowchart TD
-    A["本地提交"] --> B["git push"]
-    B --> C["CI - Governance"]
-    B --> D["CI - Backend"]
-    B --> E["CI - Frontend"]
-    B --> G["Security"]
-    C --> H["同一 Commit SHA 的 4 个 Push 工作流全部成功"]
-    D --> H
-    E --> H
-    G --> H
-    H --> I["人工授权 Publish Images"]
-    I --> J["构建、扫描并发布 3 张 GHCR 镜像"]
-    J --> K["人工授权 Deploy Production"]
+    A["本地提交并推送功能分支"] --> B["目标为 main 的 Pull Request"]
+    B --> C["4 个 PR 工作流和 13 项必需检查"]
+    C --> D["rebase 自动合并"]
+    D --> E["main Push"]
+    E --> G["同一 Commit SHA 的 4 个 Push 工作流"]
+    G --> H["人工授权 Publish Images"]
+    H --> I["构建、扫描并发布 3 张 GHCR 镜像"]
+    I --> K["人工授权 Deploy Production"]
     K --> L["固定 3 个镜像 digest 部署生产环境"]
     M["人工按需触发"] --> F["CI - Browser E2E"]
     F --> N["独立复核结果，不参与镜像发布门禁"]
@@ -41,7 +37,7 @@ flowchart TD
 
 流程坚持四项边界：
 
-1. `git push` 只触发质量和安全检查，不发布镜像，不接触生产服务器。
+1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发质量与安全检查，不发布镜像，不接触生产服务器。
 2. Browser E2E 只允许人工按需触发，不随 Push 或 Pull Request 自动运行，也不参与镜像发布门禁。
 3. 镜像发布必须人工触发，并且只接受已经通过四个自动 Push 工作流的完整 Commit SHA。
 4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
@@ -50,15 +46,15 @@ flowchart TD
 
 | 工作流 | Push | Pull Request | 定时 | 人工触发 |
 | --- | --- | --- | --- | --- |
-| CI - Governance | 是 | 是 | 否 | 否 |
-| CI - Backend | 是 | 是 | 否 | 否 |
-| CI - Frontend | 是 | 是 | 否 | 否 |
+| CI - Governance | 仅 `main` | 仅目标为 `main` | 否 | 否 |
+| CI - Backend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
+| CI - Frontend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
 | CI - Browser E2E | 否 | 否 | 否 | 是 |
-| Security | 是 | 是 | 每周一次 | 否 |
+| Security | 仅 `main` | 仅目标为 `main` | 每周一次 | 否 |
 | Publish Images | 否 | 否 | 否 | 是 |
 | Deploy Production | 否 | 否 | 否 | 是 |
 
-四个自动工作流没有配置分支过滤或路径过滤，因此向任意分支推送提交都会触发。当前仓库远程只保留 `main`，日常实际触发点是向 `main` 推送。
+四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤。
 
 `CI - Browser E2E` 只支持从 GitHub Actions 页面人工触发。是否运行由操作人员按改动风险决定，它的结果不影响 `Publish Images`。
 
@@ -85,11 +81,12 @@ flowchart TD
 - Ruleset 审批数为 0，不要求第二维护者批准，但不保留个人、管理员或日常维护 bypass。
   `current_user_can_bypass=never`，维护者只能在必需检查满足后自行合并 Pull Request。
   紧急恢复如需临时调整 Ruleset，必须单独授权、保留审计记录并在恢复后立即撤销。
+- 仓库启用 Auto-merge、rebase merge 和合并后自动删除功能分支。Auto-merge 只在 Ruleset 和必需检查满足后执行，不改变保护规则。
 - `production` Environment（ID `20337656537`）只允许受保护分支，必要 Reviewer 为
   `jinmozhe`，`prevent_self_review=false`，当前 Secrets 和 Variables 均为 0。
 
 单维护者基线没有独立审批职责分离，但 Pull Request 和自动检查仍是默认分支的强制门禁。
-提交、分支推送、合并、镜像发布和生产部署继续分别取得明确授权，并保留不可变发布和审计记录。
+普通提交、分支推送和合并按用户文字分别授权。用户显式调用 `$git-sync` 时，该次调用覆盖当前任务的分支、提交、推送、PR、rebase 自动合并、分支清理和本地 `main` 同步；镜像发布和生产部署继续分别取得明确授权，并保留不可变发布和审计记录。
 
 ### 3.2 项目 Node.js 与 Action 运行时
 
@@ -103,9 +100,9 @@ JavaScript Action 的执行版本由该 Action 固定提交中的 `action.yml` �
 仓库不设置 `ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION`，也不依赖 GitHub Runner 将旧
 `node20` Action 兼容覆盖到 Node.js 24。
 
-## 4. Push 后的执行顺序
+## 4. Pull Request 与 main Push 的执行顺序
 
-GitHub 收到新提交后，会为同一个 Commit SHA 创建四个相互独立的 Workflow Run：
+GitHub 收到目标为 `main` 的 Pull Request 更新或 `main` 新提交后，会为对应 Commit SHA 创建四个相互独立的 Workflow Run：
 
 1. `CI - Governance`
 2. `CI - Backend`
@@ -177,7 +174,7 @@ Backend 工作流验证 FastAPI 应用、数据库迁移、Redis 依赖、静态
 - `ready`：入口、依赖、测试和必要配置完整，继续运行 `backend-quality`。
 - `partial`：部分实现状态，工作区门禁直接失败。
 
-当前 Backend 为 `ready`，因此每次 push 都会进入完整质量检查。
+当前 Backend 为 `ready`，因此目标为 `main` 的 PR 和 `main` push 都会进入完整质量检查。
 
 ### 6.3 Backend quality
 
@@ -289,7 +286,7 @@ Browser E2E 只支持 `workflow_dispatch` 人工触发。它在 Ubuntu Runner �
 
 ### 9.1 作用和使用场景
 
-Security 工作流覆盖密钥泄露、依赖漏洞、依赖变更和源码安全问题。它在 push、Pull Request 和每周定时任务中运行，使没有新提交时出现的最新漏洞公告也能被发现。
+Security 工作流覆盖密钥泄露、依赖漏洞、依赖变更和源码安全问题。它在目标为 `main` 的 Pull Request、`main` push 和每周定时任务中运行，使没有新提交时出现的最新漏洞公告也能被发现。
 
 ### 9.2 Source state
 
@@ -372,7 +369,7 @@ Pull Request 会运行同样的四个自动工作流，并额外启用两项差�
 1. Backend 的 `OpenAPI breaking changes` 比较目标分支与 PR 契约。
 2. Security 的 `Dependency review` 检查 PR 新增或改变的依赖。
 
-Pull Request 检查用于合并前评审。push 检查用于验证某个已经存在于远程分支的精确 Commit SHA。镜像发布要求的是同一 Commit SHA 的成功 `push` Run，PR Run 不能替代。
+Pull Request 检查用于合并前评审。`main` push 检查用于验证已经进入默认分支的精确 Commit SHA。镜像发布要求的是同一 Commit SHA 的成功 `push` Run，PR Run 不能替代。
 
 ## 11. Publish Images
 
@@ -515,22 +512,25 @@ Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对
 
 ## 13. 完整使用场景
 
-### 13.1 日常直接推送
+### 13.1 `$git-sync` 日常交付
 
 ```text
 本地修改
 -> 本地验证
--> git add
--> git commit
--> 推送 `codex/*` 或其他开发分支
--> 创建或更新 Pull Request
--> 4 个自动工作流并行运行
+-> 显式调用 `$git-sync`
+-> 创建或使用 `codex/*` 功能分支
+-> 精确暂存并提交
+-> 推送功能分支，不触发整套检查
+-> 创建或更新目标为 `main` 的 Pull Request
+-> 设置 rebase Auto-merge
+-> 4 个 PR 工作流并行运行
 -> 额外执行 OpenAPI breaking changes 和 Dependency review
--> 13 项必需检查满足后合并
+-> 13 项必需检查满足后自动合并并删除远端分支
 -> 合并提交再次触发 4 个 Push 工作流
+-> 本地 fast-forward 同步 `main` 并删除已合并分支
 ```
 
-`main` 不允许日常直接推送。单维护者可以自行合并，但不能绕过 Pull Request、会话解决和必需检查。
+`main` 不允许日常直接推送。检查失败、取消、缺失或 PR 无法合并时，`$git-sync` 停止并保留 PR 和分支，报告具体失败检查。它不会关闭工作流、降低门槛或使用 Ruleset bypass。
 
 ### 13.2 Pull Request 评审
 
@@ -620,12 +620,18 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 - [ ] 提交不包含真实 `.env`、Token、密码或私钥。
 - [ ] 生成契约和锁文件不存在未解释漂移。
 
-### Push 后
+### Pull Request 后
 
-- [ ] 四个自动工作流均对应预期 Commit SHA。
+- [ ] 四个 PR 工作流均对应预期功能分支 Commit SHA。
 - [ ] Governance、Backend、Frontend 和 Security 全部成功。
 - [ ] 没有把 `skipped` 误判成应用质量通过。
 - [ ] 失败时已定位具体 Job 和第一条有效错误。
+
+### 合并后
+
+- [ ] PR 以 rebase 方式合并，远端功能分支已经删除。
+- [ ] 本地 `main` 已通过 fast-forward 与 `origin/main` 同步。
+- [ ] 四个 `main` Push 工作流均对应合并后的精确 Commit SHA。
 
 ### 发布镜像前
 
