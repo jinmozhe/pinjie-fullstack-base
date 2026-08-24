@@ -171,6 +171,19 @@ uv run mypy app/
 
 所有命令无需手动激活环境，`uv run` 自动定位并激活最近的 `.venv`。
 
+### VS Code Ruff 与虚拟环境隔离
+
+Windows 本机可在被 `.gitignore` 忽略的 `.vscode/settings.json` 中设置 `"ruff.importStrategy": "useBundled"`，让 VS Code Ruff 扩展使用扩展内置的 Ruff，避免编辑器 Ruff Server 锁定 `apps/backend/.venv/Scripts/ruff.exe` 并阻断 `uv sync --locked`。该设置属于个人工作区配置，不会提交或强制覆盖其他开发者的编辑器偏好。
+
+编辑器诊断只用于开发反馈。项目质量检查和 CI 仍以 `uv.lock` 锁定版本为准：
+
+```powershell
+uv run --locked ruff check .
+uv run --locked ruff format --check .
+```
+
+首次应用或修改工作区设置后，在 VS Code 中执行 `Developer: Reload Window`。依赖同步使用 `uv sync --locked`；只有经过评审的依赖升级才使用 `uv lock --upgrade`。
+
 ### 场景 3：新增依赖
 
 ```powershell
