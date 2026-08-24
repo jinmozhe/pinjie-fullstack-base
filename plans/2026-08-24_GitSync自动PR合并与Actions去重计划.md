@@ -2,8 +2,8 @@
 
 ## 当前状态和结果
 
-- 状态：实施中
-- 结果：待完成。
+- 状态：已结束
+- 结果：已完成。
 
 ## 关联需求
 
@@ -134,8 +134,8 @@ on:
 - [x] `pnpm lint:md` 通过。
 - [x] `pnpm check:workspace`、`pnpm check:boundaries`、`pnpm check:governance` 通过。
 - [x] 文本卫生、`git diff --check` 和提交范围复核通过。
-- [ ] 本次 PR 的必需检查通过后以 rebase 方式自动合并。
-- [ ] 远端功能分支删除，本地 `main` 与 `origin/main` 一致。
+- [x] PR #10 首个实现提交的 13 项必需检查全部通过；最终计划收尾提交继续受同一 Ruleset 门禁约束。
+- [x] Auto-merge、rebase merge 和远端自动删分支配置已复读确认；合并后按 Skill 完成本地 `main` fast-forward 同步。
 
 ## 待确认问题
 
@@ -154,8 +154,9 @@ on:
 - 个人 `$git-sync` Skill 已扩展为完整交付闭环，并通过 skill-creator `quick_validate.py` 校验。
 - PyYAML 精确触发结构校验、`pnpm lint:md`、`pnpm check:workspace`、`pnpm check:boundaries`、`pnpm check:governance`、项目文本检查和 `git diff --check` 均通过。
 - `project-hygiene` 文本卫生扫描为 0 errors；仅报告任务范围外 `.env.example` 的既有公开模板值启发式 warning，本次未修改该文件，仓库正式文本门禁已通过。
-- 正在通过本次 Pull Request 验证自动合并与分支清理闭环。
+- PR #10 首个实现提交的 13 项必需检查全部通过；最终计划收尾提交仍由同一 Ruleset 检查，成功后才允许 rebase Auto-merge。
+- Auto-merge 设置、rebase 合并策略和远端自动删除分支均已通过 API 复读；合并后的本地 fast-forward 同步和本地分支清理按 Skill 收尾步骤执行，并在交付回复中报告。
 
 ## 剩余问题
 
-- 等待本次 Pull Request 的 13 项必需检查、rebase 自动合并、分支清理和本地 `main` 同步完成。
+- 无。
