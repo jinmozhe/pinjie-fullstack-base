@@ -41,7 +41,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
-| `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 实施中 | Deployment、Documentation | 保留 Ruleset，并自动完成分支、PR、rebase 合并、分支清理和本地同步，同时去除功能分支 Push 重复检查 |
+| `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 已结束 | Deployment、Documentation | 已保留 Ruleset，启用 rebase Auto-merge 与自动删分支，并去除功能分支 Push 重复检查；PR #10 首轮 13 项检查通过 |
 | `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md` | 已结束 | Backend、Documentation | 已隔离 VS Code 扩展内置 Ruff 与 Backend 虚拟环境 Ruff，避免 Windows 文件占用阻断 uv 同步 |
 | `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` | 已结束 | Admin、Documentation | 已完成官方 Ant Design 6、ProComponents 和 Umi Max ProLayout 全页面视觉交互升级 |
 | `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | Admin、Deployment、Documentation | `main` 无永久 bypass，Umi Vite 4 已移除，PR #7 与合并后四个工作流通过，Dependabot 为 0 Open |
@@ -70,7 +70,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 实施中 | 待完成 | Deployment、Documentation | 自动化 Ruleset 保护下的日常 Git 交付闭环，并去除功能分支 Push 重复检查 |
+| `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 已结束 | 已完成；远端合并设置、Skill、本地门禁和 PR #10 首轮 13 项检查均通过 | Deployment、Documentation | 自动化 Ruleset 保护下的日常 Git 交付闭环，并去除功能分支 Push 重复检查 |
 | `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md` | 已结束 | 已完成工作区设置、uv 使用边界说明与治理验证 | Backend、Documentation | 隔离 VS Code 扩展内置 Ruff 与 Backend 虚拟环境 Ruff，避免 Windows 文件占用阻断 uv 同步 |
 | `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` | 已结束 | 已完成深色侧栏、浅色工作区、PageContainer、受控 ProTable、五视口与 axe 验收 | Admin、Documentation | 官方 Ant Design 6、ProComponents 与 Umi Max ProLayout 全页面视觉交互升级 |
 | `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | 已完成；PR #7 rebase 合并，Rule Suite 与合并后四个工作流通过，Dependabot 为 0 Open | Admin、Deployment、Documentation | 收紧 `main` Ruleset 并消除 Umi 依赖链中的 Vite 4 高危漏洞 |
