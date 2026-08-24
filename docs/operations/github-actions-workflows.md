@@ -68,7 +68,7 @@ flowchart TD
 
 ### 3.1 远端仓库治理基线
 
-截至 2026-08-22，GitHub 远端按单维护者基线配置：
+截至 2026-08-24，GitHub 远端按单维护者基线配置：
 
 - Dependabot vulnerability alerts、Secret Scanning、Push Protection 和 Private
   Vulnerability Reporting 已启用；Dependabot security updates 按人工依赖 PR 决策保持关闭。
@@ -82,16 +82,14 @@ flowchart TD
   完整 Commit SHA。
 - active Ruleset `Protect main`（ID `21152538`）作用于默认分支，禁止删除和非快进更新，
   要求 Pull Request、会话解决和 13 个自动状态检查。
-- Ruleset 审批数为 0，用户 `jinmozhe` 保留 always bypass。仓库为内部自用且只有一位维护者，
-  用户已确认继续保留自审、管理员 bypass 和 Ruleset bypass；这是当前治理模型，不是待增加
-  第二维护者的未完成事项。若仓库转为多人协作、对外服务或承载更高风险生产数据，再重新评估
-  独立审批和 bypass 范围。
+- Ruleset 审批数为 0，不要求第二维护者批准，但不保留个人、管理员或日常维护 bypass。
+  `current_user_can_bypass=never`，维护者只能在必需检查满足后自行合并 Pull Request。
+  紧急恢复如需临时调整 Ruleset，必须单独授权、保留审计记录并在恢复后立即撤销。
 - `production` Environment（ID `20337656537`）只允许受保护分支，必要 Reviewer 为
   `jinmozhe`，`prevent_self_review=false`，当前 Secrets 和 Variables 均为 0。
 
-单维护者基线提供自动门禁和明确恢复路径，但不等同于职责分离。该边界已按内部自用场景接受，
-不再作为待加固事项；提交、推送、镜像发布和生产部署仍需分别取得明确授权，并保留自动状态检查、
-不可变发布和审计记录。
+单维护者基线没有独立审批职责分离，但 Pull Request 和自动检查仍是默认分支的强制门禁。
+提交、分支推送、合并、镜像发布和生产部署继续分别取得明确授权，并保留不可变发布和审计记录。
 
 ### 3.2 项目 Node.js 与 Action 运行时
 
@@ -524,23 +522,19 @@ Workflow 显示成功，表示远程命令、Compose 等待和镜像引用核对
 -> 本地验证
 -> git add
 -> git commit
--> git push
+-> 推送 `codex/*` 或其他开发分支
+-> 创建或更新 Pull Request
 -> 4 个自动工作流并行运行
--> 查看失败 Job 或确认全部成功
+-> 额外执行 OpenAPI breaking changes 和 Dependency review
+-> 13 项必需检查满足后合并
+-> 合并提交再次触发 4 个 Push 工作流
 ```
 
-适合当前只维护 `main`、不使用功能分支的工作方式。直接推送意味着远程先收到提交，再由 CI 发现问题，因此本地验证仍然重要。
+`main` 不允许日常直接推送。单维护者可以自行合并，但不能绕过 Pull Request、会话解决和必需检查。
 
 ### 13.2 Pull Request 评审
 
-```text
-推送开发分支
--> 创建或更新 Pull Request
--> 4 个工作流运行
--> 额外执行 OpenAPI breaking changes 和 Dependency review
--> 评审通过后合并
--> 合并提交再次触发 4 个 Push 工作流
-```
+Pull Request 是所有日常变更的唯一默认分支入口。检查失败时先查看对应 Job 日志并在原开发分支修复；禁止通过临时关闭工作流、降低严重级别或恢复永久 bypass 完成合并。
 
 ### 13.3 正式镜像发布
 

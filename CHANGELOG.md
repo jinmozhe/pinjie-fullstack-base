@@ -49,6 +49,7 @@
 
 ### Fixed
 
+- 移除 Umi `4.7.5` 未使用的 Vite 4 构建链，通过精确 pnpm Hook 和受控补丁关闭不安全入口，修复 Webpack 开发服务器忽略 host 的行为，并增加版本漂移、锁文件和补丁门禁。
 - 修复 Web/Admin Cookie Profile 共享 Origin 与代理路径导致的跨端会话越权面；Backend 按 Profile 精确校验 Origin，Web BFF 和 Admin Nginx 只允许各自路径并过滤另一端 Cookie。
 - 修复最后超级管理员并发竞争、跨 `AsyncSession` 事务上下文误判，以及认证提交后 Redis 限流清理失败翻转成功结果的问题；真实 PostgreSQL 并发和 Redis 失败路径均已覆盖。
 - 修复 Admin/Web 刷新、退出和改密生命周期不一致，统一为单次 Refresh 与一次重放、失败保留当前页面、改密保留当前会话并轮换 Cookie。
@@ -75,7 +76,8 @@
 
 ### Changed
 
-- 移除把 Umi bundler 的 Vite 4 强制覆盖到 Vite 6 的不兼容 override；锁文件现由 Umi 使用 `vite@4.5.2`，Admin Vitest 独立使用 `vite@6.4.3`。
+- 收紧 `main` Ruleset：移除维护者永久 bypass，保留 Pull Request、会话解决和 13 项状态检查；日常交付统一通过开发分支和 Pull Request。
+- 移除把 Umi bundler 的 Vite 4 强制覆盖到 Vite 6 的不兼容 override；随后从 Webpack 模式依赖树移除未使用的 Umi Vite 4 构建链，Admin Vitest 独立使用 `vite@6.4.3`。
 - Backend、Admin、Web、PostgreSQL 和 Redis 的生产基础镜像全部固定完整 digest，生产 Compose 门禁同时覆盖 Dockerfile、应用镜像变量、基础设施引用和可变引用反例。
 - 用户、用户管理和管理员管理的 Session 列表统一为有上限的服务端分页响应；根 OpenAPI 与共享 API Client 已重新生成并迁移全部消费者。
 - 对 Umi 固定的 React Router `6.3.0` 两条 Medium 告警和暂无修复版本的 `elliptic 6.6.1` Low 告警建立截至 2026-09-21 的限时风险接受；GitHub 使用 `tolerable_risk` 保留依赖链、可达性、负责人和复核条件，本地低级别原始审计继续报告这些未修复上游风险。

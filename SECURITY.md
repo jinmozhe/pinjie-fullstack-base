@@ -40,14 +40,15 @@
 - 秘密、代码、依赖、容器和构建来源在对应阶段接受自动检查。
 - 私有仓库静态代码扫描使用固定版本的 Semgrep Community Edition 和官方 `p/default` 规则集，在 CI Runner 内本地执行，不依赖云端账号或源码上传；`--error --strict` 确保安全发现、规则或解析警告和内部错误都使门禁失败，`--metrics off` 禁止使用指标上报。
 - Python 和 Node.js 新发布依赖默认经过七天冷却期后才可进入新的解析结果；pnpm 同时拒绝奇异传递依赖和包信任等级降级。历史依赖只允许精确包版本例外，紧急安全更新必须单独评审，不得永久关闭整项供应链策略。
-- 已知高危问题不得通过无期限豁免、`continue-on-error` 或静默降级绕过。
+- 已知高危问题不得通过无期限豁免、`continue-on-error` 或静默降级绕过。上游稳定版暂时没有兼容修复时，必须移除不可达的受影响组件或建立精确版本受控补丁；补丁需要明确负责人、复核日期、删除条件、失败关闭版本门禁和完整回归，不能把 High 告警关闭为可接受风险。
 - Medium 或 Low 传递依赖在没有兼容修复版本时，只允许基于依赖链、源码可达性、临时控制和完整回归建立限时风险接受。Dependabot 关闭原因必须使用 `tolerable_risk`，备注包含负责人、复核日期和提前复核触发条件；风险接受不得表述为漏洞已修复，本地原始审计结果继续保留为复核依据。
 - GitHub 远端启用漏洞告警、Secret Scanning、Push Protection 和 Private Vulnerability
   Reporting；Dependabot security updates 保持关闭，依赖修复继续通过人工计划、评审和验证交付。
 - Actions 仅允许 GitHub-owned Actions、仓库所有者 Actions 与当前工作流明确列出的第三方
   Action，并要求完整 Commit SHA Pinning；直接引用的 JavaScript Action 必须原生声明
-  `runs.using: node24`，不得依赖旧 Node.js 运行时兼容覆盖；`main` Ruleset 和
-  `production` Environment 的单维护者审批风险以
+  `runs.using: node24`，不得依赖旧 Node.js 运行时兼容覆盖。`main` Ruleset 不保留个人
+  bypass，日常变更必须通过 Pull Request 和 13 项状态检查；单维护者审批与
+  `production` Environment 边界以
   [GitHub Actions 工作流说明](docs/operations/github-actions-workflows.md)为当前事实来源。
 
 详细边界见：

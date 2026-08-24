@@ -11,14 +11,14 @@ Admin 是 Umi Max 应用。日常命令从仓库根目录执行：
 pnpm --filter @pinjie/admin dev
 ```
 
-开发服务预期监听 `http://localhost:3001`。端口由 `apps/admin/scripts/run-umi.mjs` 通过 `PORT=3001` 注入，Umi 4.7 的 CLI 不应依赖 `max dev --port 3001` 传参。需要直接调用 Umi 时，工作目录必须是 `apps/admin`，避免 Umi 把仓库根目录误判为项目根，进而出现 `No routes matched location "/login"`。
+开发服务默认只监听 `http://127.0.0.1:3001`。`apps/admin/scripts/run-umi.mjs` 注入 `HOST=127.0.0.1` 和 `PORT=3001`，Umi Webpack 精确补丁确保底层 `listen` 调用实际使用该 host。需要局域网访问时必须显式设置 `HOST`，并先评估开发服务暴露风险。直接调用 Umi 时，工作目录必须是 `apps/admin` 且显式设置 `HOST=127.0.0.1`，避免绕过端口和监听边界。
 
 预览和构建使用仓库已有脚本：
 
 ```powershell
 pnpm --filter @pinjie/admin typecheck
 pnpm --filter @pinjie/admin lint
-pnpm --filter @pinjie/admin test -- --run
+pnpm --filter @pinjie/admin test
 pnpm --filter @pinjie/admin build
 ```
 
@@ -27,6 +27,7 @@ pnpm --filter @pinjie/admin build
 ## 2. Umi 运行时注意事项
 
 - 浏览器运行时代码不能直接依赖 Vite 专属的 `import.meta.env`。Admin 统一读取 `process.env.VITE_API_URL`，并由 `apps/admin/config/config.ts` 注入。
+- Admin 当前固定使用 Umi 默认 Webpack。`@umijs/preset-umi@4.7.5` 支持的 Vite 4 存在 High 漏洞，根 `.pnpmfile.cjs`、`patchedDependencies` 和 `scripts/ci/check-umi-vite-security.mjs` 会移除未使用的 Vite bundler 并拒绝未经复核的 Umi 升级。只有上游稳定版支持安全 Vite 或新的框架迁移计划完成后才能删除补丁。
 - 使用 Umi 的 `getInitialState` 时必须启用 `initialState: {}`。否则插件注册阶段会报 `register failed, invalid key getInitialState from plugin`。
 - `src/.umi` 和 `src/.umi-production` 是 Umi 生成目录，不能提交，也不应纳入 ESLint 扫描。修改路由、插件或配置后如遇到旧缓存行为，停止服务后删除这两个目录，再重新运行命令。
 - Ant Design 6 的弃用警告应在代码中处理。当前迁移中已将 Alert 的 `message` 调整为 `title`、Space 的 `direction` 调整为 `orientation`，Drawer 宽度使用 `styles.wrapper` 保留。
@@ -34,6 +35,8 @@ pnpm --filter @pinjie/admin build
 ## 3. 单元和组件测试
 
 Admin 使用 Vitest、React Testing Library、jsdom 和 MSW。测试运行在 jsdom 时不要触发真实浏览器导航：登录流程的 `window.location.reload()` 必须在测试模式下受保护，否则测试会挂起或输出导航未实现错误。
+
+标准测试先运行 `run-umi.node-test.mjs`，再使用 Vitest threads 单 worker 执行组件测试和覆盖率，避免 Windows forks 子进程在 Codex 上下文中卡住。
 
 覆盖率命令会比普通单元测试耗时更长。测试数量少不代表可以跳过覆盖率门禁，必须区分以下结果：
 
