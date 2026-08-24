@@ -41,7 +41,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
-| `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 实施中 | Admin、Deployment、Documentation | `main` 已移除永久 bypass，Umi Vite 4 已从本地依赖树移除，等待 PR 线上门禁 |
+| `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | Admin、Deployment、Documentation | `main` 无永久 bypass，Umi Vite 4 已移除，PR #7 与合并后四个工作流通过，Dependabot 为 0 Open |
 | `plans/2026-08-24_ruleset-vite-security-remediation-plan.md` | 已结束 | Documentation | 重复计划已由中文路径活动计划替代，永久保留审计记录 |
 | `plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已固化认证型 `gh` 命令的 Windows Keyring 宿主执行、精确审批和远端副作用授权边界 |
 | `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | Documentation、Windows 本地开发治理 | 已将个人开发机默认联网、Schannel 已知边界、准确宿主升级兜底和升级复验条件写入权威文档与规则 |
@@ -67,7 +67,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 实施中 | 本地实现与验证已完成，等待 PR 线上门禁 | Admin、Deployment、Documentation | 收紧 `main` Ruleset 并消除 Umi 依赖链中的 Vite 4 高危漏洞 |
+| `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | 已完成；PR #7 rebase 合并，Rule Suite 与合并后四个工作流通过，Dependabot 为 0 Open | Admin、Deployment、Documentation | 收紧 `main` Ruleset 并消除 Umi 依赖链中的 Vite 4 高危漏洞 |
 | `plans/2026-08-24_ruleset-vite-security-remediation-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Documentation | 保留补丁工具异常后产生的重复计划审计记录 |
 | `plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md` | 已结束 | 已完成；根规则、权威运维文档、审批示例、安全边界和索引已同步，文档与治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 GitHub CLI 与 Windows Keyring 的宿主执行和审批边界 |
 | `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | 已完成；默认联网、Schannel 对照诊断、准确宿主升级兜底、禁止规避措施和升级复验删除条件已同步，全部治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 Codex Windows 网络和系统 HTTPS 客户端边界 |
@@ -116,7 +116,7 @@
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、运行时 Metadata 和安全响应头已实现；typecheck、lint、26 项 Vitest、90.46% 语句覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 39 条路径、47 个操作，238 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成，非文档契约结构保持一致，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL advisory lock 并发保护、级联删除、dry-run/`--apply` 清理、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/cleanup_security_logs.py` |
-| Deployment | `Protect main` 已要求 Pull Request 和 13 项检查且 `current_user_can_bypass=never`；Security 门禁保持 High/Critical 阻断，本地锁文件已移除 Vite 4，等待工作分支 PR 线上复核；发布和生产部署未执行 | `.github/workflows/`、`pnpm-lock.yaml`、`scripts/ci/check-umi-vite-security.mjs`、GitHub Ruleset `21152538` |
+| Deployment | `Protect main` 要求 Pull Request 和 13 项检查且 `current_user_can_bypass=never`；PR #7 与合并后四个工作流通过，锁文件已移除 Vite 4，Dependabot 为 0 Open；发布和生产部署未执行 | `.github/workflows/`、`pnpm-lock.yaml`、`scripts/ci/check-umi-vite-security.mjs`、GitHub Ruleset `21152538` |
 | Documentation | 目录结构已按 2026-08-22 的 321 个项目文件、68 个含文件目录同步；认证、Backend 标准、测试、容器、环境变量、ADR、README、Changelog、计划和索引已按冻结整改事实回写 | `docs/architecture/project-structure.md`、`docs/architecture/authentication-authorization.md`、`plans/2026-08-22_母版不可变基线冻结整改计划.md` |
 
 ## 权威来源
