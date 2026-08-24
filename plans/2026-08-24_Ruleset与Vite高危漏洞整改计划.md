@@ -2,8 +2,8 @@
 
 ## 当前状态和结果
 
-- 状态：实施中
-- 结果：待完成。
+- 状态：已结束
+- 结果：已完成。
 
 ## 关联需求
 
@@ -143,9 +143,9 @@ Admin 当前没有启用 Umi Vite bundler，production build 使用 Umi 默认 W
 - [x] `pnpm audit --audit-level low --json` 只保留既有三项限时接受风险，或如实记录新上游事实。
 - [x] Admin lint、typecheck、33 项 Vitest、2 项启动器测试、production build 和开发监听检查通过。
 - [x] Web 受影响验证通过，API Client 无漂移。
-- [ ] `pnpm check:workspace`、`pnpm check:boundaries` 和 `pnpm check:governance` 通过；前两项和治理组成门禁已通过，全命令等待 PR 隔离工作区复核。
-- [ ] `pnpm lint:md`、文本卫生和 `git diff --check` 通过。
-- [ ] 工作分支 Pull Request 的必需检查满足后再合并。
+- [x] `pnpm check:workspace`、`pnpm check:boundaries` 和 `pnpm check:governance` 通过；完整 Governance 门禁已由 PR 隔离工作区复核。
+- [x] `pnpm lint:md`、文本卫生和 `git diff --check` 通过；并行工作区文件不进入本计划提交，PR 隔离工作区文本卫生通过。
+- [x] 工作分支 Pull Request 的必需检查满足后再合并。
 
 ## 待确认问题
 
@@ -167,8 +167,9 @@ Admin 当前没有启用 Umi Vite bundler，production build 使用 Umi 默认 W
 - 使用临时端口 3101 启动 Admin 后，Windows 端口表确认实际监听为 `127.0.0.1:3101`；测试服务及其 Node/esbuild 进程已按 PID 核对并清理，端口 3101 已关闭。
 - 本地默认 Vitest forks 在当前 Codex Windows 子进程上下文会卡住；标准脚本已固定为 threads 单 worker，完整 33 项测试和覆盖率通过，后续由 Pull Request Linux CI 复核同一路径。
 - Windows 冷依赖目录下的单 worker 覆盖率插桩会让两个既有 `StageC` 组件测试超过原 60 秒上限；全局测试超时调整为 120 秒，断言、覆盖率阈值和失败行为保持不变。
+- [Pull Request #7](https://github.com/jinmozhe/pinjie-fullstack-base/pull/7) 的 13 项必需检查全部通过后以 rebase 方式合并；`main` 提交为 `2d194876dd03f0cdb9103d36e1d267ce05b23cb8`，最新 Rule Suite 结果为 `pass`，未使用 bypass。
+- 合并提交触发的 Security、CI - Governance、CI - Backend 和 CI - Frontend 四个 push 工作流全部成功；Dependabot 重扫结果为 0 Open Alerts。
 
 ## 剩余问题
 
-- 全仓库 `pnpm check:text` 只被并行任务的 `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` UTF-8 BOM 阻断；该文件不属于本任务，等待 Pull Request 隔离工作区复核完整治理命令。
-- 工作分支尚未提交、推送和创建 Pull Request，线上 Dependabot 重扫及 13 项必需检查尚未完成。
+- 无。
