@@ -28,16 +28,20 @@
 8. 禁止使用 `danger-full-access`、全仓库 `icacls /reset /T` 或递归 `FullControl` 作为日常解决方案。
 9. 网络开启只允许沙箱内命令建立网络连接，不扩大文件写入范围，也不构成提交、推送、发布、部署或其他外部副作用授权。
 10. 沙箱内 Node 和 Python HTTPS 正常时，Windows `curl.exe` 或 PowerShell HTTPS 返回 `SEC_E_NO_CREDENTIALS` 应归类为当前 Schannel 兼容边界；需要这些系统客户端时，只对准确宿主命令申请升级执行。
+11. 当前本机 Windows Keyring 凭据只能由宿主用户上下文中的 `gh` 稳定读取。依赖当前 `gh` 登录态的命令必须跳过沙箱认证探测，直接申请准确的宿主用户 PowerShell 执行；该升级不包含登录变更或其他远端副作用授权。
 
 ## 3. 事实与证据分层
 
 ### 3.1 OpenAI 官方语义
 
-本文于 2026-08-22 复核以下 OpenAI Docs：
+本文于 2026-08-22 至 2026-08-24 复核以下 OpenAI Docs：
 
 - [配置参考](https://learn.chatgpt.com/docs/config-file/config-reference)：用户级配置位于 `~/.codex/config.toml`；受信任项目可以通过 `.codex/config.toml` 提供项目级覆盖；`shell_environment_policy.filters` 是新配置推荐形式。
 - [Windows sandbox](https://learn.chatgpt.com/docs/windows/windows-sandbox)：`elevated` 是首选原生 Windows 沙箱，使用专用低权限账户、文件系统权限边界、防火墙规则和本地策略；`unelevated` 是隔离较弱的 fallback。
 - [Agent approvals & security](https://learn.chatgpt.com/docs/agent-approvals-security)：沙箱决定技术边界，审批策略决定何时请求批准；默认网络关闭；`.git/`、`.agents/` 和 `.codex/` 在 writable root 内仍受保护。
+- [Custom instructions with AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)：Codex 在任务开始时加载项目规则，适合保存稳定、长期、可执行的仓库行为约束。
+- [Rules](https://learn.chatgpt.com/docs/agent-configuration/rules)：`.rules` 通过准确命令参数前缀控制沙箱外执行的允许、提示或禁止；宽泛前缀会扩大后续宿主执行范围。
+- [Sandbox](https://learn.chatgpt.com/docs/sandboxing)：`workspace-write + on-request` 保留工作区边界，并允许任务按需要申请越界；完整访问会移除文件系统和网络沙箱边界。
 - [Permissions](https://learn.chatgpt.com/docs/permissions)：beta permission profiles 不能与 `sandbox_mode`、`sandbox_workspace_write` 混用。
 - [Microsoft `LoadUserProfileW`](https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-loaduserprofilew)：需要用户 Profile 的调用方必须显式加载并在完成后卸载；该文档支持 Profile 相关诊断，但不能单独证明 Codex 的具体实现根因。
 - [Microsoft SSPI 状态码](https://learn.microsoft.com/en-us/windows/win32/secauthn/sspi-status-codes)：`SEC_E_NO_CREDENTIALS` 表示安全包中没有可用凭据，不能据此推导为普通 DNS、TCP 或证书错误。
@@ -46,7 +50,7 @@
 
 ### 3.2 本机验证事实
 
-2026-08-22 至 2026-08-23 在 Windows 原生 ChatGPT/Codex 桌面端完成的验证表明：
+2026-08-22 至 2026-08-24 在 Windows 原生 ChatGPT/Codex 桌面端完成的验证表明：
 
 - `unelevated` 可以让新文件 Owner 保持当前用户，并能访问精确加入的 uv Cache，但 Node 子进程出现 `EPERM`。
 - `elevated` 下 Node、uv、仓库文件操作和工作区外写入反例均正常，最终作为长期基线。
@@ -55,6 +59,8 @@
 - 用户随后明确接受个人开发机的沙箱命令联网风险，将 `network_access = true` 设为当前长期基线；代理变量继续排除，防止网络路径被宿主回环代理隐式改变。
 - 当前 `CodexSandboxOnline` 身份下 DNS、TCP、HTTP 和 Node HTTPS 正常，Node HTTPS 访问公开测试站点返回 200。
 - Windows `curl.exe` 和 PowerShell HTTPS 在相同沙箱身份下返回 `SEC_E_NO_CREDENTIALS`，宿主用户执行相同请求返回 200。现有证据表明它与 Schannel、沙箱账户 Profile 和受限 Token 有关，底层根因仍等待上游确认。
+- 2026-08-24 重新完成 GitHub CLI OAuth 登录后，普通宿主 PowerShell 中的 `gh auth status`、`gh api user --jq .login` 和认证型 GitHub Actions 查询均成功；Codex 沙箱内的 `gh auth status` 与 `gh api user` 仍使用旧凭据并返回 `401`。
+- 上述对照证明宿主用户的 GitHub CLI 登录有效，并将当前失败收窄为 Windows Keyring 的执行上下文隔离。公开仓库的 `gh run list/view` 可能在沙箱中无需有效登录也能成功，不能单独作为认证有效证据。
 
 相关上游问题跟踪包括 [openai/codex#17458](https://github.com/openai/codex/issues/17458)、[openai/codex#17459](https://github.com/openai/codex/issues/17459) 和 [openai/codex#31073](https://github.com/openai/codex/issues/31073)。这些 Issue 用于升级复核和删除兜底，不能替代本机复现。
 
@@ -63,6 +69,7 @@
 ### 3.3 项目约束
 
 - 本项目不提交个人 `config.toml`、认证状态、Token、Provider 秘密或本机绝对路径配置。
+- 不通过 `GH_TOKEN`、仓库文件、`config.toml`、命令参数或日志明文保存 GitHub Token 来绕过 Windows Keyring 隔离。
 - 本项目的个人开发机默认允许沙箱命令联网；网络目标、参数和输出仍不得泄露凭据、内网地址或生产数据。
 - 提交、推送、发布、部署和生产操作继续分别取得用户明确授权。
 - 只有可复现的真实 NTFS 失败才能触发 ACL 修复；沙箱审批和 Owner 差异不能触发递归权限修改。
@@ -308,6 +315,7 @@ pnpm store path
 | 缓存越界 | uv、pnpm 或工具只在工作区外 Cache 失败 | 先定位实际 Cache，再精确配置 |
 | 网络配置边界 | Node 或 Python HTTPS 也无法访问公开测试站点，或者当前上下文显示网络关闭 | 核对 `network_access = true`、Custom 模式和新任务运行上下文 |
 | Schannel 兼容边界 | Node/Python HTTPS 正常，但 Windows `curl.exe` 或 PowerShell HTTPS 返回 `SEC_E_NO_CREDENTIALS` | 记录客户端和错误；确需系统客户端时只升级准确宿主命令，不改 ACL、Profile、证书或 TLS 校验 |
+| GitHub CLI Keyring 边界 | 宿主 PowerShell 的认证型 `gh` 命令成功，沙箱内 `gh auth status` 或 `gh api user` 返回旧凭据 `401` | 将宿主结果作为登录事实；后续依赖登录态的 `gh` 命令直接申请准确宿主执行，不重复沙箱认证探测 |
 | 回环代理绕过 | 默认请求成功，显式直连失败，命令环境存在代理变量 | 排除代理变量并重启复验 |
 | 命令审批 | Git 写入、网络、外部副作用或高风险命令请求批准 | 审批该动作；不能表述为 ACL 失败 |
 
@@ -344,6 +352,82 @@ pnpm store path
 5. 任务确实依赖 Windows 系统客户端时，通过 Codex 审批机制只在宿主身份下重跑准确失败命令，不附加其他命令段，也不申请长期完整访问。
 
 当前底层原因尚未由 OpenAI 或 Microsoft 最终确认。文档只记录可复现行为和处理边界，不把 Profile 缺失或受限 Token 单独写成确定根因。
+
+### 9.3 GitHub CLI 与 Windows Keyring 分类
+
+当前本机已经完成以下对照：
+
+```powershell
+gh auth status
+gh api user --jq .login
+gh run view 32646420055 --repo jinmozhe/pinjie-fullstack-base
+```
+
+普通宿主 PowerShell 中三条命令可以读取有效登录态；沙箱内前两条命令仍返回旧凭据 `401`。后续按以下流程处理：
+
+1. 任务依赖当前 `gh` 登录态或 Windows Keyring 时，不先在沙箱运行 `gh auth status` 或其他认证探测。
+2. 保留原命令、仓库、资源编号和只读参数，通过 Codex 审批机制直接申请宿主用户 PowerShell 执行。
+3. 每次只升级一条准确命令，不拼接其他命令段，不附加重定向、Token 环境变量或凭据输出。
+4. 只读查询可以在原任务授权范围内执行；`gh auth login/logout` 和任何远端写操作继续按项目规则取得独立明确授权。
+5. 宿主命令仍返回 `401` 时，才把问题重新归类为真实 GitHub CLI 登录失效，并在普通 PowerShell 中重新登录。
+
+Codex 工具调用中的准确宿主升级示例如下。该 JSON 是执行元数据示例，不是需要用户复制到 `config.toml` 的配置：
+
+```json
+{
+  "cmd": "gh auth status",
+  "sandbox_permissions": "require_escalated",
+  "justification": "允许在宿主 PowerShell 上下文读取 Windows Keyring，并验证 GitHub CLI 登录状态吗？",
+  "prefix_rule": ["gh", "auth", "status"]
+}
+```
+
+- `AGENTS.md` 决定 Codex 遇到认证型 `gh` 时应直接申请宿主执行。
+- `sandbox_permissions = "require_escalated"` 是单次工具调用参数，实际把准确命令切换到宿主用户上下文；用户不需要把它写入配置文件。
+- `approval_policy = "on-request"` 决定越过沙箱边界时发起审批。
+- `approvals_reviewer = "auto_review"` 只决定符合条件的审批由自动审查处理，不扩大命令权限，也不替代远端副作用授权。
+- `.rules` 只控制已发起的宿主执行请求如何审批，不能单独保证 Codex 跳过第一次沙箱尝试。
+
+确需减少重复的只读审批时，可在用户级 `$env:USERPROFILE\.codex\rules\default.rules` 中使用窄范围规则，并在重启 Codex 后生效：
+
+```python
+prefix_rule(
+    pattern = ["gh", "auth", "status"],
+    decision = "allow",
+    justification = "允许在宿主上下文只读检查 GitHub CLI 登录状态",
+    match = [
+        "gh auth status",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "run", "list"],
+    decision = "allow",
+    justification = "允许在宿主上下文只读列出 GitHub Actions 运行记录",
+    match = [
+        "gh run list --repo jinmozhe/pinjie-fullstack-base",
+    ],
+)
+
+prefix_rule(
+    pattern = ["gh", "run", "view"],
+    decision = "allow",
+    justification = "允许在宿主上下文只读查看 GitHub Actions 运行详情",
+    match = [
+        "gh run view 32646420055 --repo jinmozhe/pinjie-fullstack-base",
+    ],
+)
+```
+
+使用以下命令检查规则匹配结果，确认没有意外覆盖其他 `gh` 子命令：
+
+```powershell
+codex execpolicy check --pretty `
+  --rules "$env:USERPROFILE\.codex\rules\default.rules" `
+  -- gh auth status
+```
+
+禁止配置 `pattern = ["gh"]`、宽泛 `pattern = ["gh", "api"]`，也不为 `gh auth login/logout`、`gh workflow run`、`gh release`、删除或权限修改命令建立长期自动放行规则。`gh api` 可以发送 `POST`、`PATCH` 和 `DELETE` 请求，必须按完整命令和实际副作用单独判断。
 
 ## 10. 配置生效验收
 
@@ -492,6 +576,7 @@ $sandboxOwned | Format-Table -AutoSize
 - 失败来自 `.git/`、`.agents/`、`.codex/` 或工作区外沙箱边界。
 - 失败来自命令审批、网络审批或用户未授权的 Git 写入。
 - 失败是 Windows 系统 HTTPS 客户端返回 `SEC_E_NO_CREDENTIALS`，而 Node 或 Python HTTPS 正常。
+- 失败只发生在 Codex 沙箱内的认证型 `gh`，而相同命令在宿主 PowerShell 中可以读取有效 Windows Keyring 凭据。
 - 尚未取得准确失败路径、错误码和 DACL 证据。
 - 文件正被进程占用或工具锁定。
 
@@ -542,6 +627,9 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - 禁止在另一台电脑直接覆盖整份个人配置并跳过初始化和验收。
 - 禁止同时使用 beta permission profiles 与 `sandbox_mode` 配置。
 - 禁止把 Auto-review 当作提交、推送、发布或部署授权。
+- 禁止把 `pattern = ["gh"]`、宽泛 `pattern = ["gh", "api"]` 或其他可以覆盖远端写操作的 `gh` 前缀配置为长期自动放行。
+- 禁止使用 `GH_TOKEN`、仓库文件、`config.toml`、命令参数或日志明文保存 GitHub Token 来绕过 Windows Keyring 隔离。
+- 禁止因为沙箱内 `gh` 返回旧凭据 `401` 就重复登录、退出登录或覆盖宿主 Keyring；必须先用准确宿主命令核对真实登录状态。
 - 禁止为修复 `SEC_E_NO_CREDENTIALS` 而加载或常驻挂载沙箱账户 Profile、注册表 Hive。
 - 禁止读取、复制或导出沙箱秘密、用户证书私钥、`.sandbox-secrets` 或其他凭据材料。
 - 禁止关闭 TLS 证书校验、使用不安全协议或修改系统信任库来绕过当前 Schannel 边界。
@@ -570,8 +658,9 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - 更换电脑、Windows 用户、仓库路径或企业安全策略。
 - Node 或 Python HTTPS 正例失败。
 - Windows `curl.exe` 或 PowerShell HTTPS 不再出现 `SEC_E_NO_CREDENTIALS`，或者错误行为发生变化。
+- GitHub CLI、Codex 桌面端或 Windows 凭据管理行为升级后，沙箱内 `gh auth status` 不再返回旧凭据 `401`，或者宿主与沙箱结果发生其他变化。
 
-复核时先查 OpenAI Docs，再运行配置解析、工作区正例、Cache、Node 子进程、工作区外写入、Node HTTPS 和两个 Windows 系统 HTTPS 客户端验收。两个系统客户端在沙箱内连续通过后，删除宿主升级兜底相关说明；不能为了保留旧流程而维持双轨。
+复核时先查 OpenAI Docs，再运行配置解析、工作区正例、Cache、Node 子进程、工作区外写入、Node HTTPS、两个 Windows 系统 HTTPS 客户端和 GitHub CLI Keyring 对照验收。两个系统客户端或 GitHub CLI 在沙箱内连续通过对应验收后，删除各自的宿主升级兜底说明；不能为了保留旧流程而维持双轨。
 
 ## 15. 日常检查清单
 
@@ -586,6 +675,7 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - [ ] 工作区外写入反例通过。
 - [ ] 代理变量不存在，Node HTTPS 正例通过。
 - [ ] 已记录 Windows `curl.exe` 和 PowerShell HTTPS 的实际结果；出现 `SEC_E_NO_CREDENTIALS` 时按 Schannel 边界处理。
+- [ ] 已在宿主 PowerShell 验证 GitHub CLI 登录；沙箱与宿主结果不一致时按 Windows Keyring 边界处理。
 
 ### 日常任务
 
@@ -594,6 +684,7 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - [ ] 依赖失败先检查实际 Store/Cache 路径。
 - [ ] 权限失败先分类，不直接改 Owner 或 ACL。
 - [ ] 系统 HTTPS 客户端失败先与 Node/Python 对照，不直接修改 Profile、证书或 TLS。
+- [ ] 依赖当前 `gh` 登录态的命令直接申请准确宿主执行，不先运行沙箱认证探测。
 - [ ] Git 写入只在交付阶段按授权集中执行。
 
 ### ACL 修复前
@@ -611,3 +702,4 @@ DACL 没有适用于所有故障的通用写命令。应根据证据选择以下
 - [Codex Windows ACL 长期治理计划](../../plans/2026-08-22_CodexWindowsACL长期治理计划.md)：保存 2026-08-22 本机 A/B 验证和历史实施证据。
 - [Codex Windows 配置与 ACL 标准文档计划](../../plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md)：保存本文建立、确认、实施和验证记录。
 - [Codex Windows 网络与 Schannel 边界治理计划](../../plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md)：保存默认联网决策、系统 HTTPS 客户端边界和本次同步记录。
+- [Codex Windows gh Keyring 宿主执行治理计划](../../plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md)：保存 GitHub CLI 凭据上下文、准确宿主执行、审批规则和安全边界的实施记录。

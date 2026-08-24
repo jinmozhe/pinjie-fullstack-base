@@ -121,6 +121,9 @@
 - Windows 本地开发采用纯 uv、pnpm、本机 PostgreSQL 和 Docker Desktop Redis，具体步骤以 `docs/operations/local-dev-environment.md` 为准。
 - Windows 原生 Codex 使用 `elevated + Custom (config.toml)`、`workspace-write` 和默认联网；网络开启不扩大文件权限，也不授权提交、推送、发布、部署或其他外部副作用。完整边界以 `docs/operations/codex-windows-config-acl-governance.md` 为准。
 - 沙箱内 Windows `curl.exe` 或 PowerShell HTTPS 返回 `SEC_E_NO_CREDENTIALS` 时，必须先与 Node/Python HTTPS 对照分类。确认属于 Schannel 兼容边界后，只能按任务需要升级准确宿主命令；禁止直接修改沙箱账户、Profile、注册表 Hive、证书、凭据或 TLS 校验。
+- 当前 Windows 原生 Codex 环境中，沙箱身份无法读取宿主用户通过 Windows Keyring 保存的有效 GitHub CLI 凭据。所有依赖当前 `gh` 登录态或 Windows Keyring 的命令，包括 `gh auth status`、认证型 `gh api`、私有仓库和 GitHub Actions 查询，禁止先在沙箱内验证，必须通过 Codex 审批机制直接以宿主用户 PowerShell 身份执行准确的单条命令。
+- `gh` 宿主升级只解决凭据读取边界，不构成远端副作用授权。`gh auth login/logout`、提交、推送、工作流触发、发布、部署、删除和权限修改仍需分别取得用户明确授权；禁止把全部 `gh` 或宽泛 `gh api` 配置为长期自动放行。
+- 禁止通过 `GH_TOKEN`、仓库文件、`config.toml`、命令参数或日志明文保存 GitHub Token 来绕过 Windows Keyring 隔离。
 - 后端统一在 `apps/backend` 中使用 `uv sync`、`uv add` 和 `uv run`。项目流程不要求 `conda activate`。
 - 前端依赖统一从仓库根目录用 pnpm workspace 管理，不在子应用中生成独立锁文件。
 - 本地数据与生产数据隔离，数据库结构只通过 Alembic 迁移同步。

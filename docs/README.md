@@ -78,7 +78,7 @@
 | [environment-variables-and-backend-local-run.md](operations/environment-variables-and-backend-local-run.md) | 三端环境变量、认证 Secret、Backend 初始化、权限同步、管理员创建、日志 Worker 和本地检查步骤 |
 | [admin-local-development-and-validation-troubleshooting.md](operations/admin-local-development-and-validation-troubleshooting.md) | Admin Umi 本地启动、测试、浏览器验证、跨栈前置条件和迁移故障排查 |
 | [ai-assisted-development-workflow.md](operations/ai-assisted-development-workflow.md) | AI 助手规则读取、任务路由、计划交付、验证和独立授权指南 |
-| [codex-windows-config-acl-governance.md](operations/codex-windows-config-acl-governance.md) | Codex Windows `config.toml`、默认联网、Schannel、`elevated + Custom`、ACL 诊断、验证、最小修复和回滚标准 |
+| [codex-windows-config-acl-governance.md](operations/codex-windows-config-acl-governance.md) | Codex Windows `config.toml`、默认联网、Schannel、GitHub CLI Keyring、`elevated + Custom`、ACL 诊断、验证、最小修复和回滚标准 |
 | [uv使用指南.md](operations/uv使用指南.md) | uv 原理、纯 uv 环境方案、常用命令和 conda 对比 |
 | [pnpm使用指南.md](operations/pnpm使用指南.md) | pnpm 存储机制、workspace 共享包、Markdown 检查等常用命令和 npm 对比 |
 | [github-actions-workflows.md](operations/github-actions-workflows.md) | GitHub Actions 自动 CI、安全扫描、人工镜像发布和生产部署的逐工作流说明与排障入口 |
