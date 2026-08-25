@@ -19,10 +19,11 @@ if os.getenv("TEST_DATABASE_URL") and os.getenv("TEST_REDIS_URL"):
 
 from app.main import app  # noqa: E402
 
+_test_redis_url = os.getenv("TEST_REDIS_URL", "redis://localhost:6379/15")
 TEST_SECRETS = {
     "REDIS_MODE": "required",
-    "REDIS_URL": "redis://localhost:6379/15",
-    "TEST_REDIS_URL": "redis://localhost:6379/15",
+    "REDIS_URL": _test_redis_url,
+    "TEST_REDIS_URL": _test_redis_url,
     "WEB_JWT_SECRET": "test-web-jwt-secret-0000000000000001",
     "ADMIN_JWT_SECRET": "test-admin-jwt-secret-0000000000001",
     "WEB_TOKEN_HMAC_KEY": "test-web-hmac-secret-000000000000001",
