@@ -127,7 +127,7 @@
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、统一文件资产服务、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 141 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.14% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、统一文件资产服务、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 142 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.14% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
 | Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留全部既有能力；已完成浅色布局、`256px` 桌面侧栏、流式 PageContainer、欢迎页、通用上传组件和个人头像持久化；当前固定 Webpack 构建，开发服务实际绑定 `127.0.0.1`；typecheck、lint、40 项 Vitest、2 项启动器测试、85.48% 语句覆盖率、87.78% 行覆盖率、production build 与桌面/移动跨栈验证通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、31 项 Vitest、88.30% 语句与行覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 43 条路径、51 个操作，274 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |

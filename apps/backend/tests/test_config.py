@@ -9,6 +9,10 @@ from app.core.logging import configure_logging
 from tests.conftest import TEST_SECRETS
 
 
+def test_test_secrets_use_one_redis_target() -> None:
+    assert TEST_SECRETS["REDIS_URL"] == TEST_SECRETS["TEST_REDIS_URL"]
+
+
 def test_local_settings_require_database_url() -> None:
     settings = Settings(ENVIRONMENT="local", DATABASE_URL="postgresql+asyncpg://u:p@localhost:5432/app", **TEST_SECRETS)
     settings.validate_runtime()
