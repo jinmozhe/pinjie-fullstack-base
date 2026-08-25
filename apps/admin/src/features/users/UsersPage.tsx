@@ -1,5 +1,5 @@
 import type { ConfirmationAction, UserPrincipalOut } from "@pinjie/api-client";
-import { EditOutlined, KeyOutlined, LaptopOutlined, PoweroffOutlined, ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { EditOutlined, KeyOutlined, LaptopOutlined, PoweroffOutlined } from "@ant-design/icons";
 import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Drawer, Flex, Form, Input, Modal, Pagination, Space, Tag, Typography, message } from "antd";
@@ -52,43 +52,48 @@ export function UsersPage() {
 
   return (
     <PageFrame title="用户管理" description="查询账户状态、维护基础资料并处理凭据与会话。">
-      <Flex gap={8} className="table-toolbar" wrap>
-        <Input
-          allowClear
-          aria-label="搜索用户"
-          prefix={<SearchOutlined />}
-          placeholder="用户名或显示名称"
-          value={searchDraft}
-          onChange={(event) => setSearchDraft(event.target.value)}
-          onPressEnter={submitSearch}
-        />
-        <Button type="primary" icon={<SearchOutlined />} onClick={submitSearch}>搜索</Button>
-        <Button onClick={resetSearch}>重置</Button>
-        <Button aria-label="刷新用户列表" icon={<ReloadOutlined />} onClick={() => void users.refetch()} />
-      </Flex>
       <QueryState loading={users.isLoading} error={users.isError ? errorMessage(users.error) : undefined} empty={users.data?.items.length === 0} onRetry={() => void users.refetch()} />
-      {users.data && users.data.items.length > 0 && (
+      {users.data && (
         <ProTable<UserPrincipalOut>
           rowKey="id"
+          headerTitle="用户列表"
           dataSource={users.data.items}
           search={false}
-          options={false}
+          options={{
+            density: true,
+            fullScreen: true,
+            reload: () => void users.refetch(),
+            setting: true,
+          }}
           cardProps={false}
+          toolBarRender={() => [
+            <Input.Search
+              key="search"
+              allowClear
+              aria-label="搜索用户"
+              placeholder="用户名或显示名称"
+              style={{ width: 240 }}
+              value={searchDraft}
+              onChange={(event) => setSearchDraft(event.target.value)}
+              onSearch={submitSearch}
+            />,
+            <Button key="reset" onClick={resetSearch}>重置</Button>,
+          ]}
           pagination={{ current: page, pageSize: 20, total: users.data.total, showSizeChanger: false, onChange: setPage }}
           columns={[
             { title: "用户", dataIndex: "username", render: (_, row) => <div className="table-primary-cell"><Typography.Text strong>{row.display_name || row.username}</Typography.Text><Typography.Text type="secondary">{row.username}</Typography.Text></div> },
             { title: "邮箱", dataIndex: "email", responsive: ["lg"], render: (value) => value || "-" },
             { title: "状态", dataIndex: "is_active", width: 100, render: (value) => <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
             { title: "创建时间", dataIndex: "created_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.created_at) },
-            { title: "操作", key: "actions", width: 300, render: (_, row) => (
-              <Space className="table-actions" size={[6, 6]} wrap>
-                {canAccess(current, "users:update") && <Button icon={<EditOutlined />} size="small" onClick={() => { setEditing(row); editForm.setFieldsValue({ display_name: row.display_name ?? undefined, email: row.email ?? undefined }); }}>编辑</Button>}
-                {canAccess(current, "users:update") && <Button icon={<PoweroffOutlined />} size="small" danger={row.is_active} onClick={() => {
+            { title: "操作", key: "actions", width: 260, render: (_, row) => (
+              <Space className="table-actions" size={[2, 0]} wrap>
+                {canAccess(current, "users:update") && <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(row); editForm.setFieldsValue({ display_name: row.display_name ?? undefined, email: row.email ?? undefined }); }}>编辑</Button>}
+                {canAccess(current, "users:update") && <Button type="link" size="small" icon={<PoweroffOutlined />} danger={row.is_active} onClick={() => {
                   const run = async (token?: string) => { await adminApi.setUserStatus(row.id, !row.is_active, token); message.success("账户状态已更新"); await invalidate(); };
                   if (row.is_active) beginConfirmation("users:disable", "停用用户", (token) => run(token)); else void run();
                 }}>{row.is_active ? "停用" : "启用"}</Button>}
-                {canAccess(current, "users:sessions:read") && <Button icon={<LaptopOutlined />} size="small" onClick={() => { setSessionPage(1); setSelected(row); }}>会话</Button>}
-                {canAccess(current, "users:credentials:reset") && <Button icon={<KeyOutlined />} size="small" onClick={() => { setPasswordTarget(row); passwordForm.resetFields(); }}>重置密码</Button>}
+                {canAccess(current, "users:sessions:read") && <Button type="link" size="small" icon={<LaptopOutlined />} onClick={() => { setSessionPage(1); setSelected(row); }}>会话</Button>}
+                {canAccess(current, "users:credentials:reset") && <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => { setPasswordTarget(row); passwordForm.resetFields(); }}>重置密码</Button>}
               </Space>
             ) },
           ]}

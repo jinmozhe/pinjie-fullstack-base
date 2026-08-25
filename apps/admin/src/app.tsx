@@ -97,69 +97,85 @@ export const layout = ({ initialState }: { initialState?: unknown }) => {
   const state = initialState as AdminInitialState | undefined;
   return {
     title: "Pinjie Console",
-    menuItemRender: (item: { path?: string }, dom: ReactNode) => item.path ? <Link to={item.path}>{dom}</Link> : dom,
-    menuHeaderRender: () => <div className="brand-mark"><span className="brand-mark__symbol">P</span><span className="brand-mark__title">Pinjie Console</span></div>,
-    avatarProps: state?.currentAdmin ? {
-      title: state.currentAdmin.display_name || state.currentAdmin.username,
-      render: () => state.currentAdmin ? <AccountMenu admin={state.currentAdmin} /> : null,
-    } : undefined,
+    logo: false,
+    menuHeaderRender: false,
+    menuItemRender: (item: { path?: string }, dom: ReactNode) => (item.path ? <Link to={item.path}>{dom}</Link> : dom),
+    avatarProps: state?.currentAdmin
+      ? {
+          title: state.currentAdmin.display_name || state.currentAdmin.username,
+          size: "small",
+          render: () => (state.currentAdmin ? <AccountMenu admin={state.currentAdmin} /> : null),
+        }
+      : undefined,
     actionsRender: () => [],
-    footerRender: () => <footer className="admin-footer">Pinjie Console</footer>,
-    childrenRender: (children: ReactNode) => <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>{children}</AdminLayoutFrame>,
+    footerRender: () => <footer className="admin-footer">Pinjie Console · 企业级通用管理后台</footer>,
+    childrenRender: (children: ReactNode) => (
+      <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>{children}</AdminLayoutFrame>
+    ),
     ...state?.settings,
-    siderWidth: 224,
+    siderWidth: 220,
     token: {
       bgLayout: "#f5f7fa",
       header: {
         colorBgHeader: "#ffffff",
         colorBgScrollHeader: "#ffffff",
         colorHeaderTitle: "#101828",
-        colorTextRightActionsItem: "#344054",
+        colorTextRightActionsItem: "#475467",
         heightLayoutHeader: 56,
       },
       sider: {
-        colorMenuBackground: "#001529",
-        colorBgCollapsedButton: "#0b1f33",
-        colorTextCollapsedButton: "#ffffff",
-        colorTextCollapsedButtonHover: "#ffffff",
-        colorBgMenuItemCollapsedElevated: "#0b1f33",
-        colorMenuItemDivider: "rgb(255 255 255 / 10%)",
-        colorBgMenuItemHover: "#14395c",
-        colorBgMenuItemActive: "#0958d9",
-        colorBgMenuItemSelected: "#0958d9",
-        colorTextMenuSelected: "#ffffff",
-        colorTextMenuItemHover: "#ffffff",
-        colorTextMenuActive: "#ffffff",
-        colorTextMenu: "#c7d2e0",
-        colorTextMenuSecondary: "#94a3b8",
-        colorTextMenuTitle: "#ffffff",
-        colorTextSubMenuSelected: "#ffffff",
+        colorMenuBackground: "#ffffff",
+        colorBgMenuItemCollapsedElevated: "#ffffff",
+        colorMenuItemDivider: "#f0f2f5",
+        colorBgMenuItemHover: "#f5f7fa",
+        colorBgMenuItemActive: "#e6f4ff",
+        colorBgMenuItemSelected: "#e6f4ff",
+        colorTextMenuSelected: "#1677ff",
+        colorTextMenuItemHover: "#1677ff",
+        colorTextMenuActive: "#1677ff",
+        colorTextMenu: "#475467",
+        colorTextMenuSecondary: "#667085",
+        colorTextMenuTitle: "#101828",
+        colorTextSubMenuSelected: "#1677ff",
       },
       pageContainer: {
         colorBgPageContainer: "#f5f7fa",
         colorBgPageContainerFixed: "#ffffff",
+        paddingInlinePageContainerContent: 24,
+        paddingBlockPageContainerContent: 24,
       },
     },
   };
 };
 
 export function rootContainer(container: ReactNode) {
-  return <ConfigProvider locale={zhCN} theme={{ algorithm: theme.defaultAlgorithm, token: {
-    borderRadius: 8,
-    borderRadiusLG: 8,
-    controlHeight: 36,
-    colorError: "#b42318",
-    colorBgLayout: "#f5f7fa",
-    colorPrimary: "#0958d9",
-    colorSuccess: "#135200",
-    colorSuccessBg: "#f6ffed",
-    colorSuccessBorder: "#95de64",
-    colorSuccessText: "#135200",
-    colorTextDescription: "#595959",
-    colorTextSecondary: "#595959",
-    fontFamily: '"Segoe UI", "Microsoft YaHei", sans-serif',
-  }, components: {
-    Card: { headerBg: "#ffffff" },
-    Table: { headerBg: "#f7f8fa", headerColor: "#344054", rowHoverBg: "#f5f9ff" },
-  } }}><QueryClientProvider client={queryClient}>{container}</QueryClientProvider></ConfigProvider>;
+  return (
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        token: {
+          borderRadius: 8,
+          borderRadiusLG: 8,
+          controlHeight: 36,
+          colorError: "#ff4d4f",
+          colorBgLayout: "#f5f7fa",
+          colorPrimary: "#1677ff",
+          colorSuccess: "#52c41a",
+          colorSuccessBg: "#f6ffed",
+          colorSuccessBorder: "#b7eb8f",
+          colorSuccessText: "#389e0d",
+          colorTextDescription: "#667085",
+          colorTextSecondary: "#667085",
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        },
+        components: {
+          Card: { headerBg: "#ffffff", colorBgContainer: "#ffffff" },
+          Table: { headerBg: "#fafafa", headerColor: "#1d2939", rowHoverBg: "#f8fafc" },
+        },
+      }}
+    >
+      <QueryClientProvider client={queryClient}>{container}</QueryClientProvider>
+    </ConfigProvider>
+  );
 }

@@ -52,7 +52,7 @@ describe("stage C admin workspace", () => {
 
   it("redirects authenticated administrators away from the login page", () => {
     renderPage(<LoginPage authenticated />, null);
-    expect(window.location.pathname).toBe("/users");
+    expect(window.location.pathname).toBe("/welcome");
   });
 
   it("loads users and supports editing and session inspection", async () => {
