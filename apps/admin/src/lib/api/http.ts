@@ -80,7 +80,8 @@ export async function apiRequest<T>(
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
-  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  const isFormData = typeof globalThis.FormData !== "undefined" && init.body instanceof globalThis.FormData;
+  if (init.body && !isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   if (!SAFE_METHODS.has(method)) {
     const csrf = readCookie("pinjie_admin_csrf");
     if (csrf) headers.set("X-CSRF-Token", csrf);

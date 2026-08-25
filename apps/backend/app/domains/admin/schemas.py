@@ -24,6 +24,7 @@ class ConfirmationAction(StrEnum):
     ADMIN_SESSIONS_REVOKE = "admins:sessions:revoke"
     ROLE_DELETE = "roles:delete"
     ROLE_PERMISSIONS_ASSIGN = "roles:permissions:assign"
+    ASSET_DELETE = "assets:delete"
 
 
 class AdminLoginIn(BaseModel):
@@ -52,7 +53,7 @@ class AdminRead(BaseModel):
     id: uuid.UUID
     username: str
     display_name: str | None
-    avatar: str | None = None
+    avatar: str | None = Field(default=None, description="管理员头像 URL 或站内资源路径")
     is_active: bool
     is_superuser: bool
     roles: list[RoleSummary]
@@ -123,7 +124,7 @@ class AdminProfileUpdateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     display_name: str | None = Field(default=None, max_length=100)
-    avatar: str | None = Field(default=None, max_length=500)
+    avatar: str | None = Field(default=None, max_length=500, description="管理员头像 URL 或站内资源路径")
 
     @model_validator(mode="after")
     def require_explicit_field(self) -> "AdminProfileUpdateIn":

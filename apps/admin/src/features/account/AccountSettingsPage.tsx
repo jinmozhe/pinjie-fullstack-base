@@ -1,10 +1,10 @@
 import type { AdminProfileUpdateIn } from "@pinjie/api-client";
 import { KeyOutlined, SafetyCertificateOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert, Avatar, Button, Card, Descriptions, Divider, Flex, Form, Input, Space, Tabs, Tag, Typography, message } from "antd";
-import { useState } from "react";
+import { Alert, Button, Card, Descriptions, Divider, Form, Input, Space, Tabs, Tag, Typography, message } from "antd";
 
 import { PageFrame, formatTime } from "@/components/PageFrame";
+import { AvatarUploader } from "@/components/Uploader";
 import { useCurrentAdmin } from "@/features/auth";
 import { adminApi } from "@/lib/api/admin";
 import { errorMessage } from "@/lib/api/http";
@@ -14,7 +14,6 @@ export function AccountSettingsPage() {
   const queryClient = useQueryClient();
   const [profileForm] = Form.useForm<AdminProfileUpdateIn>();
   const [passwordForm] = Form.useForm<{ current_password: string; new_password: string; confirm_password: string }>();
-  const [previewAvatar, setPreviewAvatar] = useState<string | undefined>(current.avatar ?? undefined);
 
   const profileMutation = useMutation({
     mutationFn: (values: AdminProfileUpdateIn) => adminApi.updateProfile(values),
@@ -59,60 +58,35 @@ export function AccountSettingsPage() {
                       style={{ marginBottom: 20 }}
                     />
                   )}
-                  <Flex gap={32} align="flex-start" wrap="wrap">
-                    <Form
-                      form={profileForm}
-                      layout="vertical"
-                      initialValues={{
-                        display_name: current.display_name ?? undefined,
-                        avatar: current.avatar ?? undefined,
-                      }}
-                      onFinish={(values) => profileMutation.mutate(values)}
-                      style={{ flex: 1, minWidth: 280 }}
+                  <Form
+                    form={profileForm}
+                    layout="vertical"
+                    initialValues={{
+                      display_name: current.display_name ?? undefined,
+                      avatar: current.avatar ?? undefined,
+                    }}
+                    onFinish={(values) => profileMutation.mutate(values)}
+                    style={{ maxWidth: 480 }}
+                  >
+                    <Form.Item label="头像" name="avatar">
+                      <AvatarUploader disabled={profileMutation.isPending} />
+                    </Form.Item>
+                    <Form.Item label="登录账号">
+                      <Input aria-label="登录账号" value={current.username} disabled prefix={<UserOutlined />} />
+                    </Form.Item>
+                    <Form.Item
+                      label="昵称 / 显示名称"
+                      name="display_name"
+                      rules={[{ max: 100, message: "显示名称最多 100 个字符" }]}
                     >
-                      <Form.Item label="登录账号">
-                        <Input value={current.username} disabled prefix={<UserOutlined />} />
-                      </Form.Item>
-                      <Form.Item
-                        label="昵称 / 显示名称"
-                        name="display_name"
-                        rules={[{ max: 100, message: "显示名称最多 100 个字符" }]}
-                      >
-                        <Input placeholder="请输入您的显示昵称" maxLength={100} />
-                      </Form.Item>
-                      <Form.Item
-                        label="头像链接 (URL)"
-                        name="avatar"
-                        rules={[{ max: 500, message: "头像链接最多 500 个字符" }]}
-                      >
-                        <Input
-                          placeholder="请输入头像图片完整 URL 地址"
-                          maxLength={500}
-                          onChange={(e) => setPreviewAvatar(e.target.value.trim() || undefined)}
-                        />
-                      </Form.Item>
-                      <Form.Item style={{ marginTop: 24 }}>
-                        <Button type="primary" htmlType="submit" loading={profileMutation.isPending}>
-                          更新基本信息
-                        </Button>
-                      </Form.Item>
-                    </Form>
-
-                    <div style={{ textAlign: "center", padding: "12px 24px" }}>
-                      <Typography.Paragraph type="secondary" strong style={{ marginBottom: 12 }}>
-                        头像预览
-                      </Typography.Paragraph>
-                      <Avatar
-                        size={100}
-                        src={previewAvatar}
-                        icon={<UserOutlined />}
-                        style={{ border: "2px solid #f0f2f5", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}
-                      />
-                      <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginTop: 12 }}>
-                        {current.display_name || current.username}
-                      </Typography.Paragraph>
-                    </div>
-                  </Flex>
+                      <Input placeholder="请输入您的显示昵称" maxLength={100} />
+                    </Form.Item>
+                    <Form.Item style={{ marginTop: 24 }}>
+                      <Button type="primary" htmlType="submit" loading={profileMutation.isPending}>
+                        更新基本信息
+                      </Button>
+                    </Form.Item>
+                  </Form>
                 </div>
               ),
             },

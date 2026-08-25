@@ -77,11 +77,18 @@ AUTH_COOKIE_SECURE=true
 REGISTRATION_MODE=closed
 REQUEST_LOG_MODE=disabled
 LOG_FILE_ENABLED=false
+UPLOAD_STORAGE_DRIVER=local
+UPLOAD_BASE_URL=/static/uploads
+UPLOAD_MAX_FILE_SIZE_MB=50
+UPLOAD_ALLOWED_EXTENSIONS=jpg,jpeg,png,webp,gif,pdf,doc,docx,xls,xlsx,zip
+UPLOAD_IO_CONCURRENCY=4
 ```
 
 真实密码、域名和应用镜像 digest 不得写入仓库。仓库中的基础镜像 digest 来自官方 registry manifest，并由生产配置正反例门禁检查所有 Dockerfile `FROM`、PostgreSQL、Redis 和应用镜像变量。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
 
 PostgreSQL 18 的命名卷挂载到 `/var/lib/postgresql`。已有 PostgreSQL 17 及以下数据卷不能通过直接改挂载路径完成升级，必须先验证备份，再按独立迁移方案恢复到 PostgreSQL 18 新卷。
+
+Backend 的 `backend_uploads` 命名卷挂载到 `/app/storage`，Compose 固定 `UPLOAD_LOCAL_ROOT=/app/storage/uploads`。镜像内的 UID `10001` 必须能写入该卷；公开目录与 `.uploads-staging`、`.uploads-trash` 位于同一卷，但静态路由只暴露 `uploads/`。生产备份必须同时覆盖 PostgreSQL 和 `backend_uploads`，并记录同一备份窗口。
 
 ## 5. 迁移、权限与初始管理员
 
@@ -126,6 +133,7 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 - 运行容器的镜像引用与批准的完整 digest 一致。
 - Web 与 Admin 使用同域 `/api/v1`，认证响应没有 Token 字段，生产 Cookie 包含 `HttpOnly`、`Secure` 和 `SameSite=Lax`。
 - 权限目录 `--check` 无漂移；启用请求元数据时消费者能够消费 Redis Stream 并落库。
+- 使用 Web 或 Admin 已认证会话上传测试头像，确认资产元数据落库、`/static/uploads/` 可读取、响应包含 `nosniff`，并确认容器重启后文件仍存在。
 
 定期保留清理先执行 dry-run，核对数量并取得数据删除授权后再增加 `--apply`：
 

@@ -22,6 +22,10 @@ export default defineConfig({
       target: backendURL,
       changeOrigin: false,
     },
+    "/static/uploads": {
+      target: backendURL,
+      changeOrigin: false,
+    },
   },
   define: {
     "process.env.APP_ENV": process.env.APP_ENV ?? "development",

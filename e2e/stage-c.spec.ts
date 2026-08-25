@@ -11,6 +11,10 @@ const adminUsername = process.env.E2E_ADMIN_USERNAME ?? "stage-admin";
 const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? "stage-c-admin-password-2026";
 const userPassword = "stage-c-user-password-2026";
 const limitedAdminPassword = "stage-c-limited-password-2026";
+const avatarPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlKz50AAAAASUVORK5CYII=",
+  "base64",
+);
 
 test.describe("stage C cross-stack journeys", () => {
   test("Web registers a user, manages the account, and signs out without exposing tokens", async ({ page }) => {
@@ -76,7 +80,7 @@ test.describe("stage C cross-stack journeys", () => {
     await page.getByLabel("用户名").fill(adminUsername);
     await page.getByLabel("密码").fill(adminPassword);
     await page.getByRole("button", { name: /登\s*录/ }).click();
-    await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "欢迎使用 Pinjie Console" })).toBeVisible();
 
     const csrf = await expectCookieProfile(page, {
       access: "pinjie_admin_access",
@@ -84,6 +88,42 @@ test.describe("stage C cross-stack journeys", () => {
       csrf: "pinjie_admin_csrf",
     });
     await expectNoClientTokenPersistence(page);
+    await page.goto("/users");
+    await expect(page.getByRole("heading", { name: "用户管理" })).toBeVisible();
+    await expectPageQuality(page);
+
+    await page.goto("/account/settings");
+    const uploadResponsePromise = page.waitForResponse(
+      (response) => response.url().endsWith("/api/v1/assets/upload") && response.request().method() === "POST",
+    );
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "avatar.png",
+      mimeType: "image/png",
+      buffer: avatarPng,
+    });
+    const uploadResponse = await uploadResponsePromise;
+    expect(uploadResponse.ok()).toBe(true);
+    const uploadedAsset = (await uploadResponse.json()).data as { url: string };
+    const avatarPreview = page.getByRole("tabpanel").locator(`img[src="${uploadedAsset.url}"]`);
+    await expect(avatarPreview).toBeVisible();
+
+    const profileResponsePromise = page.waitForResponse(
+      (response) => response.url().endsWith("/api/v1/admin/auth/profile") && response.request().method() === "PATCH",
+    );
+    await page.getByRole("button", { name: "更新基本信息" }).click();
+    expect((await profileResponsePromise).ok()).toBe(true);
+    await page.waitForLoadState("domcontentloaded");
+    await expect(avatarPreview).toBeVisible();
+    await page.reload();
+    await expect(avatarPreview).toBeVisible();
+
+    for (const assetOrigin of [origin, "http://127.0.0.1:3000"]) {
+      const assetResponse = await page.request.get(`${assetOrigin}${uploadedAsset.url}`);
+      expect(assetResponse.ok()).toBe(true);
+      expect(assetResponse.headers()["content-type"]).toBe("image/png");
+      expect(assetResponse.headers()["x-content-type-options"]).toBe("nosniff");
+      expect((await assetResponse.body()).byteLength).toBeGreaterThan(0);
+    }
     await expectPageQuality(page);
 
     const commonHeaders = { Origin: origin, "X-CSRF-Token": csrf };
@@ -118,6 +158,8 @@ test.describe("stage C cross-stack journeys", () => {
     await page.getByLabel("用户名").fill(limitedUsername);
     await page.getByLabel("密码").fill(limitedAdminPassword);
     await page.getByRole("button", { name: /登\s*录/ }).click();
+    await expect(page.getByRole("heading", { name: "欢迎使用 Pinjie Console" })).toBeVisible();
+    await page.goto("/users");
     await expect(page.getByText("无权访问")).toBeVisible();
 
     const deniedResponse = await page.request.get(`${origin}/api/v1/admin/users`);

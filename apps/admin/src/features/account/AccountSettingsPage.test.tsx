@@ -5,9 +5,10 @@ import userEvent from "@testing-library/user-event";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { http, HttpResponse } from "msw";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AdminContext } from "@/features/auth";
+import { adminApi } from "@/lib/api/admin";
 import { server } from "@/test/setup";
 import { AccountSettingsPage } from "./AccountSettingsPage";
 
@@ -38,6 +39,10 @@ function renderAccountSettingsPage(principal: AdminRead = mockAdmin) {
 }
 
 describe("AccountSettingsPage", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders base settings tab with admin information", () => {
     renderAccountSettingsPage(mockAdmin);
     expect(screen.getByText("个人设置")).toBeInTheDocument();
@@ -45,7 +50,36 @@ describe("AccountSettingsPage", () => {
     expect(screen.getByText("安全设置")).toBeInTheDocument();
     expect(screen.getByDisplayValue("settings-admin")).toBeDisabled();
     expect(screen.getByDisplayValue("设置管理员")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("https://example.com/avatar.png")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "头像预览" })).toHaveAttribute("src", "https://example.com/avatar.png");
+  });
+
+  it("uploads an avatar and updates the form preview", async () => {
+    const upload = vi.spyOn(adminApi, "uploadAsset").mockResolvedValue({
+      id: "01900000-0000-7000-8000-000000000010",
+      uploader_type: "admin",
+      uploader_id: mockAdmin.id,
+      storage_driver: "local",
+      file_key: "avatar/20260825/avatar.png",
+      original_name: "avatar.png",
+      mime_type: "image/png",
+      file_size: 16,
+      file_hash: "a".repeat(64),
+      url: "/static/uploads/avatar/20260825/avatar.png",
+      scene: "avatar",
+      created_at: "2026-08-25T00:00:00Z",
+      updated_at: "2026-08-25T00:00:00Z",
+    });
+    const user = userEvent.setup();
+    const { container } = renderAccountSettingsPage(mockAdmin);
+    const input = container.querySelector<globalThis.HTMLInputElement>('input[type="file"]');
+    expect(input).not.toBeNull();
+
+    await user.upload(input!, new globalThis.File(["png-content"], "avatar.png", { type: "image/png" }));
+
+    await waitFor(() => {
+      expect(document.querySelector('img[src="/static/uploads/avatar/20260825/avatar.png"]')).not.toBeNull();
+    });
+    expect(upload).toHaveBeenCalledWith(expect.any(globalThis.File), "avatar");
   });
 
   it("submits profile update successfully", async () => {

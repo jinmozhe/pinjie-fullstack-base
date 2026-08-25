@@ -9,11 +9,16 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
+.pytest-cache-runtime/
+.pytest-tmp/
 htmlcov/
 .coverage
 .coverage.*
 /apps/backend/build/
 /apps/backend/.eggs/
+/apps/backend/uploads/
+/apps/backend/.uploads-staging/
+/apps/backend/.uploads-trash/
 
 # ============================================================
 # Node.js / 前端

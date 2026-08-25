@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.staticfiles import StaticFiles
 
 from app.api_router import api_router
 from app.core.config import Settings, get_settings
@@ -23,6 +24,7 @@ from app.core.resources import AppResources, create_resources
 from app.core.response import public_message
 from app.domains.system.router import readiness_response
 from app.domains.system.schemas import LiveStatus, ReadinessStatus
+from app.services.storage import create_storage_provider
 
 _HTTP_ERROR_MESSAGES = {
     400: "请求内容有误",
@@ -138,6 +140,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.settings = app_settings
+    app.state.storage_provider = create_storage_provider(app_settings)
     app.middleware("http")(request_context_middleware)
     app.add_middleware(
         CORSMiddleware,
@@ -158,6 +161,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     _register_exception_handlers(app)
 
     app.include_router(api_router, prefix=app_settings.api_v1_str)
+    app.mount(
+        app_settings.upload_base_url,
+        StaticFiles(directory=app_settings.upload_local_root, check_dir=False),
+        name="uploaded-assets",
+    )
 
     @app.get("/health/live", response_model=LiveStatus, tags=["健康检查"], summary="检查应用存活状态")
     async def health_live() -> LiveStatus:

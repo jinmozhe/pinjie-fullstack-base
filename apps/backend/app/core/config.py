@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -9,6 +10,7 @@ Environment = Literal["local", "test", "production"]
 RedisMode = Literal["disabled", "required"]
 RegistrationMode = Literal["open", "closed"]
 RequestLogMode = Literal["disabled", "metadata"]
+UploadStorageDriver = Literal["local"]
 
 
 class Settings(BaseSettings):
@@ -27,6 +29,7 @@ class Settings(BaseSettings):
     test_database_url: str | None = Field(default=None, validation_alias="TEST_DATABASE_URL")
     redis_mode: RedisMode = Field(default="disabled", validation_alias="REDIS_MODE")
     redis_url: str | None = Field(default=None, validation_alias="REDIS_URL")
+    test_redis_url: str | None = Field(default=None, validation_alias="TEST_REDIS_URL")
     web_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:3000"],
         validation_alias="WEB_ORIGINS",
@@ -97,6 +100,28 @@ class Settings(BaseSettings):
     web_login_limit: int = Field(default=10, validation_alias="WEB_LOGIN_LIMIT", ge=1, le=100)
     admin_login_limit: int = Field(default=5, validation_alias="ADMIN_LOGIN_LIMIT", ge=1, le=20)
     login_window_seconds: int = Field(default=900, validation_alias="LOGIN_WINDOW_SECONDS", ge=60, le=3600)
+    upload_storage_driver: UploadStorageDriver = Field(
+        default="local",
+        validation_alias="UPLOAD_STORAGE_DRIVER",
+    )
+    upload_local_root: Path = Field(default=Path("uploads"), validation_alias="UPLOAD_LOCAL_ROOT")
+    upload_base_url: str = Field(default="/static/uploads", validation_alias="UPLOAD_BASE_URL")
+    upload_max_file_size_mb: int = Field(
+        default=50,
+        validation_alias="UPLOAD_MAX_FILE_SIZE_MB",
+        ge=1,
+        le=100,
+    )
+    upload_allowed_extensions: str = Field(
+        default="jpg,jpeg,png,webp,gif,pdf,doc,docx,xls,xlsx,zip",
+        validation_alias="UPLOAD_ALLOWED_EXTENSIONS",
+    )
+    upload_io_concurrency: int = Field(
+        default=4,
+        validation_alias="UPLOAD_IO_CONCURRENCY",
+        ge=1,
+        le=16,
+    )
 
     @field_validator("api_v1_str")
     @classmethod
@@ -112,6 +137,32 @@ class Settings(BaseSettings):
         if level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
             raise ValueError("LOG_LEVEL must be a supported standard logging level")
         return level
+
+    @field_validator("upload_base_url")
+    @classmethod
+    def validate_upload_base_url(cls, value: str) -> str:
+        if not value.startswith("/") or value == "/" or value.endswith("/"):
+            raise ValueError("UPLOAD_BASE_URL must be an absolute URL path without a trailing slash")
+        if ".." in value.split("/"):
+            raise ValueError("UPLOAD_BASE_URL must not contain parent path segments")
+        return value
+
+    @field_validator("upload_local_root")
+    @classmethod
+    def validate_upload_local_root(cls, value: Path) -> Path:
+        if not str(value).strip():
+            raise ValueError("UPLOAD_LOCAL_ROOT must not be empty")
+        return value
+
+    @field_validator("upload_allowed_extensions")
+    @classmethod
+    def validate_upload_allowed_extensions(cls, value: str) -> str:
+        extensions = [item.strip().lower().removeprefix(".") for item in value.split(",")]
+        if not extensions or any(not item or not item.isascii() or not item.isalnum() for item in extensions):
+            raise ValueError("UPLOAD_ALLOWED_EXTENSIONS must be a comma-separated extension list")
+        if "svg" in extensions:
+            raise ValueError("UPLOAD_ALLOWED_EXTENSIONS must not include SVG")
+        return ",".join(dict.fromkeys(extensions))
 
     @field_validator("web_origins", "admin_origins")
     @classmethod
@@ -144,6 +195,11 @@ class Settings(BaseSettings):
                 raise ValueError("REDIS_URL must use redis or rediss")
         else:
             raise ValueError("REDIS_MODE must be required while authentication is enabled")
+        if self.environment == "test":
+            if self.test_redis_url is None:
+                raise ValueError("TEST_REDIS_URL is required in test environment")
+            if self.redis_url != self.test_redis_url:
+                raise ValueError("REDIS_URL must match TEST_REDIS_URL in test environment")
         self._validate_authentication_secrets()
         self._validate_trusted_proxy_cidrs()
         self._validate_browser_origins()
@@ -225,6 +281,10 @@ class Settings(BaseSettings):
             self.web_token_hmac_key,
             self.admin_token_hmac_key,
         )
+
+    @property
+    def allowed_upload_extensions(self) -> frozenset[str]:
+        return frozenset(self.upload_allowed_extensions.split(","))
 
     @staticmethod
     def _validate_database_url(value: str, name: str) -> None:

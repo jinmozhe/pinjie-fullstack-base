@@ -107,6 +107,7 @@ def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
         "用户账户",
         "管理员认证",
         "后台管理",
+        "文件资产",
         "系统",
         "健康检查",
     }

@@ -36,12 +36,13 @@
 | `docs/adr/0009-Python运行时基线决策.md` | 生效 | 标准 CPython 3.14、本地 uv、CI、容器补丁固定和标准库 UUID v7 的长期决策 |
 | `docs/adr/0010-浏览器认证会话RBAC与审计决策.md` | 生效 | Browser Cookie Profile、C/B 会话隔离、Refresh 权威、规范化 RBAC 和审计决策 |
 | `docs/adr/0011-Admin采用AntDesignProV6与UmiMax决策.md` | 已完成 | Admin 采用官方 Ant Design Pro v6/Umi Max，保留项目安全、契约和质量边界 |
+| `docs/adr/0012-统一文件资产采用可补偿本地存储决策.md` | 已完成 | 统一文件资产采用本地存储端口、同文件系统原子提交、同主体去重和可恢复删除补偿 |
 
 ## 当前开发计划
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
-| `plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` | 待确认 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 规划统一文件与多媒体资产上传服务、按日期多级分层落盘、存储驱动解耦与前端组件封装 |
+| `plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 已完成统一文件与多媒体资产上传服务、按日期单层分桶落盘、存储驱动解耦、双端上传组件与完整跨栈验证 |
 | `plans/2026-08-25_Admin官方布局宽度比例对齐计划.md` | 已结束 | Admin、Documentation | 已按官方比例完成 `256px` 侧栏、流式工作区与三视口验证 |
 | `plans/2026-08-24_Admin左侧Logo移除与欢迎页面落地计划.md` | 已结束 | Admin、Documentation | 已移除侧栏 Logo，新增官方风格 WelcomePage 及单元测试，36 项测试与门禁全量通过 |
 | `plans/2026-08-24_Admin官方标准浅色高质感视觉体系对齐计划.md` | 已结束 | Admin、Documentation | 已完成白底侧栏、通透 Header、ProTable 原生工具栏、轻量操作列与微投影卡片升级，全量门禁通过 |
@@ -74,7 +75,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` | 待确认 | 未结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 规划统一文件与多媒体资产上传服务、按日期多级分层落盘、存储驱动解耦与前端组件封装 |
+| `plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` | 已结束 | 已完成；统一资产服务、双端组件、头像持久化、契约、容器与真实跨栈验收全部通过 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 实施统一文件与多媒体资产上传服务、按日期单层分桶落盘、存储驱动解耦与前端组件封装 |
 | `plans/2026-08-25_Admin官方布局宽度比例对齐计划.md` | 已结束 | 已完成；`256px` 侧栏、流式工作区、Admin 全量门禁与三视口验证通过 | Admin、Documentation | 按官方 Ant Design Pro 比例调整桌面侧栏与流式工作区宽度 |
 | `plans/2026-08-25_admin-layout-width-ratio-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Documentation | 保留补丁工具异常产生的重复计划审计记录 |
 | `plans/2026-08-24_Admin左侧Logo移除与欢迎页面落地计划.md` | 已结束 | 已完成；已移除侧栏 Logo，新增官方风格 WelcomePage 及单元测试，36 项测试与门禁全量通过 | Admin、Documentation | 移除侧栏 Logo 并在菜单首位增加欢迎页面作为登录默认主页 |
@@ -126,13 +127,13 @@
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、请求元数据、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 119 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.86% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留全部既有能力；已完成 Ant Design 6 Token、浅色侧栏、白色 Header、`256px` 桌面侧栏、流式 PageContainer、ProTable 原生工具栏与欢迎页升级；当前固定 Webpack 构建，未使用的 Vite 4 已通过精确 Hook 与补丁移除，开发服务实际绑定 `127.0.0.1`；typecheck、lint、36 项 Vitest、2 项启动器测试、87.94% 语句覆盖率、91.01% 行覆盖率、production build 与三视口布局验证通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
-| Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、运行时 Metadata 和安全响应头已实现；typecheck、lint、26 项 Vitest、90.46% 语句覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
-| API Client | 根 OpenAPI 共 39 条路径、47 个操作，238 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成，非文档契约结构保持一致，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
-| Database | 身份、分页会话、Refresh Token、RBAC 与安全日志迁移已实现，本地开发库已到 `20260820_01`；PostgreSQL advisory lock 并发保护、级联删除、dry-run/`--apply` 清理、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/identity.py`、`apps/backend/scripts/cleanup_security_logs.py` |
-| Deployment | `Protect main` 要求 Pull Request 和 13 项检查且 `current_user_can_bypass=never`；Auto-merge、rebase merge 和合并后自动删分支已启用，四个自动工作流只监听目标为 `main` 的 PR、`main` push 与 Security 定时任务；发布和生产部署未执行 | `.github/workflows/`、GitHub 仓库设置、GitHub Ruleset `21152538` |
-| Documentation | 目录结构已按 2026-08-22 的 321 个项目文件、68 个含文件目录同步；认证、Backend 标准、测试、容器、环境变量、ADR、README、Changelog、计划和索引已按冻结整改事实回写 | `docs/architecture/project-structure.md`、`docs/architecture/authentication-authorization.md`、`plans/2026-08-22_母版不可变基线冻结整改计划.md` |
+| Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、统一文件资产服务、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 141 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.14% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留全部既有能力；已完成浅色布局、`256px` 桌面侧栏、流式 PageContainer、欢迎页、通用上传组件和个人头像持久化；当前固定 Webpack 构建，开发服务实际绑定 `127.0.0.1`；typecheck、lint、40 项 Vitest、2 项启动器测试、85.48% 语句覆盖率、87.78% 行覆盖率、production build 与桌面/移动跨栈验证通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
+| Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、31 项 Vitest、88.30% 语句与行覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
+| API Client | 根 OpenAPI 共 43 条路径、51 个操作，274 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
+| Database | 身份、分页会话、Refresh Token、RBAC、安全日志与统一资产迁移已实现，本地开发库已到 `20260825_03`；PostgreSQL advisory lock 并发保护、级联删除、资产元数据、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/`、`apps/backend/scripts/cleanup_security_logs.py` |
+| Deployment | 生产 Compose 已为 Backend/Admin/Web 配置统一上传持久卷与只读静态访问，三端容器构建和生产配置门禁通过；发布和生产部署未执行 | `compose.prod.yml`、`apps/backend/Dockerfile`、`apps/admin/Dockerfile`、`apps/web/Dockerfile` |
+| Documentation | 认证、Backend 标准、测试、容器、环境变量、统一文件资产架构、ADR、README、Changelog、计划和索引已按当前实现与验证事实回写 | `docs/architecture/file-asset-storage.md`、`docs/adr/0012-统一文件资产采用可补偿本地存储决策.md`、`plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` |
 
 ## 权威来源
 

@@ -9,6 +9,12 @@ $rootPath = (Resolve-Path -LiteralPath $Root).Path
 $violations = [System.Collections.Generic.List[string]]::new()
 $sourceExtensions = @(".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
 $directorySeparator = [System.IO.Path]::DirectorySeparatorChar
+$excludedDirectories = [System.Collections.Generic.HashSet[string]]::new(
+    [System.StringComparer]::OrdinalIgnoreCase
+)
+foreach ($directoryName in @("node_modules", ".next", "dist", "coverage", ".venv", ".pytest_cache", ".pytest-cache-runtime", ".pytest-tmp", "__pycache__")) {
+    [void]$excludedDirectories.Add($directoryName)
+}
 
 function Convert-ToForwardSlashPath {
     param([string]$Path)
@@ -35,10 +41,25 @@ function Get-SourceFiles {
     if (-not (Test-Path -LiteralPath $Path -PathType Container)) {
         return @()
     }
-    return @(Get-ChildItem -LiteralPath $Path -Recurse -File | Where-Object {
-        $sourceExtensions -contains $_.Extension -and
-        $_.FullName -notmatch "[\\/](node_modules|\.next|dist|coverage|\.venv)[\\/]"
-    })
+
+    $files = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+    $pending = [System.Collections.Generic.Stack[string]]::new()
+    $pending.Push($Path)
+    while ($pending.Count -gt 0) {
+        $current = $pending.Pop()
+        foreach ($item in Get-ChildItem -Force -LiteralPath $current) {
+            if ($item.PSIsContainer) {
+                if (-not $excludedDirectories.Contains($item.Name)) {
+                    $pending.Push($item.FullName)
+                }
+                continue
+            }
+            if ($sourceExtensions -contains $item.Extension) {
+                $files.Add($item)
+            }
+        }
+    }
+    return @($files)
 }
 
 function Get-ImportSpecifiers {

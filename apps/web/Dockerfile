@@ -2,10 +2,11 @@ FROM node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a5
 
 WORKDIR /workspace
 RUN corepack enable
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .pnpmfile.cjs ./
 COPY apps/web/package.json apps/web/package.json
 COPY apps/admin/package.json apps/admin/package.json
 COPY packages packages
+COPY patches patches
 RUN pnpm install --frozen-lockfile
 COPY apps/web apps/web
 RUN pnpm --filter @pinjie/web build

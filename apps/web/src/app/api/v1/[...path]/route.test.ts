@@ -105,4 +105,47 @@ describe("Web API profile proxy", () => {
     expect(rejected.status).toBe(404);
     expect(fetchMock).toHaveBeenCalledOnce();
   });
+
+  it("streams an allowed multipart asset upload", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ code: "OK", data: { url: "/static/uploads/avatar/test.png" } }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    const boundary = "pinjie-test-boundary";
+    const body = [
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="scene"',
+      "",
+      "avatar",
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="file"; filename="avatar.png"',
+      "Content-Type: image/png",
+      "",
+      "png",
+      `--${boundary}--`,
+      "",
+    ].join("\r\n");
+
+    const response = await POST(
+      new Request("http://localhost:3000/api/v1/assets/upload", {
+        method: "POST",
+        headers: {
+          cookie: "pinjie_web_access=web-access; pinjie_admin_access=admin-access; pinjie_web_csrf=web-csrf",
+          "content-type": `multipart/form-data; boundary=${boundary}`,
+          origin: "http://localhost:3000",
+          "x-csrf-token": "web-csrf",
+        },
+        body,
+      }),
+      context(["assets", "upload"]),
+    );
+
+    expect(response.status).toBe(201);
+    const [target, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(target)).toBe("http://backend.test/api/v1/assets/upload");
+    expect(new Headers(init?.headers).get("content-type")).toContain("multipart/form-data");
+    expect((init as RequestInit & { duplex?: string })?.duplex).toBe("half");
+  });
 });

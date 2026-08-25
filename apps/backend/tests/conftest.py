@@ -1,14 +1,28 @@
+import os
 from collections.abc import AsyncIterator
 from unittest.mock import MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
+from app.core.config import Settings
+
+_bootstrap_settings = Settings()
+if _bootstrap_settings.test_database_url:
+    os.environ.setdefault("TEST_DATABASE_URL", _bootstrap_settings.test_database_url)
+if _bootstrap_settings.test_redis_url:
+    os.environ.setdefault("TEST_REDIS_URL", _bootstrap_settings.test_redis_url)
+if os.getenv("TEST_DATABASE_URL") and os.getenv("TEST_REDIS_URL"):
+    os.environ["ENVIRONMENT"] = "test"
+    os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
+    os.environ["REDIS_URL"] = os.environ["TEST_REDIS_URL"]
+
+from app.main import app  # noqa: E402
 
 TEST_SECRETS = {
     "REDIS_MODE": "required",
     "REDIS_URL": "redis://localhost:6379/15",
+    "TEST_REDIS_URL": "redis://localhost:6379/15",
     "WEB_JWT_SECRET": "test-web-jwt-secret-0000000000000001",
     "ADMIN_JWT_SECRET": "test-admin-jwt-secret-0000000000001",
     "WEB_TOKEN_HMAC_KEY": "test-web-hmac-secret-000000000000001",

@@ -3,7 +3,7 @@
   "info": {
     "title": "Pinjie Fullstack Base Backend",
     "description": "通用全栈母版的后端 API，提供用户认证、账户管理、后台管理和系统状态能力。",
-    "version": "local"
+    "version": "0.1.0"
   },
   "paths": {
     "/api/v1/auth/register": {
@@ -159,6 +159,230 @@
                 }
               ],
               "title": "Pinjie Web Refresh"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_bool_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/upload": {
+      "post": {
+        "tags": [
+          "文件资产"
+        ],
+        "summary": "上传文件资产",
+        "description": "按受控场景校验扩展名、真实文件头、体积与双域上传身份后保存文件资产。",
+        "operationId": "upload_asset_api_v1_assets_upload_post",
+        "parameters": [
+          {
+            "name": "pinjie_web_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Web Access"
+            }
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_asset_api_v1_assets_upload_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AssetRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "tags": [
+          "文件资产"
+        ],
+        "summary": "获取文件资产列表",
+        "operationId": "list_assets_api_v1_assets_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_PageResult_AssetRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}": {
+      "delete": {
+        "tags": [
+          "文件资产"
+        ],
+        "summary": "删除文件资产",
+        "description": "通过管理员二次确认与审计链删除资产元数据和对应存储文件。",
+        "operationId": "delete_asset_api_v1_assets__asset_id__delete",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "X-Admin-Confirmation",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Confirmation"
+            }
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
             }
           }
         ],
@@ -3265,7 +3489,8 @@
                 "type": "null"
               }
             ],
-            "title": "Avatar"
+            "title": "Avatar",
+            "description": "管理员头像 URL 或站内资源路径"
           }
         },
         "additionalProperties": false,
@@ -3306,7 +3531,8 @@
                 "type": "null"
               }
             ],
-            "title": "Avatar"
+            "title": "Avatar",
+            "description": "管理员头像 URL 或站内资源路径"
           },
           "is_active": {
             "type": "boolean",
@@ -3413,6 +3639,102 @@
         "type": "object",
         "title": "AdminUpdateIn"
       },
+      "AssetRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "文件资产唯一标识"
+          },
+          "uploader_type": {
+            "$ref": "#/components/schemas/UploaderType",
+            "description": "上传主体类型"
+          },
+          "uploader_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uploader Id",
+            "description": "上传主体唯一标识，系统任务可为空"
+          },
+          "storage_driver": {
+            "type": "string",
+            "title": "Storage Driver",
+            "description": "保存文件的存储驱动代码"
+          },
+          "file_key": {
+            "type": "string",
+            "title": "File Key",
+            "description": "存储驱动中的相对文件键"
+          },
+          "original_name": {
+            "type": "string",
+            "title": "Original Name",
+            "description": "上传时经过路径剥离的原始文件名"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "服务端探测得到的真实 MIME 类型"
+          },
+          "file_size": {
+            "type": "integer",
+            "title": "File Size",
+            "description": "文件大小，单位为字节"
+          },
+          "file_hash": {
+            "type": "string",
+            "title": "File Hash",
+            "description": "文件内容的 SHA-256 哈希值"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "文件的公开访问 URL 或站内路径"
+          },
+          "scene": {
+            "$ref": "#/components/schemas/UploadScene",
+            "description": "受控的文件使用场景"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "最近更新时间"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "uploader_type",
+          "uploader_id",
+          "storage_driver",
+          "file_key",
+          "original_name",
+          "mime_type",
+          "file_size",
+          "file_hash",
+          "url",
+          "scene",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AssetRead"
+      },
       "AuditEventRead": {
         "properties": {
           "id": {
@@ -3509,6 +3831,26 @@
         ],
         "title": "AuditEventRead"
       },
+      "Body_upload_asset_api_v1_assets_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "需要上传的文件"
+          },
+          "scene": {
+            "$ref": "#/components/schemas/UploadScene",
+            "description": "受控的文件使用场景"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "scene"
+        ],
+        "title": "Body_upload_asset_api_v1_assets_upload_post"
+      },
       "ConfirmationAction": {
         "type": "string",
         "enum": [
@@ -3522,7 +3864,8 @@
           "admins:roles:assign",
           "admins:sessions:revoke",
           "roles:delete",
-          "roles:permissions:assign"
+          "roles:permissions:assign",
+          "assets:delete"
         ],
         "title": "ConfirmationAction"
       },
@@ -3695,6 +4038,53 @@
           "total_pages"
         ],
         "title": "PageResult[AdminRead]"
+      },
+      "PageResult_AssetRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssetRead"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "当前分页中的资源列表"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "每页资源数量"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "符合条件的资源总数"
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
+          "total_pages"
+        ],
+        "title": "PageResult[AssetRead]"
       },
       "PageResult_AuditEventRead_": {
         "properties": {
@@ -4364,6 +4754,38 @@
         ],
         "title": "ResponseModel[AdminRead]"
       },
+      "ResponseModel_AssetRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AssetRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[AssetRead]"
+      },
       "ResponseModel_PageResult_AdminRead__": {
         "properties": {
           "code": {
@@ -4395,6 +4817,38 @@
           "request_id"
         ],
         "title": "ResponseModel[PageResult[AdminRead]]"
+      },
+      "ResponseModel_PageResult_AssetRead__": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResult_AssetRead_",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[PageResult[AssetRead]]"
       },
       "ResponseModel_PageResult_AuditEventRead__": {
         "properties": {
@@ -5156,6 +5610,27 @@
         ],
         "title": "SystemStatus"
       },
+      "UploadScene": {
+        "type": "string",
+        "enum": [
+          "avatar",
+          "article",
+          "product",
+          "document",
+          "attachment",
+          "temp"
+        ],
+        "title": "UploadScene"
+      },
+      "UploaderType": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "user",
+          "system"
+        ],
+        "title": "UploaderType"
+      },
       "UserAuthSessionOut": {
         "properties": {
           "principal": {
@@ -5434,6 +5909,10 @@
     {
       "name": "后台管理",
       "description": "用户、管理员、角色、权限和安全审计管理接口。"
+    },
+    {
+      "name": "文件资产",
+      "description": "双域文件上传、管理员资产查询与受控删除接口。"
     },
     {
       "name": "系统",

@@ -66,7 +66,8 @@ export async function webRequest<T>(
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
-  if (init.body) headers.set("Content-Type", "application/json");
+  const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
+  if (init.body && !isFormData && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   if (!SAFE_METHODS.has(method)) {
     const csrf = readCookie("pinjie_web_csrf");
     if (csrf) headers.set("X-CSRF-Token", csrf);

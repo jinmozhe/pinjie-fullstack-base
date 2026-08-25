@@ -59,7 +59,12 @@ function AccountMenu({ admin }: { admin: AdminRead }) {
       }}
     >
       <Button type="text" className="account-trigger" aria-label={`账户菜单：${admin.display_name || admin.username}`}>
-        <Avatar size="small" src={admin.avatar ?? undefined} icon={<UserOutlined />} />
+        <Avatar
+          size="small"
+          src={admin.avatar ?? undefined}
+          alt={`${admin.display_name || admin.username}的头像`}
+          icon={<UserOutlined />}
+        />
         <span>{admin.display_name || admin.username}</span>
       </Button>
     </Dropdown>
@@ -110,13 +115,13 @@ export const layout = ({ initialState }: { initialState?: unknown }) => {
         colorBgMenuItemHover: "#f5f7fa",
         colorBgMenuItemActive: "#e6f4ff",
         colorBgMenuItemSelected: "#e6f4ff",
-        colorTextMenuSelected: "#1677ff",
-        colorTextMenuItemHover: "#1677ff",
-        colorTextMenuActive: "#1677ff",
+        colorTextMenuSelected: "#0958d9",
+        colorTextMenuItemHover: "#0958d9",
+        colorTextMenuActive: "#0958d9",
         colorTextMenu: "#475467",
         colorTextMenuSecondary: "#667085",
         colorTextMenuTitle: "#101828",
-        colorTextSubMenuSelected: "#1677ff",
+        colorTextSubMenuSelected: "#0958d9",
       },
       pageContainer: {
         colorBgPageContainer: "#f5f7fa",
@@ -138,13 +143,16 @@ export function rootContainer(container: ReactNode) {
           borderRadius: 8,
           borderRadiusLG: 8,
           controlHeight: 36,
-          colorError: "#ff4d4f",
+          colorError: "#cf1322",
+          colorErrorText: "#a8071a",
           colorBgLayout: "#f5f7fa",
-          colorPrimary: "#1677ff",
-          colorSuccess: "#52c41a",
+          colorPrimary: "#0958d9",
+          colorLink: "#0958d9",
+          colorLinkHover: "#003eb3",
+          colorSuccess: "#237804",
           colorSuccessBg: "#f6ffed",
           colorSuccessBorder: "#b7eb8f",
-          colorSuccessText: "#389e0d",
+          colorSuccessText: "#237804",
           colorTextDescription: "#667085",
           colorTextSecondary: "#667085",
           fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',

@@ -1,5 +1,6 @@
 """SQLAlchemy model base types."""
 
+from .asset import Asset
 from .base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from .identity import (
     Admin,
@@ -19,6 +20,7 @@ from .identity import (
 
 __all__ = [
     "Admin",
+    "Asset",
     "AdminRefreshToken",
     "AdminSession",
     "AuditEvent",
