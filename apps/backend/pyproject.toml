@@ -12,6 +12,7 @@ dependencies = [
     "pwdlib[argon2]>=0.3,<1",
     "pydantic-settings>=2.10.0",
     "pyjwt>=2.13,<3",
+    "python-multipart>=0.0.20,<1",
     "redis>=6.4.0",
     "sqlalchemy[asyncio]>=2.0.43",
     "uvicorn[standard]>=0.35.0",
@@ -51,11 +52,12 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-addopts = "--strict-markers --strict-config --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=90"
+addopts = "--strict-markers --strict-config --basetemp=.pytest-tmp --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=90"
 markers = [
     "integration: requires the isolated PostgreSQL test database",
 ]
 testpaths = ["tests"]
+cache_dir = ".pytest-cache-runtime"
 
 [tool.coverage.run]
 branch = true

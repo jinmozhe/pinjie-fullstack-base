@@ -37,6 +37,9 @@ services:
       - apps/backend/.env
     environment:
       LOG_FILE_ENABLED: "false"
+      UPLOAD_LOCAL_ROOT: /app/storage/uploads
+    volumes:
+      - backend_uploads:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
@@ -96,5 +99,6 @@ services:
       retries: 6
 
 volumes:
+  backend_uploads:
   postgres_data:
   redis_data:

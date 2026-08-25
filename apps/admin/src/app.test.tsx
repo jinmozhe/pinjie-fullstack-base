@@ -36,6 +36,7 @@ const currentAdmin: AdminRead = {
   id: "01900000-0000-7000-8000-000000000001",
   username: "stage-admin",
   display_name: "Stage Admin",
+  avatar: "/static/uploads/avatar.png",
   is_active: true,
   is_superuser: true,
   roles: [],
@@ -85,6 +86,7 @@ describe("admin runtime lifecycle", () => {
     const user = userEvent.setup();
     const runtime = layout({ initialState: { settings: defaultSettings, currentAdmin } });
     render(rootContainer(runtime.avatarProps?.render?.() ?? null));
+    expect(screen.getByRole("img", { name: "Stage Admin的头像" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "账户菜单：Stage Admin" }));
     await user.click(await screen.findByText("个人设置"));

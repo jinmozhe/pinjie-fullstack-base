@@ -31,6 +31,8 @@ class PermissionCode(StrEnum):
     SECURITY_LOGIN_EVENTS_READ = "security:login-events:read"
     SECURITY_AUDIT_EVENTS_READ = "security:audit-events:read"
     SYSTEM_REQUEST_LOGS_READ = "system:request-logs:read"
+    ASSETS_READ = "assets:read"
+    ASSETS_DELETE = "assets:delete"
 
 
 PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
@@ -55,10 +57,12 @@ PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
     PermissionDefinition("security:login-events:read", "查看登录事件", "查看登录安全事件"),
     PermissionDefinition("security:audit-events:read", "查看审计事件", "查看高风险操作审计"),
     PermissionDefinition("system:request-logs:read", "查看请求日志", "查看启用后的请求元数据"),
+    PermissionDefinition("assets:read", "查看文件资产", "查看统一文件与多媒体资产列表"),
+    PermissionDefinition("assets:delete", "删除文件资产", "删除文件资产及其存储对象"),
 )
 
 PERMISSION_CODES = frozenset(item.code for item in PERMISSION_CATALOG)
-CATALOG_VERSION = "2026-08-15"
+CATALOG_VERSION = "2026-08-25"
 
 __all__ = [
     "CATALOG_VERSION",

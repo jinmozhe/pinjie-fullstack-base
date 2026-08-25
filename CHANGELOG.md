@@ -6,6 +6,7 @@
 
 ### Added
 
+- 增加统一文件与多媒体资产服务：本地存储端口、Magic Number 与场景策略、同主体 SHA-256 去重、双域 Cookie/CSRF 上传、RBAC 资产查询、二次确认审计删除、Admin/Web 上传组件及生产持久卷。
 - 增加 Session 分页契约、Refresh Token 级联清理和默认 dry-run 的会话保留清理工具，支持显式 `--apply`、结果统计和隔离测试库验证。
 - 增加 Admin 认证 HTTP、启动生命周期、权限映射和 Web BFF/SSR 会话恢复回归测试，将高风险传输边界纳入前端覆盖率门禁。
 - 增加 Web App Router PNG favicon，使用 Next.js `ImageResponse` 生成业务中立的 Pinjie 图标，并通过 production build、桌面和移动浏览器及真实资源响应检查。
@@ -49,6 +50,7 @@
 
 ### Fixed
 
+- 补齐管理员头像输入输出字段的 OpenAPI 中文说明、隔离测试 Redis 变量与 pytest 临时目录，并以前向迁移修复 `request_logs` 表注释漂移。
 - 移除 Umi `4.7.5` 未使用的 Vite 4 构建链，通过精确 pnpm Hook 和受控补丁关闭不安全入口，修复 Webpack 开发服务器忽略 host 的行为，并增加版本漂移、锁文件和补丁门禁。
 - 修复 Web/Admin Cookie Profile 共享 Origin 与代理路径导致的跨端会话越权面；Backend 按 Profile 精确校验 Origin，Web BFF 和 Admin Nginx 只允许各自路径并过滤另一端 Cookie。
 - 修复最后超级管理员并发竞争、跨 `AsyncSession` 事务上下文误判，以及认证提交后 Redis 限流清理失败翻转成功结果的问题；真实 PostgreSQL 并发和 Redis 失败路径均已覆盖。

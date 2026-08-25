@@ -172,6 +172,8 @@ export type AdminProfileUpdateIn = {
     display_name?: string | null;
     /**
      * Avatar
+     *
+     * 管理员头像 URL 或站内资源路径
      */
     avatar?: string | null;
 };
@@ -200,6 +202,8 @@ export type AdminRead = {
     display_name: string | null;
     /**
      * Avatar
+     *
+     * 管理员头像 URL 或站内资源路径
      */
     avatar?: string | null;
     /**
@@ -271,6 +275,86 @@ export type AdminUpdateIn = {
 };
 
 /**
+ * AssetRead
+ */
+export type AssetRead = {
+    /**
+     * Id
+     *
+     * 文件资产唯一标识
+     */
+    id: string;
+    /**
+     * 上传主体类型
+     */
+    uploader_type: UploaderType;
+    /**
+     * Uploader Id
+     *
+     * 上传主体唯一标识，系统任务可为空
+     */
+    uploader_id: string | null;
+    /**
+     * Storage Driver
+     *
+     * 保存文件的存储驱动代码
+     */
+    storage_driver: string;
+    /**
+     * File Key
+     *
+     * 存储驱动中的相对文件键
+     */
+    file_key: string;
+    /**
+     * Original Name
+     *
+     * 上传时经过路径剥离的原始文件名
+     */
+    original_name: string;
+    /**
+     * Mime Type
+     *
+     * 服务端探测得到的真实 MIME 类型
+     */
+    mime_type: string;
+    /**
+     * File Size
+     *
+     * 文件大小，单位为字节
+     */
+    file_size: number;
+    /**
+     * File Hash
+     *
+     * 文件内容的 SHA-256 哈希值
+     */
+    file_hash: string;
+    /**
+     * Url
+     *
+     * 文件的公开访问 URL 或站内路径
+     */
+    url: string;
+    /**
+     * 受控的文件使用场景
+     */
+    scene: UploadScene;
+    /**
+     * Created At
+     *
+     * 创建时间
+     */
+    created_at: string;
+    /**
+     * Updated At
+     *
+     * 最近更新时间
+     */
+    updated_at: string;
+};
+
+/**
  * AuditEventRead
  */
 export type AuditEventRead = {
@@ -339,9 +423,25 @@ export type AuditEventRead = {
 };
 
 /**
+ * Body_upload_asset_api_v1_assets_upload_post
+ */
+export type BodyUploadAssetApiV1AssetsUploadPost = {
+    /**
+     * File
+     *
+     * 需要上传的文件
+     */
+    file: Blob | File;
+    /**
+     * 受控的文件使用场景
+     */
+    scene: UploadScene;
+};
+
+/**
  * ConfirmationAction
  */
-export type ConfirmationAction = 'users:disable' | 'users:credentials:reset' | 'users:sessions:revoke' | 'admins:create' | 'admins:superuser:change' | 'admins:status:change' | 'admins:credentials:reset' | 'admins:roles:assign' | 'admins:sessions:revoke' | 'roles:delete' | 'roles:permissions:assign';
+export type ConfirmationAction = 'users:disable' | 'users:credentials:reset' | 'users:sessions:revoke' | 'admins:create' | 'admins:superuser:change' | 'admins:status:change' | 'admins:credentials:reset' | 'admins:roles:assign' | 'admins:sessions:revoke' | 'roles:delete' | 'roles:permissions:assign' | 'assets:delete';
 
 /**
  * HTTPValidationError
@@ -443,6 +543,42 @@ export type PageResultAdminRead = {
      * 当前分页中的资源列表
      */
     items: Array<AdminRead>;
+    /**
+     * Page
+     *
+     * 当前页码，从 1 开始
+     */
+    page: number;
+    /**
+     * Page Size
+     *
+     * 每页资源数量
+     */
+    page_size: number;
+    /**
+     * Total
+     *
+     * 符合条件的资源总数
+     */
+    total: number;
+    /**
+     * Total Pages
+     *
+     * 符合条件的总页数
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[AssetRead]
+ */
+export type PageResultAssetRead = {
+    /**
+     * Items
+     *
+     * 当前分页中的资源列表
+     */
+    items: Array<AssetRead>;
     /**
      * Page
      *
@@ -992,6 +1128,34 @@ export type ResponseModelAdminRead = {
 };
 
 /**
+ * ResponseModel[AssetRead]
+ */
+export type ResponseModelAssetRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: AssetRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
  * ResponseModel[PageResult[AdminRead]]
  */
 export type ResponseModelPageResultAdminRead = {
@@ -1011,6 +1175,34 @@ export type ResponseModelPageResultAdminRead = {
      * 响应业务数据
      */
     data: PageResultAdminRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[AssetRead]]
+ */
+export type ResponseModelPageResultAssetRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: PageResultAssetRead;
     /**
      * Request Id
      *
@@ -1622,6 +1814,16 @@ export type SystemStatus = {
 };
 
 /**
+ * UploadScene
+ */
+export type UploadScene = 'avatar' | 'article' | 'product' | 'document' | 'attachment' | 'temp';
+
+/**
+ * UploaderType
+ */
+export type UploaderType = 'admin' | 'user' | 'system';
+
+/**
  * UserAuthSessionOut
  */
 export type UserAuthSessionOut = {
@@ -1906,6 +2108,101 @@ export type LogoutApiV1AuthLogoutPostResponses = {
 };
 
 export type LogoutApiV1AuthLogoutPostResponse = LogoutApiV1AuthLogoutPostResponses[keyof LogoutApiV1AuthLogoutPostResponses];
+
+export type UploadAssetApiV1AssetsUploadPostData = {
+    body: BodyUploadAssetApiV1AssetsUploadPost;
+    path?: never;
+    query?: never;
+    url: '/api/v1/assets/upload';
+};
+
+export type UploadAssetApiV1AssetsUploadPostErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type UploadAssetApiV1AssetsUploadPostError = UploadAssetApiV1AssetsUploadPostErrors[keyof UploadAssetApiV1AssetsUploadPostErrors];
+
+export type UploadAssetApiV1AssetsUploadPostResponses = {
+    /**
+     * 请求成功
+     */
+    201: ResponseModelAssetRead;
+};
+
+export type UploadAssetApiV1AssetsUploadPostResponse = UploadAssetApiV1AssetsUploadPostResponses[keyof UploadAssetApiV1AssetsUploadPostResponses];
+
+export type ListAssetsApiV1AssetsGetData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Page
+         */
+        page?: number;
+        /**
+         * Page Size
+         */
+        page_size?: number;
+    };
+    url: '/api/v1/assets';
+};
+
+export type ListAssetsApiV1AssetsGetErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type ListAssetsApiV1AssetsGetError = ListAssetsApiV1AssetsGetErrors[keyof ListAssetsApiV1AssetsGetErrors];
+
+export type ListAssetsApiV1AssetsGetResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelPageResultAssetRead;
+};
+
+export type ListAssetsApiV1AssetsGetResponse = ListAssetsApiV1AssetsGetResponses[keyof ListAssetsApiV1AssetsGetResponses];
+
+export type DeleteAssetApiV1AssetsAssetIdDeleteData = {
+    body?: never;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path: {
+        /**
+         * Asset Id
+         */
+        asset_id: string;
+    };
+    query?: never;
+    url: '/api/v1/assets/{asset_id}';
+};
+
+export type DeleteAssetApiV1AssetsAssetIdDeleteErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAssetApiV1AssetsAssetIdDeleteError = DeleteAssetApiV1AssetsAssetIdDeleteErrors[keyof DeleteAssetApiV1AssetsAssetIdDeleteErrors];
+
+export type DeleteAssetApiV1AssetsAssetIdDeleteResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelBool;
+};
+
+export type DeleteAssetApiV1AssetsAssetIdDeleteResponse = DeleteAssetApiV1AssetsAssetIdDeleteResponses[keyof DeleteAssetApiV1AssetsAssetIdDeleteResponses];
 
 export type DeleteAccountApiV1UsersMeDeleteData = {
     body: AccountDeleteIn;

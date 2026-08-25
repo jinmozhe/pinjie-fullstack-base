@@ -143,3 +143,28 @@ a { color: inherit; }
   .session-item { grid-template-columns: 38px minmax(0, 1fr); }
   .session-item > button, .session-item > .revoked-label { grid-column: 2; justify-self: start; }
 }
+.image-uploader {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.image-uploader__preview {
+  position: relative;
+  width: min(240px, 100%);
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.image-uploader__preview img {
+  object-fit: cover;
+}
+
+.image-uploader--avatar .image-uploader__preview {
+  width: 88px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}

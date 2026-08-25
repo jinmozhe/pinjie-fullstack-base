@@ -5,6 +5,7 @@ import type {
   AdminLoginIn,
   AdminProfileUpdateIn,
   AdminRead,
+  AssetRead,
   ConfirmationAction,
   PageResultSessionRead,
   PageResultAdminRead,
@@ -22,6 +23,7 @@ import type {
   StatusUpdateIn,
   UserUpdateIn,
   UserPrincipalOut,
+  UploadScene,
 } from "@pinjie/api-client";
 
 import { apiRequest, jsonBody } from "./http";
@@ -38,6 +40,12 @@ export const adminApi = {
       method: "PATCH",
       body: jsonBody(input),
     }),
+  uploadAsset: (file: globalThis.File, scene: UploadScene = "avatar") => {
+    const body = new globalThis.FormData();
+    body.set("file", file);
+    body.set("scene", scene);
+    return apiRequest<AssetRead>("/api/v1/assets/upload", { method: "POST", body });
+  },
   logout: () => apiRequest<boolean>("/api/v1/admin/auth/logout", { method: "POST" }, { retryAuth: false }),
   confirm: (action: ConfirmationAction, currentPassword: string) =>
     apiRequest<AdminConfirmOut>("/api/v1/admin/auth/confirm", {

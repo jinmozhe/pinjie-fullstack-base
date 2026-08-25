@@ -6,9 +6,17 @@ export default {
       target: backendURL,
       changeOrigin: false,
     },
+    "/static/uploads": {
+      target: backendURL,
+      changeOrigin: false,
+    },
   },
   test: {
     "/api/v1": {
+      target: backendURL,
+      changeOrigin: false,
+    },
+    "/static/uploads": {
       target: backendURL,
       changeOrigin: false,
     },

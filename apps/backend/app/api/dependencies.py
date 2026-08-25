@@ -24,9 +24,12 @@ from app.db.repositories import SessionRepository
 from app.db.session import session_scope
 from app.domains.admin.permissions import PERMISSION_CODES, PermissionCode
 from app.domains.admin.schemas import ConfirmationAction
+from app.domains.assets.schemas import UploaderType
 from app.services.accounts import AdminAccountService, UserAccountService
 from app.services.admin_management import AdminManagementService
+from app.services.assets import AssetService, AssetUploader
 from app.services.authentication import AdminAuthService, WebAuthService
+from app.services.storage import StorageProvider
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +126,31 @@ WebAuthServiceDependency = Annotated[WebAuthService, Depends(get_web_auth_servic
 AdminAuthServiceDependency = Annotated[AdminAuthService, Depends(get_admin_auth_service)]
 UserAccountServiceDependency = Annotated[UserAccountService, Depends(get_user_account_service)]
 AdminAccountServiceDependency = Annotated[AdminAccountService, Depends(get_admin_account_service)]
+
+
+def get_storage_provider(request: Request) -> StorageProvider:
+    provider = getattr(request.app.state, "storage_provider", None)
+    if provider is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="文件存储服务尚未就绪",
+        )
+    return cast(StorageProvider, provider)
+
+
+def get_asset_service(request: Request, session: DatabaseSession) -> AssetService:
+    resources = get_resources(request)
+    return AssetService(
+        session=session,
+        session_factory=resources.session_factory,
+        settings=get_request_settings(request),
+        storage=get_storage_provider(request),
+        metadata=request_metadata(request),
+    )
+
+
+AssetServiceDependency = Annotated[AssetService, Depends(get_asset_service)]
 
 
 def _require_browser_origin(request: Request, *, allowed_origins: list[str]) -> None:
@@ -343,6 +371,33 @@ async def get_current_admin(
     return CurrentAdmin(admin=admin, login_session=login_session, permissions=permissions)
 
 
+async def get_asset_uploader(
+    request: Request,
+    session: DatabaseSession,
+    web_access_token: Annotated[str | None, Cookie(alias=WEB_COOKIES.access)] = None,
+    admin_access_token: Annotated[str | None, Cookie(alias=ADMIN_COOKIES.access)] = None,
+) -> AssetUploader:
+    settings = get_request_settings(request)
+    origin = request.headers.get("origin")
+    if origin in settings.web_origins and web_access_token:
+        current_user = await get_current_user(request, session, web_access_token)
+        require_web_csrf(request, current_user)
+        return AssetUploader(type=UploaderType.USER, id=current_user.user.id)
+    if origin in settings.admin_origins and admin_access_token:
+        current_admin = await get_current_admin(request, session, admin_access_token)
+        require_admin_csrf(request, current_admin)
+        return AssetUploader(type=UploaderType.ADMIN, id=current_admin.admin.id)
+    raise AppException(
+        status_code=401 if not web_access_token and not admin_access_token else 403,
+        code=ErrorCode.AUTH_REQUIRED if not web_access_token and not admin_access_token else ErrorCode.CSRF_REJECTED,
+        message="需要匹配当前来源的已认证上传会话",
+        headers={"WWW-Authenticate": "Cookie"} if not web_access_token and not admin_access_token else None,
+    )
+
+
+AssetUploaderDependency = Annotated[AssetUploader, Depends(get_asset_uploader)]
+
+
 def get_admin_management_service(
     request: Request,
     session: DatabaseSession,
@@ -460,6 +515,8 @@ __all__ = [
     "CurrentAdmin",
     "CurrentUser",
     "AdminAccountServiceDependency",
+    "AssetServiceDependency",
+    "AssetUploaderDependency",
     "AdminAuthServiceDependency",
     "AdminManagementServiceDependency",
     "consume_admin_confirmation",

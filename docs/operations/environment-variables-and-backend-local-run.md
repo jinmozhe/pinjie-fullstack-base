@@ -70,8 +70,12 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `AUTH_COOKIE_SECURE`、注册模式、Token、Session 期限与 `SESSION_RETENTION_DAYS`
 - 请求元数据模式及安全日志保留期
 - Loguru 控制台与本地文件日志开关、路径、轮转大小和保留周期
+- `UPLOAD_STORAGE_DRIVER`、`UPLOAD_LOCAL_ROOT`、`UPLOAD_BASE_URL`
+- `UPLOAD_MAX_FILE_SIZE_MB`、`UPLOAD_ALLOWED_EXTENSIONS`、`UPLOAD_IO_CONCURRENCY`
 
 文件日志默认写入 Backend 工作目录下的 `logs/app_{time:YYYY-MM-DD}.log`，使用异步队列、50 MB 轮转、10 天保留和 ZIP 压缩。日志文件不进入 Git；只读容器或只允许标准错误流的部署必须显式设置 `LOG_FILE_ENABLED=false`。
+
+本地文件资产默认写入 Backend 工作目录下的 `uploads/`，公开路径为 `/static/uploads`。全局扩展名白名单不包含 SVG；场景级 MIME、Magic Number 和大小限制仍由 Backend 强制执行，不能只依赖 `.env` 或前端限制。生产 Compose 把完整 `/app/storage` 挂载为命名卷，并覆盖 `UPLOAD_LOCAL_ROOT=/app/storage/uploads`，确保公开文件、私有 staging 和 trash 位于同一文件系统。
 
 生产 `compose.prod.yml` 当前通过以下配置把该文件注入 Backend 容器，并强制覆盖文件日志开关：
 

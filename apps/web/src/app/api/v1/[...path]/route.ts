@@ -11,6 +11,7 @@ const SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 function isAllowedRoute(method: string, path: string[]): boolean {
   const route = path.join("/");
   if (method === "POST" && /^(auth\/(register|login|refresh|logout)|users\/me\/(password|sessions\/revoke-others))$/.test(route)) return true;
+  if (method === "POST" && route === "assets/upload") return true;
   if (["GET", "PATCH", "DELETE"].includes(method) && route === "users/me") return true;
   if (method === "GET" && route === "users/me/sessions") return true;
   return method === "DELETE" && path.length === 4 && path.slice(0, 3).join("/") === "users/me/sessions" && SESSION_ID.test(path[3] ?? "");
@@ -69,13 +70,15 @@ async function proxy(request: Request, context: { params: Promise<{ path: string
     if (value) headers.set(name, name === "cookie" ? webCookies(value) : value);
   }
   try {
-    const response = await fetch(target, {
+    const requestInit: RequestInit & { duplex?: "half" } = {
       method: request.method,
       headers,
-      body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.arrayBuffer(),
+      body: request.method === "GET" || request.method === "HEAD" ? undefined : request.body,
       cache: "no-store",
       redirect: "manual",
-    });
+    };
+    if (requestInit.body) requestInit.duplex = "half";
+    const response = await fetch(target, requestInit);
     const outgoing = new Headers();
     for (const name of ["cache-control", "content-type", "retry-after", "x-request-id", "x-trace-id"]) {
       const value = response.headers.get(name);
