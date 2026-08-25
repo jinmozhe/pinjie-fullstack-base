@@ -12,13 +12,13 @@ type LoginValues = { username: string; password: string };
 export function LoginPage({ authenticated = false }: { authenticated?: boolean }) {
   const queryClient = useQueryClient();
   useEffect(() => {
-    if (authenticated) navigate("/users");
+    if (authenticated) navigate("/welcome");
   }, [authenticated]);
   const login = useMutation({
     mutationFn: (values: LoginValues) => adminApi.login(values),
     onSuccess: (session) => {
       queryClient.setQueryData(["admin-me"], session.principal);
-      navigate("/users");
+      navigate("/welcome");
       if (process.env.NODE_ENV !== "test") window.location.reload();
     },
   });

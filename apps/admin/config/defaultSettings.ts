@@ -2,10 +2,10 @@ import type { Settings as LayoutSettings } from "@ant-design/pro-components";
 
 const defaultSettings: LayoutSettings = {
   navTheme: "light",
-  colorPrimary: "#0958d9",
-  layout: "side",
+  colorPrimary: "#1677ff",
+  layout: "mix",
   contentWidth: "Fluid",
-  fixedHeader: false,
+  fixedHeader: true,
   fixSiderbar: true,
   splitMenus: false,
   title: "Pinjie Console",

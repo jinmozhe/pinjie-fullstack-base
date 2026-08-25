@@ -1,60 +1,297 @@
 :root {
-  color: #172033;
+  color: #1f2937;
   background: #f5f7fa;
-  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
 }
 
-* { box-sizing: border-box; }
-html, body, #root { min-height: 100%; }
-body { margin: 0; min-width: 320px; overflow-x: hidden; }
-button, input, textarea { letter-spacing: 0; }
-.brand-mark { display: flex; height: 56px; min-width: 0; align-items: center; gap: 10px; overflow: hidden; color: #fff; font-size: 15px; font-weight: 650; white-space: nowrap; }
-.brand-mark__symbol { display: inline-grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 8px; color: #fff; background: #1677ff; box-shadow: 0 4px 12px rgb(22 119 255 / 28%); }
-.brand-mark__title { overflow: hidden; text-overflow: ellipsis; }
-.account-trigger { display: inline-flex; height: 40px; align-items: center; gap: 8px; }
-.ant-pro-sider .account-trigger { color: #c7d2e0; }
-.ant-pro-sider .account-trigger:hover { color: #fff !important; background: #14395c !important; }
-.ant-pro-layout-header { position: sticky; top: 0; z-index: 19; }
-.workspace-page { min-width: 0; }
-.workspace-page h1.page-title { margin: 0; color: #101828; font-size: 24px; line-height: 1.4; }
-.workspace-page .ant-pro-page-container-children-container { max-width: 1480px; margin: 0 auto; padding-block-end: 32px; }
-.workspace-page .ant-pro-page-container-warp-page-header { max-width: 1480px; margin: 0 auto; }
-.workspace-panel { border: 1px solid #eaecf0; box-shadow: 0 1px 3px rgb(16 24 40 / 6%); }
-.workspace-panel > .ant-card-body { min-width: 0; padding: 20px; }
-.table-toolbar { margin-bottom: 16px; }
-.table-toolbar .ant-input-affix-wrapper { width: min(100%, 360px); }
-.table-scroll-boundary { width: 100%; min-width: 0; overflow-x: auto; }
-.workspace-panel .ant-pro-table .ant-pro-card { border: 0; box-shadow: none; }
-.workspace-panel .ant-pro-table .ant-pro-card-body { padding: 0; }
-.workspace-panel .ant-table-container { max-width: 100%; overflow-x: auto; }
-.workspace-panel .ant-table-cell { vertical-align: middle; }
-.table-primary-cell { display: grid; min-width: 120px; gap: 2px; }
-.table-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.center-state { display: grid; min-height: 240px; align-content: center; justify-items: center; gap: 12px; }
-.session-row { display: grid; gap: 6px; padding: 14px 0; border-bottom: 1px solid #eceff3; }
-.permission-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; width: 100%; }
-.permission-grid .ant-checkbox-wrapper { align-items: flex-start; margin-inline-start: 0; padding: 9px; border: 1px solid #e4e7ec; border-radius: 6px; }
-.permission-grid small { display: block; color: #667085; font-family: Consolas, monospace; }
-.modal-copy { color: #475467; line-height: 1.6; }
-.admin-footer { color: #667085; }
-.bootstrap-state { display: grid; width: min(100% - 32px, 620px); min-height: 100vh; margin: auto; place-items: center; }
-.login-screen { display: grid; min-height: 100vh; place-items: center; padding: 24px; background: #f5f7fa; }
-.login-panel { width: min(100%, 420px); padding: 36px; border: 1px solid #e4e7ec; border-radius: 8px; background: #fff; box-shadow: 0 12px 32px rgb(16 24 40 / 10%); }
-.login-panel__mark { display: grid; width: 44px; height: 44px; margin-bottom: 20px; place-items: center; border-radius: 8px; color: #fff; background: #1677ff; box-shadow: 0 6px 16px rgb(22 119 255 / 24%); font-size: 22px; }
-.login-panel .ant-alert { margin-bottom: 18px; }
-.login-panel h1.ant-typography { margin-bottom: 4px; font-size: 30px; }
-body .ant-typography.ant-typography-secondary { color: #595959; }
-body .ant-tag.ant-tag-success { color: #135200; background: #f6ffed; border-color: #95de64; }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+  background-color: #f5f7fa;
+}
+
+button,
+input,
+textarea {
+  letter-spacing: 0;
+}
+
+/* 顶部品牌 Logo */
+.brand-mark {
+  display: flex;
+  height: 56px;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  color: #101828;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.brand-mark__symbol {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  border-radius: 6px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+  box-shadow: 0 2px 6px rgba(22, 119, 255, 0.28);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.brand-mark__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #101828;
+  letter-spacing: -0.2px;
+}
+
+/* 顶部账号菜单触发器 */
+.account-trigger {
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: #344054;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.account-trigger:hover {
+  background: #f2f4f7 !important;
+  color: #1677ff !important;
+}
+
+.ant-pro-layout-header {
+  position: sticky;
+  top: 0;
+  z-index: 19;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* 页面容器与卡片 */
+.workspace-page {
+  min-width: 0;
+}
+
+.workspace-page h1.page-title {
+  margin: 0;
+  color: #101828;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.workspace-page .ant-pro-page-container-children-container {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding-block-end: 24px;
+}
+
+.workspace-page .ant-pro-page-container-warp-page-header {
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.workspace-panel {
+  border: 1px solid #f0f2f5;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.workspace-panel > .ant-card-body {
+  min-width: 0;
+  padding: 20px 24px;
+}
+
+/* 表格与工具条优化 */
+.workspace-panel .ant-pro-table .ant-pro-card {
+  border: 0;
+  box-shadow: none;
+}
+
+.workspace-panel .ant-pro-table .ant-pro-card-body {
+  padding: 0;
+}
+
+.workspace-panel .ant-table-container {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.workspace-panel .ant-table-cell {
+  vertical-align: middle;
+}
+
+.table-primary-cell {
+  display: grid;
+  min-width: 120px;
+  gap: 2px;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.table-actions .ant-btn-link {
+  padding: 0 4px;
+  height: auto;
+  font-size: 13px;
+}
+
+.center-state {
+  display: grid;
+  min-height: 240px;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+}
+
+.session-row {
+  display: grid;
+  gap: 6px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f4f7;
+}
+
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  width: 100%;
+}
+
+.permission-grid .ant-checkbox-wrapper {
+  align-items: flex-start;
+  margin-inline-start: 0;
+  padding: 9px;
+  border: 1px solid #e4e7ec;
+  border-radius: 6px;
+}
+
+.permission-grid small {
+  display: block;
+  color: #667085;
+  font-family: Consolas, monospace;
+}
+
+.modal-copy {
+  color: #475467;
+  line-height: 1.6;
+}
+
+/* 页脚 */
+.admin-footer {
+  text-align: center;
+  padding: 24px 0;
+  color: #8c8c8c;
+  font-size: 13px;
+}
+
+.bootstrap-state {
+  display: grid;
+  width: min(100% - 32px, 620px);
+  min-height: 100vh;
+  margin: auto;
+  place-items: center;
+}
+
+/* 登录界面微质感 */
+.login-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: #f5f7fa;
+}
+
+.login-panel {
+  width: min(100%, 400px);
+  padding: 36px 32px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+}
+
+.login-panel__mark {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  place-items: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1677ff 0%, #0958d9 100%);
+  box-shadow: 0 4px 14px rgba(22, 119, 255, 0.28);
+  font-size: 22px;
+}
+
+.login-panel .ant-alert {
+  margin-bottom: 18px;
+}
+
+.login-panel h1.ant-typography {
+  margin-bottom: 4px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+body .ant-typography.ant-typography-secondary {
+  color: #667085;
+}
+
+body .ant-tag.ant-tag-success {
+  color: #389e0d;
+  background: #f6ffed;
+  border-color: #b7eb8f;
+}
 
 @media (max-width: 991px) {
-  .account-trigger span:last-child { display: none; }
-  .workspace-page .ant-pro-page-container-children-container { padding-inline: 16px; }
+  .account-trigger span:last-child {
+    display: none;
+  }
+  .workspace-page .ant-pro-page-container-children-container {
+    padding-inline: 16px;
+  }
 }
 
 @media (max-width: 640px) {
-  .login-screen { padding: 16px; }
-  .login-panel { padding: 26px 22px; }
-  .permission-grid { grid-template-columns: 1fr; }
-  .workspace-panel > .ant-card-body { padding: 14px; }
-  .workspace-page .ant-pro-page-container-warp-page-header { padding-inline: 16px; }
+  .login-screen {
+    padding: 16px;
+  }
+  .login-panel {
+    padding: 26px 20px;
+  }
+  .permission-grid {
+    grid-template-columns: 1fr;
+  }
+  .workspace-panel > .ant-card-body {
+    padding: 16px;
+  }
+  .workspace-page .ant-pro-page-container-warp-page-header {
+    padding-inline: 16px;
+  }
 }

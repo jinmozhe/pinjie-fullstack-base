@@ -78,7 +78,7 @@
 
 - 保留 `Protect main` Ruleset 和 13 项必需检查，启用 rebase Auto-merge 与合并后自动删除分支；`$git-sync` 现可一次完成当前任务的分支、提交、推送、PR、检查等待、自动合并、分支清理和本地 `main` 同步，失败时保留 PR 与分支并停止。
 - 四个自动 GitHub Actions 工作流收敛为目标为 `main` 的 Pull Request 和 `main` push 触发，Security 继续保留每周定时扫描；功能分支 push 不再重复运行整套检查，合并后的 `main` 仍生成镜像发布所需的四项 Push Run。
-- Admin 全面采用官方 Ant Design 6 与 ProComponents 视觉交互体系：以 ProLayout 官方 Token 实现深色侧栏和浅色工作区，统一 PageContainer、单层工作面板、受控 ProTable、搜索刷新、状态与响应式滚动边界，并完成五视口和 axe 验收；认证、RBAC、CSRF、Refresh 和二次确认流程保持不变。
+- Admin 全面采用官方 Ant Design 6 与 ProComponents 视觉交互体系：以 ProLayout 官方 Token 实现浅色侧栏、白色 Header 和浅灰工作区，恢复 ProTable 原生工具栏与轻量操作列，移除侧栏 Logo，并新增 `/welcome` 默认主页和管理快捷入口；认证、RBAC、CSRF、Refresh 和二次确认流程保持不变。
 - 收紧 `main` Ruleset：移除维护者永久 bypass，保留 Pull Request、会话解决和 13 项状态检查；日常交付统一通过开发分支和 Pull Request。
 - 移除把 Umi bundler 的 Vite 4 强制覆盖到 Vite 6 的不兼容 override；随后从 Webpack 模式依赖树移除未使用的 Umi Vite 4 构建链，Admin Vitest 独立使用 `vite@6.4.3`。
 - Backend、Admin、Web、PostgreSQL 和 Redis 的生产基础镜像全部固定完整 digest，生产 Compose 门禁同时覆盖 Dockerfile、应用镜像变量、基础设施引用和可变引用反例。
