@@ -16,7 +16,7 @@ from app.core.security import PasswordManager, create_access_token, new_opaque_t
 from app.db.models import Admin, AdminRefreshToken, AdminSession, User, UserRefreshToken, UserSession
 from app.db.repositories import AdminRepository, SecurityRepository, SessionRepository, UserRepository
 from app.db.transaction import transaction_scope
-from app.domains.admin.schemas import AdminConfirmIn, AdminConfirmOut
+from app.domains.admin.schemas import AdminConfirmIn, AdminConfirmOut, AdminProfileUpdateIn
 from app.domains.users.schemas import AccountDeleteIn, PasswordChangeIn, UserUpdateIn
 from app.services.authentication import SessionArtifacts
 from app.services.security_events import login_event
@@ -199,6 +199,22 @@ class AdminAccountService:
         _, admin_secret, _, admin_hmac = settings.authentication_secrets()
         self.jwt_secret = admin_secret
         self.hmac_key = admin_hmac
+
+    async def update_profile(
+        self,
+        *,
+        admin: Admin,
+        payload: AdminProfileUpdateIn,
+    ) -> Admin:
+        async with transaction_scope(self.session):
+            locked = await self.admins.get(admin.id, for_update=True)
+            if locked is None or not locked.is_active:
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在或已停用")
+            if "display_name" in payload.model_fields_set:
+                locked.display_name = payload.display_name.strip() if payload.display_name else None
+            if "avatar" in payload.model_fields_set:
+                locked.avatar = payload.avatar.strip() if payload.avatar else None
+        return locked
 
     async def change_password(
         self,

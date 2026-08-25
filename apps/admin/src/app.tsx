@@ -1,16 +1,16 @@
 import type { AdminRead } from "@pinjie/api-client";
-import { KeyOutlined, LogoutOutlined, UserOutlined } from "@ant-design/icons";
+import { LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 import { history, Link } from "@umijs/max";
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
-import { Alert, Avatar, Button, ConfigProvider, Drawer, Dropdown, Form, Input, Result, Typography, message, theme } from "antd";
+import { Avatar, Button, ConfigProvider, Dropdown, Result, Typography, message, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import type { ReactNode } from "react";
-import { useState } from "react";
 
 import defaultSettings from "../config/defaultSettings";
 import { AdminContext } from "./features/auth/auth-context";
 import { adminApi } from "./lib/api/admin";
 import { ApiError, errorMessage } from "./lib/api/http";
+import logoSvg from "./assets/logo.svg";
 import "./styles.css";
 
 const queryClient = new QueryClient({
@@ -38,29 +38,7 @@ export async function getInitialState(): Promise<AdminInitialState> {
   }
 }
 
-function PasswordDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [form] = Form.useForm<{ current_password: string; new_password: string }>();
-  const mutation = useMutation({
-    mutationFn: (values: { current_password: string; new_password: string }) => adminApi.changePassword(values.current_password, values.new_password),
-    onSuccess: () => {
-      message.success("密码已修改，当前会话已更新，其他会话已撤销");
-      form.resetFields();
-      onClose();
-    },
-  });
-  return <Drawer open={open} title="账户安全" styles={{ wrapper: { width: 420 } }} onClose={onClose}>
-    <Typography.Paragraph type="secondary">修改密码会保留当前会话并撤销其他会话。</Typography.Paragraph>
-    {mutation.isError && <Alert showIcon type="error" title={errorMessage(mutation.error)} />}
-    <Form form={form} layout="vertical" onFinish={(values) => mutation.mutate(values)}>
-      <Form.Item label="当前密码" name="current_password" rules={[{ required: true }, { max: 64, message: "密码最多 64 个字符" }]}><Input.Password autoComplete="current-password" maxLength={64} /></Form.Item>
-      <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
-      <Button type="primary" htmlType="submit" loading={mutation.isPending}>修改密码</Button>
-    </Form>
-  </Drawer>;
-}
-
 function AccountMenu({ admin }: { admin: AdminRead }) {
-  const [passwordOpen, setPasswordOpen] = useState(false);
   const logout = useMutation({
     mutationFn: adminApi.logout,
     onSuccess: () => {
@@ -70,19 +48,22 @@ function AccountMenu({ admin }: { admin: AdminRead }) {
     },
     onError: (error) => message.error(errorMessage(error)),
   });
-  return <>
-    <Dropdown menu={{ items: [
-      { key: "password", icon: <KeyOutlined />, label: "修改密码", onClick: () => setPasswordOpen(true) },
-      { type: "divider" },
-      { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, disabled: logout.isPending, onClick: () => logout.mutate() },
-    ] }}>
+  return (
+    <Dropdown
+      menu={{
+        items: [
+          { key: "settings", icon: <SettingOutlined />, label: "个人设置", onClick: () => history.push("/account/settings") },
+          { type: "divider" },
+          { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, disabled: logout.isPending, onClick: () => logout.mutate() },
+        ],
+      }}
+    >
       <Button type="text" className="account-trigger" aria-label={`账户菜单：${admin.display_name || admin.username}`}>
-        <Avatar size="small" icon={<UserOutlined />} />
+        <Avatar size="small" src={admin.avatar ?? undefined} icon={<UserOutlined />} />
         <span>{admin.display_name || admin.username}</span>
       </Button>
     </Dropdown>
-    <PasswordDrawer open={passwordOpen} onClose={() => setPasswordOpen(false)} />
-  </>;
+  );
 }
 
 function AdminLayoutFrame({ initialState, children }: { initialState: AdminInitialState; children: ReactNode }) {
@@ -96,9 +77,8 @@ function AdminLayoutFrame({ initialState, children }: { initialState: AdminIniti
 export const layout = ({ initialState }: { initialState?: unknown }) => {
   const state = initialState as AdminInitialState | undefined;
   return {
-    title: "Pinjie Console",
-    logo: false,
-    menuHeaderRender: false,
+    title: "PinJie",
+    logo: logoSvg,
     menuItemRender: (item: { path?: string }, dom: ReactNode) => (item.path ? <Link to={item.path}>{dom}</Link> : dom),
     avatarProps: state?.currentAdmin
       ? {
@@ -113,7 +93,7 @@ export const layout = ({ initialState }: { initialState?: unknown }) => {
       <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>{children}</AdminLayoutFrame>
     ),
     ...state?.settings,
-    siderWidth: 220,
+    siderWidth: 256,
     token: {
       bgLayout: "#f5f7fa",
       header: {
@@ -141,7 +121,7 @@ export const layout = ({ initialState }: { initialState?: unknown }) => {
       pageContainer: {
         colorBgPageContainer: "#f5f7fa",
         colorBgPageContainerFixed: "#ffffff",
-        paddingInlinePageContainerContent: 24,
+        paddingInlinePageContainerContent: 40,
         paddingBlockPageContainerContent: 24,
       },
     },

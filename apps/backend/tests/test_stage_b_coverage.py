@@ -301,6 +301,21 @@ async def test_admin_browser_api_complete_management_lifecycle(coverage_app: Fas
         root_id = logged_in.json()["data"]["principal"]["id"]
         assert (await admin_client.get("/api/v1/admin/auth/me")).status_code == 200
 
+        invalid_profile = await admin_client.patch(
+            "/api/v1/admin/auth/profile",
+            headers=_csrf_headers(admin_client, admin=True),
+            json={},
+        )
+        assert invalid_profile.status_code == 422
+        updated_profile = await admin_client.patch(
+            "/api/v1/admin/auth/profile",
+            headers=_csrf_headers(admin_client, admin=True),
+            json={"display_name": "Root New Display", "avatar": "https://example.com/avatar.png"},
+        )
+        assert updated_profile.status_code == 200
+        assert updated_profile.json()["data"]["display_name"] == "Root New Display"
+        assert updated_profile.json()["data"]["avatar"] == "https://example.com/avatar.png"
+
         refreshed = await admin_client.post(
             "/api/v1/admin/auth/refresh", headers=_csrf_headers(admin_client, admin=True)
         )

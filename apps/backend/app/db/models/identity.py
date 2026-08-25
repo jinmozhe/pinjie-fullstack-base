@@ -119,6 +119,7 @@ class Admin(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
     display_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    avatar: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="管理员头像 URL 或路径")
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_superuser: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

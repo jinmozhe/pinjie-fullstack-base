@@ -7,5 +7,6 @@ export default [
   { path: "/roles", name: "角色权限", icon: "SafetyCertificateOutlined", component: "../features/roles/RolesPage", access: "canRoles" },
   { path: "/security", name: "安全日志", icon: "AuditOutlined", component: "../features/security/SecurityPage", access: "canSecurity" },
   { path: "/system", name: "系统状态", icon: "DashboardOutlined", component: "../features/system/SystemStatusPage" },
+  { path: "/account/settings", name: "个人设置", component: "../features/account/AccountSettingsPage", hideInMenu: true },
   { path: "*", redirect: "/welcome" },
 ];

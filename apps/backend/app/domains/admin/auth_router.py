@@ -22,7 +22,7 @@ from app.domains.users.schemas import PasswordChangeIn
 from app.services.authentication import SessionArtifacts
 
 from .presenters import admin_read
-from .schemas import AdminAuthSessionOut, AdminConfirmIn, AdminConfirmOut, AdminLoginIn, AdminRead
+from .schemas import AdminAuthSessionOut, AdminConfirmIn, AdminConfirmOut, AdminLoginIn, AdminProfileUpdateIn, AdminRead
 
 router = APIRouter(prefix="/admin/auth", tags=["管理员认证"])
 
@@ -124,6 +124,19 @@ async def logout(
 @router.get("/me", response_model=ResponseModel[AdminRead], summary="获取当前管理员")
 async def get_me(current: Annotated[CurrentAdmin, Depends(get_current_admin)]) -> ResponseModel[AdminRead]:
     return success_response(data=admin_read(current.admin), request_id=current_request_id())
+
+
+@router.patch("/profile", response_model=ResponseModel[AdminRead], summary="修改当前管理员个人资料")
+async def update_profile(
+    payload: AdminProfileUpdateIn,
+    service: AdminAccountServiceDependency,
+    current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
+) -> ResponseModel[AdminRead]:
+    admin = await service.update_profile(
+        admin=current.admin,
+        payload=payload,
+    )
+    return success_response(data=admin_read(admin), request_id=current_request_id(), message="个人资料已更新")
 
 
 @router.post("/password", response_model=ResponseModel[RefreshSessionOut], summary="修改当前管理员密码")

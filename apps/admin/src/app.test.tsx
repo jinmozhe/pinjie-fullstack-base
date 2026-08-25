@@ -1,5 +1,5 @@
 import type { AdminRead } from "@pinjie/api-client";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
@@ -81,19 +81,15 @@ describe("admin runtime lifecycle", () => {
     await expect(getInitialState()).resolves.toMatchObject({ bootstrapError: "管理服务暂不可用" });
   });
 
-  it("keeps the current session after a password change", async () => {
+  it("navigates to account settings from dropdown menu", async () => {
     const user = userEvent.setup();
     const runtime = layout({ initialState: { settings: defaultSettings, currentAdmin } });
     render(rootContainer(runtime.avatarProps?.render?.() ?? null));
 
     await user.click(screen.getByRole("button", { name: "账户菜单：Stage Admin" }));
-    await user.click(await screen.findByText("修改密码"));
-    await user.type(screen.getByLabelText("当前密码"), "current-password");
-    await user.type(screen.getByLabelText("新密码"), "replacement-password");
-    await user.click(screen.getByRole("button", { name: "修改密码" }));
+    await user.click(await screen.findByText("个人设置"));
 
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "账户安全" })).not.toBeInTheDocument());
-    expect(history.location.pathname).not.toBe("/login");
+    expect(history.location.pathname).toBe("/account/settings");
   });
 
   it("shows logout failures without redirecting", async () => {
@@ -129,6 +125,8 @@ describe("admin runtime lifecycle", () => {
 
     render(rootContainer(ready.childrenRender?.(<span>受保护内容</span>) ?? null));
     expect(screen.getByText("受保护内容")).toBeInTheDocument();
-    expect(ready.title).toBe("Pinjie Console");
+    expect(ready.title).toBe("PinJie");
+    expect(ready.siderWidth).toBe(256);
+    expect(ready.token?.pageContainer?.paddingInlinePageContainerContent).toBe(40);
   });
 });

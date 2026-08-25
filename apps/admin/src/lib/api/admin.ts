@@ -3,6 +3,7 @@ import type {
   AdminConfirmOut,
   AdminCreateIn,
   AdminLoginIn,
+  AdminProfileUpdateIn,
   AdminRead,
   ConfirmationAction,
   PageResultSessionRead,
@@ -32,6 +33,11 @@ export const adminApi = {
       body: jsonBody(input),
     }, { retryAuth: false }),
   me: () => apiRequest<AdminRead>("/api/v1/admin/auth/me"),
+  updateProfile: (input: AdminProfileUpdateIn) =>
+    apiRequest<AdminRead>("/api/v1/admin/auth/profile", {
+      method: "PATCH",
+      body: jsonBody(input),
+    }),
   logout: () => apiRequest<boolean>("/api/v1/admin/auth/logout", { method: "POST" }, { retryAuth: false }),
   confirm: (action: ConfirmationAction, currentPassword: string) =>
     apiRequest<AdminConfirmOut>("/api/v1/admin/auth/confirm", {
