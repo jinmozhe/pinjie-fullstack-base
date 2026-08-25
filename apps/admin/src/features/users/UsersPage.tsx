@@ -85,8 +85,8 @@ export function UsersPage() {
             { title: "邮箱", dataIndex: "email", responsive: ["lg"], render: (value) => value || "-" },
             { title: "状态", dataIndex: "is_active", width: 100, render: (value) => <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
             { title: "创建时间", dataIndex: "created_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.created_at) },
-            { title: "操作", key: "actions", width: 260, render: (_, row) => (
-              <Space className="table-actions" size={[2, 0]} wrap>
+            { title: "操作", key: "actions", width: "1%", render: (_, row) => (
+              <Space className="table-actions" size={[4, 0]} wrap={false}>
                 {canAccess(current, "users:update") && <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(row); editForm.setFieldsValue({ display_name: row.display_name ?? undefined, email: row.email ?? undefined }); }}>编辑</Button>}
                 {canAccess(current, "users:update") && <Button type="link" size="small" icon={<PoweroffOutlined />} danger={row.is_active} onClick={() => {
                   const run = async (token?: string) => { await adminApi.setUserStatus(row.id, !row.is_active, token); message.success("账户状态已更新"); await invalidate(); };

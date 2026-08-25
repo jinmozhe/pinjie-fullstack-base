@@ -161,6 +161,22 @@ export type AdminLoginIn = {
 };
 
 /**
+ * AdminProfileUpdateIn
+ */
+export type AdminProfileUpdateIn = {
+    /**
+     * Display Name
+     *
+     * 展示名称
+     */
+    display_name?: string | null;
+    /**
+     * Avatar
+     */
+    avatar?: string | null;
+};
+
+/**
  * AdminRead
  */
 export type AdminRead = {
@@ -182,6 +198,10 @@ export type AdminRead = {
      * 展示名称
      */
     display_name: string | null;
+    /**
+     * Avatar
+     */
+    avatar?: string | null;
     /**
      * Is Active
      *
@@ -2175,6 +2195,31 @@ export type GetMeApiV1AdminAuthMeGetResponses = {
 };
 
 export type GetMeApiV1AdminAuthMeGetResponse = GetMeApiV1AdminAuthMeGetResponses[keyof GetMeApiV1AdminAuthMeGetResponses];
+
+export type UpdateProfileApiV1AdminAuthProfilePatchData = {
+    body: AdminProfileUpdateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/profile';
+};
+
+export type UpdateProfileApiV1AdminAuthProfilePatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateProfileApiV1AdminAuthProfilePatchError = UpdateProfileApiV1AdminAuthProfilePatchErrors[keyof UpdateProfileApiV1AdminAuthProfilePatchErrors];
+
+export type UpdateProfileApiV1AdminAuthProfilePatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type UpdateProfileApiV1AdminAuthProfilePatchResponse = UpdateProfileApiV1AdminAuthProfilePatchResponses[keyof UpdateProfileApiV1AdminAuthProfilePatchResponses];
 
 export type ChangePasswordApiV1AdminAuthPasswordPostData = {
     body: PasswordChangeIn;

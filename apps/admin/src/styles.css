@@ -28,6 +28,14 @@ textarea {
 }
 
 /* 顶部品牌 Logo */
+.ant-pro-global-header-logo img,
+.ant-pro-global-header-logo svg {
+  width: 28px;
+  height: 28px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .brand-mark {
   display: flex;
   height: 56px;
@@ -101,14 +109,16 @@ textarea {
 }
 
 .workspace-page .ant-pro-page-container-children-container {
-  max-width: 1480px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   padding-block-end: 24px;
 }
 
 .workspace-page .ant-pro-page-container-warp-page-header {
-  max-width: 1480px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .workspace-panel {
@@ -150,7 +160,9 @@ textarea {
 
 .table-actions {
   display: flex;
-  flex-wrap: wrap;
+  width: max-content;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   align-items: center;
   gap: 4px;
 }
@@ -269,11 +281,20 @@ body .ant-tag.ant-tag-success {
   border-color: #b7eb8f;
 }
 
+@media (max-width: 1439px) {
+  .workspace-page .ant-pro-page-container-children-container,
+  .workspace-page .ant-pro-page-container-warp-page-header {
+    padding-inline: 24px;
+  }
+}
+
 @media (max-width: 991px) {
   .account-trigger span:last-child {
     display: none;
   }
-  .workspace-page .ant-pro-page-container-children-container {
+
+  .workspace-page .ant-pro-page-container-children-container,
+  .workspace-page .ant-pro-page-container-warp-page-header {
     padding-inline: 16px;
   }
 }
@@ -290,8 +311,5 @@ body .ant-tag.ant-tag-success {
   }
   .workspace-panel > .ant-card-body {
     padding: 16px;
-  }
-  .workspace-page .ant-pro-page-container-warp-page-header {
-    padding-inline: 16px;
   }
 }

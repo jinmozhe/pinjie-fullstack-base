@@ -52,6 +52,7 @@ class AdminRead(BaseModel):
     id: uuid.UUID
     username: str
     display_name: str | None
+    avatar: str | None = None
     is_active: bool
     is_superuser: bool
     roles: list[RoleSummary]
@@ -113,6 +114,19 @@ class AdminUpdateIn(BaseModel):
 
     @model_validator(mode="after")
     def require_explicit_field(self) -> "AdminUpdateIn":
+        if not self.model_fields_set:
+            raise ValueError("at least one field is required")
+        return self
+
+
+class AdminProfileUpdateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str | None = Field(default=None, max_length=100)
+    avatar: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def require_explicit_field(self) -> "AdminProfileUpdateIn":
         if not self.model_fields_set:
             raise ValueError("at least one field is required")
         return self
@@ -261,6 +275,7 @@ __all__ = [
     "AdminCreateIn",
     "AdminLoginIn",
     "AdminPage",
+    "AdminProfileUpdateIn",
     "AdminRead",
     "AdminRoleAssignIn",
     "AdminUpdateIn",

@@ -23,6 +23,7 @@ def admin_read(admin: Admin) -> AdminRead:
         id=admin.id,
         username=admin.username,
         display_name=admin.display_name,
+        avatar=admin.avatar,
         is_active=admin.is_active,
         is_superuser=admin.is_superuser,
         roles=[RoleSummary.model_validate(role) for role in sorted(admin.roles, key=lambda value: value.code)],

@@ -76,6 +76,7 @@
 
 ### Changed
 
+- Admin 桌面布局按 Ant Design Pro 官方比例调整：展开侧栏统一为 `256px`，PageContainer 移除 `1480px` 固定上限并改用流式工作区，桌面与移动端按 `40px`、`24px`、`16px` 三级内边距响应，保留现有页面、表格和业务操作。
 - 保留 `Protect main` Ruleset 和 13 项必需检查，启用 rebase Auto-merge 与合并后自动删除分支；`$git-sync` 现可一次完成当前任务的分支、提交、推送、PR、检查等待、自动合并、分支清理和本地 `main` 同步，失败时保留 PR 与分支并停止。
 - 四个自动 GitHub Actions 工作流收敛为目标为 `main` 的 Pull Request 和 `main` push 触发，Security 继续保留每周定时扫描；功能分支 push 不再重复运行整套检查，合并后的 `main` 仍生成镜像发布所需的四项 Push Run。
 - Admin 全面采用官方 Ant Design 6 与 ProComponents 视觉交互体系：以 ProLayout 官方 Token 实现浅色侧栏、白色 Header 和浅灰工作区，恢复 ProTable 原生工具栏与轻量操作列，移除侧栏 Logo，并新增 `/welcome` 默认主页和管理快捷入口；认证、RBAC、CSRF、Refresh 和二次确认流程保持不变。

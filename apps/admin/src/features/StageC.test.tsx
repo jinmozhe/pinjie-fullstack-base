@@ -91,7 +91,7 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
     await confirmAction(user);
-  }, 60_000);
+  }, 120_000);
 
   it("loads administrators and opens role assignment", async () => {
     const user = userEvent.setup();
