@@ -1,10 +1,12 @@
 import type {
   AdminAuthSessionOut,
+  AdminBulkStatusUpdateIn,
   AdminConfirmOut,
   AdminCreateIn,
   AdminLoginIn,
   AdminProfileUpdateIn,
   AdminRead,
+  AdminUpdateIn,
   AssetRead,
   ConfirmationAction,
   PageResultSessionRead,
@@ -87,7 +89,7 @@ export const adminApi = {
   admins: (page: number) => apiRequest<PageResultAdminRead>(`/api/v1/admin/admins?page=${page}&page_size=20`),
   createAdmin: (input: AdminCreateIn, confirmationToken: string) =>
     apiRequest<AdminRead>("/api/v1/admin/admins", { method: "POST", body: jsonBody(input) }, { confirmationToken }),
-  updateAdmin: (id: string, input: { display_name?: string | null; is_superuser?: boolean }, confirmationToken?: string) =>
+  updateAdmin: (id: string, input: AdminUpdateIn, confirmationToken?: string) =>
     apiRequest<AdminRead>(
       `/api/v1/admin/admins/${id}`,
       { method: "PATCH", body: jsonBody(input) },
@@ -97,6 +99,18 @@ export const adminApi = {
     apiRequest<AdminRead>(
       `/api/v1/admin/admins/${id}/status`,
       { method: "PATCH", body: jsonBody({ is_active: isActive } satisfies StatusUpdateIn) },
+      { confirmationToken },
+    ),
+  setAdminStatusBulk: (input: AdminBulkStatusUpdateIn, confirmationToken: string) =>
+    apiRequest<AdminRead[]>(
+      "/api/v1/admin/admins/status/batch",
+      { method: "PATCH", body: jsonBody(input) },
+      { confirmationToken },
+    ),
+  resetAdminPassword: (id: string, newPassword: string, confirmationToken: string) =>
+    apiRequest<{ completed?: boolean }>(
+      `/api/v1/admin/admins/${id}/credentials/password`,
+      { method: "PUT", body: jsonBody({ new_password: newPassword }) },
       { confirmationToken },
     ),
   assignAdminRoles: (id: string, roleIds: string[], confirmationToken: string) =>

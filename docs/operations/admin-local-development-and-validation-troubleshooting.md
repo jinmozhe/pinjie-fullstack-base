@@ -46,7 +46,7 @@ Admin 使用 Vitest、React Testing Library、jsdom 和 MSW。测试运行在 js
 
 ## 4. 浏览器验证
 
-至少检查登录页在桌面 `1440x900` 和移动 `390x844` 视口下的可见性、登录表单、控制台错误、横向溢出和关键跳转。Playwright 标准项目仍需完整环境；仅使用本机 Chrome 或短会话脚本时，必须在结果中注明是兜底验证。
+只有用户在当前任务中明确授权浏览器验证时才启动相关工具。获授权后至少检查登录页在桌面 `1440x900` 和移动 `390x844` 视口下的可见性、登录表单、控制台错误、横向溢出和关键跳转。Playwright 标准项目仍需完整环境；仅使用本机 Chrome 或短会话脚本时，必须在结果中注明是兜底验证。
 
 Windows 环境下，Playwright CLI 包装器可能因依赖 bash 不可用，可使用仓库已锁定的 Playwright Test 或 `npx --yes --package @playwright/cli playwright-cli` 做局部检查。验证结束后只清理本次启动的服务、进程和测试标签，禁止调用会结束整个 Browser Use 会话的 finalize 操作。
 
@@ -59,7 +59,7 @@ Windows 环境下，Playwright CLI 包装器可能因依赖 bash 不可用，可
 3. Redis 容器已启动并可通过 `redis-cli ping` 返回 `PONG`。
 4. Backend 已完成迁移并监听 `8000`。
 
-缺少任一条件时，只能执行 Admin 自身的 typecheck、lint、Vitest、production build 和局部浏览器冒烟，并在交付记录中列出未执行项。不能用 MSW 或假数据替代已经要求真实 Backend、PostgreSQL 和 Redis 的跨栈测试。
+Admin 默认只自动执行 typecheck 和 lint。Vitest、production build、局部浏览器冒烟和完整跨栈验证都需要用户在当前任务中明确授权；缺少完整环境时必须列出未执行项，不能用 MSW 或假数据替代真实 Backend、PostgreSQL 和 Redis 的跨栈测试。
 
 ## 6. 本次迁移中出现的故障
 

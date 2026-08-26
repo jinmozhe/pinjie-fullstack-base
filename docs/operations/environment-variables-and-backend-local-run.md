@@ -214,23 +214,24 @@ uv run python -m scripts.create_initial_admin --username initial-admin --confirm
 
 ## 6. Backend 本地检查
 
-当后端进入 `ready` 状态后，在 `apps/backend` 目录运行：
+当后端进入 `ready` 状态后，在 `apps/backend` 目录运行默认轻量检查：
 
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy app
 uv run lint-imports
-uv run python -m compileall -q app scripts tests
+uv run python -m compileall -q app alembic scripts
 uv run python -c "from app.main import app; print('APP_IMPORT_OK', len(app.openapi().get('paths', {})))"
-uv run pytest tests/ -v
 ```
 
-涉及数据库的测试必须连接名称以 `_test` 结尾的独立测试数据库。禁止使用开发数据库或生产数据库充当自动化测试数据库。
-集成测试同时使用 `TEST_REDIS_URL=redis://localhost:6379/15` 隔离 Redis 数据；测试 DB 15 不得与开发用途混用。
-默认 pytest 配置会同时统计 `app` 的行与分支覆盖率，综合结果低于 90% 时命令失败；本地和 Backend CI 使用同一门禁。
+pytest、测试数据库迁移和测试 Redis 不由日常开发、`$git-sync` 或 GitHub Actions 自动执行。用户在当前任务中明确授权 Backend 测试后，才追加 `uv run pytest tests/ -v` 或被点名的测试范围。
 
-涉及迁移时还需在隔离 `_test` 数据库执行两次升级与一致性检查：
+经授权且涉及数据库的测试必须连接名称以 `_test` 结尾的独立测试数据库。禁止使用开发数据库或生产数据库充当自动化测试数据库。
+集成测试同时使用 `TEST_REDIS_URL=redis://localhost:6379/15` 隔离 Redis 数据；测试 DB 15 不得与开发用途混用。
+pytest 配置会同时统计 `app` 的行与分支覆盖率，综合结果低于 90% 时命令失败；日常 Backend CI 不运行 pytest。
+
+涉及迁移且用户明确授权真实数据库验证时，在隔离 `_test` 数据库执行两次升级与一致性检查：
 
 ```powershell
 uv run alembic upgrade head

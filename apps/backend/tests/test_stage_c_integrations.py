@@ -7,8 +7,10 @@ from unittest.mock import patch
 from urllib.parse import urlsplit
 
 import pytest
+from pydantic import ValidationError
 from redis.exceptions import ResponseError
 from sqlalchemy import delete, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache_keys import cache_keys
 from app.core.config import Settings
@@ -32,7 +34,7 @@ from app.db.models import (
     UserSession,
 )
 from app.db.transaction import transaction_scope
-from app.domains.admin.schemas import AdminUpdateIn, RolePermissionAssignIn
+from app.domains.admin.schemas import AdminBulkStatusUpdateIn, AdminUpdateIn, RolePermissionAssignIn
 from app.domains.auth.schemas import UserRegisterIn
 from app.services.admin_management import AdminManagementService
 from app.services.authentication import WebAuthService
@@ -69,6 +71,13 @@ def _request_metadata() -> RequestMetadata:
         user_agent_summary="pytest",
         release_version="test",
     )
+
+
+def test_admin_bulk_status_rejects_duplicate_ids() -> None:
+    admin_id = new_uuid7()
+
+    with pytest.raises(ValidationError):
+        AdminBulkStatusUpdateIn(admin_ids=[admin_id, admin_id], is_active=False)
 
 
 @pytest.mark.integration
@@ -323,6 +332,207 @@ async def test_denied_admin_change_rolls_back_business_fields_and_finishes_audit
         async with resources.session_factory() as session, transaction_scope(session):
             await session.execute(delete(AuditEvent).where(AuditEvent.request_id == metadata.request_id))
             await session.execute(delete(Admin).where(Admin.id == actor_id))
+        await resources.close()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_admin_avatar_and_bulk_status_are_atomic_and_audited() -> None:
+    database_url = os.getenv("TEST_DATABASE_URL")
+    if not database_url:
+        pytest.fail("TEST_DATABASE_URL is required for admin management integration tests")
+    settings = Settings(
+        ENVIRONMENT="local",
+        DATABASE_URL=database_url,
+        TEST_DATABASE_URL=database_url,
+        REDIS_MODE="disabled",
+        **{key: value for key, value in TEST_SECRETS.items() if "REDIS" not in key},
+    )
+    resources = create_resources(settings)
+    actor_id = new_uuid7()
+    target_ids = [new_uuid7(), new_uuid7()]
+    protected_ids = [new_uuid7(), new_uuid7()]
+    session_ids = [new_uuid7(), new_uuid7()]
+    missing_id = new_uuid7()
+    request_ids: list[str] = []
+    existing_superusers: list[tuple[uuid.UUID, int, datetime]] = []
+    now = datetime.now(UTC)
+
+    def service(session: AsyncSession) -> AdminManagementService:
+        metadata = _request_metadata()
+        request_ids.append(metadata.request_id)
+        return AdminManagementService(
+            session=session,
+            session_factory=resources.session_factory,
+            settings=settings,
+            password_manager=resources.password_manager,
+            metadata=metadata,
+            actor_id=actor_id,
+        )
+
+    try:
+        async with resources.session_factory() as session, transaction_scope(session):
+            existing_superusers = list(
+                (
+                    await session.execute(
+                        select(Admin.id, Admin.credential_version, Admin.updated_at).where(
+                            Admin.is_active.is_(True), Admin.is_superuser.is_(True)
+                        )
+                    )
+                ).tuples()
+            )
+            if existing_superusers:
+                await session.execute(
+                    update(Admin)
+                    .where(Admin.id.in_([item[0] for item in existing_superusers]))
+                    .values(is_superuser=False)
+                )
+            session.add(
+                Admin(
+                    id=actor_id,
+                    username=f"bulk-actor-{actor_id.hex[-12:]}",
+                    display_name="Bulk Actor",
+                    password_hash="not-used-by-this-test",
+                    is_active=True,
+                    is_superuser=False,
+                    credential_version=1,
+                )
+            )
+            for index, target_id in enumerate(target_ids):
+                session.add(
+                    Admin(
+                        id=target_id,
+                        username=f"bulk-target-{target_id.hex[-12:]}",
+                        display_name=f"Bulk Target {index}",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        is_superuser=False,
+                        credential_version=1,
+                    )
+                )
+                session.add(
+                    AdminSession(
+                        id=session_ids[index],
+                        admin_id=target_id,
+                        family_id=new_uuid7(),
+                        credential_profile="browser_cookie",
+                        client_id="pinjie-admin",
+                        csrf_digest="0" * 64,
+                        ip_address="127.0.0.1",
+                        user_agent_summary="pytest",
+                        device_name="integration",
+                        last_seen_at=now,
+                        idle_expires_at=now + timedelta(days=7),
+                        absolute_expires_at=now + timedelta(days=30),
+                        revoked_at=None,
+                        revoke_reason=None,
+                    )
+                )
+            for protected_id in protected_ids:
+                session.add(
+                    Admin(
+                        id=protected_id,
+                        username=f"protected-target-{protected_id.hex[-12:]}",
+                        display_name="Protected Superuser",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        is_superuser=True,
+                        credential_version=1,
+                    )
+                )
+
+        async with resources.session_factory() as current_session:
+            updated = await service(current_session).update_admin(
+                target_ids[0],
+                AdminUpdateIn(display_name=" Updated Target ", avatar=" /static/uploads/avatar/example.png "),
+            )
+            assert updated.display_name == "Updated Target"
+            assert updated.avatar == "/static/uploads/avatar/example.png"
+
+        async with resources.session_factory() as current_session:
+            cleared = await service(current_session).update_admin(target_ids[0], AdminUpdateIn(avatar=None))
+            assert cleared.avatar is None
+
+        async with resources.session_factory() as current_session:
+            disabled = await service(current_session).set_admin_status_bulk(
+                AdminBulkStatusUpdateIn(admin_ids=list(reversed(target_ids)), is_active=False)
+            )
+            assert [admin.id for admin in disabled] == sorted(target_ids)
+
+        async with resources.session_factory() as session:
+            stored_targets = list(
+                (await session.scalars(select(Admin).where(Admin.id.in_(target_ids)).order_by(Admin.id))).all()
+            )
+            stored_sessions = list(
+                (await session.scalars(select(AdminSession).where(AdminSession.id.in_(session_ids)))).all()
+            )
+            bulk_audit = await session.scalar(select(AuditEvent).where(AuditEvent.request_id == request_ids[-1]))
+            assert all(not admin.is_active and admin.credential_version == 2 for admin in stored_targets)
+            assert all(
+                item.revoked_at is not None and item.revoke_reason == "account_status_changed"
+                for item in stored_sessions
+            )
+            assert bulk_audit is not None
+            assert bulk_audit.action == "admins:status:update-bulk"
+            assert bulk_audit.result == "succeeded"
+            assert bulk_audit.changed_fields == {
+                "admin_ids": [str(admin_id) for admin_id in reversed(target_ids)],
+                "is_active": False,
+            }
+
+        async with resources.session_factory() as current_session:
+            await service(current_session).set_admin_status_bulk(
+                AdminBulkStatusUpdateIn(admin_ids=target_ids, is_active=True)
+            )
+
+        async with resources.session_factory() as current_session:
+            with pytest.raises(AppException) as current_exc:
+                await service(current_session).set_admin_status_bulk(
+                    AdminBulkStatusUpdateIn(admin_ids=[target_ids[0], actor_id], is_active=False)
+                )
+            assert current_exc.value.code == ErrorCode.STATE_CONFLICT
+
+        async with resources.session_factory() as current_session:
+            with pytest.raises(AppException) as missing_exc:
+                await service(current_session).set_admin_status_bulk(
+                    AdminBulkStatusUpdateIn(admin_ids=[target_ids[0], missing_id], is_active=False)
+                )
+            assert missing_exc.value.code == ErrorCode.ADMIN_NOT_FOUND
+
+        async with resources.session_factory() as current_session:
+            with pytest.raises(AppException) as protected_exc:
+                await service(current_session).set_admin_status_bulk(
+                    AdminBulkStatusUpdateIn(admin_ids=protected_ids, is_active=False)
+                )
+            assert protected_exc.value.code == ErrorCode.LAST_SUPERUSER_PROTECTED
+
+        async with resources.session_factory() as session:
+            unchanged_targets = list(
+                (await session.scalars(select(Admin).where(Admin.id.in_(target_ids + protected_ids)))).all()
+            )
+            assert all(admin.is_active for admin in unchanged_targets)
+            assert all(admin.credential_version == 3 for admin in unchanged_targets if admin.id in target_ids)
+            assert all(admin.credential_version == 1 for admin in unchanged_targets if admin.id in protected_ids)
+            denied_audits = list(
+                (await session.scalars(select(AuditEvent).where(AuditEvent.request_id.in_(request_ids[-3:])))).all()
+            )
+            assert len(denied_audits) == 3
+            assert all(event.result == "denied" for event in denied_audits)
+    finally:
+        async with resources.session_factory() as session, transaction_scope(session):
+            await session.execute(delete(AdminSession).where(AdminSession.id.in_(session_ids)))
+            await session.execute(delete(AuditEvent).where(AuditEvent.actor_id == actor_id))
+            await session.execute(delete(Admin).where(Admin.id.in_([actor_id, *target_ids, *protected_ids])))
+            for admin_id, credential_version, updated_at in existing_superusers:
+                await session.execute(
+                    update(Admin)
+                    .where(Admin.id == admin_id)
+                    .values(
+                        is_superuser=True,
+                        credential_version=credential_version,
+                        updated_at=updated_at,
+                    )
+                )
         await resources.close()
 
 

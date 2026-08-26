@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 母版不可变基线冻结整改与完整验证已完成；当前工作区满足冻结候选条件，提交、不可变 Tag、发布和部署仍需独立授权 |
+| 当前阶段 | 管理员资料与安全操作及三端轻量验证规则已完成，正在执行 GitSync 交付；发布和部署仍需独立授权 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -42,6 +42,9 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` | 已结束 | Backend、Admin、Web、API Client、Deployment、Documentation | 三端本地、GitSync 与 GitHub Actions 已收敛为轻量静态检查，重型验证只在用户明确授权后执行 |
+| `plans/2026-08-26_开发迭代与GitSync分层验证规则计划.md` | 已结束 | Documentation、Developer Workflow | 已建立开发定向测试与 GitSync 按影响范围全量验证规则，通用 Skill 保持中立 |
+| `plans/2026-08-25_Admin管理员资料编辑与安全操作整合计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 已完成管理员资料编辑、身份切换、独立密码重置、批量状态管理和紧凑不换行操作列 |
 | `plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 已完成统一文件与多媒体资产上传服务、按日期单层分桶落盘、存储驱动解耦、双端上传组件与完整跨栈验证 |
 | `plans/2026-08-25_Admin官方布局宽度比例对齐计划.md` | 已结束 | Admin、Documentation | 已按官方比例完成 `256px` 侧栏、流式工作区与三视口验证 |
 | `plans/2026-08-24_Admin左侧Logo移除与欢迎页面落地计划.md` | 已结束 | Admin、Documentation | 已移除侧栏 Logo，新增官方风格 WelcomePage 及单元测试，36 项测试与门禁全量通过 |
@@ -75,6 +78,9 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` | 已结束 | 已完成；四级规则、权威文档与两条自动 CI 已同步，轻量门禁和契约幂等检查通过，重型验证按策略未执行 | Backend、Admin、Web、API Client、Deployment、Documentation | 三端本地、GitSync 与 GitHub Actions 已收敛为轻量静态检查，重型验证只在用户明确授权后执行 |
+| `plans/2026-08-26_开发迭代与GitSync分层验证规则计划.md` | 已结束 | 已完成；三级项目规则、测试策略、计划与索引已同步，通用 Skill 未修改 | Documentation、Developer Workflow | 建立开发定向测试与 GitSync 全量验证的分层规则 |
+| `plans/2026-08-25_Admin管理员资料编辑与安全操作整合计划.md` | 已结束 | 已完成；代码、契约和轻量门禁通过，Vitest、pytest、build 与浏览器验证按策略未执行 | Backend、Admin、API Client、Documentation | 已完成管理员资料编辑、身份切换、独立密码重置、批量状态管理和紧凑不换行操作列 |
 | `plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` | 已结束 | 已完成；统一资产服务、双端组件、头像持久化、契约、容器与真实跨栈验收全部通过 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 实施统一文件与多媒体资产上传服务、按日期单层分桶落盘、存储驱动解耦与前端组件封装 |
 | `plans/2026-08-25_Admin官方布局宽度比例对齐计划.md` | 已结束 | 已完成；`256px` 侧栏、流式工作区、Admin 全量门禁与三视口验证通过 | Admin、Documentation | 按官方 Ant Design Pro 比例调整桌面侧栏与流式工作区宽度 |
 | `plans/2026-08-25_admin-layout-width-ratio-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Documentation | 保留补丁工具异常产生的重复计划审计记录 |
@@ -127,13 +133,13 @@
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | Web/Admin Cookie Profile、精确 Origin、RBAC、分页 Session/Refresh、CSRF、限流、安全事件、审计、统一文件资产服务、会话保留清理、超级管理员并发保护和 Session 绑定事务已实现；本轮 142 项真实 PostgreSQL/Redis pytest 通过，覆盖率 90.14% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留全部既有能力；已完成浅色布局、`256px` 桌面侧栏、流式 PageContainer、欢迎页、通用上传组件和个人头像持久化；当前固定 Webpack 构建，开发服务实际绑定 `127.0.0.1`；typecheck、lint、40 项 Vitest、2 项启动器测试、85.48% 语句覆盖率、87.78% 行覆盖率、production build 与桌面/移动跨栈验证通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
+| Backend | 认证、RBAC、会话、审计、统一资产、管理员头像更新、身份切换、密码重置和原子批量状态能力已实现；此前基线 142 项真实依赖 pytest 通过，本次改动仅轻量门禁通过，pytest 按策略未执行 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留既有能力；管理员列表已支持头像与显示名称、资料编辑、身份切换、密码重置、批量启停和紧凑操作列；本次 typecheck 与 lint 通过，Vitest、production build 和浏览器验证按策略未执行 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、31 项 Vitest、88.30% 语句与行覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
-| API Client | 根 OpenAPI 共 43 条路径、51 个操作，274 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
+| API Client | 根 OpenAPI 共 44 条路径、52 个操作，281 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC、安全日志与统一资产迁移已实现，本地开发库已到 `20260825_03`；PostgreSQL advisory lock 并发保护、级联删除、资产元数据、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/`、`apps/backend/scripts/cleanup_security_logs.py` |
-| Deployment | 生产 Compose 已为 Backend/Admin/Web 配置统一上传持久卷与只读静态访问，三端容器构建和生产配置门禁通过；发布和生产部署未执行 | `compose.prod.yml`、`apps/backend/Dockerfile`、`apps/admin/Dockerfile`、`apps/web/Dockerfile` |
-| Documentation | 认证、Backend 标准、测试、容器、环境变量、统一文件资产架构、ADR、README、Changelog、计划和索引已按当前实现与验证事实回写 | `docs/architecture/file-asset-storage.md`、`docs/adr/0012-统一文件资产采用可补偿本地存储决策.md`、`plans/2026-08-25_统一文件与多媒体资产上传服务计划.md` |
+| Deployment | 自动 Backend CI 只运行静态、导入与契约门禁，自动 Frontend CI 只运行 Admin/Web typecheck 和 lint；Browser E2E 保持纯人工触发，生产 Compose 与镜像发布职责不变 | `.github/workflows/ci-backend.yml`、`.github/workflows/ci-frontend.yml`、`.github/workflows/ci-e2e.yml` |
+| Documentation | 产品需求、四级规则、测试策略、工程标准、运维说明、AI 工作流、PR 模板、Changelog、计划和索引已按三端轻量验证策略同步 | `docs/PROJECT_REQUIREMENTS.md`、`docs/architecture/testing-strategy.md`、`docs/operations/github-actions-workflows.md`、`plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` |
 
 ## 权威来源
 

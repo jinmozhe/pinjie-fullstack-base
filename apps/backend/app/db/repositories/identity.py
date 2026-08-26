@@ -86,6 +86,14 @@ class AdminRepository:
             statement = statement.with_for_update()
         return (await self.session.execute(statement)).scalar_one_or_none()
 
+    async def get_many(self, admin_ids: list[uuid.UUID], *, for_update: bool = False) -> list[Admin]:
+        if not admin_ids:
+            return []
+        statement = select(Admin).where(Admin.id.in_(admin_ids)).options(self._with_permissions()).order_by(Admin.id)
+        if for_update:
+            statement = statement.with_for_update()
+        return list((await self.session.scalars(statement)).unique().all())
+
     def add(self, admin: Admin) -> None:
         self.session.add(admin)
 

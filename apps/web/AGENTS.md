@@ -32,9 +32,11 @@
 
 ## 验证
 
-- 从仓库根目录运行 `pnpm --filter @pinjie/web typecheck`、`pnpm --filter @pinjie/web lint` 和 `pnpm --filter @pinjie/web build`。
+- Web 的默认自动门禁只有 `pnpm --filter @pinjie/web typecheck` 和 `pnpm --filter @pinjie/web lint`。日常开发、普通提交、`$git-sync`、Push 和 Pull Request 均遵守这一范围。
 - 阶段 B 采用 Vitest、React Testing Library、jsdom 和 MSW 作为单元与组件测试栈，并使用 Playwright 执行真实浏览器跨栈 E2E；关键页面通过 axe 自动扫描可访问性。异步 Server Component 和跨 Server、Client 边界行为由 Playwright 覆盖，详细分层遵守 `docs/architecture/testing-strategy.md`。
-- 测试框架和 `test` 脚本落地后，功能改动必须运行相关单元、组件和适用的跨栈测试；当前尚未配置时应明确说明该缺口，不得表述为测试通过。
+- 未经用户在当前任务中明确点名，禁止运行 Web production build、定向或全量 Vitest、Playwright、axe 浏览器扫描及其他浏览器自动化。`$git-sync` 不提供隐式授权，GitHub Actions 的 Push、Pull Request 和定时触发也不得执行这些命令。
+- 用户明确授权时只执行被点名的命令和范围，授权不延续到后续任务；测试或构建失败必须如实报告。未获授权的项目记录为“按项目策略未执行”，不能表述为通过或待 GitSync 执行。
+- 测试、构建和 E2E 脚本继续保留，供用户本地人工检查或明确授权的专项验证使用。人工页面体验没有可核验证据时，不记为自动测试或完整跨栈通过。
 - 应用出现入口但缺少测试脚本或必要测试时属于 `partial`，仓库门禁必须失败，禁止退回空骨架规避检查。
-- UI 改动必须做桌面和移动端浏览器验证，检查首页可见性、关键区块、交互状态和 `document` 横向溢出。
+- 用户明确授权浏览器验证时，检查桌面和移动端的首页可见性、关键区块、交互状态和 `document` 横向溢出。
 - Windows 下启动开发服务时优先使用稳定的短会话或直接调用 Next CLI。结束验证后核对端口和 PID，只停止本次启动的 Next、Playwright 或浏览器测试进程。

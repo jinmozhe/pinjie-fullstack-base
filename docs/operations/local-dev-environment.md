@@ -240,9 +240,11 @@ pnpm --filter @pinjie/admin dev
 Set-Location apps/backend
 uv sync
 uv run ruff check .
+uv run ruff format --check .
 uv run mypy app
-uv run pytest
 ```
+
+pytest、测试数据库迁移和测试 Redis 不属于日常自动检查。只有用户在当前任务中明确授权 Backend 测试时才运行被点名的测试范围。
 
 新增依赖：
 

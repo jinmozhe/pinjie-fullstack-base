@@ -21,6 +21,7 @@ from app.db.repositories import (
 from app.domains.admin.permissions import PERMISSION_CODES
 from app.domains.admin.presenters import admin_read, role_read
 from app.domains.admin.schemas import (
+    AdminBulkStatusUpdateIn,
     AdminCreateIn,
     AdminRead,
     AdminRoleAssignIn,
@@ -241,6 +242,8 @@ class AdminManagementService:
                 raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
             if "display_name" in payload.model_fields_set:
                 admin.display_name = payload.display_name.strip() if payload.display_name else None
+            if "avatar" in payload.model_fields_set:
+                admin.avatar = payload.avatar.strip() if payload.avatar else None
             if "is_superuser" in payload.model_fields_set and payload.is_superuser is not None:
                 if admin.id == self.actor_id:
                     raise AppException(
@@ -284,6 +287,44 @@ class AdminManagementService:
             target_type="admin",
             target_id=admin_id,
             changed_fields={"is_active": payload.is_active},
+            operation=operation,
+        )
+
+    async def set_admin_status_bulk(self, payload: AdminBulkStatusUpdateIn) -> list[Admin]:
+        async def operation() -> list[Admin]:
+            if self.actor_id in payload.admin_ids:
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="不能修改自己的启用状态")
+
+            admins = await self.admins.get_many(payload.admin_ids, for_update=True)
+            if len(admins) != len(payload.admin_ids):
+                raise AppException(
+                    status_code=404,
+                    code=ErrorCode.ADMIN_NOT_FOUND,
+                    message="一个或多个管理员不存在",
+                )
+
+            superusers_to_disable = sum(
+                1 for admin in admins if admin.is_active and admin.is_superuser and not payload.is_active
+            )
+            if superusers_to_disable:
+                await self._protect_superuser_reduction(superusers_to_disable)
+
+            for admin in admins:
+                if admin.is_active == payload.is_active:
+                    continue
+                admin.is_active = payload.is_active
+                admin.credential_version += 1
+                await self.sessions.revoke_admin_for_admin(admin.id, reason="account_status_changed")
+            return admins
+
+        return await self.audit.execute(
+            action="admins:status:update-bulk",
+            target_type="admin_batch",
+            target_id=None,
+            changed_fields={
+                "admin_ids": [str(admin_id) for admin_id in payload.admin_ids],
+                "is_active": payload.is_active,
+            },
             operation=operation,
         )
 
@@ -498,8 +539,11 @@ class AdminManagementService:
         )
 
     async def _protect_last_superuser(self) -> None:
+        await self._protect_superuser_reduction(1)
+
+    async def _protect_superuser_reduction(self, reduction: int) -> None:
         await self.admins.lock_active_superuser_guard()
-        if await self.admins.count_active_superusers() <= 1:
+        if await self.admins.count_active_superusers() <= reduction:
             raise AppException(
                 status_code=409,
                 code=ErrorCode.LAST_SUPERUSER_PROTECTED,

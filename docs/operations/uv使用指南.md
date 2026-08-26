@@ -158,12 +158,9 @@ uv run uvicorn app.main:app --reload --port 8000
 # 执行数据库迁移
 uv run alembic upgrade head
 
-# 运行测试
-uv run pytest
-
 # 代码格式检查
 uv run ruff check .
-uv run ruff format .
+uv run ruff format --check .
 
 # 类型检查
 uv run mypy app/
@@ -249,7 +246,7 @@ uv python list
 ### 场景 7：CI/CD 环境（GitHub Actions）
 
 ```yaml
-# .github/workflows/test.yml
+# .github/workflows/ci-backend.yml
 - name: Install uv
   uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
 
@@ -264,12 +261,16 @@ uv python list
   run: uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"
   working-directory: apps/backend
 
-- name: Run tests
-  run: uv run pytest
+- name: Run Ruff
+  run: uv run ruff check . && uv run ruff format --check .
+  working-directory: apps/backend
+
+- name: Run Mypy
+  run: uv run mypy app
   working-directory: apps/backend
 ```
 
-CI 必须显式使用标准 CPython 3.14，并在 `uv sync --locked` 前校验解释器版本。生产运行时由固定 digest 的 Backend 镜像提供，1Panel 宿主机 Python 不参与版本选择。
+CI 必须显式使用标准 CPython 3.14，并在 `uv sync --locked` 前校验解释器版本。默认 CI 只运行项目规定的轻量门禁，不运行 pytest；pytest 只有用户在当前任务中明确授权后才执行。生产运行时由固定 digest 的 Backend 镜像提供，1Panel 宿主机 Python 不参与版本选择。
 
 ---
 
@@ -281,7 +282,7 @@ CI 必须显式使用标准 CPython 3.14，并在 `uv sync --locked` 前校验�
 | 启动开发服务器 | `uv run uvicorn app.main:app --reload --port 8000` | `apps/backend/` |
 | 数据库迁移 | `uv run alembic upgrade head` | `apps/backend/` |
 | 生成迁移文件 | `uv run alembic revision --autogenerate -m "描述"` | `apps/backend/` |
-| 运行测试 | `uv run pytest` | `apps/backend/` |
+| 运行测试（需用户明确授权） | `uv run pytest` | `apps/backend/` |
 | 代码检查 | `uv run ruff check .` | `apps/backend/` |
 | 代码格式化 | `uv run ruff format .` | `apps/backend/` |
 | 类型检查 | `uv run mypy app/` | `apps/backend/` |

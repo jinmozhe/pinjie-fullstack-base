@@ -32,11 +32,13 @@
 
 ## 验证
 
-- 从仓库根目录运行 `pnpm --filter @pinjie/admin typecheck`、`pnpm --filter @pinjie/admin lint` 和 `pnpm --filter @pinjie/admin build`。
+- Admin 的默认自动门禁只有 `pnpm --filter @pinjie/admin typecheck` 和 `pnpm --filter @pinjie/admin lint`。日常开发、普通提交、`$git-sync`、Push 和 Pull Request 均遵守这一范围。
 - Admin 采用 Vitest、React Testing Library、jsdom 和 MSW 作为单元与组件测试栈，并使用 Playwright 执行真实浏览器跨栈 E2E；关键页面通过 axe 自动扫描可访问性。详细分层遵守 `docs/architecture/testing-strategy.md`。
-- 测试框架和 `test` 脚本落地后，功能改动必须运行相关单元、组件和适用的跨栈测试；当前尚未配置时应明确说明该缺口，不得表述为测试通过。
+- 未经用户在当前任务中明确点名，禁止运行 Admin production build、定向或全量 Vitest、Playwright、axe 浏览器扫描及其他浏览器自动化。`$git-sync` 不提供隐式授权，GitHub Actions 的 Push、Pull Request 和定时触发也不得执行这些命令。
+- 用户明确授权时只执行被点名的命令和范围，授权不延续到后续任务；测试或构建失败必须如实报告。未获授权的项目记录为“按项目策略未执行”，不能表述为通过或待 GitSync 执行。
+- 测试、构建和 E2E 脚本继续保留，供用户本地人工检查或明确授权的专项验证使用。人工页面体验没有可核验证据时，不记为自动测试或完整跨栈通过。
 - 应用出现入口但缺少测试脚本或必要测试时属于 `partial`，仓库门禁必须失败，禁止退回空骨架规避检查。
-- 涉及页面和样式时检查桌面与移动端视口、关键流程、文字和横向溢出。浏览器验证只清理本次启动的服务、进程和标签。
+- 用户明确授权浏览器验证时，检查桌面与移动端视口、关键流程、文字和横向溢出，并只清理本次启动的服务、进程和标签。
 
 ## Umi 运行专项
 
@@ -48,8 +50,8 @@
 ## 依赖准入
 
 - Umi、React、Ant Design、ProComponents 和官方插件只能按官方兼容组合升级；所有升级继续遵守根锁文件、七天冷却、安装脚本白名单、专项计划和受影响范围验证。
-- 安全 override 仅用于范围明确且有依赖链证据的兼容修复，并必须执行完整 Admin 与适用跨栈回归。没有兼容修复版本的 Medium 或 Low 上游风险按 `SECURITY.md` 建立限时风险接受，不得伪装为已修复。
-- 当前 Admin 只允许 Umi 默认 Webpack 构建链。移除 Vite 4 的精确 pnpm Hook、两个 Umi 补丁和依赖自检门禁必须同时保留；升级 Umi 或重新启用 Vite bundler 前必须创建专项计划，证明上游稳定组合已消除已知 High 漏洞并完成全量回归。
+- 安全 override 仅用于范围明确且有依赖链证据的兼容修复。默认运行 typecheck、lint 和依赖安全检查；完整 Admin 与跨栈回归需要用户明确授权，未执行时不得把风险表述为已完整验证。没有兼容修复版本的 Medium 或 Low 上游风险按 `SECURITY.md` 建立限时风险接受。
+- 当前 Admin 只允许 Umi 默认 Webpack 构建链。移除 Vite 4 的精确 pnpm Hook、两个 Umi 补丁和依赖自检门禁必须同时保留；升级 Umi 或重新启用 Vite bundler 前必须创建专项计划，提供上游兼容证据，并在用户明确授权后执行计划内全量回归。
 - 母版只接收跨业务复用且有明确需求的外围能力。图表、富文本、Excel 和其他具体业务依赖默认由派生仓库按真实需求引入，不以“业务依赖自由升级”为准入理由。
 
 详细目录、请求、组件选择和依赖分层见 `docs/architecture/admin-engineering-standard.md`。

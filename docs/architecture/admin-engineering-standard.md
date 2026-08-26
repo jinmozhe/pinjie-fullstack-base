@@ -85,16 +85,14 @@ ProComponents 是提高标准管理场景效率的首选，不是形式上的强
 
 ## 验证要求
 
-变更按风险运行最小充分检查。Admin 源码或依赖变化至少执行：
+变更按风险运行最小充分检查。Admin 源码或依赖变化默认只执行：
 
 ```powershell
 pnpm --filter @pinjie/admin typecheck
 pnpm --filter @pinjie/admin lint
-pnpm --filter @pinjie/admin test
-pnpm --filter @pinjie/admin build
 ```
 
-路由、插件、认证、请求或依赖变化还需执行适用的浏览器冒烟和真实跨栈 E2E，并分别记录结果。规则和架构变化执行：
+Vitest、production build、浏览器冒烟和真实跨栈 E2E 只有在用户对当前任务明确授权后才执行，并分别记录结果。路由、插件、认证、请求或依赖变化不能自行扩大授权范围。规则和架构变化执行：
 
 ```powershell
 pnpm lint:md
