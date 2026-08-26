@@ -59,8 +59,11 @@
 ## 测试、契约与交付
 
 - 测试分层、依赖策略和完成条件以 `docs/architecture/testing-strategy.md` 为准。单元测试禁止访问真实数据库和未声明外部网络，也禁止 Mock 被测对象自己的内部方法。
+- Backend 的默认自动门禁为 `uv run ruff check .`、`uv run ruff format --check .`、`uv run mypy app`、`uv run lint-imports`、源码编译、应用导入和 OpenAPI 契约检查。日常开发、普通提交、`$git-sync`、Push 和 Pull Request 均遵守这一范围。
+- 未经用户在当前任务中明确点名，禁止运行任何定向或全量 pytest、测试数据库迁移、测试 PostgreSQL/Redis 服务及其他依赖真实测试环境的自动验证。`$git-sync` 不提供隐式授权，GitHub Actions 的 Push、Pull Request 和定时触发也不得执行这些命令。
+- 用户明确授权时只执行被点名的命令和范围，授权不延续到后续任务；测试失败必须如实报告。未获授权的项目记录为“按项目策略未执行”，不能表述为通过或待 GitSync 执行。
 - PostgreSQL 集成测试使用名称以 `_test` 结尾的独立数据库，并在任何迁移、建表或清理前校验环境、主机、数据库名和应用数据库隔离。禁止用 SQLite 替代 PostgreSQL 语义测试。
-- 修改 Model 或迁移时验证 Alembic 升级和一致性；修改公开 Schema 或 Router 时按“Backend 实现、导出根 `openapi.json`、运行 `pnpm generate-api`、适配消费者”的顺序同步。
-- Backend 进入 `ready` 后必须通过编译、应用导入、OpenAPI、Ruff、格式、Mypy、架构依赖、Alembic 和 pytest 门禁。当前未配置或不能执行的命令属于实施缺口，必须如实报告，禁止以跳过或替代检查宣称通过。
+- 修改 Model 或迁移时必须同步 Alembic 文件并人工复读；实际数据库升级、重复升级和漂移验证只在用户明确授权后执行。修改公开 Schema 或 Router 时按“Backend 实现、导出根 `openapi.json`、运行 `pnpm generate-api`、适配消费者”的顺序同步。
+- Backend 准备通过 `$git-sync` 交付时只要求上述轻量门禁和受影响契约检查通过。pytest、Alembic 真实数据库验证和覆盖率门禁继续保留为显式授权后的专项能力，未执行时必须如实记录。
 - AI 生成的迁移必须人工审查后才能执行到共享环境。生产迁移、数据修复、部署、回滚、密钥调整和破坏性操作分别需要明确授权。
 - 每次交付列出实际通过、失败、跳过、未适用和未执行项；当前空骨架不得表述为应用质量、运行能力或高可用已经实现。

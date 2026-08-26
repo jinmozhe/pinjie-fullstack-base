@@ -371,11 +371,11 @@ flowchart TD
 | 只读代码评审 | 共同入口、目标实现、测试标准 | 专题架构、SECURITY、PRD、活动计划 | 不新增；有活动计划则读取 | Findings 优先，说明测试缺口 |
 | 产品能力新增或调整 | 共同入口、PRD、计划规范 | ADR、架构、蓝图 | 必须新建或续接 | 用户确认范围和需求编号 |
 | Backend 详细设计 | 共同入口、Backend 工程标准、测试策略 | 对应专题架构、SECURITY、PRD | 通常必须 | 先计划后实现，不写虚构路径 |
-| Backend 实现或修复 | 上一项加目标源码、配置和测试 | 运维、迁移、契约 | 必须新建或续接 | Backend 门禁和失败路径 |
-| Admin 页面或状态 | 共同入口、Admin 规则、目标实现 | PRD、模块边界、认证、测试 | 实现时必须 | typecheck、lint、build、必要浏览器验证 |
-| Web 页面、SSR 或 UI | 共同入口、Web 规则、目标实现 | PRD、模块边界、认证、测试 | 实现时必须 | typecheck、lint、build、桌面和移动端验证 |
-| 跨栈 API 变化 | 三端规则、PRD、计划、OpenAPI 链 | 错误、认证、迁移兼容 ADR | 必须使用一份全栈计划 | Backend、契约、客户端、消费者联合验证 |
-| Model 或 Alembic | Backend 规则、工程标准、测试、备份恢复 | 模块边界、错误、发布手册 | 必须 | `_test` PostgreSQL、迁移审查；共享或生产执行另行授权 |
+| Backend 实现或修复 | 上一项加目标源码、配置和测试 | 运维、迁移、契约 | 必须新建或续接 | 默认静态、导入和契约门禁；pytest 仅在用户明确授权后执行 |
+| Admin 页面或状态 | 共同入口、Admin 规则、目标实现 | PRD、模块边界、认证、测试 | 实现时必须 | 默认 typecheck、lint；build、Vitest 和浏览器仅在用户明确授权后执行 |
+| Web 页面、SSR 或 UI | 共同入口、Web 规则、目标实现 | PRD、模块边界、认证、测试 | 实现时必须 | 默认 typecheck、lint；build、Vitest 和浏览器仅在用户明确授权后执行 |
+| 跨栈 API 变化 | 三端规则、PRD、计划、OpenAPI 链 | 错误、认证、迁移兼容 ADR | 必须使用一份全栈计划 | Backend 静态检查、契约、客户端和消费者类型联合验证 |
+| Model 或 Alembic | Backend 规则、工程标准、测试、备份恢复 | 模块边界、错误、发布手册 | 必须 | 默认静态检查与迁移复读；`_test` PostgreSQL 验证需用户明确授权 |
 | 认证、权限或审计 | 共同入口、SECURITY、认证授权、错误、测试 | Backend 标准、前端规则、事故手册 | 必须 | 默认拒绝、失败路径、敏感信息检查 |
 | 外部 API 或副作用 | Backend 规则、工程标准、错误、测试 | SECURITY、可靠性 | 必须 | 超时、幂等、结果未知、网络隔离 |
 | 日志、探针和可靠性 | 共同入口、可靠性、测试 | 错误、事故、发布手册 | 实现时必须 | Startup、Liveness、Readiness 语义和故障验证 |
@@ -468,20 +468,20 @@ Admin 保留 Ant Design 与 ProComponents。不能因为 Web 使用另一套 UI 
 PRD 与全栈计划
 -> Backend、Admin、Web 三份 AGENTS.md
 -> Backend 工程标准和相关专题架构
--> Backend Router、Schema 和测试
+-> Backend Router、Schema 和现有测试资产
 -> 根 openapi.json
 -> packages/api-client/src
 -> Admin 和 Web 消费者
--> Backend、生成漂移、前端类型与构建联合验证
+-> Backend 静态检查、生成漂移与前端类型联合验证
 ```
 
 实施顺序固定为：
 
-1. 完成 Backend 实现和测试。
+1. 完成 Backend 实现，并维护相关测试资产。
 2. 从 Backend 导出根 `openapi.json`。
 3. 从根目录运行 `pnpm generate-api`。
 4. 适配 Admin 和 Web 消费者。
-5. 运行 Breaking Change、生成漂移和受影响应用验证。
+5. 运行 Breaking Change、生成漂移和受影响应用轻量验证；构建与测试只在用户明确授权后执行。
 
 禁止手工修改 `openapi.json` 或 `packages/api-client/src/`，也禁止只提交 Backend 一侧的破坏性契约变化。
 
@@ -554,19 +554,16 @@ AI 必须完成：
 
 ### 17.3 验证
 
-验证范围随风险扩大：
+默认自动验证范围固定为轻量门禁，风险增加不会自动扩大为重型验证：
 
 ```text
-局部语法与类型
--> 单元和领域测试
--> Repository 或 API 集成测试
--> 契约和生成漂移
--> 受影响应用构建
--> 浏览器或跨栈 E2E
--> 部署、探针和恢复验证
+Admin / Web: typecheck + lint
+Backend: Ruff + format + Mypy + import boundaries + compile + app import
+公开 API: OpenAPI + API Client + breaking / drift
+治理变更: workspace + boundaries + text + Markdown
 ```
 
-Markdown 修改至少运行 `pnpm lint:md`。治理和架构变更继续运行 `pnpm check:workspace`、`pnpm check:boundaries` 或完整 `pnpm check:governance`。只运行仓库当前已经配置的命令。
+Vitest、pytest、production build、Playwright、浏览器自动化和测试数据库验证只有在用户对当前任务明确授权后才能追加。Markdown 修改至少运行 `pnpm lint:md`。治理和架构变更继续运行 `pnpm check:workspace`、`pnpm check:boundaries` 或不包含重型验证的适用治理命令。只运行仓库当前已经配置的命令。
 
 ### 17.4 交付收尾
 
@@ -589,7 +586,7 @@ Markdown 修改至少运行 `pnpm lint:md`。治理和架构变更继续运行 `
 | 执行共享数据库迁移 | 需要明确授权和人工迁移审查 | Backend 标准、备份恢复、活动计划 |
 | 删除数据或不可逆操作 | 需要操作时再次确认目标和回滚 | 安全、备份恢复、事故和计划 |
 | 普通 Git 暂存、提交、推送、PR 或合并 | 各动作按用户文字明确范围执行 | Git 差异、计划和交付状态 |
-| 显式调用 `$git-sync` | 视为当前任务完整 Git 交付授权；必需检查失败时停止 | Git 差异、计划、PR 模板和 Actions 状态 |
+| 显式调用 `$git-sync` | 视为当前任务完整 Git 交付授权，但不授权重型验证；轻量必需检查失败时停止 | Git 差异、计划、PR 模板和 Actions 状态 |
 | 创建或推送 Tag | 需要独立授权 | ADR 0008、发布手册和完整 SHA |
 | 发布 GHCR 镜像 | 需要独立授权 | 发布手册、Workflow 和候选提交 |
 | 部署或回滚生产 | 需要独立授权 | 发布、备份、事故、安全和部署记录 |
@@ -597,7 +594,7 @@ Markdown 修改至少运行 `pnpm lint:md`。治理和架构变更继续运行 `
 
 授权必须匹配准确的目标、环境和动作。对本地开发的授权不能扩展为生产操作授权。
 
-`$git-sync` 的完整 Git 交付授权只覆盖当前任务：创建或使用功能分支、精确暂存、提交、推送、创建或更新目标为 `main` 的 Pull Request、设置 rebase 自动合并、等待必需检查、合并后删除分支并以 fast-forward 方式同步本地 `main`。它不授权 Tag、Release、GHCR、人工工作流、部署、回滚、生产变更或 Ruleset 修改。
+`$git-sync` 的完整 Git 交付授权只覆盖当前任务：创建或使用功能分支、执行项目轻量门禁、精确暂存、提交、推送、创建或更新目标为 `main` 的 Pull Request、设置 rebase 自动合并、等待必需检查、合并后删除分支并以 fast-forward 方式同步本地 `main`。它不授权 Vitest、pytest、production build、Playwright、浏览器自动化、测试数据库验证、Tag、Release、GHCR、人工工作流、部署、回滚、生产变更或 Ruleset 修改。
 
 ## 19. 三个完整示例
 
@@ -610,8 +607,8 @@ AI 应执行：
 3. 读取 Backend 工程标准、认证授权、错误模型、测试策略和 SECURITY。
 4. 确认是否有匹配活动计划；没有则创建全栈计划，因为登录还影响 Web、Admin 和 API Client。
 5. 用户确认计划后读取相关源码和配置并实施。
-6. 完成 Backend 测试，导出 OpenAPI，生成客户端，适配受影响前端。
-7. 运行安全失败路径、契约和三端适用门禁。
+6. 导出 OpenAPI，生成客户端并适配受影响前端，相关测试资产随实现维护。
+7. 运行 Backend 静态检查、契约和三端轻量门禁；安全失败路径测试只在用户明确授权后执行。
 8. 更新计划、索引、架构或运维文档及 Changelog。
 
 ### 19.2 “修复 Admin 表格在窄屏溢出”
@@ -622,8 +619,8 @@ AI 应执行：
 2. 读取 Admin `AGENTS.md`、目标页面和现有样式。
 3. 读取计划规范；修复代码需要创建或续接计划。
 4. 保留 Ant Design 和既有交互，不引入 Web 的 shadcn/ui 规则。
-5. 实施后运行 Admin typecheck、lint、build 和桌面、移动端视觉检查。
-6. 清理本次服务与浏览器测试资源，回写计划和 Changelog。
+5. 实施后默认只运行 Admin typecheck 和 lint；build、桌面与移动端视觉检查由用户自行完成，或在用户明确授权后由 AI 执行。
+6. 回写计划和 Changelog；只有实际启动服务或浏览器时才清理对应资源。
 
 ### 19.3 “解释根 `.env` 有什么用”
 

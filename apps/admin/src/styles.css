@@ -152,6 +152,10 @@ textarea {
   vertical-align: middle;
 }
 
+.admins-table .ant-table-measure-row {
+  visibility: hidden;
+}
+
 .table-primary-cell {
   display: grid;
   min-width: 120px;

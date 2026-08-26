@@ -63,6 +63,24 @@ export type AdminAuthSessionOut = {
 };
 
 /**
+ * AdminBulkStatusUpdateIn
+ */
+export type AdminBulkStatusUpdateIn = {
+    /**
+     * Admin Ids
+     *
+     * 待批量更新状态的管理员唯一标识列表
+     */
+    admin_ids: Array<string>;
+    /**
+     * Is Active
+     *
+     * 资源当前是否启用
+     */
+    is_active: boolean;
+};
+
+/**
  * AdminConfirmIn
  */
 export type AdminConfirmIn = {
@@ -266,6 +284,12 @@ export type AdminUpdateIn = {
      * 展示名称
      */
     display_name?: string | null;
+    /**
+     * Avatar
+     *
+     * 管理员头像 URL 或站内资源路径
+     */
+    avatar?: string | null;
     /**
      * Is Superuser
      *
@@ -1541,6 +1565,36 @@ export type ResponseModelBool = {
      * 响应业务数据
      */
     data: boolean;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[list[AdminRead]]
+ */
+export type ResponseModelListAdminRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * Data
+     *
+     * 响应业务数据
+     */
+    data: Array<AdminRead>;
     /**
      * Request Id
      *
@@ -2917,6 +2971,37 @@ export type CreateAdminApiV1AdminAdminsPostResponses = {
 };
 
 export type CreateAdminApiV1AdminAdminsPostResponse = CreateAdminApiV1AdminAdminsPostResponses[keyof CreateAdminApiV1AdminAdminsPostResponses];
+
+export type SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchData = {
+    body: AdminBulkStatusUpdateIn;
+    headers?: {
+        /**
+         * X-Admin-Confirmation
+         */
+        'X-Admin-Confirmation'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/admins/status/batch';
+};
+
+export type SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchError = SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchErrors[keyof SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchErrors];
+
+export type SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelListAdminRead;
+};
+
+export type SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchResponse = SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchResponses[keyof SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchResponses];
 
 export type GetAdminApiV1AdminAdminsAdminIdGetData = {
     body?: never;

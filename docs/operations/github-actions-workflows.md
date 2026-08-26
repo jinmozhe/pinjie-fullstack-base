@@ -23,7 +23,7 @@
 ```mermaid
 flowchart TD
     A["本地提交并推送功能分支"] --> B["目标为 main 的 Pull Request"]
-    B --> C["4 个 PR 工作流和 13 项必需检查"]
+    B --> C["4 个 PR 工作流和 13 项轻量必需检查"]
     C --> D["rebase 自动合并"]
     D --> E["main Push"]
     E --> G["同一 Commit SHA 的 4 个 Push 工作流"]
@@ -37,9 +37,9 @@ flowchart TD
 
 流程坚持四项边界：
 
-1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发质量与安全检查，不发布镜像，不接触生产服务器。
+1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发轻量静态、契约、治理与安全检查，不运行应用测试或前端生产构建，不发布镜像，不接触生产服务器。
 2. Browser E2E 只允许人工按需触发，不随 Push 或 Pull Request 自动运行，也不参与镜像发布门禁。
-3. 镜像发布必须人工触发，并且只接受已经通过四个自动 Push 工作流的完整 Commit SHA。
+3. 镜像发布必须人工触发，并且只接受已经通过四个自动 Push 工作流的完整 Commit SHA；这些成功记录只代表轻量门禁和安全检查通过。
 4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
 
 ## 3. 触发条件总表
@@ -54,7 +54,7 @@ flowchart TD
 | Publish Images | 否 | 否 | 否 | 是 |
 | Deploy Production | 否 | 否 | 否 | 是 |
 
-四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤。
+四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行轻量门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤，也不自动运行 Backend pytest、前端 Vitest、前端 production build 或 Playwright。
 
 `CI - Browser E2E` 只支持从 GitHub Actions 页面人工触发。是否运行由操作人员按改动风险决定，它的结果不影响 `Publish Images`。
 
@@ -111,7 +111,7 @@ GitHub 收到目标为 `main` 的 Pull Request 更新或 `main` 新提交后，�
 
 四个工作流通常并行排队和执行。它们之间没有 `workflow_run` 自动串联，因此一个工作流成功不会自动启动另一个工作流。
 
-同一工作流内部可以通过 `needs` 建立 Job 依赖。例如 Backend 和 Frontend 先判断应用状态，再决定是否运行完整质量检查。GitHub Runner 配额、依赖下载速度和服务容器启动速度会影响完成先后顺序。
+同一工作流内部可以通过 `needs` 建立 Job 依赖。例如 Backend 和 Frontend 先判断应用状态，再决定是否运行对应轻量质量检查。GitHub Runner 配额和依赖下载速度会影响完成先后顺序。
 
 任意工作流失败时：
 
@@ -157,12 +157,12 @@ Governance 检查仓库结构、文本质量和架构边界，防止代码本身
 
 ### 6.1 作用和使用场景
 
-Backend 工作流验证 FastAPI 应用、数据库迁移、Redis 依赖、静态质量、测试覆盖率和 OpenAPI 生成契约。
+Backend 工作流验证 FastAPI 应用的静态质量、模块边界、源码编译、应用导入和 OpenAPI 生成契约。它不启动 PostgreSQL 或 Redis，也不运行 Alembic 数据库验证和 pytest。
 
 适用场景包括：
 
 - 修改 Python 业务代码、配置、依赖或测试。
-- 修改 SQLAlchemy Model 或 Alembic 迁移。
+- 修改 SQLAlchemy Model 或 Alembic 迁移时检查源码、导入和文件边界；真实数据库验证需要用户明确授权后在本地执行。
 - 修改 Router、Schema 或 OpenAPI 契约。
 - 修改共享 API Client 的生成来源。
 
@@ -174,11 +174,11 @@ Backend 工作流验证 FastAPI 应用、数据库迁移、Redis 依赖、静态
 - `ready`：入口、依赖、测试和必要配置完整，继续运行 `backend-quality`。
 - `partial`：部分实现状态，工作区门禁直接失败。
 
-当前 Backend 为 `ready`，因此目标为 `main` 的 PR 和 `main` push 都会进入完整质量检查。
+当前 Backend 为 `ready`，因此目标为 `main` 的 PR 和 `main` push 都会进入轻量质量检查。
 
 ### 6.3 Backend quality
 
-Job 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器，并使用隔离的 `pinjie_ci_test` 测试数据库。
+Job 不启动测试服务容器，全部步骤应在没有 PostgreSQL、Redis 和测试数据库的条件下完成。
 
 | 步骤 | 作用 |
 | --- | --- |
@@ -189,12 +189,8 @@ Job 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器，并使用隔离的 `p
 | Ruff format | 检查格式，无自动改写 |
 | Mypy | 运行严格静态类型检查 |
 | Import boundaries | 检查 Backend 模块依赖规则 |
-| Compile Python sources | 编译应用、迁移、脚本和测试源码 |
+| Compile Python sources | 编译应用、迁移和脚本源码 |
 | Import application | 导入 FastAPI 应用并生成内存 OpenAPI |
-| Validate isolated test database | 强制测试库名称以 `_test` 结尾 |
-| Upgrade test database twice | 验证 Alembic 从空库升级和重复升级幂等性 |
-| Check migration drift | 验证 Model 与迁移 Head 一致 |
-| Pytest | 运行测试并要求行和分支覆盖率达到 90% |
 | Export OpenAPI contract | 从 Backend 重新生成根 `openapi.json` |
 | Regenerate API Client | 从 OpenAPI 重新生成 TypeScript Client |
 | Reject generated contract drift | 发现生成结果与仓库不一致时失败 |
@@ -209,14 +205,14 @@ Job 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器，并使用隔离的 `p
 
 ### 7.1 作用和使用场景
 
-Frontend 工作流分别验证 Web 和 Admin 两个独立应用，覆盖代码质量、类型、单元或组件测试、生产构建和生成 API Client 一致性。
+Frontend 工作流分别验证 Web 和 Admin 两个独立应用，只覆盖 ESLint 与 TypeScript 类型检查。单元或组件测试、生产构建和浏览器验证不由 Push 或 Pull Request 自动执行。
 
 适用场景包括：
 
 - 修改 Next.js Web 应用。
 - 修改 Umi Max、React、Ant Design Admin 应用。
 - 修改共享前端包或根依赖。
-- OpenAPI 变化后验证两个消费者仍能构建。
+- OpenAPI 变化后验证两个消费者仍能通过类型检查。
 
 ### 7.2 Frontend state and boundaries
 
@@ -230,9 +226,6 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 2. 使用 `pnpm install --frozen-lockfile` 安装锁定依赖。
 3. 运行 Web ESLint。
 4. 运行 Web TypeScript 类型检查。
-5. 运行 Web 单元和组件测试。
-6. 运行 Web 生产构建。
-7. 重新生成 API Client，并拒绝生成目录出现 Git 差异。
 
 ### 7.4 Admin quality
 
@@ -240,13 +233,10 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 2. 使用 `pnpm install --frozen-lockfile` 安装锁定依赖。
 3. 运行 Admin ESLint。
 4. 运行 Admin TypeScript 类型检查。
-5. 运行 Admin 单元和组件测试。
-6. 运行 Admin 生产构建。
-7. 重新生成 API Client，并拒绝生成目录出现 Git 差异。
 
 ### 7.5 结果含义
 
-成功表示两个前端应用可以通过各自的静态检查、测试和生产构建。需要复核真实浏览器中的 Backend、Web、Admin 联动时，在本地运行 E2E，或人工触发 Browser E2E 工作流。
+成功只表示两个前端应用通过各自的 ESLint 和 TypeScript 类型检查，不表示 Vitest、production build 或浏览器流程通过。只有用户明确授权时才在本地运行对应重型命令，线上 Browser E2E 由用户人工触发。
 
 ## 8. CI - Browser E2E
 
@@ -264,7 +254,7 @@ Browser E2E 只支持 `workflow_dispatch` 人工触发。它在 Ubuntu Runner �
 - 页面路由、表单、权限导航和浏览器运行错误。
 - 多个应用分别构建成功，但组合运行失败。
 
-日常以本地 `pnpm test:e2e` 为主。需要排除 Windows、本机缓存或本地服务差异时，可以人工运行该工作流获得干净 Ubuntu 环境的复核结果。该结果不参与 Pull Request、Push 或镜像发布门禁。
+本地 `pnpm test:e2e` 和线上 Browser E2E 都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的复核结果。该结果不参与 Pull Request、Push 或镜像发布门禁。
 
 ### 8.2 执行步骤
 
@@ -280,7 +270,7 @@ Browser E2E 只支持 `workflow_dispatch` 人工触发。它在 Ubuntu Runner �
 
 ### 8.3 资源特征
 
-该工作流会下载浏览器、启动数据库和 Redis，并构建两个前端，耗时和资源占用较高，因此只在人工确认有必要时运行。
+该工作流会下载浏览器、启动数据库和 Redis，并构建两个前端，耗时和资源占用较高，因此只能在用户明确授权后人工触发。
 
 ## 9. Security
 
@@ -400,7 +390,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 5. Backend、Web 和 Admin 状态必须全部为 `ready`。
 6. 模块边界必须再次通过。
 
-任何一项缺少时，工作流在构建镜像前停止。
+任何一项缺少时，工作流在构建镜像前停止。四个 Push Run 不包含 Backend pytest、前端 Vitest、前端 production build 或 Playwright；发布矩阵中的 Docker build 只负责生成制品。
 
 ### 11.3 Publish matrix
 

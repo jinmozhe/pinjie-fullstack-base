@@ -133,8 +133,12 @@
 ## 验证与交付
 
 - 按实际影响范围运行最小充分验证。跨应用契约变化必须同时验证后端契约、生成客户端和受影响前端。
+- 日常开发、普通提交、`$git-sync`、Push 和 Pull Request 只自动执行轻量门禁：Admin 与 Web 各自运行 typecheck 和 lint，Backend 运行 Ruff、格式、Mypy、导入边界、编译、应用导入和契约检查。公开 API 变化继续导出 OpenAPI、生成 API Client 并检查漂移。
+- 未经用户在当前任务中明确点名，禁止在本地或 GitHub Actions 自动执行 Admin/Web production build、任何 Vitest、任何 pytest、Playwright、浏览器自动化、测试数据库迁移或其他全量测试。普通“提交”“推送”和 `$git-sync` 均不包含这些重型验证的隐式授权，也不得通过定时任务或其他 Workflow 间接触发。
+- 用户明确授权重型验证时，只执行被点名的应用、命令和范围；授权不延续到后续任务。用户自行进行本地人工验收不受此限制，未提供可核验证据时只记录为“用户自行验收，自动验证未执行”。
+- 按策略未执行的重型验证记录为“未执行”，不再记录为“待 `$git-sync` 执行”，也不得表述为测试通过、完整跨栈验收完成或生产可用。
 - 只运行仓库已配置的命令。尚未配置的检查项应明确写为缺口，禁止伪装成通过。
-- 治理和架构变更必须运行 `pnpm check:workspace` 与 `pnpm check:boundaries`。进入应用 `ready` 后继续运行对应应用的全部质量命令。
+- 治理和架构变更必须运行 `pnpm check:workspace` 与 `pnpm check:boundaries`。安全、依赖、文本、工作区、模块边界、OpenAPI Breaking Change 和生成契约漂移继续按实际影响执行，但不得隐式启动上述重型验证。
 - 交付前复读修改文件，检查 `git diff` 或等价差异，并清理本次验证产生的缓存和临时产物。
 - 最终回复说明修改内容、验证结果、未执行项和剩余风险。
 - 提交、推送、发布 GHCR、部署和生产变更是独立动作，分别需要用户明确授权；禁止因完成本地修改而自动执行。
@@ -143,5 +147,5 @@
 
 - Admin 日常启动使用 `pnpm --filter @pinjie/admin dev`；直接调用 Umi 时工作目录必须是 `apps/admin`，端口通过项目包装器设置的 `PORT=3001` 管理，不使用 `max dev --port` 作为端口契约。
 - Umi 修改路由、插件或配置后，遇到生成缓存导致的异常时必须清理 `apps/admin/src/.umi` 和 `apps/admin/src/.umi-production`，并确认这些目录未被提交。
-- Admin 的 typecheck、lint、Vitest、production build、浏览器冒烟和真实跨栈 E2E 必须分项记录；Docker Desktop、Backend、PostgreSQL 或 Redis 未就绪时，不得把局部冒烟或 MSW 测试表述为完整跨栈通过。
+- Admin 默认只自动运行 typecheck 与 lint。Vitest、production build、浏览器冒烟和真实跨栈 E2E 仅在用户明确授权后执行并分项记录；Docker Desktop、Backend、PostgreSQL 或 Redis 未就绪时，不得把局部冒烟或 MSW 测试表述为完整跨栈通过。
 - Windows 验证结束后只清理本次启动且已核对 PID、命令行和端口归属的服务、进程与浏览器标签，禁止误杀 Codex 或浏览器运行时。

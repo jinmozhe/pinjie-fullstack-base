@@ -1949,6 +1949,81 @@
         }
       }
     },
+    "/api/v1/admin/admins/status/batch": {
+      "patch": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "批量修改管理员状态",
+        "operationId": "set_admin_status_bulk_api_v1_admin_admins_status_batch_patch",
+        "parameters": [
+          {
+            "name": "X-Admin-Confirmation",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Confirmation"
+            }
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminBulkStatusUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_list_AdminRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/admins/{admin_id}": {
       "get": {
         "tags": [
@@ -3335,6 +3410,33 @@
         ],
         "title": "AdminAuthSessionOut"
       },
+      "AdminBulkStatusUpdateIn": {
+        "properties": {
+          "admin_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Admin Ids",
+            "description": "待批量更新状态的管理员唯一标识列表"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "资源当前是否启用"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "admin_ids",
+          "is_active"
+        ],
+        "title": "AdminBulkStatusUpdateIn"
+      },
       "AdminConfirmIn": {
         "properties": {
           "current_password": {
@@ -3621,6 +3723,19 @@
             ],
             "title": "Display Name",
             "description": "展示名称"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar",
+            "description": "管理员头像 URL 或站内资源路径"
           },
           "is_superuser": {
             "anyOf": [
@@ -5234,6 +5349,42 @@
           "request_id"
         ],
         "title": "ResponseModel[bool]"
+      },
+      "ResponseModel_list_AdminRead__": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AdminRead"
+            },
+            "type": "array",
+            "title": "Data",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[list[AdminRead]]"
       },
       "ResponseModel_list_PermissionRead__": {
         "properties": {

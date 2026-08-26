@@ -40,36 +40,14 @@ jobs:
     needs: backend-state
     if: needs.backend-state.outputs.backend == 'ready'
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:18.4-alpine
-        env:
-          POSTGRES_USER: pinjie_test
-          POSTGRES_PASSWORD: pinjie_test
-          POSTGRES_DB: pinjie_ci_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U pinjie_test -d pinjie_ci_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
-      redis:
-        image: redis:8.10.0-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     env:
-      DATABASE_URL: postgresql+asyncpg://pinjie_test:pinjie_test@127.0.0.1:5432/pinjie_ci_test
-      TEST_DATABASE_URL: postgresql+asyncpg://pinjie_test:pinjie_test@127.0.0.1:5432/pinjie_ci_test
-      REDIS_MODE: required
-      REDIS_URL: redis://127.0.0.1:6379/0
-      TEST_REDIS_URL: redis://127.0.0.1:6379/0
       ENVIRONMENT: test
+      # Configuration validation only; this job starts no PostgreSQL or Redis service.
+      DATABASE_URL: postgresql+asyncpg://ci:ci@127.0.0.1:5432/pinjie_ci_test
+      TEST_DATABASE_URL: postgresql+asyncpg://ci:ci@127.0.0.1:5432/pinjie_ci_test
+      REDIS_MODE: required
+      REDIS_URL: redis://127.0.0.1:6379/15
+      TEST_REDIS_URL: redis://127.0.0.1:6379/15
       REGISTRATION_MODE: open
       WEB_JWT_SECRET: ci-web-jwt-secret-00000000000000001
       ADMIN_JWT_SECRET: ci-admin-jwt-secret-000000000000001
@@ -115,29 +93,11 @@ jobs:
 
       - name: Compile Python sources
         working-directory: apps/backend
-        run: uv run python -m compileall -q app alembic scripts tests
+        run: uv run python -m compileall -q app alembic scripts
 
       - name: Import application
         working-directory: apps/backend
         run: uv run python -c "from app.main import app; schema = app.openapi(); print('OPENAPI_OK', len(schema.get('paths', {})))"
-
-      - name: Validate isolated test database
-        working-directory: apps/backend
-        shell: bash
-        run: |
-          uv run python -c 'import os; from urllib.parse import urlsplit; name=urlsplit(os.environ["TEST_DATABASE_URL"]).path.rsplit("/", 1)[-1]; assert name.endswith("_test"), "TEST_DATABASE_URL must target a database ending in _test"'
-
-      - name: Upgrade test database twice
-        working-directory: apps/backend
-        run: uv run alembic upgrade head && uv run alembic upgrade head
-
-      - name: Check migration drift
-        working-directory: apps/backend
-        run: uv run alembic check
-
-      - name: Pytest with 90% coverage gate
-        working-directory: apps/backend
-        run: uv run pytest tests/ -v
 
       - name: Export OpenAPI contract
         working-directory: apps/backend

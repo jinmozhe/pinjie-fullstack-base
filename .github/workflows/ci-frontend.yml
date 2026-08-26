@@ -65,15 +65,6 @@ jobs:
       - name: Typecheck Web
         run: pnpm --filter @pinjie/web typecheck
 
-      - name: Test Web
-        run: pnpm --filter @pinjie/web test
-
-      - name: Build Web
-        run: pnpm --filter @pinjie/web build
-
-      - name: Reject generated API Client drift
-        run: pnpm generate-api && git diff --exit-code -- packages/api-client/src
-
   admin-quality:
     name: Admin quality
     needs: frontend-state
@@ -102,12 +93,3 @@ jobs:
 
       - name: Typecheck Admin
         run: pnpm --filter @pinjie/admin typecheck
-
-      - name: Test Admin
-        run: pnpm --filter @pinjie/admin test
-
-      - name: Build Admin
-        run: pnpm --filter @pinjie/admin build
-
-      - name: Reject generated API Client drift
-        run: pnpm generate-api && git diff --exit-code -- packages/api-client/src

@@ -4,7 +4,19 @@
 
 测试围绕风险、边界和用户结果设计。覆盖率用于发现空白，不能代替有效断言，也不能通过 Mock、SQLite 或假数据伪装 PostgreSQL 和真实契约行为。
 
-## 2. 测试层级
+## 2. 验证时机与测试层级
+
+### 2.1 验证时机
+
+本项目采用“默认轻量、重型验证显式授权”的分层策略：
+
+1. **默认自动门禁**：Admin 与 Web 只运行 typecheck 和 lint；Backend 只运行 Ruff、格式、Mypy、导入边界、编译、应用导入和 OpenAPI 契约检查。公开 API 变化继续执行契约导出、API Client 生成、漂移与 Breaking Change 检查。
+2. **统一触发边界**：日常开发、普通提交、`$git-sync`、Push 和 Pull Request 均使用默认轻量门禁。`$git-sync` 只扩展 Git 交付动作，不自动扩展测试范围。
+3. **重型验证授权**：Admin/Web production build、任何 Vitest、任何 pytest、Playwright、浏览器自动化和测试数据库验证，只有用户在当前任务中明确点名后才能执行。授权只覆盖被点名的应用、命令和范围，不延续到后续任务。
+4. **线上边界**：GitHub Actions 的 Push、Pull Request 和定时任务不得执行重型验证，也不得通过 Workflow 调用链间接触发。Browser E2E 只保留人工 `workflow_dispatch`。
+5. **结果表达**：默认交付只说明轻量门禁结果。未获授权的重型验证记录为“按项目策略未执行”，不能表述为通过、待 GitSync 执行、完整跨栈验收完成或生产可用。
+
+### 2.2 测试层级
 
 | 层级 | 主要对象 | 依赖策略 | 必测内容 |
 | --- | --- | --- | --- |
@@ -62,7 +74,7 @@ Admin 与 Web 统一采用以下测试栈：
 
 Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测试基础设施。只有现有栈无法可靠覆盖且有明确风险证据时，才通过后续计划评估引入，禁止为同一层级长期维护两套等价测试框架。
 
-上述依赖已写入 Admin、Web 和根工作区的 `package.json` 与 `pnpm-lock.yaml`。当前版本以锁文件为准，升级必须重新执行单元、构建和 E2E 验证。
+上述依赖已写入 Admin、Web 和根工作区的 `package.json` 与 `pnpm-lock.yaml`。当前版本以锁文件为准；升级后的单元、构建和 E2E 验证需要用户明确授权，未执行时必须记录风险。
 
 ### 6.2 单元与组件测试
 
@@ -81,13 +93,13 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
-- Push 和 Pull Request 不自动运行 Playwright。标准 Chromium E2E 默认在本地执行，需要干净 Ubuntu 环境时人工触发 GitHub Browser E2E；是否运行由操作人员按改动风险决定，其结果不参与镜像发布门禁。Firefox 与 WebKit 在以下情况之一时应人工验证：（1）涉及 CSS 布局、动画、字体渲染、焦点样式或滚动行为的 UI 变更；（2）引入了依赖浏览器原生 API（如 Clipboard、File、WebAuthn）的交互；（3）派生项目将 Firefox 或 Safari 列为明确支持的目标浏览器。派生项目明确支持 Safari 时，发布前必须人工完成 WebKit 验证并在对应计划中记录结果；母版维护阶段不强制要求定期 WebKit 验证。
+- Playwright 不由日常开发、`$git-sync`、Push、Pull Request 或定时任务自动运行。需要本地标准 Chromium E2E 时由用户明确授权；需要干净 Ubuntu 环境时由用户人工触发 GitHub Browser E2E。Firefox 与 WebKit 也只在用户明确要求或派生项目验收计划明确授权时执行，所有浏览器结果均不参与镜像发布门禁。
 - CI 失败保留首个失败重试的 Trace、必要截图和 HTML Report。重试只用于采集诊断信息，初次失败仍按不稳定测试处理，禁止依靠重试把套件标记为健康。
 - 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
 
 ### 6.4 UI 与可访问性验收
 
-涉及 UI 时至少验证：
+用户明确授权 UI 或浏览器验收时至少验证：
 
 - 桌面和移动端关键视口。
 - 加载、空数据、失败、无权限、成功和危险操作确认。
@@ -95,7 +107,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - 长文本、窄屏、横向溢出和遮挡。
 - 关键浏览器流程和控制台错误。
 
-关键页面和关键状态必须运行 axe 自动扫描。自动扫描未发现问题只能说明已配置规则没有命中，不能宣称符合完整 WCAG；键盘操作、焦点顺序、动态反馈、语义和实际可理解性仍需组件断言与浏览器验证。
+用户明确授权可访问性自动验证时，关键页面和关键状态运行 axe 扫描。自动扫描未发现问题只能说明已配置规则没有命中，不能宣称符合完整 WCAG；键盘操作、焦点顺序、动态反馈、语义和实际可理解性仍需人工或经授权的组件与浏览器验证。
 
 浏览器冒烟不能替代已经配置的单元、组件或 E2E 测试。兜底验证必须明确标为未完整通过。
 
@@ -104,20 +116,20 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 ## 7. Backend 覆盖率门禁
 
 - `apps/backend/pyproject.toml` 是 Backend 覆盖率配置的唯一来源，统计范围为 `app`，同时启用行覆盖率和分支覆盖率。
-- 默认 `uv run pytest` 与 Backend CI 都继承 `--cov=app --cov-branch --cov-report=term-missing --cov-fail-under=90`，低于 90% 时退出码非零。
-- 全量门禁包含真实 PostgreSQL 18.4 与 Redis 8.10.0 集成测试，不允许用 SQLite、跳过 integration marker 或只运行单元测试代替。
+- 用户明确授权运行 `uv run pytest` 时，命令继承 `--cov=app --cov-branch --cov-report=term-missing --cov-fail-under=90`，低于 90% 时退出码非零；日常 CI 不自动运行 pytest。
+- 经授权的 Backend 全量测试包含真实 PostgreSQL 18.4 与 Redis 8.10.0 集成测试，不允许用 SQLite、跳过 integration marker 或只运行单元测试代替。
 - 覆盖率只用于暴露测试空白。关键成功、拒绝、冲突、依赖失败、配置失败和恢复路径仍需具备可观察行为断言。
 
 ## 8. 跳过和不稳定测试
 
-- 关键门禁不得因缺少依赖而静默跳过。
+- 已明确授权的测试和已配置的轻量自动门禁不得因缺少依赖而静默跳过。
 - `skip`、`xfail` 和隔离测试必须包含原因、负责人和清理日期。
 - 不稳定测试先定位原因，不能通过无限重试掩盖。
 - CI Summary 必须区分通过、失败、跳过和未适用。
 
 ## 9. 完成条件
 
-一项实现只有在计划内全部适用门禁通过、未适用项有依据、跳过项被明确记录并且代码与文档同步后才能宣称完成。Backend 当前最低覆盖率为 90%；Admin 与 Web 的语句、分支、函数和行覆盖率最低为 80%。
+一项实现通过默认轻量门禁、完成计划内文档同步并如实记录未执行项后，可以提交和完成 Git 交付。只有用户明确授权对应重型验证且实际通过时，才能宣称测试、构建或完整跨栈验收通过。Backend pytest 保持 90% 覆盖率阈值，Admin 与 Web 的 Vitest 保持语句、分支、函数和行覆盖率 80% 阈值；这些阈值只在对应测试获授权并实际运行时生效。
 
 前端覆盖率必须纳入承担 Cookie、CSRF、Refresh、权限启动和 BFF 转发的高风险入口。当前 Admin 统计 `src/features/**`、`src/lib/api/**`、`src/access.ts` 与 `src/app.tsx`；Web 统计 `src/features/**`、`src/lib/api/**` 与 BFF Route Handler。不得通过只统计页面组件排除传输和认证生命周期代码来满足 80% 门禁。
 

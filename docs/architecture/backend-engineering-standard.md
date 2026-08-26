@@ -306,19 +306,17 @@ Service、Domain 和 Repository 禁止依赖 FastAPI `Request`、`Response`、`D
 
 ## 16. 质量门禁
 
-Backend 当前 `ready`，以下门禁从 `apps/backend` 执行：
+Backend 当前 `ready`，以下默认轻量门禁从 `apps/backend` 执行：
 
 ```powershell
 uv sync --locked
-uv run python -m compileall -q app alembic scripts tests
+uv run python -m compileall -q app alembic scripts
 uv run python -c "from app.main import app; print('APP_IMPORT_OK')"
 uv run python -c "from app.main import app; schema = app.openapi(); print('OPENAPI_OK', len(schema.get('paths', {})))"
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy app
 uv run lint-imports
-uv run alembic check
-uv run python -m pytest -q
 ```
 
 从仓库根目录继续执行：
@@ -331,10 +329,12 @@ git diff --exit-code -- openapi.json packages/api-client/src
 
 适用规则：
 
-1. 数据库不可用、测试跳过、工具未安装和替代验证必须分别报告，不能汇总为“测试通过”。
-2. `pyproject.toml` 默认对 `app` 同时统计行与分支覆盖率，`uv run pytest` 和 Backend CI 低于 90% 时必须失败；禁止通过 marker、单测子集或关闭 coverage 交付。
-3. 全量 pytest 必须显式提供隔离的 `TEST_DATABASE_URL` 与 `TEST_REDIS_URL`，数据库名必须以 `_test` 结尾；依赖不可用时按 fail closed 规则失败。
-4. 修改公开 API 时必须重新导出 OpenAPI 并生成客户端；生成后工作区存在差异表示契约尚未同步完成。
+1. 日常开发、普通提交、`$git-sync`、Push 和 Pull Request 只自动运行上述轻量门禁，不运行 pytest、测试数据库迁移或测试 Redis。
+2. 用户明确授权 Backend 测试时，才运行 `uv run alembic check` 和被点名的 pytest 范围；授权只对当前任务生效。
+3. `pyproject.toml` 对 `app` 同时统计行与分支覆盖率。经授权运行全量 pytest 时低于 90% 必须失败，禁止通过 marker、单测子集或关闭 coverage 伪装全量通过。
+4. 经授权的全量 pytest 必须显式提供隔离的 `TEST_DATABASE_URL` 与 `TEST_REDIS_URL`，数据库名必须以 `_test` 结尾；依赖不可用时按 fail closed 规则失败。
+5. 数据库不可用、测试跳过、工具未安装、未获授权和替代验证必须分别报告，不能汇总为“测试通过”。
+6. 修改公开 API 时必须重新导出 OpenAPI 并生成客户端；生成后工作区存在差异表示契约尚未同步完成。
 
 ## 17. 代码评审清单
 

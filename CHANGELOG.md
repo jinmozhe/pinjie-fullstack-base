@@ -6,6 +6,7 @@
 
 ### Added
 
+- 完善 Admin 管理员列表：展示头像与显示名称，提供资料编辑、身份列超级管理员切换、独立密码重置、批量启用或停用，以及“编辑、角色、会话、更多”的紧凑不换行操作布局；Backend 同步增加头像更新和原子批量状态接口。
 - 增加统一文件与多媒体资产服务：本地存储端口、Magic Number 与场景策略、同主体 SHA-256 去重、双域 Cookie/CSRF 上传、RBAC 资产查询、二次确认审计删除、Admin/Web 上传组件及生产持久卷。
 - 增加 Session 分页契约、Refresh Token 级联清理和默认 dry-run 的会话保留清理工具，支持显式 `--apply`、结果统计和隔离测试库验证。
 - 增加 Admin 认证 HTTP、启动生命周期、权限映射和 Web BFF/SSR 会话恢复回归测试，将高风险传输边界纳入前端覆盖率门禁。
@@ -78,6 +79,7 @@
 
 ### Changed
 
+- 三端日常开发、`$git-sync`、Push 与 Pull Request 收敛为轻量门禁：Admin/Web 只自动运行 typecheck 和 lint，Backend 只自动运行静态、导入与契约检查；前端 build、Vitest、pytest、Playwright 和测试数据库验证仅在用户明确授权后执行，GitHub Actions 不再自动运行这些重型验证。
 - Admin 桌面布局按 Ant Design Pro 官方比例调整：展开侧栏统一为 `256px`，PageContainer 移除 `1480px` 固定上限并改用流式工作区，桌面与移动端按 `40px`、`24px`、`16px` 三级内边距响应，保留现有页面、表格和业务操作。
 - 保留 `Protect main` Ruleset 和 13 项必需检查，启用 rebase Auto-merge 与合并后自动删除分支；`$git-sync` 现可一次完成当前任务的分支、提交、推送、PR、检查等待、自动合并、分支清理和本地 `main` 同步，失败时保留 PR 与分支并停止。
 - 四个自动 GitHub Actions 工作流收敛为目标为 `main` 的 Pull Request 和 `main` push 触发，Security 继续保留每周定时扫描；功能分支 push 不再重复运行整套检查，合并后的 `main` 仍生成镜像发布所需的四项 Push Run。

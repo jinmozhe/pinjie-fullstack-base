@@ -21,6 +21,7 @@ from app.domains.users.schemas import ActionResult, SessionPage, SessionRead, Us
 from .permissions import PermissionCode
 from .presenters import admin_read, role_read
 from .schemas import (
+    AdminBulkStatusUpdateIn,
     AdminCreateIn,
     AdminPage,
     AdminRead,
@@ -212,6 +213,27 @@ async def list_admins(
 ) -> ResponseModel[AdminPage]:
     return success_response(
         data=await service.list_admins(page=page, page_size=page_size), request_id=current_request_id()
+    )
+
+
+@router.patch(
+    "/admins/status/batch",
+    response_model=ResponseModel[list[AdminRead]],
+    dependencies=[
+        Depends(require_permission(PermissionCode.ADMINS_UPDATE)),
+        Depends(require_admin_confirmation(ConfirmationAction.ADMIN_STATUS_CHANGE)),
+    ],
+    summary="批量修改管理员状态",
+)
+async def set_admin_status_bulk(
+    payload: AdminBulkStatusUpdateIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[list[AdminRead]]:
+    admins = await service.set_admin_status_bulk(payload)
+    return success_response(
+        data=[admin_read(admin) for admin in admins],
+        request_id=current_request_id(),
+        message="管理员状态批量更新成功",
     )
 
 

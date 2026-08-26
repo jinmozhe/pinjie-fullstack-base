@@ -111,6 +111,7 @@ class AdminUpdateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     display_name: str | None = Field(default=None, max_length=100)
+    avatar: str | None = Field(default=None, max_length=500, description="管理员头像 URL 或站内资源路径")
     is_superuser: bool | None = None
 
     @model_validator(mode="after")
@@ -137,6 +138,24 @@ class StatusUpdateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     is_active: bool
+
+
+class AdminBulkStatusUpdateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    admin_ids: list[uuid.UUID] = Field(
+        min_length=1,
+        max_length=100,
+        description="待批量更新状态的管理员唯一标识列表",
+    )
+    is_active: bool
+
+    @field_validator("admin_ids")
+    @classmethod
+    def validate_unique_admin_ids(cls, value: list[uuid.UUID]) -> list[uuid.UUID]:
+        if len(value) != len(set(value)):
+            raise ValueError("admin_ids must be unique")
+        return value
 
 
 class PasswordResetIn(BaseModel):
@@ -271,6 +290,7 @@ UserPage = PageResult[UserPrincipalOut]
 
 __all__ = [
     "AdminAuthSessionOut",
+    "AdminBulkStatusUpdateIn",
     "AdminConfirmIn",
     "AdminConfirmOut",
     "AdminCreateIn",

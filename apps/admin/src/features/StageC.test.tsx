@@ -1,6 +1,6 @@
 import type { AdminRead } from "@pinjie/api-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
@@ -20,6 +20,7 @@ import { server } from "../test/setup";
 const now = "2026-08-15T00:00:00Z";
 const current: AdminRead = { id: "01900000-0000-7000-8000-000000000001", username: "stage-admin", display_name: "Stage Admin", is_active: true, is_superuser: true, roles: [], permissions: [], created_at: now, updated_at: now };
 const restricted: AdminRead = { ...current, id: "01900000-0000-7000-8000-000000000009", username: "read-only", display_name: "Read Only", is_superuser: false, permissions: ["users:read", "admins:read", "roles:read"] };
+const otherAdmin: AdminRead = { ...current, id: "01900000-0000-7000-8000-000000000010", username: "other-admin", display_name: "Other Admin", avatar: "/static/uploads/avatar/other.png", is_superuser: false };
 
 function renderPage(node: ReactNode, principal: AdminRead | null = current) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -93,31 +94,126 @@ describe("stage C admin workspace", () => {
     await confirmAction(user);
   }, 120_000);
 
-  it("loads administrators and opens role assignment", async () => {
+  it("loads administrators and assigns roles with confirmation", async () => {
     const user = userEvent.setup();
+    server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 }, request_id: "test-request" })));
     renderPage(<AdminsPage />);
-    expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
+    expect(await screen.findByText("Other Admin")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /角色/ }));
     expect(screen.getByText("分配角色")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /取\s*消/ }));
-  });
+    await user.click(screen.getByRole("button", { name: /下一步/ }));
+    await confirmAction(user);
+  }, 60_000);
 
   it("protects administrator status and session operations", async () => {
     const user = userEvent.setup();
     server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({
       code: "OK",
       message: "操作成功",
-      data: { items: [{ ...current, id: "01900000-0000-7000-8000-000000000010", username: "other-admin", display_name: "Other Admin" }], page: 1, page_size: 20, total: 1, total_pages: 1 },
+      data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 },
       request_id: "test-request",
     })));
     renderPage(<AdminsPage />);
     expect(await screen.findByText("Other Admin")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /停\s*用/ }));
+    await user.click(screen.getByRole("button", { name: "更多操作：other-admin" }));
+    await user.click(await screen.findByRole("menuitem", { name: /停\s*用/ }));
     await confirmAction(user);
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
     await confirmAction(user);
+  }, 60_000);
+
+  it("edits administrator avatar and display name", async () => {
+    const user = userEvent.setup();
+    let updatePayload: unknown;
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 }, request_id: "test-request" })),
+      http.patch("http://localhost:3000/api/v1/admin/admins/:id", async ({ request }) => {
+        updatePayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: otherAdmin, request_id: "test-request" });
+      }),
+    );
+    renderPage(<AdminsPage />);
+
+    expect(await screen.findByRole("img", { name: "Other Admin的头像" })).toHaveAttribute("src", "/static/uploads/avatar/other.png");
+    await user.click(screen.getByRole("button", { name: /编辑/ }));
+    const displayName = screen.getByLabelText("显示名称");
+    await user.clear(displayName);
+    await user.type(displayName, "Updated Admin");
+    await user.click(screen.getByRole("button", { name: "移除头像" }));
+    await user.click(screen.getByRole("button", { name: /保\s*存/ }));
+
+    await waitFor(() => expect(updatePayload).toEqual({ avatar: null, display_name: "Updated Admin" }));
+  }, 60_000);
+
+  it("switches administrator identity with confirmation", async () => {
+    const user = userEvent.setup();
+    let updatePayload: unknown;
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 }, request_id: "test-request" })),
+      http.patch("http://localhost:3000/api/v1/admin/admins/:id", async ({ request }) => {
+        updatePayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: { ...otherAdmin, is_superuser: true }, request_id: "test-request" });
+      }),
+    );
+    renderPage(<AdminsPage />);
+
+    await user.click(await screen.findByRole("button", { name: "设为超级管理员：other-admin" }));
+    await confirmAction(user);
+    await waitFor(() => expect(updatePayload).toEqual({ is_superuser: true }));
+  }, 60_000);
+
+  it("resets an administrator password from the more menu", async () => {
+    const user = userEvent.setup();
+    let resetPayload: unknown;
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 }, request_id: "test-request" })),
+      http.put("http://localhost:3000/api/v1/admin/admins/:id/credentials/password", async ({ request }) => {
+        resetPayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: { completed: true }, request_id: "test-request" });
+      }),
+    );
+    renderPage(<AdminsPage />);
+
+    await user.click(await screen.findByRole("button", { name: "更多操作：other-admin" }));
+    await user.click(await screen.findByRole("menuitem", { name: /重置密码/ }));
+    await user.type(screen.getByLabelText("新密码"), "replacement-password");
+    await user.type(screen.getByLabelText("确认新密码"), "replacement-password");
+    await user.click(screen.getByRole("button", { name: /下一步/ }));
+    await confirmAction(user);
+
+    await waitFor(() => expect(resetPayload).toEqual({ new_password: "replacement-password" }));
+  }, 60_000);
+
+  it("selects administrators and performs one atomic bulk status request", async () => {
+    const user = userEvent.setup();
+    const thirdAdmin: AdminRead = { ...otherAdmin, id: "01900000-0000-7000-8000-000000000011", username: "third-admin", display_name: "Third Admin" };
+    let bulkPayload: unknown;
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [current, otherAdmin, thirdAdmin], page: 1, page_size: 20, total: 3, total_pages: 1 }, request_id: "test-request" })),
+      http.patch("http://localhost:3000/api/v1/admin/admins/status/batch", async ({ request }) => {
+        bulkPayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: [otherAdmin, thirdAdmin], request_id: "test-request" });
+      }),
+    );
+    renderPage(<AdminsPage />);
+
+    expect(await screen.findByText("Third Admin")).toBeInTheDocument();
+    const rowCheckboxes = screen.getAllByRole("checkbox", { name: /Select row/ });
+    expect(rowCheckboxes[0]).toBeDisabled();
+    const secondCheckbox = rowCheckboxes[1];
+    const thirdCheckbox = rowCheckboxes[2];
+    if (!secondCheckbox || !thirdCheckbox) throw new Error("批量选择列未完整渲染");
+    await user.click(secondCheckbox);
+    await user.click(thirdCheckbox);
+    expect(screen.getByText("已选择 2 项")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /批量停用/ }));
+    await confirmAction(user);
+
+    await waitFor(() => expect(bulkPayload).toEqual({ admin_ids: [otherAdmin.id, thirdAdmin.id], is_active: false }));
+    expect(screen.getByRole("columnheader", { name: "操作" })).toHaveStyle({ whiteSpace: "nowrap" });
+    expect(document.querySelector('col[style*="width: 1%"]')).not.toBeNull();
   }, 60_000);
 
   it("renders inactive records, empty fields, and active session details", async () => {
@@ -166,7 +262,8 @@ describe("stage C admin workspace", () => {
     const admins = renderPage(<AdminsPage />);
     expect((await screen.findAllByText("inactive-admin")).length).toBeGreaterThan(0);
     expect(screen.getByText("审计员")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /启\s*用/ }));
+    await user.click(screen.getByRole("button", { name: "更多操作：inactive-admin" }));
+    await user.click(await screen.findByRole("menuitem", { name: /启\s*用/ }));
     await confirmAction(user);
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("旧设备")).toBeInTheDocument();
@@ -180,7 +277,7 @@ describe("stage C admin workspace", () => {
     expect(screen.getByText("0")).toBeInTheDocument();
   }, 60_000);
 
-  it("creates an administrator and confirms role assignment", async () => {
+  it("creates an administrator with confirmation", async () => {
     const user = userEvent.setup();
     renderPage(<AdminsPage />);
     expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
@@ -192,9 +289,6 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("button", { name: /下一步/ }));
     await confirmAction(user);
 
-    await user.click(screen.getByRole("button", { name: /角色/ }));
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
-    await confirmAction(user);
   }, 60_000);
 
   it("rejects administrator passwords shorter than six characters", async () => {
@@ -284,7 +378,8 @@ describe("stage C admin workspace", () => {
 
     const admins = renderPage(<AdminsPage />, restricted);
     expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /新建管理员|角色|停用|会话/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /新建管理员|编辑|角色|更多操作|会话/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     admins.unmount();
 
     renderPage(<RolesPage />, restricted);

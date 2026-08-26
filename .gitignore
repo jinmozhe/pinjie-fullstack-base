@@ -1,5 +1,5 @@
 # ============================================================
-# Python / 后端
+# Python / Backend
 # ============================================================
 __pycache__/
 *.py[cod]
@@ -19,6 +19,12 @@ htmlcov/
 /apps/backend/uploads/
 /apps/backend/.uploads-staging/
 /apps/backend/.uploads-trash/
+.e2e-uploads/
+.e2e-uploads-staging/
+..e2e-uploads-staging/
+/apps/backend/.e2e-uploads/
+/apps/backend/.e2e-uploads-staging/
+/apps/backend/..e2e-uploads-staging/
 
 # ============================================================
 # Node.js / 前端
@@ -43,8 +49,11 @@ dist/
 # TypeScript 增量编译缓存
 *.tsbuildinfo
 
-# 测试覆盖率
+# 测试与覆盖率产物
 coverage/
+playwright-report/
+test-results/
+.playwright-cli/
 
 # ============================================================
 # 环境变量（绝不入库）
