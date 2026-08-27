@@ -25,6 +25,12 @@ class UserUpdateIn(BaseModel):
         return self
 
 
+class UserAvatarUpdateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    asset_id: uuid.UUID | None = Field(default=None, description="本人上传的头像资产唯一标识，传 null 表示移除")
+
+
 class PasswordChangeIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -66,4 +72,12 @@ class ActionResult(BaseModel):
 SessionPage = PageResult[SessionRead]
 
 
-__all__ = ["AccountDeleteIn", "ActionResult", "PasswordChangeIn", "SessionPage", "SessionRead", "UserUpdateIn"]
+__all__ = [
+    "AccountDeleteIn",
+    "ActionResult",
+    "PasswordChangeIn",
+    "SessionPage",
+    "SessionRead",
+    "UserAvatarUpdateIn",
+    "UserUpdateIn",
+]

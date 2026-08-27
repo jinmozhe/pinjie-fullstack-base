@@ -1,6 +1,6 @@
 "use client";
 
-import type { UploadScene } from "@pinjie/api-client";
+import type { AssetRead, UploadScene } from "@pinjie/api-client";
 import { Upload } from "lucide-react";
 import Image from "next/image";
 import { useRef, useState } from "react";
@@ -11,6 +11,7 @@ import { errorMessage } from "@/lib/api/http";
 export type ImageUploaderProps = {
   value?: string | null;
   onChange?: (url: string) => void;
+  onUploaded?: (asset: AssetRead) => void;
   scene?: UploadScene;
   disabled?: boolean;
   maxSizeMb?: number;
@@ -22,6 +23,7 @@ const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 export function ImageUploader({
   value,
   onChange,
+  onUploaded,
   scene = "attachment",
   disabled = false,
   maxSizeMb = 5,
@@ -46,6 +48,7 @@ export function ImageUploader({
     try {
       const asset = await assetApi.upload(file, scene);
       onChange?.(asset.url);
+      onUploaded?.(asset);
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {

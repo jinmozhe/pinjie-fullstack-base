@@ -58,6 +58,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, comment="规范化用户名")
     email: Mapped[str | None] = mapped_column(String(320), nullable=True, unique=True, comment="未验证可选邮箱")
     display_name: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="展示名称")
+    avatar: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="用户头像站内资源路径")
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, comment="Argon2id 密码摘要")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="是否允许登录")
     credential_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="凭据版本")

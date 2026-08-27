@@ -17,7 +17,15 @@ from app.core.response import ResponseModel, success_response
 from app.db.models import UserSession
 from app.domains.auth.schemas import RefreshSessionOut, UserPrincipalOut
 
-from .schemas import AccountDeleteIn, ActionResult, PasswordChangeIn, SessionPage, SessionRead, UserUpdateIn
+from .schemas import (
+    AccountDeleteIn,
+    ActionResult,
+    PasswordChangeIn,
+    SessionPage,
+    SessionRead,
+    UserAvatarUpdateIn,
+    UserUpdateIn,
+)
 
 router = APIRouter(prefix="/users/me", tags=["用户账户"])
 
@@ -53,6 +61,18 @@ async def update_me(
     user = await service.update_profile(current.user.id, payload)
     return success_response(
         data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="用户资料更新成功"
+    )
+
+
+@router.put("/avatar", response_model=ResponseModel[UserPrincipalOut], summary="更新当前用户头像")
+async def update_avatar(
+    payload: UserAvatarUpdateIn,
+    service: UserAccountServiceDependency,
+    current: Annotated[CurrentUser, Depends(require_web_csrf)],
+) -> ResponseModel[UserPrincipalOut]:
+    user = await service.update_avatar(current.user.id, payload)
+    return success_response(
+        data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="用户头像更新成功"
     )
 
 

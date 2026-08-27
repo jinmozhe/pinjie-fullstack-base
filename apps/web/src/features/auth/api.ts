@@ -8,6 +8,7 @@ export const webAuthApi = {
   refresh: () => webRequest<RefreshSessionOut>("/api/v1/auth/refresh", { method: "POST" }, false),
   me: (signal?: globalThis.AbortSignal) => webRequest<UserPrincipalOut>("/api/v1/users/me", {}, true, signal),
   update: (input: UserUpdateIn) => webRequest<UserPrincipalOut>("/api/v1/users/me", { method: "PATCH", body: JSON.stringify(input) }),
+  updateAvatar: (assetId: string | null) => webRequest<UserPrincipalOut>("/api/v1/users/me/avatar", { method: "PUT", body: JSON.stringify({ asset_id: assetId }) }),
   changePassword: (currentPassword: string, newPassword: string) => webRequest<RefreshSessionOut>("/api/v1/users/me/password", { method: "POST", body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }) }),
   sessions: (signal?: globalThis.AbortSignal) => webRequest<PageResultSessionRead>("/api/v1/users/me/sessions?page=1&page_size=100", {}, true, signal),
   revokeSession: (id: string) => webRequest<ActionResult>(`/api/v1/users/me/sessions/${id}`, { method: "DELETE" }),

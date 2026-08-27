@@ -363,6 +363,12 @@ export type AdminUserRead = {
      */
     email: string | null;
     /**
+     * Avatar
+     *
+     * 用户头像站内资源路径
+     */
+    avatar?: string | null;
+    /**
      * Is Active
      *
      * 资源当前是否启用
@@ -2478,6 +2484,18 @@ export type UserAuthSessionOut = {
 };
 
 /**
+ * UserAvatarUpdateIn
+ */
+export type UserAvatarUpdateIn = {
+    /**
+     * Asset Id
+     *
+     * 本人上传的头像资产唯一标识，传 null 表示移除
+     */
+    asset_id?: string | null;
+};
+
+/**
  * UserBulkDeleteIn
  */
 export type UserBulkDeleteIn = {
@@ -2559,6 +2577,12 @@ export type UserPrincipalOut = {
      * 电子邮箱地址
      */
     email: string | null;
+    /**
+     * Avatar
+     *
+     * 用户头像站内资源路径
+     */
+    avatar?: string | null;
     /**
      * Is Active
      *
@@ -2977,6 +3001,31 @@ export type UpdateMeApiV1UsersMePatchResponses = {
 };
 
 export type UpdateMeApiV1UsersMePatchResponse = UpdateMeApiV1UsersMePatchResponses[keyof UpdateMeApiV1UsersMePatchResponses];
+
+export type UpdateAvatarApiV1UsersMeAvatarPutData = {
+    body: UserAvatarUpdateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/users/me/avatar';
+};
+
+export type UpdateAvatarApiV1UsersMeAvatarPutErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateAvatarApiV1UsersMeAvatarPutError = UpdateAvatarApiV1UsersMeAvatarPutErrors[keyof UpdateAvatarApiV1UsersMeAvatarPutErrors];
+
+export type UpdateAvatarApiV1UsersMeAvatarPutResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelUserPrincipalOut;
+};
+
+export type UpdateAvatarApiV1UsersMeAvatarPutResponse = UpdateAvatarApiV1UsersMeAvatarPutResponses[keyof UpdateAvatarApiV1UsersMeAvatarPutResponses];
 
 export type ChangePasswordApiV1UsersMePasswordPostData = {
     body: PasswordChangeIn;

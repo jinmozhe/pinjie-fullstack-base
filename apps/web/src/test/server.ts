@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 
 const now = "2026-08-15T00:00:00Z";
-const user = { id: "01900000-0000-7000-8000-000000000002", username: "browser-user", display_name: "Browser User", email: "browser@example.test", is_active: true, created_at: now, updated_at: now };
+const user = { id: "01900000-0000-7000-8000-000000000002", username: "browser-user", display_name: "Browser User", email: "browser@example.test", avatar: null, is_active: true, created_at: now, updated_at: now };
 const session = { id: "01900000-0000-7000-8000-000000000003", device_name: "Chrome on Windows", ip_masked: "127.0.0.*", user_agent_summary: "Chrome", created_at: now, last_seen_at: now, idle_expires_at: now, absolute_expires_at: now, is_current: true, revoked_at: null };
 const ok = <T>(data: T) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
 
@@ -18,6 +18,10 @@ export const handlers = [
   http.post("http://localhost:3000/api/v1/auth/refresh", () => ok({ session_id: session.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),
   http.get("http://localhost:3000/api/v1/users/me", () => ok(user)),
   http.patch("http://localhost:3000/api/v1/users/me", () => ok({ ...user, display_name: "Updated User" })),
+  http.put("http://localhost:3000/api/v1/users/me/avatar", async ({ request }) => {
+    const body = await request.json() as { asset_id: string | null };
+    return ok({ ...user, avatar: body.asset_id ? "/static/uploads/avatar/avatar.png" : null });
+  }),
   http.delete("http://localhost:3000/api/v1/users/me", () => ok({ completed: true })),
   http.post("http://localhost:3000/api/v1/users/me/password", () => ok({ completed: true })),
   http.get("http://localhost:3000/api/v1/users/me/sessions", () =>

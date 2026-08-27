@@ -17,6 +17,7 @@ const user = {
   username: "browser-user",
   display_name: "Browser User",
   email: "browser@example.test",
+  avatar: null,
   is_active: true,
   created_at: now,
   updated_at: now,
