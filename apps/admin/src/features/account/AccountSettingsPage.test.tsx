@@ -120,4 +120,55 @@ describe("AccountSettingsPage", () => {
     expect(screen.getByText("超级管理组")).toBeInTheDocument();
     expect(screen.getByText("2 项有效权限")).toBeInTheDocument();
   });
+
+  it("changes the current password and resets the security form", async () => {
+    let passwordPayload: unknown;
+    server.use(
+      http.post("http://localhost:3000/api/v1/admin/auth/password", async ({ request }) => {
+        passwordPayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "密码已更新", data: { completed: true } });
+      }),
+    );
+    const user = userEvent.setup();
+    renderAccountSettingsPage(mockAdmin);
+    await user.click(screen.getByText("安全设置"));
+
+    await user.type(screen.getByLabelText("当前密码"), "current-password");
+    await user.type(screen.getByLabelText("新密码"), "replacement-password");
+    await user.type(screen.getByLabelText("确认新密码"), "replacement-password");
+    await user.click(screen.getByRole("button", { name: "修改密码" }));
+
+    await waitFor(() => expect(passwordPayload).toEqual({
+      current_password: "current-password",
+      new_password: "replacement-password",
+    }));
+    await waitFor(() => expect(screen.getByLabelText("当前密码")).toHaveValue(""));
+  });
+
+  it("rejects mismatched password confirmation", async () => {
+    const user = userEvent.setup();
+    renderAccountSettingsPage(mockAdmin);
+    await user.click(screen.getByText("安全设置"));
+
+    await user.type(screen.getByLabelText("当前密码"), "current-password");
+    await user.type(screen.getByLabelText("新密码"), "replacement-password");
+    await user.type(screen.getByLabelText("确认新密码"), "different-password");
+    await user.click(screen.getByRole("button", { name: "修改密码" }));
+
+    expect(await screen.findByText("两次输入的新密码不一致")).toBeInTheDocument();
+  });
+
+  it("renders ordinary administrators without assigned roles", async () => {
+    renderAccountSettingsPage({
+      ...mockAdmin,
+      is_superuser: false,
+      roles: [],
+      permissions: [],
+    });
+    fireEvent.click(screen.getByText("安全设置"));
+
+    expect(await screen.findByText("普通管理员")).toBeInTheDocument();
+    expect(screen.getByText("-")).toBeInTheDocument();
+    expect(screen.getByText("0 项有效权限")).toBeInTheDocument();
+  });
 });

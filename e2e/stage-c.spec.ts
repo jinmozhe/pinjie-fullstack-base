@@ -57,7 +57,7 @@ test.describe("stage C cross-stack journeys", () => {
     await expect(page.getByRole("heading", { name: "用户中心" })).toBeVisible();
 
     await page.getByLabel("显示名称").fill("Stage C Updated User");
-    await page.getByRole("button", { name: "保存资料" }).click();
+    await page.getByRole("button", { name: "保存资料" }).press("Enter");
     await expect(page.getByRole("status")).toContainText("个人资料已保存");
     await page.getByRole("button", { name: /登录设备/ }).click();
     await expect(page.getByText("当前设备")).toBeVisible();

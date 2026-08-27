@@ -5,7 +5,8 @@ const reuseExistingServer = process.env.E2E_MANAGED_SERVERS === "1" || !process.
 
 export default defineConfig({
   testDir: "./e2e",
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: [["list"], ["html", { open: "never" }]],

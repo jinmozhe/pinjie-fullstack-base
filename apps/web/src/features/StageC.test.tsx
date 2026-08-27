@@ -156,7 +156,7 @@ describe("stage C web account", () => {
 
   it("uploads and binds a user-owned avatar asset", async () => {
     const upload = vi.spyOn(assetApi, "upload").mockResolvedValue({
-      id: "01900000-0000-0000-0000-000000000020",
+      id: "01900000-0000-7000-8000-000000000020",
       uploader_type: "user",
       uploader_id: initialUser.id,
       storage_driver: "local",
@@ -176,14 +176,14 @@ describe("stage C web account", () => {
 
     await user.upload(screen.getByLabelText("选择图片文件"), new globalThis.File(["png-content"], "avatar.png", { type: "image/png" }));
 
-    await waitFor(() => expect(updateAvatar).toHaveBeenCalledWith("01900000-0000-0000-0000-000000000020"));
+    await waitFor(() => expect(updateAvatar).toHaveBeenCalledWith("01900000-0000-7000-8000-000000000020"));
     expect(upload).toHaveBeenCalledWith(expect.any(globalThis.File), "avatar");
     expect(await screen.findByText("头像已更新")).toBeInTheDocument();
   });
 
   it("shows a binding failure after avatar upload", async () => {
     vi.spyOn(assetApi, "upload").mockResolvedValue({
-      id: "01900000-0000-0000-0000-000000000021",
+      id: "01900000-0000-7000-8000-000000000021",
       uploader_type: "user",
       uploader_id: initialUser.id,
       storage_driver: "local",
@@ -208,6 +208,11 @@ describe("stage C web account", () => {
 
   it("removes the avatar through the binding endpoint", async () => {
     const currentAvatar = { ...initialUser, avatar: "/static/uploads/avatar/current.png" };
+    server.use(
+      http.get("http://localhost:3000/api/v1/users/me", () =>
+        HttpResponse.json({ code: "OK", message: "操作成功", data: currentAvatar }),
+      ),
+    );
     const updateAvatar = vi.spyOn(webAuthApi, "updateAvatar").mockResolvedValue({ ...currentAvatar, avatar: null });
     const user = userEvent.setup();
     renderWithQuery(<AccountCenter initialUser={currentAvatar} />);
