@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, Depends, Request, Response
+from loguru import logger
 
 from app.api.dependencies import (
     AdminAccountServiceDependency,
@@ -22,7 +23,7 @@ from app.domains.users.schemas import PasswordChangeIn
 from app.services.authentication import SessionArtifacts
 
 from .presenters import admin_read
-from .schemas import AdminAuthSessionOut, AdminLoginIn, AdminProfileUpdateIn, AdminRead
+from .schemas import AdminAuthSessionOut, AdminConfirmIn, AdminConfirmOut, AdminLoginIn, AdminProfileUpdateIn, AdminRead
 
 router = APIRouter(prefix="/admin/auth", tags=["管理员认证"])
 
@@ -163,6 +164,32 @@ async def change_password(
         request_id=current_request_id(),
         message="密码修改成功",
     )
+
+
+@router.post(
+    "/confirm",
+    response_model=ResponseModel[AdminConfirmOut],
+    summary="兼容旧版管理员敏感操作确认",
+    description="仅供旧版 Admin 客户端迁移使用，已弃用并计划于 2026-09-26 删除。确认回执不参与后续操作授权。",
+    deprecated=True,
+    operation_id="confirm_api_v1_admin_auth_confirm_post",
+)
+async def confirm_compatibility(
+    payload: AdminConfirmIn,
+    response: Response,
+    service: AdminAccountServiceDependency,
+    current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
+) -> ResponseModel[AdminConfirmOut]:
+    logger.bind(
+        event="admin_confirmation_compatibility_used",
+        admin_id=str(current.admin.id),
+        action=payload.action.value,
+        sunset="2026-09-26",
+    ).warning("deprecated admin confirmation compatibility endpoint used")
+    result = await service.create_confirmation_compatibility(admin=current.admin, payload=payload)
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["Sunset"] = "Sat, 26 Sep 2026 00:00:00 GMT"
+    return success_response(data=result, request_id=current_request_id(), message="敏感操作确认成功")
 
 
 __all__ = ["router"]

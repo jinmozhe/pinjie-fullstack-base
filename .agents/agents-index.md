@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | Admin 系统状态全景监控审查修正已完成；新增权限的目标环境同步、发布和部署仍需独立授权 |
+| 当前阶段 | PR #14 契约兼容修复已完成；旧版管理员确认端点限时保留至 2026-09-26，新增权限的目标环境同步、发布和部署仍需独立授权 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -49,7 +49,7 @@
 | `plans/2026-08-27_Admin用户永久回收站恢复策略调整计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Documentation | 实施统一 SoftDeleteMixin，移除恢复截止和匿名化，用户自助注销统一进入可恢复软删除回收站 |
 | `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | Documentation、Developer Workflow | 已建立功能单元本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | Database、Backend、Admin、API Client、Documentation | 已完成用户回收站、单条与批量恢复、到期匿名化和独立恢复权限；目标环境迁移与权限同步仍需独立授权 |
-| `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 用户、管理员、角色和资产普通数据列表已具备批量操作；安全日志保持只读，管理端点显式权限和长期规则已同步 |
+| `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 批量治理已完成；旧版管理员确认端点按 ADR 0007 限时兼容至 2026-09-26 |
 | `plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` | 已结束 | Backend、Admin、Web、API Client、Deployment、Documentation | 三端本地、GitSync 与 GitHub Actions 已收敛为轻量静态检查，重型验证只在用户明确授权后执行 |
 | `plans/2026-08-26_开发迭代与GitSync分层验证规则计划.md` | 已结束 | Documentation、Developer Workflow | 已建立开发定向测试与 GitSync 按影响范围全量验证规则，通用 Skill 保持中立 |
 | `plans/2026-08-25_Admin管理员资料编辑与安全操作整合计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 已完成管理员资料编辑、身份切换、独立密码重置、批量状态管理和紧凑不换行操作列 |
@@ -93,7 +93,7 @@
 | `plans/2026-08-27_Admin用户永久回收站恢复策略调整计划.md` | 已结束 | 已完成统一 SoftDeleteMixin、移除匿名化、用户自助注销走可恢复软删除及删除原因可选方案；轻量门禁通过，重型验证和真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Documentation | 实施统一 SoftDeleteMixin，移除恢复截止和匿名化，用户自助注销统一进入可恢复软删除回收站 |
 | `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | 已完成；功能单元完成后请求本地检查点授权、分阶段授权后立即精确提交，高风险整文件写入具备恢复基线和严格校验，治理轻量门禁通过 | Documentation、Developer Workflow | 建立本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | 已完成；回收站、恢复后保持停用、默认 30 天到期匿名化、迁移、契约、Admin 页面和文档已同步，轻量门禁通过，重型验证按策略未执行 | Database、Backend、Admin、API Client、Documentation | 为软删除用户增加可恢复生命周期和受控数据最小化机制 |
-| `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | 已完成；普通数据列表批量操作、资产筛选与批量硬删除、管理端点显式权限和日志只读规则已落地，轻量门禁通过，重型验证按策略未执行 | Backend、Admin、API Client、Documentation | 为现有非日志类 Admin 列表补齐批量选择、状态变更和匹配实体生命周期的删除能力 |
+| `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | 已完成；批量治理已落地，旧版管理员确认端点限时兼容至 2026-09-26；轻量门禁通过，重型验证按策略未执行 | Backend、Admin、API Client、Documentation | 为现有非日志类 Admin 列表补齐批量能力，并登记管理员确认端点受控迁移窗口 |
 | `plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` | 已结束 | 已完成；四级规则、权威文档与两条自动 CI 已同步，轻量门禁和契约幂等检查通过，重型验证按策略未执行 | Backend、Admin、Web、API Client、Deployment、Documentation | 三端本地、GitSync 与 GitHub Actions 已收敛为轻量静态检查，重型验证只在用户明确授权后执行 |
 | `plans/2026-08-26_开发迭代与GitSync分层验证规则计划.md` | 已结束 | 已完成；三级项目规则、测试策略、计划与索引已同步，通用 Skill 未修改 | Documentation、Developer Workflow | 建立开发定向测试与 GitSync 全量验证的分层规则 |
 | `plans/2026-08-25_Admin管理员资料编辑与安全操作整合计划.md` | 已结束 | 已完成；代码、契约和轻量门禁通过，Vitest、pytest、build 与浏览器验证按策略未执行 | Backend、Admin、API Client、Documentation | 已完成管理员资料编辑、身份切换、独立密码重置、批量状态管理和紧凑不换行操作列 |
@@ -149,10 +149,10 @@
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | 认证、RBAC、会话、审计、统一资产及用户和角色原子批量能力已实现；资产列表支持文件名、场景和上传主体筛选，资产批量硬删除使用固定锁顺序和文件补偿；本次轻量门禁通过，pytest 按策略未执行 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Backend | 认证、RBAC、会话、审计、统一资产及用户和角色原子批量能力已实现；旧版管理员确认端点仅作为弃用契约兼容保留至 2026-09-26，不承担授权；本次轻量门禁通过，pytest 按策略未执行 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
 | Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留既有能力；用户、管理员、角色和文件资产普通数据列表均支持受权限控制的批量操作，安全日志继续只读；本次 typecheck 与 lint 通过，Vitest、production build 和浏览器验证按策略未执行 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、31 项 Vitest、88.30% 语句与行覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
-| API Client | 根 OpenAPI 共 49 条路径、57 个操作，300 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
+| API Client | 根 OpenAPI 共 52 条路径、60 个操作，357 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC、安全日志与统一资产迁移已实现，本地开发库已到 `20260825_03`；PostgreSQL advisory lock 并发保护、级联删除、资产元数据、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/`、`apps/backend/scripts/cleanup_security_logs.py` |
 | Deployment | 自动 Backend CI 只运行静态、导入与契约门禁，自动 Frontend CI 只运行 Admin/Web typecheck 和 lint；Browser E2E 保持纯人工触发，生产 Compose 与镜像发布职责不变 | `.github/workflows/ci-backend.yml`、`.github/workflows/ci-frontend.yml`、`.github/workflows/ci-e2e.yml` |
 | Documentation | 产品需求、两端规则、Admin 工程标准、认证授权、资产补偿架构、Changelog、计划和索引已同步列表批量治理与管理端点显式权限规则 | `docs/PROJECT_REQUIREMENTS.md`、`docs/architecture/admin-engineering-standard.md`、`docs/architecture/authentication-authorization.md`、`docs/architecture/file-asset-storage.md` |
