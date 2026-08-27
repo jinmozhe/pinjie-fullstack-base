@@ -67,14 +67,7 @@ docker compose --env-file .env -f compose.prod.yml run --rm backend python -m sc
 
 应用启动不自动执行 Alembic。迁移失败时停止发布，保全原数据库和备份，不继续启动不兼容的新应用镜像。
 
-用户回收站到期匿名化必须先预览数量，取得数据变更授权后再显式应用：
-
-```bash
-docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.anonymize_expired_users --confirm-database <生产数据库名>
-docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.anonymize_expired_users --apply --confirm-database <生产数据库名>
-```
-
-`USER_RECYCLE_BIN_RETENTION_DAYS` 默认 30 天。匿名化后用户永久不可恢复；该脚本不物理删除用户、安全事件或审计记录。
+用户回收站记录长期保留，不配置到期时间，也不运行匿名化脚本。具备 `users:restore` 权限的管理员可以随时恢复，恢复后账户仍保持停用。
 
 ## 5. 启动与健康检查
 

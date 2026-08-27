@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Literal
 
 from sqlalchemy.exc import IntegrityError
@@ -81,12 +81,7 @@ class AdminManagementService:
         )
         self.actor_id = actor_id
 
-    def _user_read(self, user: User, *, now: datetime | None = None) -> AdminUserRead:
-        restore_expires_at = None
-        can_restore = False
-        if user.deleted_at is not None:
-            restore_expires_at = user.deleted_at + timedelta(days=self.settings.user_recycle_bin_retention_days)
-            can_restore = user.anonymized_at is None and (now or datetime.now(UTC)) <= restore_expires_at
+    def _user_read(self, user: User) -> AdminUserRead:
         return AdminUserRead(
             id=user.id,
             username=user.username,
@@ -96,11 +91,10 @@ class AdminManagementService:
             created_at=user.created_at,
             updated_at=user.updated_at,
             deleted_at=user.deleted_at,
-            deleted_by_admin_id=user.deleted_by_admin_id,
+            deleted_by_id=user.deleted_by_id,
+            deleted_by_type=user.deleted_by_type,
             deletion_reason=user.deletion_reason,
-            anonymized_at=user.anonymized_at,
-            restore_expires_at=restore_expires_at,
-            can_restore=can_restore,
+            can_restore=user.deleted_at is not None,
         )
 
     async def list_users(
@@ -117,9 +111,8 @@ class AdminManagementService:
             search=search,
             lifecycle=lifecycle,
         )
-        now = datetime.now(UTC)
         return UserPage.create(
-            items=[self._user_read(item, now=now) for item in items],
+            items=[self._user_read(item) for item in items],
             page=page,
             page_size=page_size,
             total=total,
@@ -215,9 +208,9 @@ class AdminManagementService:
                 user.is_active = False
                 user.credential_version += 1
                 user.deleted_at = deleted_at
-                user.deleted_by_admin_id = self.actor_id
-                user.deletion_reason = "admin_deleted"
-                user.anonymized_at = None
+                user.deleted_by_id = self.actor_id
+                user.deleted_by_type = "admin"
+                user.deletion_reason = payload.deletion_reason
                 await self.sessions.revoke_web_for_user(user.id, reason="account_deleted_by_admin")
             return BatchActionResult(completed_count=len(users), target_ids=[user.id for user in users])
 
@@ -228,35 +221,29 @@ class AdminManagementService:
             changed_fields={
                 "user_ids": [str(user_id) for user_id in payload.user_ids],
                 "deleted": True,
+                "deletion_reason": payload.deletion_reason,
             },
             operation=operation,
         )
 
-    def _validate_user_restore(self, user: User, *, now: datetime) -> None:
+    def _validate_user_restore(self, user: User) -> None:
         if user.deleted_at is None:
             raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户未处于回收站")
-        if user.anonymized_at is not None:
-            raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户身份资料已匿名化，无法恢复")
-        restore_expires_at = user.deleted_at + timedelta(days=self.settings.user_recycle_bin_retention_days)
-        if now > restore_expires_at:
-            raise AppException(
-                status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户已超过回收站保留期，无法恢复"
-            )
 
     async def restore_user(self, user_id: uuid.UUID) -> AdminUserRead:
         async def operation() -> AdminUserRead:
             user = await self.users.get(user_id, for_update=True)
             if user is None:
                 raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
-            now = datetime.now(UTC)
-            self._validate_user_restore(user, now=now)
+            self._validate_user_restore(user)
             user.deleted_at = None
-            user.deleted_by_admin_id = None
+            user.deleted_by_id = None
+            user.deleted_by_type = None
             user.deletion_reason = None
             user.is_active = False
             user.credential_version += 1
             await self.sessions.revoke_web_for_user(user.id, reason="account_restored_by_admin")
-            return self._user_read(user, now=now)
+            return self._user_read(user)
 
         return await self.audit.execute(
             action="users:restore",
@@ -271,12 +258,12 @@ class AdminManagementService:
             users = await self.users.get_many(payload.user_ids, for_update=True)
             if len(users) != len(payload.user_ids):
                 raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="一个或多个用户不存在")
-            now = datetime.now(UTC)
             for user in users:
-                self._validate_user_restore(user, now=now)
+                self._validate_user_restore(user)
             for user in users:
                 user.deleted_at = None
-                user.deleted_by_admin_id = None
+                user.deleted_by_id = None
+                user.deleted_by_type = None
                 user.deletion_reason = None
                 user.is_active = False
                 user.credential_version += 1

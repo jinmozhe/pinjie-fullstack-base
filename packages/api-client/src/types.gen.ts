@@ -313,29 +313,23 @@ export type AdminUserRead = {
      */
     deleted_at: string | null;
     /**
-     * Deleted By Admin Id
+     * Deleted By Id
      *
-     * 执行软删除的管理员唯一标识
+     * 执行软删除的主体唯一标识
      */
-    deleted_by_admin_id: string | null;
+    deleted_by_id: string | null;
+    /**
+     * Deleted By Type
+     *
+     * 执行软删除的主体类型
+     */
+    deleted_by_type: string | null;
     /**
      * Deletion Reason
      *
      * 账户删除原因代码
      */
     deletion_reason: string | null;
-    /**
-     * Anonymized At
-     *
-     * 身份资料永久匿名化时间
-     */
-    anonymized_at: string | null;
-    /**
-     * Restore Expires At
-     *
-     * 允许恢复的截止时间
-     */
-    restore_expires_at: string | null;
     /**
      * Can Restore
      *
@@ -2096,6 +2090,12 @@ export type UserBulkDeleteIn = {
      * 待批量操作的用户唯一标识列表
      */
     user_ids: Array<string>;
+    /**
+     * Deletion Reason
+     *
+     * 软删除原因，可为空
+     */
+    deletion_reason?: string | null;
 };
 
 /**

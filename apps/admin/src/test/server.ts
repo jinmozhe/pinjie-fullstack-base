@@ -21,10 +21,9 @@ const user = {
   created_at: now,
   updated_at: now,
   deleted_at: null,
-  deleted_by_admin_id: null,
+  deleted_by_id: null,
+  deleted_by_type: null,
   deletion_reason: null,
-  anonymized_at: null,
-  restore_expires_at: null,
   can_restore: false,
 };
 const role = {

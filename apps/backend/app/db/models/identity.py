@@ -19,7 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from .base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 admin_roles = Table(
     "admin_roles",
@@ -38,12 +38,20 @@ role_permissions = Table(
 )
 
 
-class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+class User(UUIDPrimaryKeyMixin, TimestampMixin, SoftDeleteMixin, Base):
     __tablename__ = "users"
     __table_args__ = (
         CheckConstraint("credential_version >= 1", name="ck_users_credential_version_positive"),
+        CheckConstraint(
+            "(deleted_at IS NULL AND deleted_by_id IS NULL AND deleted_by_type IS NULL) "
+            "OR (deleted_at IS NOT NULL AND deleted_by_id IS NOT NULL AND deleted_by_type IS NOT NULL)",
+            name="ck_users_soft_delete_actor_consistency",
+        ),
+        CheckConstraint(
+            "deleted_by_type IS NULL OR deleted_by_type IN ('admin', 'user', 'system')",
+            name="ck_users_soft_delete_actor_type",
+        ),
         Index("ix_users_active_created", "is_active", "created_at"),
-        Index("ix_users_deleted_anonymized", "deleted_at", "anonymized_at"),
         {"comment": "C 端用户账户"},
     )
 
@@ -53,15 +61,6 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, comment="Argon2id 密码摘要")
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="是否允许登录")
     credential_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="凭据版本")
-    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="注销时间")
-    deleted_by_admin_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("admins.id", ondelete="SET NULL"), nullable=True, comment="执行软删除的管理员 ID"
-    )
-    deletion_reason: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="账户删除原因代码")
-    anonymized_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True, comment="身份资料永久匿名化时间"
-    )
-
     sessions: Mapped[list["UserSession"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 

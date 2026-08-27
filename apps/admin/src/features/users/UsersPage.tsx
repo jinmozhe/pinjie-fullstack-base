@@ -24,8 +24,14 @@ type UserLifecycle = "all" | "active" | "inactive" | "deleted";
 function deletionReasonLabel(reason: string | null): string {
   if (reason === "admin_deleted") return "管理员删除";
   if (reason === "self_deleted") return "用户注销";
-  if (reason === "legacy_anonymized") return "历史匿名化";
   return reason || "-";
+}
+
+function deletionActorLabel(actorType: string | null): string {
+  if (actorType === "admin") return "管理员";
+  if (actorType === "user") return "用户本人";
+  if (actorType === "system") return "系统";
+  return actorType || "-";
 }
 
 export function UsersPage() {
@@ -39,9 +45,11 @@ export function UsersPage() {
   const [sessionPage, setSessionPage] = useState(1);
   const [editing, setEditing] = useState<AdminUserRead | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<AdminUserRead | null>(null);
+  const [deleteTargets, setDeleteTargets] = useState<string[] | null>(null);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [editForm] = Form.useForm<{ display_name?: string; email?: string }>();
   const [passwordForm] = Form.useForm<{ new_password: string }>();
+  const [deleteReasonForm] = Form.useForm<{ deletion_reason?: string }>();
   const users = useQuery({
     queryKey: ["admin-users", page, search, lifecycle],
     queryFn: () => adminApi.users({ page, search: search || undefined, lifecycle }),
@@ -69,9 +77,12 @@ export function UsersPage() {
     },
   });
   const batchDeleteMutation = useMutation({
-    mutationFn: (userIds: string[]) => adminApi.deleteUsersBulk({ user_ids: userIds }),
+    mutationFn: ({ userIds, deletionReason }: { userIds: string[]; deletionReason?: string | null }) =>
+      adminApi.deleteUsersBulk({ user_ids: userIds, deletion_reason: deletionReason ?? null }),
     onSuccess: async (result) => {
       message.success(`已将 ${result.completed_count} 名用户移入回收站`);
+      setDeleteTargets(null);
+      deleteReasonForm.resetFields();
       setSelectedRowKeys([]);
       await invalidate();
     },
@@ -125,8 +136,8 @@ export function UsersPage() {
       .catch((error: unknown) => message.error(errorMessage(error)));
   };
   const beginBulkDelete = () => {
-    const userIds = [...selectedRowKeys];
-    void batchDeleteMutation.mutateAsync(userIds).catch((error: unknown) => message.error(errorMessage(error)));
+    setDeleteTargets([...selectedRowKeys]);
+    deleteReasonForm.resetFields();
   };
   const beginBulkRestore = () => {
     const userIds = [...selectedRowKeys];
@@ -256,17 +267,13 @@ export function UsersPage() {
             { title: "用户", dataIndex: "username", render: (_, row) => <div className="table-primary-cell"><Typography.Text strong>{row.display_name || row.username}</Typography.Text><Typography.Text type="secondary">{row.username}</Typography.Text></div> },
             { title: "邮箱", dataIndex: "email", responsive: ["lg"], render: (value) => value || "-" },
             { title: "状态", dataIndex: "is_active", width: 110, render: (value, row) => lifecycle === "deleted"
-              ? row.anonymized_at
-                ? <Tag>已匿名化</Tag>
-                : row.can_restore
-                  ? <Tag color="warning">可恢复</Tag>
-                  : <Tag>已过期</Tag>
+              ? row.can_restore ? <Tag color="warning">可恢复</Tag> : <Tag>不可恢复</Tag>
               : <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
             { title: "创建时间", dataIndex: "created_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.created_at) },
             ...(lifecycle === "deleted" ? [
               { title: "删除时间", dataIndex: "deleted_at", width: 170, render: (_: unknown, row: AdminUserRead) => formatTime(row.deleted_at) },
+              { title: "删除主体", dataIndex: "deleted_by_type", width: 100, render: (_: unknown, row: AdminUserRead) => deletionActorLabel(row.deleted_by_type) },
               { title: "删除原因", dataIndex: "deletion_reason", width: 120, render: (_: unknown, row: AdminUserRead) => deletionReasonLabel(row.deletion_reason) },
-              { title: "恢复截止", dataIndex: "restore_expires_at", width: 170, responsive: ["xl" as const], render: (_: unknown, row: AdminUserRead) => row.anonymized_at ? "永久不可恢复" : formatTime(row.restore_expires_at) },
             ] : []),
             { title: "操作", key: "actions", width: "1%", render: (_, row) => lifecycle === "deleted" ? (
               canRestore && (
@@ -291,7 +298,7 @@ export function UsersPage() {
                  }}>{row.is_active ? "停用" : "启用"}</Button>}
                 {canAccess(current, "users:sessions:read") && <Button type="link" size="small" icon={<LaptopOutlined />} onClick={() => { setSessionPage(1); setSelected(row); }}>会话</Button>}
                 {canAccess(current, "users:credentials:reset") && <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => { setPasswordTarget(row); passwordForm.resetFields(); }}>重置密码</Button>}
-                {canDelete && <Button type="link" size="small" danger icon={<DeleteOutlined />} loading={batchDeleteMutation.isPending && batchDeleteMutation.variables?.length === 1 && batchDeleteMutation.variables[0] === row.id} onClick={() => void batchDeleteMutation.mutateAsync([row.id]).catch((error: unknown) => message.error(errorMessage(error)))}>删除</Button>}
+                {canDelete && <Button type="link" size="small" danger icon={<DeleteOutlined />} loading={batchDeleteMutation.isPending && batchDeleteMutation.variables?.userIds.length === 1 && batchDeleteMutation.variables.userIds[0] === row.id} onClick={() => { setDeleteTargets([row.id]); deleteReasonForm.resetFields(); }}>删除</Button>}
               </Space>
             ) },
           ]}
@@ -314,6 +321,31 @@ export function UsersPage() {
            resetPasswordMutation.mutate({ userId: target.id, newPassword: new_password });
          }}>
           <Form.Item label="新密码" name="new_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteTargets)}
+        title="填写删除原因（可选）"
+        okText="移入回收站"
+        confirmLoading={batchDeleteMutation.isPending}
+        onCancel={() => { setDeleteTargets(null); deleteReasonForm.resetFields(); }}
+        onOk={() => deleteReasonForm.submit()}
+      >
+        <Form
+          form={deleteReasonForm}
+          layout="vertical"
+          onFinish={({ deletion_reason }) => {
+            const targets = deleteTargets;
+            if (!targets) return;
+            void batchDeleteMutation
+              .mutateAsync({ userIds: targets, deletionReason: deletion_reason?.trim() || null })
+              .catch((error: unknown) => message.error(errorMessage(error)));
+          }}
+        >
+          <Form.Item label="删除原因" name="deletion_reason" extra="可留空，最多 100 个字符">
+            <Input.TextArea maxLength={100} showCount autoFocus />
+          </Form.Item>
         </Form>
       </Modal>
 

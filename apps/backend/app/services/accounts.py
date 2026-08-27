@@ -12,7 +12,6 @@ from app.core.request_metadata import RequestMetadata
 from app.core.security import (
     PasswordManager,
     create_access_token,
-    new_anonymized_username,
     new_opaque_token,
     token_digest,
 )
@@ -170,16 +169,13 @@ class UserAccountService:
             locked = await self.users.get(user.id, for_update=True)
             if locked is None or locked.deleted_at is not None:
                 raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
-            locked.username = new_anonymized_username(locked.id)
-            locked.email = None
-            locked.display_name = None
             locked.password_hash = replacement_hash
             locked.is_active = False
             locked.credential_version += 1
             locked.deleted_at = now
-            locked.deleted_by_admin_id = None
-            locked.deletion_reason = "self_deleted"
-            locked.anonymized_at = now
+            locked.deleted_by_id = locked.id
+            locked.deleted_by_type = "user"
+            locked.deletion_reason = None
             await self.sessions.revoke_web_for_user(locked.id, reason="account_deleted")
 
 

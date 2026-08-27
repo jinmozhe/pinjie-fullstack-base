@@ -127,7 +127,7 @@ class AdminBulkStatusUpdateIn(BaseModel):
         return value
 
 
-class UserBulkDeleteIn(BaseModel):
+class _UserBulkTargetIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     user_ids: list[uuid.UUID] = Field(
@@ -144,11 +144,21 @@ class UserBulkDeleteIn(BaseModel):
         return value
 
 
-class UserBulkStatusUpdateIn(UserBulkDeleteIn):
+class UserBulkDeleteIn(_UserBulkTargetIn):
+    deletion_reason: str | None = Field(default=None, max_length=100, description="软删除原因，可为空")
+
+    @field_validator("deletion_reason")
+    @classmethod
+    def normalize_deletion_reason(cls, value: str | None) -> str | None:
+        normalized = value.strip() if value else None
+        return normalized or None
+
+
+class UserBulkStatusUpdateIn(_UserBulkTargetIn):
     is_active: bool = Field(description="批量操作后的用户启用状态")
 
 
-class UserRestoreBatchIn(UserBulkDeleteIn):
+class UserRestoreBatchIn(_UserBulkTargetIn):
     pass
 
 
@@ -163,10 +173,9 @@ class AdminUserRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     deleted_at: datetime | None = Field(description="账户进入回收站的时间")
-    deleted_by_admin_id: uuid.UUID | None = Field(description="执行软删除的管理员唯一标识")
+    deleted_by_id: uuid.UUID | None = Field(description="执行软删除的主体唯一标识")
+    deleted_by_type: str | None = Field(description="执行软删除的主体类型")
     deletion_reason: str | None = Field(description="账户删除原因代码")
-    anonymized_at: datetime | None = Field(description="身份资料永久匿名化时间")
-    restore_expires_at: datetime | None = Field(description="允许恢复的截止时间")
     can_restore: bool = Field(description="当前是否允许恢复")
 
 
