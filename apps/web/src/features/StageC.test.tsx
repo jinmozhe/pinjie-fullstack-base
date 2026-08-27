@@ -13,6 +13,7 @@ import { AccountCenter } from "./account/AccountCenter";
 import { AccountSessionRecovery } from "./account/AccountSessionRecovery";
 import { AuthForm } from "./auth/AuthForm";
 import { webAuthApi } from "./auth/api";
+import { fetchRegistrationState } from "../lib/api/server";
 
 const replace = vi.fn();
 const refresh = vi.fn();
@@ -76,6 +77,37 @@ describe("stage C web account", () => {
     expect(screen.getByLabelText("密码")).toHaveAttribute("maxlength", "64");
     expect(screen.getByText("至少 6 个字符，最多 64 个字符。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /注册并登录/ })).toBeInTheDocument();
+  });
+
+  it("hides the registration link when public registration is unavailable", () => {
+    renderWithQuery(<AuthForm mode="login" registrationEnabled={false} />);
+
+    expect(screen.queryByRole("link", { name: "立即注册" })).not.toBeInTheDocument();
+  });
+
+  it("reads enabled, disabled, and unavailable public registration states", async () => {
+    const originalBaseUrl = process.env.BACKEND_INTERNAL_URL;
+    process.env.BACKEND_INTERNAL_URL = "http://localhost:3000";
+    try {
+      expect(await fetchRegistrationState()).toBe("enabled");
+      server.use(
+        http.get("http://localhost:3000/api/v1/system/capabilities", () => HttpResponse.json({
+          code: "OK",
+          message: "操作成功",
+          data: { registration_enabled: false },
+          request_id: "test-request",
+        })),
+      );
+      expect(await fetchRegistrationState()).toBe("disabled");
+      server.use(
+        http.get("http://localhost:3000/api/v1/system/capabilities", () =>
+          HttpResponse.json({ code: "SERVICE_UNAVAILABLE", message: "服务不可用" }, { status: 503 })),
+      );
+      expect(await fetchRegistrationState()).toBe("unavailable");
+    } finally {
+      if (originalBaseUrl === undefined) delete process.env.BACKEND_INTERNAL_URL;
+      else process.env.BACKEND_INTERNAL_URL = originalBaseUrl;
+    }
   });
 
   it("shows the backend message and retry delay when registration is rate limited", async () => {

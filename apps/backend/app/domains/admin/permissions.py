@@ -11,6 +11,7 @@ class PermissionDefinition:
 
 class PermissionCode(StrEnum):
     USERS_READ = "users:read"
+    USERS_CREATE = "users:create"
     USERS_UPDATE = "users:update"
     USERS_DELETE = "users:delete"
     USERS_RESTORE = "users:restore"
@@ -40,6 +41,7 @@ class PermissionCode(StrEnum):
 
 PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
     PermissionDefinition("users:read", "查看用户", "查看用户列表和详情"),
+    PermissionDefinition("users:create", "创建用户", "创建普通用户账户"),
     PermissionDefinition("users:update", "修改用户", "修改用户资料和状态"),
     PermissionDefinition("users:delete", "删除用户", "将用户账户移入回收站"),
     PermissionDefinition("users:restore", "恢复用户", "从回收站恢复软删除用户账户"),
@@ -68,7 +70,7 @@ PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
 )
 
 PERMISSION_CODES = frozenset(item.code for item in PERMISSION_CATALOG)
-CATALOG_VERSION = "2026-08-27.3"
+CATALOG_VERSION = "2026-08-27.4"
 
 __all__ = [
     "CATALOG_VERSION",

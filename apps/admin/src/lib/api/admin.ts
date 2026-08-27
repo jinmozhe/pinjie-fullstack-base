@@ -5,6 +5,7 @@ import type {
   AdminLoginIn,
   AdminProfileUpdateIn,
   AdminRead,
+  AdminUserCreateIn,
   AdminUserRead,
   AdminUpdateIn,
   AssetBulkDeleteIn,
@@ -92,6 +93,8 @@ export const adminApi = {
     query.set("lifecycle", lifecycle);
     return apiRequest<PageResultAdminUserRead>(`/api/v1/admin/users?${query}`);
   },
+  createUser: (input: AdminUserCreateIn) =>
+    apiRequest<AdminUserRead>("/api/v1/admin/users", { method: "POST", body: jsonBody(input) }),
   updateUser: (id: string, input: UserUpdateIn) =>
     apiRequest<UserPrincipalOut>(`/api/v1/admin/users/${id}`, { method: "PATCH", body: jsonBody(input) }),
   setUserStatus: (id: string, isActive: boolean) =>

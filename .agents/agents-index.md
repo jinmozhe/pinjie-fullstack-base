@@ -42,6 +42,8 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 待实施 | Backend、Web、API Client、Database、Documentation | 头像资产归属和旧文件生命周期已确认，等待第二阶段实施 |
+| `plans/2026-08-27_Admin创建用户与公开注册开关联动计划.md` | 已结束 | Backend、Admin、Web、API Client、Documentation | 已完成 Admin 独立创建用户、公共注册能力契约和 Web 注册入口联动 |
 | `plans/2026-08-27_Admin系统状态页面全景监控升级计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 已完成受权系统概览、实时探针、可解释缓存遥测、公开配置摘要与旧数据提示 |
 | `plans/2026-08-27_Admin管理员头像统一回退样式计划.md` | 已结束 | Admin、Documentation | 已统一管理员列表与顶部账户头像的浅色首字符回退 |
 | `plans/2026-08-27_Admin文件资产上传主体标识精简计划.md` | 已结束 | Admin、Documentation | 已隐藏上传主体 UUID 文本，并在主体类型后保留图标复制能力 |
@@ -86,6 +88,8 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 待实施 | 头像资产归属和旧资产处理策略已确认，等待第二阶段实施 | Backend、Web、API Client、Database、Documentation | 支持用户上传、绑定、移除和持久化头像，并保护在用资产 |
+| `plans/2026-08-27_Admin创建用户与公开注册开关联动计划.md` | 已结束 | 已完成；轻量门禁通过，重型测试按规则未执行，目标环境权限同步仍需独立授权 | Backend、Admin、Web、API Client、Documentation | 支持关闭公开注册的派生项目由 Admin 创建可登录用户 |
 | `plans/2026-08-27_Admin系统状态页面全景监控升级计划.md` | 已结束 | 已完成；缓存、权限、健康语义、公开配置、统计口径、运行时版本和旧数据提示已修正，轻量门禁通过；重型测试和目标环境权限同步未执行 | Backend、Admin、API Client、Documentation | 建立管理端单接口全景监控、基础设施实时探针、Redis 缓存遥测与美观多卡片看板 |
 | `plans/2026-08-27_Admin管理员头像统一回退样式计划.md` | 已结束 | 已完成；空头像和失效图片统一显示浅色首字符回退，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 统一管理员列表与顶部账户头像的浅色首字符回退 |
 | `plans/2026-08-27_Admin文件资产上传主体标识精简计划.md` | 已结束 | 已完成；UUID 文本已隐藏，主体类型后保留复制图标，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 隐藏上传主体 UUID 文本，在主体类型后保留图标复制能力 |

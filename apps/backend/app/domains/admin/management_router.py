@@ -24,6 +24,7 @@ from .schemas import (
     AdminRead,
     AdminRoleAssignIn,
     AdminUpdateIn,
+    AdminUserCreateIn,
     AdminUserRead,
     AuditEventPage,
     BatchActionResult,
@@ -79,6 +80,25 @@ async def list_users(
 ) -> ResponseModel[UserPage]:
     result = await service.list_users(page=page, page_size=page_size, search=search, lifecycle=lifecycle)
     return success_response(data=result, request_id=current_request_id())
+
+
+@router.post(
+    "/users",
+    response_model=ResponseModel[AdminUserRead],
+    status_code=201,
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.USERS_CREATE))],
+    summary="创建用户",
+    description="由具备独立权限的管理员创建普通用户账户，不受公开注册开关影响且不创建登录会话。",
+)
+async def create_user(
+    payload: AdminUserCreateIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[AdminUserRead]:
+    return success_response(
+        data=await service.create_user(payload),
+        request_id=current_request_id(),
+        message="用户创建成功",
+    )
 
 
 @router.patch(

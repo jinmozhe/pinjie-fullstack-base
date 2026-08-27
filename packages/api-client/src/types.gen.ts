@@ -299,6 +299,42 @@ export type AdminUpdateIn = {
 };
 
 /**
+ * AdminUserCreateIn
+ */
+export type AdminUserCreateIn = {
+    /**
+     * Username
+     *
+     * 普通用户登录用户名，长度为 3 至 50 个字符
+     */
+    username: string;
+    /**
+     * Initial Password
+     *
+     * 初始密码，长度为 6 至 64 个字符
+     */
+    initial_password: string;
+    /**
+     * Display Name
+     *
+     * 用户显示名称
+     */
+    display_name?: string | null;
+    /**
+     * Email
+     *
+     * 用户邮箱，保存时规范化为小写
+     */
+    email?: string | null;
+    /**
+     * Is Active
+     *
+     * 是否允许用户登录
+     */
+    is_active?: boolean;
+};
+
+/**
  * AdminUserRead
  */
 export type AdminUserRead = {
@@ -1728,6 +1764,34 @@ export type ResponseModelRoleRead = {
 };
 
 /**
+ * ResponseModel[SystemCapabilitiesRead]
+ */
+export type ResponseModelSystemCapabilitiesRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: SystemCapabilitiesRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
  * ResponseModel[SystemOverviewRead]
  */
 export type ResponseModelSystemOverviewRead = {
@@ -2221,6 +2285,18 @@ export type StorageConfigurationRead = {
      * 文件公开访问根路径
      */
     public_base_url: string;
+};
+
+/**
+ * SystemCapabilitiesRead
+ */
+export type SystemCapabilitiesRead = {
+    /**
+     * Registration Enabled
+     *
+     * 是否允许 Web 公开注册普通用户
+     */
+    registration_enabled: boolean;
 };
 
 /**
@@ -3233,6 +3309,31 @@ export type ListUsersApiV1AdminUsersGetResponses = {
 
 export type ListUsersApiV1AdminUsersGetResponse = ListUsersApiV1AdminUsersGetResponses[keyof ListUsersApiV1AdminUsersGetResponses];
 
+export type CreateUserApiV1AdminUsersPostData = {
+    body: AdminUserCreateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/users';
+};
+
+export type CreateUserApiV1AdminUsersPostErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type CreateUserApiV1AdminUsersPostError = CreateUserApiV1AdminUsersPostErrors[keyof CreateUserApiV1AdminUsersPostErrors];
+
+export type CreateUserApiV1AdminUsersPostResponses = {
+    /**
+     * 请求成功
+     */
+    201: ResponseModelAdminUserRead;
+};
+
+export type CreateUserApiV1AdminUsersPostResponse = CreateUserApiV1AdminUsersPostResponses[keyof CreateUserApiV1AdminUsersPostResponses];
+
 export type SetUserStatusBulkApiV1AdminUsersStatusBatchPatchData = {
     body: UserBulkStatusUpdateIn;
     path?: never;
@@ -4244,6 +4345,22 @@ export type GetSystemOverviewApiV1AdminSystemOverviewGetResponses = {
 };
 
 export type GetSystemOverviewApiV1AdminSystemOverviewGetResponse = GetSystemOverviewApiV1AdminSystemOverviewGetResponses[keyof GetSystemOverviewApiV1AdminSystemOverviewGetResponses];
+
+export type GetSystemCapabilitiesApiV1SystemCapabilitiesGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/system/capabilities';
+};
+
+export type GetSystemCapabilitiesApiV1SystemCapabilitiesGetResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelSystemCapabilitiesRead;
+};
+
+export type GetSystemCapabilitiesApiV1SystemCapabilitiesGetResponse = GetSystemCapabilitiesApiV1SystemCapabilitiesGetResponses[keyof GetSystemCapabilitiesApiV1SystemCapabilitiesGetResponses];
 
 export type GetSystemStatusApiV1SystemStatusGetData = {
     body?: never;
