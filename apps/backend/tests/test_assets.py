@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from pydantic import ValidationError
 from sqlalchemy import delete, select
 
 from app.api import dependencies as api_dependencies
@@ -20,10 +21,11 @@ from app.core.resources import create_resources
 from app.core.security import token_digest
 from app.db.models import Asset, AuditEvent
 from app.db.transaction import transaction_scope
-from app.domains.assets.schemas import AssetRead, UploaderType, UploadScene
+from app.domains.assets.schemas import AssetBulkDeleteIn, AssetRead, UploaderType, UploadScene
 from app.main import app
 from app.services.assets import AssetService, AssetUploader
-from app.services.storage import LocalStorageProvider
+from app.services.security_events import AuditCoordinator
+from app.services.storage import LocalStorageProvider, StagedDeletion
 from tests.conftest import TEST_SECRETS
 
 _PNG = b"\x89PNG\r\n\x1a\n" + b"asset-test-content"
@@ -106,6 +108,129 @@ def _current_principal(*, admin: bool, csrf_token: str) -> SimpleNamespace:
     if admin:
         return SimpleNamespace(admin=principal, login_session=login_session, permissions=frozenset())
     return SimpleNamespace(user=principal, login_session=login_session)
+
+
+def test_asset_bulk_delete_rejects_duplicate_ids() -> None:
+    asset_id = uuid.uuid7()
+
+    with pytest.raises(ValidationError):
+        AssetBulkDeleteIn(asset_ids=[asset_id, asset_id])
+
+
+def _asset_delete_service(*, storage: AsyncMock, assets: list[SimpleNamespace]) -> AssetService:
+    service = AssetService(
+        session=AsyncMock(),
+        session_factory=AsyncMock(),
+        settings=app.state.settings,
+        storage=storage,
+        metadata=_metadata(),
+    )
+    service._assets = SimpleNamespace(  # type: ignore[assignment]
+        get_many=AsyncMock(return_value=assets),
+        delete=AsyncMock(),
+    )
+    return service
+
+
+async def _execute_audit_operation(_coordinator: AuditCoordinator, **kwargs):
+    return await kwargs["operation"]()
+
+
+@pytest.mark.asyncio
+async def test_asset_bulk_delete_restores_staged_files_when_later_staging_fails(monkeypatch) -> None:
+    first_id = uuid.uuid7()
+    second_id = uuid.uuid7()
+    first_deletion = StagedDeletion(token="trash-one", file_key="product/one.png")
+    storage = AsyncMock()
+    storage.stage_delete.side_effect = [first_deletion, OSError("stage failed")]
+    service = _asset_delete_service(
+        storage=storage,
+        assets=[
+            SimpleNamespace(id=first_id, file_key=first_deletion.file_key),
+            SimpleNamespace(id=second_id, file_key="product/two.png"),
+        ],
+    )
+    monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
+
+    with pytest.raises(AppException) as exc_info:
+        await service.delete_bulk(asset_ids=[first_id, second_id], actor_id=uuid.uuid7())
+
+    assert exc_info.value.code == ErrorCode.ASSET_STORAGE_FAILED
+    storage.restore.assert_awaited_once_with(first_deletion)
+    service._assets.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_asset_bulk_delete_restores_in_reverse_order_when_database_commit_fails(monkeypatch) -> None:
+    first_id = uuid.uuid7()
+    second_id = uuid.uuid7()
+    first_deletion = StagedDeletion(token="trash-one", file_key="product/one.png")
+    second_deletion = StagedDeletion(token="trash-two", file_key="product/two.png")
+    storage = AsyncMock()
+    storage.stage_delete.side_effect = [first_deletion, second_deletion]
+    service = _asset_delete_service(
+        storage=storage,
+        assets=[
+            SimpleNamespace(id=first_id, file_key=first_deletion.file_key),
+            SimpleNamespace(id=second_id, file_key=second_deletion.file_key),
+        ],
+    )
+
+    async def fail_after_operation(_coordinator: AuditCoordinator, **kwargs):
+        await kwargs["operation"]()
+        raise RuntimeError("database commit failed")
+
+    monkeypatch.setattr(AuditCoordinator, "execute", fail_after_operation)
+
+    with pytest.raises(RuntimeError, match="database commit failed"):
+        await service.delete_bulk(asset_ids=[first_id, second_id], actor_id=uuid.uuid7())
+
+    assert [call.args[0] for call in storage.restore.await_args_list] == [second_deletion, first_deletion]
+
+
+@pytest.mark.asyncio
+async def test_asset_bulk_delete_reports_manual_review_when_restore_fails(monkeypatch) -> None:
+    first_id = uuid.uuid7()
+    first_deletion = StagedDeletion(token="trash-one", file_key="product/one.png")
+    storage = AsyncMock()
+    storage.stage_delete.side_effect = [first_deletion, OSError("stage failed")]
+    storage.restore.side_effect = OSError("restore failed")
+    service = _asset_delete_service(
+        storage=storage,
+        assets=[
+            SimpleNamespace(id=first_id, file_key=first_deletion.file_key),
+            SimpleNamespace(id=uuid.uuid7(), file_key="product/two.png"),
+        ],
+    )
+    monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
+
+    with pytest.raises(AppException, match="文件删除结果需要人工核查") as exc_info:
+        await service.delete_bulk(
+            asset_ids=[asset.id for asset in service._assets.get_many.return_value],
+            actor_id=uuid.uuid7(),
+        )
+
+    assert exc_info.value.code == ErrorCode.ASSET_STORAGE_FAILED
+
+
+@pytest.mark.asyncio
+async def test_asset_bulk_delete_keeps_committed_result_when_trash_purge_fails(monkeypatch) -> None:
+    asset_id = uuid.uuid7()
+    deletion = StagedDeletion(token="trash-one", file_key="product/one.png")
+    storage = AsyncMock()
+    storage.stage_delete.return_value = deletion
+    storage.purge.side_effect = OSError("purge failed")
+    service = _asset_delete_service(
+        storage=storage,
+        assets=[SimpleNamespace(id=asset_id, file_key=deletion.file_key)],
+    )
+    monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
+
+    result = await service.delete_bulk(asset_ids=[asset_id], actor_id=uuid.uuid7())
+
+    assert result.completed_count == 1
+    assert result.target_ids == [asset_id]
+    storage.purge.assert_awaited_once_with(deletion)
 
 
 @pytest.mark.asyncio
@@ -432,6 +557,84 @@ async def test_asset_upload_deduplicates_and_audited_delete_uses_real_postgres(t
             if asset_id is not None:
                 await session.execute(delete(Asset).where(Asset.id == asset_id))
                 await session.execute(delete(AuditEvent).where(AuditEvent.target_id == asset_id))
+        await resources.close()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_asset_bulk_delete_filters_and_rejects_partial_targets(tmp_path: Path) -> None:
+    settings = _integration_settings(tmp_path / "uploads")
+    resources = create_resources(settings)
+    storage = LocalStorageProvider(settings.upload_local_root, io_concurrency=1)
+    uploader = AssetUploader(type=UploaderType.USER, id=uuid.uuid7())
+    actor_id = uuid.uuid7()
+    asset_ids: list[uuid.UUID] = []
+    file_keys: list[str] = []
+    try:
+        async with resources.session_factory() as session:
+            service = AssetService(
+                session=session,
+                session_factory=resources.session_factory,
+                settings=settings,
+                storage=storage,
+                metadata=_metadata(),
+            )
+            first = await service.upload(
+                source=io.BytesIO(_PNG + b"-bulk-one"),
+                original_name="batch-one.png",
+                scene=UploadScene.AVATAR,
+                uploader=uploader,
+            )
+            second = await service.upload(
+                source=io.BytesIO(_PNG + b"-bulk-two"),
+                original_name="batch-two.png",
+                scene=UploadScene.AVATAR,
+                uploader=uploader,
+            )
+            asset_ids = [first.id, second.id]
+            file_keys = [first.file_key, second.file_key]
+
+            filtered = await service.list(
+                page=1,
+                page_size=20,
+                search="batch-one",
+                scene=UploadScene.AVATAR,
+                uploader_type=UploaderType.USER,
+            )
+            assert [item.id for item in filtered.items] == [first.id]
+
+            missing_id = uuid.uuid7()
+            with pytest.raises(AppException) as missing_exc:
+                await service.delete_bulk(asset_ids=[first.id, missing_id], actor_id=actor_id)
+            assert missing_exc.value.code == ErrorCode.ASSET_NOT_FOUND
+            assert all((settings.upload_local_root / file_key).is_file() for file_key in file_keys)
+
+            result = await service.delete_bulk(asset_ids=list(reversed(asset_ids)), actor_id=actor_id)
+            assert result.completed_count == 2
+            assert result.target_ids == sorted(asset_ids)
+            assert all(not (settings.upload_local_root / file_key).exists() for file_key in file_keys)
+
+        async with resources.session_factory() as session:
+            stored_assets = list((await session.scalars(select(Asset).where(Asset.id.in_(asset_ids)))).all())
+            audits = list(
+                (
+                    await session.scalars(
+                        select(AuditEvent).where(
+                            AuditEvent.actor_id == actor_id,
+                            AuditEvent.action == "assets:delete-bulk",
+                        )
+                    )
+                ).all()
+            )
+            assert stored_assets == []
+            assert {audit.result for audit in audits} == {"denied", "succeeded"}
+    finally:
+        async with resources.session_factory() as session, transaction_scope(session):
+            if asset_ids:
+                await session.execute(delete(Asset).where(Asset.id.in_(asset_ids)))
+            await session.execute(delete(AuditEvent).where(AuditEvent.actor_id == actor_id))
+        for file_key in file_keys:
+            (settings.upload_local_root / file_key).unlink(missing_ok=True)
         await resources.close()
 
 

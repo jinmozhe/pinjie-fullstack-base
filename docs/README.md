@@ -46,7 +46,7 @@
 | [admin-engineering-standard.md](architecture/admin-engineering-standard.md)     | Admin Umi/Pro 框架边界、Feature、请求、状态、UI 组件和依赖准入的具体实施标准               |
 | [module-boundaries.md](architecture/module-boundaries.md)                       | Backend 领域、Frontend Feature、共享包和机械依赖门禁的边界                                 |
 | [error-model.md](architecture/error-model.md)                                   | 错误分类、HTTP 契约、分层处理和禁止吞错、假成功、静默降级的规则                            |
-| [authentication-authorization.md](architecture/authentication-authorization.md) | Browser Cookie Profile、JWT、Session、CSRF、RBAC、二次确认和审计运行机制                   |
+| [authentication-authorization.md](architecture/authentication-authorization.md) | Browser Cookie Profile、JWT、Session、CSRF、RBAC、管理操作保护和审计运行机制             |
 | [testing-strategy.md](architecture/testing-strategy.md)                         | 单元、Service、Repository、API、standalone E2E、架构、迁移和契约测试策略                   |
 | [observability-reliability.md](architecture/observability-reliability.md)       | 部署等级、健康探针、安全事件、同事务审计、请求元数据 Stream、SLO、容量和恢复演练基线       |
 | [file-asset-storage.md](architecture/file-asset-storage.md)                     | 统一文件资产的存储端口、上传安全、双域鉴权、去重、删除补偿和生产卷边界                   |

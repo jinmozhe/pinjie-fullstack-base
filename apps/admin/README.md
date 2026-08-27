@@ -21,7 +21,7 @@ pnpm --filter @pinjie/admin dev   # http://localhost:3001
 
 ## 当前范围
 
-当前 Admin 已接入登录、Cookie 会话、RBAC 权限导航、用户、管理员、角色权限、安全日志和系统状态页面。`@pinjie/api-client` 提供 OpenAPI 生成类型，`src/lib/api/http.ts` 统一承担 Cookie、CSRF、单飞 Refresh、错误解包和二次确认头，危险操作继续保留服务端最终授权、审计和请求追踪。
+当前 Admin 已接入登录、Cookie 会话、RBAC 权限导航、用户、管理员、角色权限、安全日志和系统状态页面。`@pinjie/api-client` 提供 OpenAPI 生成类型，`src/lib/api/http.ts` 统一承担 Cookie、CSRF、单飞 Refresh 和错误解包；物理硬删除共用标准警告弹窗，所有管理操作继续保留服务端最终授权、审计和请求追踪。
 
 路由、运行时、请求、状态、UI 组件和依赖准入的开发边界见 [Admin 工程实施标准](../../docs/architecture/admin-engineering-standard.md)。
 

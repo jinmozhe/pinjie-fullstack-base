@@ -117,6 +117,20 @@ def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
     assert "password" in schema["components"]["schemas"]["UserLoginIn"]["properties"]
 
 
+def test_admin_operations_do_not_expose_password_confirmation_contract() -> None:
+    from app.main import app
+
+    schema = app.openapi()
+    assert "/api/v1/admin/auth/confirm" not in schema["paths"]
+    for path_item in schema["paths"].values():
+        for operation in path_item.values():
+            if not isinstance(operation, dict):
+                continue
+            parameters = operation.get("parameters", [])
+            header_names = {parameter["name"].lower() for parameter in parameters if parameter["in"] == "header"}
+            assert "x-admin-confirmation" not in header_names
+
+
 @pytest.mark.asyncio
 async def test_external_request_id_is_rejected_and_replaced(client) -> None:
     response = await client.get("/health/live", headers={"X-Request-ID": "contains spaces"})

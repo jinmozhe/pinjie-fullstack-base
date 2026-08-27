@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.db.models import Asset
 
@@ -19,6 +20,14 @@ class AssetRepository:
             statement = statement.with_for_update()
         return (await self._session.execute(statement)).scalar_one_or_none()
 
+    async def get_many(self, asset_ids: list[uuid.UUID], *, for_update: bool = False) -> list[Asset]:
+        if not asset_ids:
+            return []
+        statement = select(Asset).where(Asset.id.in_(asset_ids)).order_by(Asset.id)
+        if for_update:
+            statement = statement.with_for_update()
+        return list((await self._session.scalars(statement)).all())
+
     async def find_duplicate(
         self,
         *,
@@ -35,11 +44,27 @@ class AssetRepository:
         )
         return (await self._session.execute(statement)).scalar_one_or_none()
 
-    async def list(self, *, page: int, page_size: int) -> tuple[list[Asset], int]:
-        total = await self._session.scalar(select(func.count()).select_from(Asset))
+    async def list(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        search: str | None = None,
+        scene: str | None = None,
+        uploader_type: str | None = None,
+    ) -> tuple[list[Asset], int]:
+        filters: list[ColumnElement[bool]] = []
+        if search:
+            filters.append(Asset.original_name.ilike(f"%{search}%"))
+        if scene:
+            filters.append(Asset.scene == scene)
+        if uploader_type:
+            filters.append(Asset.uploader_type == uploader_type)
+        total = await self._session.scalar(select(func.count()).select_from(Asset).where(*filters))
         items = list(
             await self._session.scalars(
                 select(Asset)
+                .where(*filters)
                 .order_by(Asset.created_at.desc(), Asset.id.desc())
                 .offset((page - 1) * page_size)
                 .limit(page_size)

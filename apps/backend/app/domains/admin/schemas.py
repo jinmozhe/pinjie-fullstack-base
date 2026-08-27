@@ -1,30 +1,14 @@
 import re
 import uuid
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.core.pagination import PageResult
 from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
-from app.domains.auth.schemas import UserPrincipalOut, normalize_username
+from app.domains.auth.schemas import normalize_username
 
 _ROLE_CODE = re.compile(r"^[a-z][a-z0-9_-]{2,99}$")
-
-
-class ConfirmationAction(StrEnum):
-    USER_DISABLE = "users:disable"
-    USER_PASSWORD_RESET = "users:credentials:reset"
-    USER_SESSION_REVOKE = "users:sessions:revoke"
-    ADMIN_CREATE = "admins:create"
-    ADMIN_SUPERUSER_CHANGE = "admins:superuser:change"
-    ADMIN_STATUS_CHANGE = "admins:status:change"
-    ADMIN_PASSWORD_RESET = "admins:credentials:reset"
-    ADMIN_ROLES_ASSIGN = "admins:roles:assign"
-    ADMIN_SESSIONS_REVOKE = "admins:sessions:revoke"
-    ROLE_DELETE = "roles:delete"
-    ROLE_PERMISSIONS_ASSIGN = "roles:permissions:assign"
-    ASSET_DELETE = "assets:delete"
 
 
 class AdminLoginIn(BaseModel):
@@ -70,21 +54,6 @@ class AdminAuthSessionOut(BaseModel):
     access_expires_at: datetime
     idle_expires_at: datetime
     absolute_expires_at: datetime
-
-
-class AdminConfirmIn(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    current_password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH, description="当前密码，最多 64 个字符")
-    action: ConfirmationAction
-
-
-class AdminConfirmOut(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    confirmation_token: str
-    action: ConfirmationAction
-    expires_at: datetime
 
 
 class AdminCreateIn(BaseModel):
@@ -156,6 +125,77 @@ class AdminBulkStatusUpdateIn(BaseModel):
         if len(value) != len(set(value)):
             raise ValueError("admin_ids must be unique")
         return value
+
+
+class UserBulkDeleteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_ids: list[uuid.UUID] = Field(
+        min_length=1,
+        max_length=100,
+        description="待批量操作的用户唯一标识列表",
+    )
+
+    @field_validator("user_ids")
+    @classmethod
+    def validate_unique_user_ids(cls, value: list[uuid.UUID]) -> list[uuid.UUID]:
+        if len(value) != len(set(value)):
+            raise ValueError("user_ids must be unique")
+        return value
+
+
+class UserBulkStatusUpdateIn(UserBulkDeleteIn):
+    is_active: bool = Field(description="批量操作后的用户启用状态")
+
+
+class UserRestoreBatchIn(UserBulkDeleteIn):
+    pass
+
+
+class AdminUserRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+    id: uuid.UUID
+    username: str
+    display_name: str | None
+    email: str | None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: datetime | None = Field(description="账户进入回收站的时间")
+    deleted_by_admin_id: uuid.UUID | None = Field(description="执行软删除的管理员唯一标识")
+    deletion_reason: str | None = Field(description="账户删除原因代码")
+    anonymized_at: datetime | None = Field(description="身份资料永久匿名化时间")
+    restore_expires_at: datetime | None = Field(description="允许恢复的截止时间")
+    can_restore: bool = Field(description="当前是否允许恢复")
+
+
+class RoleBulkDeleteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    role_ids: list[uuid.UUID] = Field(
+        min_length=1,
+        max_length=100,
+        description="待批量操作的角色唯一标识列表",
+    )
+
+    @field_validator("role_ids")
+    @classmethod
+    def validate_unique_role_ids(cls, value: list[uuid.UUID]) -> list[uuid.UUID]:
+        if len(value) != len(set(value)):
+            raise ValueError("role_ids must be unique")
+        return value
+
+
+class RoleBulkStatusUpdateIn(RoleBulkDeleteIn):
+    is_active: bool = Field(description="批量操作后的角色启用状态")
+
+
+class BatchActionResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    completed_count: int = Field(ge=0, description="本次批量操作完成的目标数量")
+    target_ids: list[uuid.UUID] = Field(description="本次批量操作处理的目标唯一标识列表")
 
 
 class PasswordResetIn(BaseModel):
@@ -286,13 +326,11 @@ RolePage = PageResult[RoleRead]
 LoginEventPage = PageResult[LoginEventRead]
 AuditEventPage = PageResult[AuditEventRead]
 RequestLogPage = PageResult[RequestLogRead]
-UserPage = PageResult[UserPrincipalOut]
+UserPage = PageResult[AdminUserRead]
 
 __all__ = [
     "AdminAuthSessionOut",
     "AdminBulkStatusUpdateIn",
-    "AdminConfirmIn",
-    "AdminConfirmOut",
     "AdminCreateIn",
     "AdminLoginIn",
     "AdminPage",
@@ -300,14 +338,17 @@ __all__ = [
     "AdminRead",
     "AdminRoleAssignIn",
     "AdminUpdateIn",
+    "AdminUserRead",
     "AuditEventPage",
     "AuditEventRead",
-    "ConfirmationAction",
+    "BatchActionResult",
     "LoginEventPage",
     "LoginEventRead",
     "PasswordResetIn",
     "PermissionRead",
     "RoleCreateIn",
+    "RoleBulkDeleteIn",
+    "RoleBulkStatusUpdateIn",
     "RolePage",
     "RolePermissionAssignIn",
     "RoleRead",
@@ -317,4 +358,7 @@ __all__ = [
     "RequestLogPage",
     "RequestLogRead",
     "UserPage",
+    "UserBulkDeleteIn",
+    "UserBulkStatusUpdateIn",
+    "UserRestoreBatchIn",
 ]

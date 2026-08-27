@@ -2,7 +2,7 @@
 
 import { type Client, type ClientMeta, formDataBodySerializer, type Options as Options2, type RequestResult, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, ChangePasswordApiV1AdminAuthPasswordPostData, ChangePasswordApiV1AdminAuthPasswordPostErrors, ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostData, ChangePasswordApiV1UsersMePasswordPostErrors, ChangePasswordApiV1UsersMePasswordPostResponses, ConfirmApiV1AdminAuthConfirmPostData, ConfirmApiV1AdminAuthConfirmPostErrors, ConfirmApiV1AdminAuthConfirmPostResponses, CreateAdminApiV1AdminAdminsPostData, CreateAdminApiV1AdminAdminsPostErrors, CreateAdminApiV1AdminAdminsPostResponses, CreateRoleApiV1AdminRolesPostData, CreateRoleApiV1AdminRolesPostErrors, CreateRoleApiV1AdminRolesPostResponses, DeleteAccountApiV1UsersMeDeleteData, DeleteAccountApiV1UsersMeDeleteErrors, DeleteAccountApiV1UsersMeDeleteResponses, DeleteAssetApiV1AssetsAssetIdDeleteData, DeleteAssetApiV1AssetsAssetIdDeleteErrors, DeleteAssetApiV1AssetsAssetIdDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteData, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, GetAdminApiV1AdminAdminsAdminIdGetData, GetAdminApiV1AdminAdminsAdminIdGetErrors, GetAdminApiV1AdminAdminsAdminIdGetResponses, GetMeApiV1AdminAuthMeGetData, GetMeApiV1AdminAuthMeGetErrors, GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1UsersMeGetData, GetMeApiV1UsersMeGetErrors, GetMeApiV1UsersMeGetResponses, GetRoleApiV1AdminRolesRoleIdGetData, GetRoleApiV1AdminRolesRoleIdGetErrors, GetRoleApiV1AdminRolesRoleIdGetResponses, GetSystemStatusApiV1SystemStatusGetData, GetSystemStatusApiV1SystemStatusGetResponses, GetUserApiV1AdminUsersUserIdGetData, GetUserApiV1AdminUsersUserIdGetErrors, GetUserApiV1AdminUsersUserIdGetResponses, HealthLiveHealthLiveGetData, HealthLiveHealthLiveGetResponses, HealthReadyHealthReadyGetData, HealthReadyHealthReadyGetResponses, ListAdminsApiV1AdminAdminsGetData, ListAdminsApiV1AdminAdminsGetErrors, ListAdminsApiV1AdminAdminsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAssetsApiV1AssetsGetData, ListAssetsApiV1AssetsGetErrors, ListAssetsApiV1AssetsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetData, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetData, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListPermissionsApiV1AdminPermissionsGetData, ListPermissionsApiV1AdminPermissionsGetErrors, ListPermissionsApiV1AdminPermissionsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetData, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRolesApiV1AdminRolesGetData, ListRolesApiV1AdminRolesGetErrors, ListRolesApiV1AdminRolesGetResponses, ListSessionsApiV1UsersMeSessionsGetData, ListSessionsApiV1UsersMeSessionsGetErrors, ListSessionsApiV1UsersMeSessionsGetResponses, ListUsersApiV1AdminUsersGetData, ListUsersApiV1AdminUsersGetErrors, ListUsersApiV1AdminUsersGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetData, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, LoginApiV1AdminAuthLoginPostData, LoginApiV1AdminAuthLoginPostErrors, LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostErrors, LoginApiV1AuthLoginPostResponses, LogoutApiV1AdminAuthLogoutPostData, LogoutApiV1AdminAuthLogoutPostErrors, LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostErrors, LogoutApiV1AuthLogoutPostResponses, RefreshApiV1AdminAuthRefreshPostData, RefreshApiV1AdminAuthRefreshPostErrors, RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostErrors, RefreshApiV1AuthRefreshPostResponses, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostErrors, RegisterApiV1AuthRegisterPostResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchData, SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchErrors, SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchData, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchData, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateMeApiV1UsersMePatchData, UpdateMeApiV1UsersMePatchErrors, UpdateMeApiV1UsersMePatchResponses, UpdateProfileApiV1AdminAuthProfilePatchData, UpdateProfileApiV1AdminAuthProfilePatchErrors, UpdateProfileApiV1AdminAuthProfilePatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchData, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchData, UpdateUserApiV1AdminUsersUserIdPatchErrors, UpdateUserApiV1AdminUsersUserIdPatchResponses, UploadAssetApiV1AssetsUploadPostData, UploadAssetApiV1AssetsUploadPostErrors, UploadAssetApiV1AssetsUploadPostResponses } from './types.gen';
+import type { AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutErrors, AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutResponses, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutErrors, AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutResponses, ChangePasswordApiV1AdminAuthPasswordPostData, ChangePasswordApiV1AdminAuthPasswordPostErrors, ChangePasswordApiV1AdminAuthPasswordPostResponses, ChangePasswordApiV1UsersMePasswordPostData, ChangePasswordApiV1UsersMePasswordPostErrors, ChangePasswordApiV1UsersMePasswordPostResponses, CreateAdminApiV1AdminAdminsPostData, CreateAdminApiV1AdminAdminsPostErrors, CreateAdminApiV1AdminAdminsPostResponses, CreateRoleApiV1AdminRolesPostData, CreateRoleApiV1AdminRolesPostErrors, CreateRoleApiV1AdminRolesPostResponses, DeleteAccountApiV1UsersMeDeleteData, DeleteAccountApiV1UsersMeDeleteErrors, DeleteAccountApiV1UsersMeDeleteResponses, DeleteAssetApiV1AssetsAssetIdDeleteData, DeleteAssetApiV1AssetsAssetIdDeleteErrors, DeleteAssetApiV1AssetsAssetIdDeleteResponses, DeleteAssetsBulkApiV1AssetsBatchDeleteData, DeleteAssetsBulkApiV1AssetsBatchDeleteErrors, DeleteAssetsBulkApiV1AssetsBatchDeleteResponses, DeleteRoleApiV1AdminRolesRoleIdDeleteData, DeleteRoleApiV1AdminRolesRoleIdDeleteErrors, DeleteRoleApiV1AdminRolesRoleIdDeleteResponses, DeleteRolesBulkApiV1AdminRolesBatchDeleteData, DeleteRolesBulkApiV1AdminRolesBatchDeleteErrors, DeleteRolesBulkApiV1AdminRolesBatchDeleteResponses, DeleteUsersBulkApiV1AdminUsersBatchDeleteData, DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors, DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses, GetAdminApiV1AdminAdminsAdminIdGetData, GetAdminApiV1AdminAdminsAdminIdGetErrors, GetAdminApiV1AdminAdminsAdminIdGetResponses, GetMeApiV1AdminAuthMeGetData, GetMeApiV1AdminAuthMeGetErrors, GetMeApiV1AdminAuthMeGetResponses, GetMeApiV1UsersMeGetData, GetMeApiV1UsersMeGetErrors, GetMeApiV1UsersMeGetResponses, GetRoleApiV1AdminRolesRoleIdGetData, GetRoleApiV1AdminRolesRoleIdGetErrors, GetRoleApiV1AdminRolesRoleIdGetResponses, GetSystemStatusApiV1SystemStatusGetData, GetSystemStatusApiV1SystemStatusGetResponses, GetUserApiV1AdminUsersUserIdGetData, GetUserApiV1AdminUsersUserIdGetErrors, GetUserApiV1AdminUsersUserIdGetResponses, HealthLiveHealthLiveGetData, HealthLiveHealthLiveGetResponses, HealthReadyHealthReadyGetData, HealthReadyHealthReadyGetResponses, ListAdminsApiV1AdminAdminsGetData, ListAdminsApiV1AdminAdminsGetErrors, ListAdminsApiV1AdminAdminsGetResponses, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetData, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetErrors, ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponses, ListAssetsApiV1AssetsGetData, ListAssetsApiV1AssetsGetErrors, ListAssetsApiV1AssetsGetResponses, ListAuditEventsApiV1AdminSecurityAuditEventsGetData, ListAuditEventsApiV1AdminSecurityAuditEventsGetErrors, ListAuditEventsApiV1AdminSecurityAuditEventsGetResponses, ListLoginEventsApiV1AdminSecurityLoginEventsGetData, ListLoginEventsApiV1AdminSecurityLoginEventsGetErrors, ListLoginEventsApiV1AdminSecurityLoginEventsGetResponses, ListPermissionsApiV1AdminPermissionsGetData, ListPermissionsApiV1AdminPermissionsGetErrors, ListPermissionsApiV1AdminPermissionsGetResponses, ListRequestLogsApiV1AdminSystemRequestLogsGetData, ListRequestLogsApiV1AdminSystemRequestLogsGetErrors, ListRequestLogsApiV1AdminSystemRequestLogsGetResponses, ListRolesApiV1AdminRolesGetData, ListRolesApiV1AdminRolesGetErrors, ListRolesApiV1AdminRolesGetResponses, ListSessionsApiV1UsersMeSessionsGetData, ListSessionsApiV1UsersMeSessionsGetErrors, ListSessionsApiV1UsersMeSessionsGetResponses, ListUsersApiV1AdminUsersGetData, ListUsersApiV1AdminUsersGetErrors, ListUsersApiV1AdminUsersGetResponses, ListUserSessionsApiV1AdminUsersUserIdSessionsGetData, ListUserSessionsApiV1AdminUsersUserIdSessionsGetErrors, ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponses, LoginApiV1AdminAuthLoginPostData, LoginApiV1AdminAuthLoginPostErrors, LoginApiV1AdminAuthLoginPostResponses, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostErrors, LoginApiV1AuthLoginPostResponses, LogoutApiV1AdminAuthLogoutPostData, LogoutApiV1AdminAuthLogoutPostErrors, LogoutApiV1AdminAuthLogoutPostResponses, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostErrors, LogoutApiV1AuthLogoutPostResponses, RefreshApiV1AdminAuthRefreshPostData, RefreshApiV1AdminAuthRefreshPostErrors, RefreshApiV1AdminAuthRefreshPostResponses, RefreshApiV1AuthRefreshPostData, RefreshApiV1AuthRefreshPostErrors, RefreshApiV1AuthRefreshPostResponses, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostErrors, RegisterApiV1AuthRegisterPostResponses, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutErrors, ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutResponses, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutErrors, ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutResponses, RestoreUserApiV1AdminUsersUserIdRestorePostData, RestoreUserApiV1AdminUsersUserIdRestorePostErrors, RestoreUserApiV1AdminUsersUserIdRestorePostResponses, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostData, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostErrors, RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostResponses, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostErrors, RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostResponses, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostData, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostErrors, RevokeOtherSessionsApiV1UsersMeSessionsRevokeOthersPostResponses, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteData, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteErrors, RevokeSessionApiV1UsersMeSessionsSessionIdDeleteResponses, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteErrors, RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteResponses, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchErrors, SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponses, SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchData, SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchErrors, SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchResponses, SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchData, SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchErrors, SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponses, SetUserStatusApiV1AdminUsersUserIdStatusPatchData, SetUserStatusApiV1AdminUsersUserIdStatusPatchErrors, SetUserStatusApiV1AdminUsersUserIdStatusPatchResponses, SetUserStatusBulkApiV1AdminUsersStatusBatchPatchData, SetUserStatusBulkApiV1AdminUsersStatusBatchPatchErrors, SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponses, UpdateAdminApiV1AdminAdminsAdminIdPatchData, UpdateAdminApiV1AdminAdminsAdminIdPatchErrors, UpdateAdminApiV1AdminAdminsAdminIdPatchResponses, UpdateMeApiV1UsersMePatchData, UpdateMeApiV1UsersMePatchErrors, UpdateMeApiV1UsersMePatchResponses, UpdateProfileApiV1AdminAuthProfilePatchData, UpdateProfileApiV1AdminAuthProfilePatchErrors, UpdateProfileApiV1AdminAuthProfilePatchResponses, UpdateRoleApiV1AdminRolesRoleIdPatchData, UpdateRoleApiV1AdminRolesRoleIdPatchErrors, UpdateRoleApiV1AdminRolesRoleIdPatchResponses, UpdateUserApiV1AdminUsersUserIdPatchData, UpdateUserApiV1AdminUsersUserIdPatchErrors, UpdateUserApiV1AdminUsersUserIdPatchResponses, UploadAssetApiV1AssetsUploadPostData, UploadAssetApiV1AssetsUploadPostErrors, UploadAssetApiV1AssetsUploadPostResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -88,9 +88,24 @@ export const listAssetsApiV1AssetsGet = <ThrowOnError extends boolean = false>(o
 });
 
 /**
+ * 批量删除文件资产
+ *
+ * 通过权限、CSRF 与审计链原子删除明确选中的资产元数据和对应存储文件。
+ */
+export const deleteAssetsBulkApiV1AssetsBatchDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAssetsBulkApiV1AssetsBatchDeleteData, ThrowOnError>): RequestResult<DeleteAssetsBulkApiV1AssetsBatchDeleteResponses, DeleteAssetsBulkApiV1AssetsBatchDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAssetsBulkApiV1AssetsBatchDeleteResponses, DeleteAssetsBulkApiV1AssetsBatchDeleteErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/assets/batch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
  * 删除文件资产
  *
- * 通过管理员二次确认与审计链删除资产元数据和对应存储文件。
+ * 通过权限、CSRF 与审计链删除资产元数据和对应存储文件。
  */
 export const deleteAssetApiV1AssetsAssetIdDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAssetApiV1AssetsAssetIdDeleteData, ThrowOnError>): RequestResult<DeleteAssetApiV1AssetsAssetIdDeleteResponses, DeleteAssetApiV1AssetsAssetIdDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAssetApiV1AssetsAssetIdDeleteResponses, DeleteAssetApiV1AssetsAssetIdDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -240,11 +255,20 @@ export const changePasswordApiV1AdminAuthPasswordPost = <ThrowOnError extends bo
 });
 
 /**
- * 确认管理员敏感操作
+ * 获取用户列表
  */
-export const confirmApiV1AdminAuthConfirmPost = <ThrowOnError extends boolean = false>(options: Options<ConfirmApiV1AdminAuthConfirmPostData, ThrowOnError>): RequestResult<ConfirmApiV1AdminAuthConfirmPostResponses, ConfirmApiV1AdminAuthConfirmPostErrors, ThrowOnError> => (options.client ?? client).post<ConfirmApiV1AdminAuthConfirmPostResponses, ConfirmApiV1AdminAuthConfirmPostErrors, ThrowOnError>({
+export const listUsersApiV1AdminUsersGet = <ThrowOnError extends boolean = false>(options?: Options<ListUsersApiV1AdminUsersGetData, ThrowOnError>): RequestResult<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError>({
     responseType: 'json',
-    url: '/api/v1/admin/auth/confirm',
+    url: '/api/v1/admin/users',
+    ...options
+});
+
+/**
+ * 批量修改用户状态
+ */
+export const setUserStatusBulkApiV1AdminUsersStatusBatchPatch = <ThrowOnError extends boolean = false>(options: Options<SetUserStatusBulkApiV1AdminUsersStatusBatchPatchData, ThrowOnError>): RequestResult<SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponses, SetUserStatusBulkApiV1AdminUsersStatusBatchPatchErrors, ThrowOnError> => (options.client ?? client).patch<SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponses, SetUserStatusBulkApiV1AdminUsersStatusBatchPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/status/batch',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -253,11 +277,43 @@ export const confirmApiV1AdminAuthConfirmPost = <ThrowOnError extends boolean = 
 });
 
 /**
- * 获取用户列表
+ * 批量软删除用户
+ *
+ * 将明确选中的用户账户移入回收站并停用，撤销其全部会话。
  */
-export const listUsersApiV1AdminUsersGet = <ThrowOnError extends boolean = false>(options?: Options<ListUsersApiV1AdminUsersGetData, ThrowOnError>): RequestResult<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError> => (options?.client ?? client).get<ListUsersApiV1AdminUsersGetResponses, ListUsersApiV1AdminUsersGetErrors, ThrowOnError>({
+export const deleteUsersBulkApiV1AdminUsersBatchDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteUsersBulkApiV1AdminUsersBatchDeleteData, ThrowOnError>): RequestResult<DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses, DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses, DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors, ThrowOnError>({
     responseType: 'json',
-    url: '/api/v1/admin/users',
+    url: '/api/v1/admin/users/batch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * 批量恢复回收站用户
+ *
+ * 恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。
+ */
+export const restoreUsersBulkApiV1AdminUsersRestoreBatchPost = <ThrowOnError extends boolean = false>(options: Options<RestoreUsersBulkApiV1AdminUsersRestoreBatchPostData, ThrowOnError>): RequestResult<RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors, ThrowOnError> => (options.client ?? client).post<RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/restore/batch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * 恢复回收站用户
+ *
+ * 恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。
+ */
+export const restoreUserApiV1AdminUsersUserIdRestorePost = <ThrowOnError extends boolean = false>(options: Options<RestoreUserApiV1AdminUsersUserIdRestorePostData, ThrowOnError>): RequestResult<RestoreUserApiV1AdminUsersUserIdRestorePostResponses, RestoreUserApiV1AdminUsersUserIdRestorePostErrors, ThrowOnError> => (options.client ?? client).post<RestoreUserApiV1AdminUsersUserIdRestorePostResponses, RestoreUserApiV1AdminUsersUserIdRestorePostErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/users/{user_id}/restore',
     ...options
 });
 
@@ -465,6 +521,32 @@ export const listRolesApiV1AdminRolesGet = <ThrowOnError extends boolean = false
 export const createRoleApiV1AdminRolesPost = <ThrowOnError extends boolean = false>(options: Options<CreateRoleApiV1AdminRolesPostData, ThrowOnError>): RequestResult<CreateRoleApiV1AdminRolesPostResponses, CreateRoleApiV1AdminRolesPostErrors, ThrowOnError> => (options.client ?? client).post<CreateRoleApiV1AdminRolesPostResponses, CreateRoleApiV1AdminRolesPostErrors, ThrowOnError>({
     responseType: 'json',
     url: '/api/v1/admin/roles',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * 批量修改角色状态
+ */
+export const setRoleStatusBulkApiV1AdminRolesStatusBatchPatch = <ThrowOnError extends boolean = false>(options: Options<SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchData, ThrowOnError>): RequestResult<SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponses, SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchErrors, ThrowOnError> => (options.client ?? client).patch<SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponses, SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles/status/batch',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * 批量删除未使用角色
+ */
+export const deleteRolesBulkApiV1AdminRolesBatchDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteRolesBulkApiV1AdminRolesBatchDeleteData, ThrowOnError>): RequestResult<DeleteRolesBulkApiV1AdminRolesBatchDeleteResponses, DeleteRolesBulkApiV1AdminRolesBatchDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteRolesBulkApiV1AdminRolesBatchDeleteResponses, DeleteRolesBulkApiV1AdminRolesBatchDeleteErrors, ThrowOnError>({
+    responseType: 'json',
+    url: '/api/v1/admin/roles/batch',
     ...options,
     headers: {
         'Content-Type': 'application/json',

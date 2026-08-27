@@ -29,9 +29,6 @@ class CacheKeys:
         domain = "auth-admin" if admin else "auth-web"
         return self._key(domain, "login-id", digest)
 
-    def admin_confirmation(self, digest: str) -> str:
-        return self._key("auth-admin", "confirm", digest)
-
     def request_log_stream(self) -> str:
         return self._key("system", "request-log", "events")
 

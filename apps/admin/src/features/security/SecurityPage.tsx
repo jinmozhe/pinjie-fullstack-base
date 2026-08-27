@@ -37,7 +37,7 @@ function translatedLabel(labels: Record<string, string>, value: string) {
 function LoginEvents() {
   const [page, setPage] = useState(1);
   const query = useQuery({ queryKey: ["login-events", page], queryFn: () => adminApi.loginEvents(page) });
-  return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} empty={query.data?.items.length === 0} onRetry={() => void query.refetch()} />{query.data && <ProTable<LoginEventRead> className="controlled-table" rowKey="id" dataSource={query.data.items} search={false} options={{ reload: () => void query.refetch() }} cardProps={false} pagination={{ current: page, pageSize: query.data.page_size, total: query.data.total, showSizeChanger: false, onChange: setPage }} scroll={{ x: 900 }} columns={[
+  return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} onRetry={() => void query.refetch()} />{query.data && <ProTable<LoginEventRead> className="controlled-table" rowKey="id" dataSource={query.data.items} search={false} options={{ reload: () => void query.refetch() }} cardProps={false} pagination={{ current: page, pageSize: query.data.page_size, total: query.data.total, showSizeChanger: false, onChange: setPage }} scroll={{ x: 900 }} columns={[
     { title: "时间", dataIndex: "occurred_at", width: 170, render: (_, row) => formatTime(row.occurred_at) },
     { title: "主体", dataIndex: "principal_type", width: 90, render: (_, row) => translatedLabel(principalLabels, row.principal_type) },
     { title: "事件", dataIndex: "event_type", width: 120, render: (_, row) => translatedLabel(loginEventLabels, row.event_type) },
@@ -50,7 +50,7 @@ function LoginEvents() {
 function AuditEvents() {
   const [page, setPage] = useState(1);
   const query = useQuery({ queryKey: ["audit-events", page], queryFn: () => adminApi.auditEvents(page) });
-  return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} empty={query.data?.items.length === 0} onRetry={() => void query.refetch()} />{query.data && <ProTable<AuditEventRead> className="controlled-table" rowKey="id" dataSource={query.data.items} search={false} options={{ reload: () => void query.refetch() }} cardProps={false} pagination={{ current: page, pageSize: query.data.page_size, total: query.data.total, showSizeChanger: false, onChange: setPage }} scroll={{ x: 980 }} columns={[
+  return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} onRetry={() => void query.refetch()} />{query.data && <ProTable<AuditEventRead> className="controlled-table" rowKey="id" dataSource={query.data.items} search={false} options={{ reload: () => void query.refetch() }} cardProps={false} pagination={{ current: page, pageSize: query.data.page_size, total: query.data.total, showSizeChanger: false, onChange: setPage }} scroll={{ x: 980 }} columns={[
     { title: "时间", dataIndex: "occurred_at", width: 170, render: (_, row) => formatTime(row.occurred_at) },
     { title: "动作", dataIndex: "action", width: 220 },
     { title: "目标", key: "target", width: 220, render: (_, row) => `${row.target_type}:${row.target_id || "-"}` },
@@ -71,7 +71,6 @@ function RequestLogs() {
       <QueryState
         loading={query.isLoading}
         error={query.isError ? errorMessage(query.error) : undefined}
-        empty={query.data?.items.length === 0}
         onRetry={() => void query.refetch()}
       />
       {query.data && (

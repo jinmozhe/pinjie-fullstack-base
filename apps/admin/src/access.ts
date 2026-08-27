@@ -6,6 +6,7 @@ export default function access(initialState?: AdminInitialState) {
     canUsers: Boolean(admin && (admin.is_superuser || admin.permissions.includes("users:read"))),
     canAdmins: Boolean(admin && (admin.is_superuser || admin.permissions.includes("admins:read"))),
     canRoles: Boolean(admin && (admin.is_superuser || admin.permissions.includes("roles:read"))),
+    canAssets: Boolean(admin && (admin.is_superuser || admin.permissions.includes("assets:read"))),
     canSecurity: Boolean(admin && (admin.is_superuser || [
       "security:login-events:read",
       "security:audit-events:read",

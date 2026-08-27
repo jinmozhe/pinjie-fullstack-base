@@ -63,14 +63,14 @@ describe("admin HTTP authentication boundary", () => {
     );
   });
 
-  it("adds JSON, CSRF, and confirmation headers to unsafe requests", async () => {
+  it("adds JSON and CSRF headers to unsafe requests", async () => {
     document.cookie = "pinjie_admin_csrf=csrf%20token";
     server.use(
       http.patch("http://localhost:3000/api/v1/admin/users/user-id", async ({ request }) => {
         expect(request.headers.get("Accept")).toBe("application/json");
         expect(request.headers.get("Content-Type")).toBe("application/json");
         expect(request.headers.get("X-CSRF-Token")).toBe("csrf token");
-        expect(request.headers.get("X-Admin-Confirmation")).toBe("confirmation");
+        expect(request.headers.has("X-Admin-Confirmation")).toBe(false);
         expect(await request.json()).toEqual({ is_active: false });
         return ok({ is_active: false });
       }),
@@ -80,7 +80,6 @@ describe("admin HTTP authentication boundary", () => {
       apiRequest(
         "/api/v1/admin/users/user-id",
         { method: "PATCH", body: jsonBody({ is_active: false }) },
-        { confirmationToken: "confirmation" },
       ),
     ).resolves.toEqual({ is_active: false });
   });

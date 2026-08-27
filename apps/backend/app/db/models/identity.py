@@ -43,6 +43,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __table_args__ = (
         CheckConstraint("credential_version >= 1", name="ck_users_credential_version_positive"),
         Index("ix_users_active_created", "is_active", "created_at"),
+        Index("ix_users_deleted_anonymized", "deleted_at", "anonymized_at"),
         {"comment": "C 端用户账户"},
     )
 
@@ -53,6 +54,13 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, comment="是否允许登录")
     credential_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, comment="凭据版本")
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="注销时间")
+    deleted_by_admin_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("admins.id", ondelete="SET NULL"), nullable=True, comment="执行软删除的管理员 ID"
+    )
+    deletion_reason: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="账户删除原因代码")
+    anonymized_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, comment="身份资料永久匿名化时间"
+    )
 
     sessions: Mapped[list["UserSession"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 

@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 
 import { AdminsPage } from "./admins/AdminsPage";
+import { AssetsPage } from "./assets/AssetsPage";
 import { LoginPage } from "./auth/LoginPage";
 import { AdminContext } from "./auth/auth-context";
 import { RolesPage } from "./roles/RolesPage";
@@ -19,7 +20,7 @@ import { server } from "../test/setup";
 
 const now = "2026-08-15T00:00:00Z";
 const current: AdminRead = { id: "01900000-0000-7000-8000-000000000001", username: "stage-admin", display_name: "Stage Admin", is_active: true, is_superuser: true, roles: [], permissions: [], created_at: now, updated_at: now };
-const restricted: AdminRead = { ...current, id: "01900000-0000-7000-8000-000000000009", username: "read-only", display_name: "Read Only", is_superuser: false, permissions: ["users:read", "admins:read", "roles:read"] };
+const restricted: AdminRead = { ...current, id: "01900000-0000-7000-8000-000000000009", username: "read-only", display_name: "Read Only", is_superuser: false, permissions: ["users:read", "admins:read", "roles:read", "assets:read"] };
 const otherAdmin: AdminRead = { ...current, id: "01900000-0000-7000-8000-000000000010", username: "other-admin", display_name: "Other Admin", avatar: "/static/uploads/avatar/other.png", is_superuser: false };
 
 function renderPage(node: ReactNode, principal: AdminRead | null = current) {
@@ -28,16 +29,10 @@ function renderPage(node: ReactNode, principal: AdminRead | null = current) {
   return render(<ConfigProvider locale={zhCN}><QueryClientProvider client={client}>{principal ? <AdminContext.Provider value={principal}>{node}</AdminContext.Provider> : node}</QueryClientProvider></ConfigProvider>);
 }
 
-async function confirmAction(user: ReturnType<typeof userEvent.setup>) {
-  const password = await screen.findByLabelText("当前密码");
-  expect(password).toHaveAttribute("maxlength", "64");
-  await user.type(password, "stage-c-admin-password");
-  await user.click(screen.getByRole("button", { name: /确认执行/ }));
-  await waitFor(() => {
-    const field = screen.queryByLabelText("当前密码");
-    if (field) expect(field).not.toBeVisible();
-    else expect(field).toBeNull();
-  });
+async function confirmWarning(user: ReturnType<typeof userEvent.setup>, title: string) {
+  const dialog = screen.getByRole("dialog", { name: title });
+  expect(within(dialog).queryByLabelText("当前密码")).not.toBeInTheDocument();
+  await user.click(within(dialog).getByRole("button", { name: "确定" }));
 }
 
 describe("stage C admin workspace", () => {
@@ -74,35 +69,105 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
   });
 
-  it("protects user status, credential, and session operations with confirmation", async () => {
+  it("executes user status, credential, and session operations without password confirmation", async () => {
     const user = userEvent.setup();
     renderPage(<UsersPage />);
     expect(await screen.findByText("Browser User")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /停\s*用/ }));
-    await confirmAction(user);
 
     await user.click(screen.getByRole("button", { name: /重置密码/ }));
     expect(screen.getByLabelText("新密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("新密码"), "replacement-password");
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
-    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: "确定" }));
 
     await user.click(await screen.findByRole("button", { name: /会话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
-    await confirmAction(user);
+    expect(screen.queryByLabelText("当前密码")).not.toBeInTheDocument();
   }, 120_000);
 
-  it("loads administrators and assigns roles with confirmation", async () => {
+  it("selects users and sends one atomic bulk soft-delete request", async () => {
+    const user = userEvent.setup();
+    let bulkPayload: unknown;
+    server.use(
+      http.delete("http://localhost:3000/api/v1/admin/users/batch", async ({ request }) => {
+        bulkPayload = await request.json();
+        return HttpResponse.json({
+          code: "OK",
+          message: "操作成功",
+          data: { completed_count: 1, target_ids: ["01900000-0000-7000-8000-000000000002"] },
+          request_id: "test-request",
+        });
+      }),
+    );
+    renderPage(<UsersPage />);
+
+    expect(await screen.findByText("Browser User")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
+    expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "批量删除" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(bulkPayload).toEqual({ user_ids: ["01900000-0000-7000-8000-000000000002"] }),
+    );
+  }, 60_000);
+
+  it("loads the recycle bin and sends one atomic bulk restore request", async () => {
+    const user = userEvent.setup();
+    let restorePayload: unknown;
+    const ok = (data: unknown) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
+    const deletedUser = {
+      id: "01900000-0000-7000-8000-000000000002",
+      username: "browser-user",
+      display_name: "Browser User",
+      email: "browser@example.test",
+      is_active: false,
+      created_at: now,
+      updated_at: now,
+      deleted_at: now,
+      deleted_by_admin_id: current.id,
+      deletion_reason: "admin_deleted",
+      anonymized_at: null,
+      restore_expires_at: "2026-09-14T00:00:00Z",
+      can_restore: true,
+    };
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/users", ({ request }) => {
+        const lifecycle = new globalThis.URL(request.url).searchParams.get("lifecycle");
+        return ok({
+          items: lifecycle === "deleted" ? [deletedUser] : [],
+          page: 1,
+          page_size: 20,
+          total: lifecycle === "deleted" ? 1 : 0,
+          total_pages: lifecycle === "deleted" ? 1 : 0,
+        });
+      }),
+      http.post("http://localhost:3000/api/v1/admin/users/restore/batch", async ({ request }) => {
+        restorePayload = await request.json();
+        return ok({ completed_count: 1, target_ids: [deletedUser.id] });
+      }),
+    );
+    renderPage(<UsersPage />);
+
+    await user.click(screen.getByText("回收站"));
+    expect(await screen.findByText("可恢复")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
+    await user.click(screen.getByRole("button", { name: "批量恢复" }));
+
+    await waitFor(() => expect(restorePayload).toEqual({ user_ids: [deletedUser.id] }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  }, 60_000);
+
+  it("loads administrators and assigns roles directly", async () => {
     const user = userEvent.setup();
     server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 }, request_id: "test-request" })));
     renderPage(<AdminsPage />);
     expect(await screen.findByText("Other Admin")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /角色/ }));
     expect(screen.getByText("分配角色")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
-    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: /保\s*存/ }));
   }, 60_000);
 
   it("protects administrator status and session operations", async () => {
@@ -117,11 +182,10 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("Other Admin")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "更多操作：other-admin" }));
     await user.click(await screen.findByRole("menuitem", { name: /停\s*用/ }));
-    await confirmAction(user);
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
-    await confirmAction(user);
+    expect(screen.queryByLabelText("当前密码")).not.toBeInTheDocument();
   }, 60_000);
 
   it("edits administrator avatar and display name", async () => {
@@ -147,7 +211,7 @@ describe("stage C admin workspace", () => {
     await waitFor(() => expect(updatePayload).toEqual({ avatar: null, display_name: "Updated Admin" }));
   }, 60_000);
 
-  it("switches administrator identity with confirmation", async () => {
+  it("switches administrator identity directly", async () => {
     const user = userEvent.setup();
     let updatePayload: unknown;
     server.use(
@@ -160,7 +224,6 @@ describe("stage C admin workspace", () => {
     renderPage(<AdminsPage />);
 
     await user.click(await screen.findByRole("button", { name: "设为超级管理员：other-admin" }));
-    await confirmAction(user);
     await waitFor(() => expect(updatePayload).toEqual({ is_superuser: true }));
   }, 60_000);
 
@@ -180,8 +243,7 @@ describe("stage C admin workspace", () => {
     await user.click(await screen.findByRole("menuitem", { name: /重置密码/ }));
     await user.type(screen.getByLabelText("新密码"), "replacement-password");
     await user.type(screen.getByLabelText("确认新密码"), "replacement-password");
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
-    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: "确定" }));
 
     await waitFor(() => expect(resetPayload).toEqual({ new_password: "replacement-password" }));
   }, 60_000);
@@ -209,7 +271,6 @@ describe("stage C admin workspace", () => {
     await user.click(thirdCheckbox);
     expect(screen.getByText("已选择 2 项")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /批量停用/ }));
-    await confirmAction(user);
 
     await waitFor(() => expect(bulkPayload).toEqual({ admin_ids: [otherAdmin.id, thirdAdmin.id], is_active: false }));
     expect(screen.getByRole("columnheader", { name: "操作" })).toHaveStyle({ whiteSpace: "nowrap" });
@@ -264,11 +325,9 @@ describe("stage C admin workspace", () => {
     expect(screen.getByText("审计员")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "更多操作：inactive-admin" }));
     await user.click(await screen.findByRole("menuitem", { name: /启\s*用/ }));
-    await confirmAction(user);
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("旧设备")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
-    await confirmAction(user);
     admins.unmount();
 
     renderPage(<RolesPage />);
@@ -277,7 +336,7 @@ describe("stage C admin workspace", () => {
     expect(screen.getByText("0")).toBeInTheDocument();
   }, 60_000);
 
-  it("creates an administrator with confirmation", async () => {
+  it("creates an administrator directly", async () => {
     const user = userEvent.setup();
     renderPage(<AdminsPage />);
     expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
@@ -286,8 +345,7 @@ describe("stage C admin workspace", () => {
     await user.type(screen.getByLabelText("用户名"), "new-operator");
     expect(screen.getByLabelText("初始密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("初始密码"), "new-operator-password");
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
-    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: /保\s*存/ }));
 
   }, 60_000);
 
@@ -298,7 +356,7 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("button", { name: /新建管理员/ }));
     await user.type(screen.getByLabelText("用户名"), "new-operator");
     await user.type(screen.getByLabelText("初始密码"), "short");
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
+    await user.click(screen.getByRole("button", { name: /保\s*存/ }));
     expect(await screen.findByText("密码必须为 6 至 64 个字符")).toBeInTheDocument();
   });
 
@@ -308,10 +366,36 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /权限/ }));
     expect(await screen.findByText("查看用户")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /下一步/ }));
-    await confirmAction(user);
+    await user.click(screen.getByRole("button", { name: /保\s*存/ }));
     await user.click(screen.getByRole("button", { name: /删除/ }));
-    await confirmAction(user);
+    await confirmWarning(user, "删除未使用角色");
+  }, 60_000);
+
+  it("selects roles and sends one atomic bulk hard-delete request", async () => {
+    const user = userEvent.setup();
+    let bulkPayload: unknown;
+    server.use(
+      http.delete("http://localhost:3000/api/v1/admin/roles/batch", async ({ request }) => {
+        bulkPayload = await request.json();
+        return HttpResponse.json({
+          code: "OK",
+          message: "操作成功",
+          data: { completed_count: 1, target_ids: ["01900000-0000-7000-8000-000000000003"] },
+          request_id: "test-request",
+        });
+      }),
+    );
+    renderPage(<RolesPage />);
+
+    expect(await screen.findByText("运营人员")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
+    expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "批量删除" }));
+    await confirmWarning(user, "确认批量删除 1 个角色");
+
+    await waitFor(() =>
+      expect(bulkPayload).toEqual({ role_ids: ["01900000-0000-7000-8000-000000000003"] }),
+    );
   }, 60_000);
 
   it("creates and edits source-controlled roles", async () => {
@@ -370,10 +454,89 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("请求元数据日志当前未启用")).toBeInTheDocument();
   });
 
+  it("loads file assets and applies filename, scene, and uploader filters", async () => {
+    const user = userEvent.setup();
+    let lastQuery = "";
+    server.use(
+      http.get("http://localhost:3000/api/v1/assets", ({ request }) => {
+        lastQuery = new globalThis.URL(request.url).search;
+        return HttpResponse.json({
+          code: "OK",
+          message: "操作成功",
+          data: {
+            items: [{
+              id: "01900000-0000-7000-8000-000000000008",
+              uploader_type: "admin",
+              uploader_id: current.id,
+              storage_driver: "local",
+              file_key: "product/catalog-cover.png",
+              original_name: "catalog-cover.png",
+              mime_type: "image/png",
+              file_size: 2048,
+              file_hash: "a".repeat(64),
+              url: "/static/uploads/product/catalog-cover.png",
+              scene: "product",
+              created_at: now,
+              updated_at: now,
+            }],
+            page: 1,
+            page_size: 20,
+            total: 1,
+            total_pages: 1,
+          },
+          request_id: "test-request",
+        });
+      }),
+    );
+    renderPage(<AssetsPage />);
+
+    expect(await screen.findByText("catalog-cover.png")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("搜索文件名"), "catalog{Enter}");
+    await user.click(screen.getByLabelText("筛选使用场景"));
+    await user.click(await screen.findByRole("option", { name: "商品" }));
+    await user.click(screen.getByLabelText("筛选上传主体"));
+    await user.click(await screen.findByRole("option", { name: "管理员" }));
+
+    await waitFor(() => {
+      const params = new URLSearchParams(lastQuery);
+      expect(params.get("search")).toBe("catalog");
+      expect(params.get("scene")).toBe("product");
+      expect(params.get("uploader_type")).toBe("admin");
+    });
+  }, 60_000);
+
+  it("selects assets and sends one atomic bulk hard-delete request", async () => {
+    const user = userEvent.setup();
+    let bulkPayload: unknown;
+    server.use(
+      http.delete("http://localhost:3000/api/v1/assets/batch", async ({ request }) => {
+        bulkPayload = await request.json();
+        return HttpResponse.json({
+          code: "OK",
+          message: "操作成功",
+          data: { completed_count: 1, target_ids: ["01900000-0000-7000-8000-000000000008"] },
+          request_id: "test-request",
+        });
+      }),
+    );
+    renderPage(<AssetsPage />);
+
+    expect(await screen.findByText("catalog-cover.png")).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
+    expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "批量删除" }));
+    await confirmWarning(user, "确认批量删除 1 个文件资产");
+
+    await waitFor(() =>
+      expect(bulkPayload).toEqual({ asset_ids: ["01900000-0000-7000-8000-000000000008"] }),
+    );
+  }, 60_000);
+
   it("hides mutation controls from read-only administrators", async () => {
     const users = renderPage(<UsersPage />, restricted);
     expect(await screen.findByText("Browser User")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /编辑|停用|会话|重置密码/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     users.unmount();
 
     const admins = renderPage(<AdminsPage />, restricted);
@@ -382,8 +545,15 @@ describe("stage C admin workspace", () => {
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     admins.unmount();
 
-    renderPage(<RolesPage />, restricted);
+    const roles = renderPage(<RolesPage />, restricted);
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /新建角色|编辑|权限|删除/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    roles.unmount();
+
+    renderPage(<AssetsPage />, restricted);
+    expect(await screen.findByText("catalog-cover.png")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /删除|批量删除/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
   }, 60_000);
 });

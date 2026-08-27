@@ -140,7 +140,11 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 ```powershell
 docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.cleanup_security_logs --confirm-database pinjie_fullstack_prod
 docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.cleanup_security_logs --apply --confirm-database pinjie_fullstack_prod
+docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.anonymize_expired_users --confirm-database pinjie_fullstack_prod
+docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.anonymize_expired_users --apply --confirm-database pinjie_fullstack_prod
 ```
+
+后两条命令处理超过 `USER_RECYCLE_BIN_RETENTION_DAYS` 的用户回收站记录。先核对 dry-run 数量，再单独授权 `--apply`；匿名化后无法恢复原身份资料。
 
 ## 7. 停止与回滚边界
 

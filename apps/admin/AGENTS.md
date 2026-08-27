@@ -9,7 +9,7 @@
 ## 目录与状态边界
 
 - `config/routes.ts` 负责配置式路由；当前路由页面位于 `src/features/<feature>/*Page.tsx`，Feature 内聚页面、组件、Hook 和领域适配。`src/components/` 放跨页面组件，`src/lib/` 放 HTTP、导航等基础设施。
-- 页面和 Feature 不得直接调用原始 `fetch`、拼接底层请求或重复处理响应结构。`src/lib/api/http.ts` 是唯一传输层，统一处理 Cookie 会话、CSRF、单飞 Refresh、响应解包、错误分类、登录失效和二次确认头；不得引入 Umi Request 或另一套客户端形成并行请求管道。
+- 页面和 Feature 不得直接调用原始 `fetch`、拼接底层请求或重复处理响应结构。`src/lib/api/http.ts` 是唯一传输层，统一处理 Cookie 会话、CSRF、单飞 Refresh、响应解包、错误分类和登录失效；不得引入 Umi Request 或另一套客户端形成并行请求管道。
 - 服务端数据、缓存和请求状态由 TanStack Query 管理。Zustand 只保存真正的客户端状态，禁止复制 Query 数据形成双份事实来源。
 - 临时弹窗、表单和草稿优先使用组件本地状态。Zustand 不保存 Token、Cookie 内容和其他敏感凭据；浏览器认证边界遵守 `docs/architecture/authentication-authorization.md`。
 - Web 与 Admin 禁止直接互相引用。共享类型和请求能力只能通过 `@pinjie/api-client` 等 `packages/` 公共包进入。
@@ -28,6 +28,12 @@
 - 优先使用 Ant Design 和 ProComponents 的现有组件、表单、表格、反馈和主题能力，避免重复实现基础控件；`ProTable`、`ModalForm` 和 `DrawerForm` 适用于标准场景，但不强制用于复杂工作流、特殊交互或有明确性能约束的页面。
 - 操作按钮使用 Ant Design 图标并提供明确文本或 Tooltip；危险操作必须有清晰确认和错误反馈。
 - 页面状态至少覆盖加载、空数据、失败、无权限和成功反馈。表格与表单需处理窄屏、长文本和溢出。
+- 使用 `ProTable` 的列表由 `ProTable` 统一呈现空数据状态，外层 `QueryState` 只处理加载、失败和重试，禁止再传 `empty` 或额外渲染 Ant Design `Empty`。未使用 `ProTable` 的列表、抽屉和面板继续通过 `QueryState empty` 或 Ant Design `Empty` 呈现“暂无数据”。
+- 新增或修改数据列表时，必须按服务端权限提供受控批量选择和至少一种与实体生命周期一致的批量操作。已有软删除时对接批量软删除，已有硬删除时对接批量硬删除；没有删除语义时提供启停、分配、导出等合法批量操作，禁止前端循环调用单条写接口模拟批量事务。
+- 批量操作成功后清空选择并刷新数据，失败时保留选择并显示明确错误；翻页、筛选或搜索条件变化时清空不可见选择。没有批量写权限时不显示选择列和批量入口。
+- Admin 全局只维护一个通用标准警告弹窗组件，业务页面传入标题、说明、加载状态和执行回调，禁止为单个页面或操作重复创建确认弹窗。弹窗按钮固定为“确定”和“取消”，不提供密码输入。
+- 只有物理硬删除在单条和批量入口提交前显示标准警告弹窗。软删除、启用、停用、密码重置、会话撤销、身份调整、角色分配、权限修改及其他非物理删除操作直接提交，不显示二次确认弹窗，也不要求管理员密码二次确认。
+- 登录安全事件、审计事件、请求元数据及产品需求明确登记的不可变历史记录属于只读日志列表，不提供选择列、人工删除或批量写操作。普通业务数据不得自行归类为日志以规避批量能力。
 - 不使用营销页式巨型标题、装饰性卡片堆叠、夸张圆角、重阴影或花哨动效。
 
 ## 验证
@@ -43,7 +49,7 @@
 ## Umi 运行专项
 
 - 路由、布局、运行时生命周期和客户端 Access 只通过 `@umijs/max`、Umi 配置与插件公开入口使用。禁止直接声明、接管或绕过 Umi 管理的 React Router、Bundler、Babel、esbuild 和运行时内部依赖，禁止通过 override 强制升级到 Umi 尚未支持的主版本；精确内部版本只属于当前锁文件事实，不写成永久规则。
-- Admin Access 只负责路由、菜单和控件的客户端体验，不是安全边界；所有授权、二次确认和审计仍由 Backend 最终执行。
+- Admin Access 只负责路由、菜单和控件的客户端体验，不是安全边界；所有授权、CSRF、资源状态校验和审计仍由 Backend 最终执行。
 - Admin 开发服务使用 `scripts/run-umi.mjs` 通过 `HOST=127.0.0.1`、`PORT=3001` 启动；底层 Umi Webpack host 补丁必须保留。不要使用 `max dev --port` 替代项目脚本；直接调用 Umi 时必须从 `apps/admin` 目录运行并显式绑定 `127.0.0.1`。
 - Umi 的 `process.env.VITE_API_URL`、`initialState: {}` 和生成目录清理是运行时约束；不得在浏览器代码中直接使用 Vite 的 `import.meta.env`，不得提交 `src/.umi` 或 `src/.umi-production`。详细排障见 `docs/operations/admin-local-development-and-validation-troubleshooting.md`。
 

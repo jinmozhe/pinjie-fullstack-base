@@ -20,12 +20,22 @@ from app.core.rate_limit import acquire_refresh_lock, enforce_rate_limit, releas
 from app.core.redis import check_redis, create_redis_client
 from app.core.request_metadata import RequestMetadata, publish_request_log, request_metadata, trusted_client_ip
 from app.core.resources import AppResources, create_resources
-from app.core.security import PasswordManager, create_access_token, decode_access_token
+from app.core.security import PasswordManager, create_access_token, decode_access_token, new_anonymized_username
 from app.main import create_app
 from app.services.authentication import WebAuthService
 from tests.conftest import TEST_SECRETS
 
 DATABASE_URL = "postgresql+asyncpg://u:p@localhost:5432/app"
+
+
+def test_anonymized_username_is_unique_and_within_database_limit() -> None:
+    user_id = new_uuid7()
+    first = new_anonymized_username(user_id)
+    second = new_anonymized_username(user_id)
+
+    assert first.startswith("deleted-")
+    assert len(first) <= 50
+    assert first != second
 
 
 def _settings(**updates: object) -> Settings:
