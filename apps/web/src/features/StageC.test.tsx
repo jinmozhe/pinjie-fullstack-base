@@ -210,7 +210,7 @@ describe("stage C web account", () => {
     await user.type(screen.getByLabelText(/输入用户名/), "browser-user");
     expect(screen.getByLabelText("当前密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("当前密码"), "stage-c-user-password");
-    await user.click(screen.getByRole("button", { name: /永久注销账户/ }));
+    await user.click(screen.getByRole("button", { name: /注销并移入回收站/ }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login?reason=account-deleted"));
   });
 });

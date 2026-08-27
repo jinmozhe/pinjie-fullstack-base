@@ -67,7 +67,7 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `WEB_ORIGINS` 与 `ADMIN_ORIGINS`
 - `WEB_JWT_SECRET` 与 `ADMIN_JWT_SECRET`
 - `WEB_TOKEN_HMAC_KEY` 与 `ADMIN_TOKEN_HMAC_KEY`
-- `AUTH_COOKIE_SECURE`、注册模式、Token、Session 期限、`SESSION_RETENTION_DAYS` 与 `USER_RECYCLE_BIN_RETENTION_DAYS`
+- `AUTH_COOKIE_SECURE`、注册模式、Token、Session 期限与 `SESSION_RETENTION_DAYS`
 - 请求元数据模式及安全日志保留期
 - Loguru 控制台与本地文件日志开关、路径、轮转大小和保留周期
 - `UPLOAD_STORAGE_DRIVER`、`UPLOAD_LOCAL_ROOT`、`UPLOAD_BASE_URL`
@@ -273,14 +273,9 @@ uv run python -m scripts.cleanup_security_logs --confirm-database pinjie_fullsta
 # 经审批后应用保留期清理
 uv run python -m scripts.cleanup_security_logs --apply --confirm-database pinjie_fullstack_dev
 
-# 查看超过用户回收站保留期且尚未匿名化的账户数量
-uv run python -m scripts.anonymize_expired_users --confirm-database pinjie_fullstack_dev
-
-# 经审批后永久匿名化到期账户，匿名化后无法恢复
-uv run python -m scripts.anonymize_expired_users --apply --confirm-database pinjie_fullstack_dev
 ```
 
-`USER_RECYCLE_BIN_RETENTION_DAYS` 默认是 30 天。Admin 新增 `users:restore` 权限后，目标环境必须先运行权限目录 `--check`，经授权后执行 `scripts.sync_permissions --apply`；应用启动不会自动修改权限表。数据库结构还必须通过 Alembic 升级到 `20260827_01` 后才能使用回收站字段和恢复端点。
+用户软删除记录长期保留且可恢复，不再配置回收站保留期或运行匿名化脚本。Admin 新增 `users:restore` 权限后，目标环境必须先运行权限目录 `--check`，经授权后执行 `scripts.sync_permissions --apply`；应用启动不会自动修改权限表。数据库结构还必须通过 Alembic 升级到 `20260827_02` 后才能使用统一软删除字段和恢复端点。
 
 `REQUEST_LOG_MODE=disabled` 是默认值。启用 `metadata` 后，必须单独运行消费者：
 

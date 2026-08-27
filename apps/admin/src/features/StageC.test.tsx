@@ -107,10 +107,12 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
     expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "批量删除" }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "填写删除原因（可选）" });
+    expect(within(dialog).getByLabelText("删除原因")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "移入回收站" }));
 
     await waitFor(() =>
-      expect(bulkPayload).toEqual({ user_ids: ["01900000-0000-7000-8000-000000000002"] }),
+      expect(bulkPayload).toEqual({ user_ids: ["01900000-0000-7000-8000-000000000002"], deletion_reason: null }),
     );
   }, 60_000);
 
@@ -127,10 +129,9 @@ describe("stage C admin workspace", () => {
       created_at: now,
       updated_at: now,
       deleted_at: now,
-      deleted_by_admin_id: current.id,
+      deleted_by_id: current.id,
+      deleted_by_type: "admin",
       deletion_reason: "admin_deleted",
-      anonymized_at: null,
-      restore_expires_at: "2026-09-14T00:00:00Z",
       can_restore: true,
     };
     server.use(

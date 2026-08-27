@@ -612,7 +612,7 @@
         "tags": [
           "用户账户"
         ],
-        "summary": "注销并匿名化当前用户账户",
+        "summary": "注销当前用户账户并移入回收站",
         "operationId": "delete_account_api_v1_users_me_delete",
         "parameters": [
           {
@@ -1381,7 +1381,7 @@
           "后台管理"
         ],
         "summary": "批量软删除用户",
-        "description": "将明确选中的用户账户移入回收站并停用，撤销其全部会话。",
+        "description": "将明确选中的用户账户移入回收站并停用，记录可选删除原因并撤销其全部会话。",
         "operationId": "delete_users_bulk_api_v1_admin_users_batch_delete",
         "parameters": [
           {
@@ -1441,7 +1441,7 @@
           "后台管理"
         ],
         "summary": "批量恢复回收站用户",
-        "description": "恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+        "description": "恢复回收站中的用户，恢复后账户保持停用。",
         "operationId": "restore_users_bulk_api_v1_admin_users_restore_batch_post",
         "parameters": [
           {
@@ -1501,7 +1501,7 @@
           "后台管理"
         ],
         "summary": "恢复回收站用户",
-        "description": "恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+        "description": "恢复回收站中的用户，恢复后账户保持停用。",
         "operationId": "restore_user_api_v1_admin_users__user_id__restore_post",
         "parameters": [
           {
@@ -3955,7 +3955,7 @@
             "title": "Deleted At",
             "description": "账户进入回收站的时间"
           },
-          "deleted_by_admin_id": {
+          "deleted_by_id": {
             "anyOf": [
               {
                 "type": "string",
@@ -3965,8 +3965,20 @@
                 "type": "null"
               }
             ],
-            "title": "Deleted By Admin Id",
-            "description": "执行软删除的管理员唯一标识"
+            "title": "Deleted By Id",
+            "description": "执行软删除的主体唯一标识"
+          },
+          "deleted_by_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted By Type",
+            "description": "执行软删除的主体类型"
           },
           "deletion_reason": {
             "anyOf": [
@@ -3979,32 +3991,6 @@
             ],
             "title": "Deletion Reason",
             "description": "账户删除原因代码"
-          },
-          "anonymized_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Anonymized At",
-            "description": "身份资料永久匿名化时间"
-          },
-          "restore_expires_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Restore Expires At",
-            "description": "允许恢复的截止时间"
           },
           "can_restore": {
             "type": "boolean",
@@ -4023,10 +4009,9 @@
           "created_at",
           "updated_at",
           "deleted_at",
-          "deleted_by_admin_id",
+          "deleted_by_id",
+          "deleted_by_type",
           "deletion_reason",
-          "anonymized_at",
-          "restore_expires_at",
           "can_restore"
         ],
         "title": "AdminUserRead"
@@ -6280,6 +6265,19 @@
             "minItems": 1,
             "title": "User Ids",
             "description": "待批量操作的用户唯一标识列表"
+          },
+          "deletion_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletion Reason",
+            "description": "软删除原因，可为空"
           }
         },
         "additionalProperties": false,

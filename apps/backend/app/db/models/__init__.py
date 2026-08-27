@@ -1,7 +1,7 @@
 """SQLAlchemy model base types."""
 
 from .asset import Asset
-from .base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from .base import Base, SoftDeleteMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from .identity import (
     Admin,
     AdminRefreshToken,
@@ -29,6 +29,7 @@ __all__ = [
     "RequestLog",
     "Role",
     "SecurityLoginEvent",
+    "SoftDeleteMixin",
     "TimestampMixin",
     "UUIDPrimaryKeyMixin",
     "User",

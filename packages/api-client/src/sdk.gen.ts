@@ -114,7 +114,7 @@ export const deleteAssetApiV1AssetsAssetIdDelete = <ThrowOnError extends boolean
 });
 
 /**
- * 注销并匿名化当前用户账户
+ * 注销当前用户账户并移入回收站
  */
 export const deleteAccountApiV1UsersMeDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteAccountApiV1UsersMeDeleteData, ThrowOnError>): RequestResult<DeleteAccountApiV1UsersMeDeleteResponses, DeleteAccountApiV1UsersMeDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteAccountApiV1UsersMeDeleteResponses, DeleteAccountApiV1UsersMeDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -279,7 +279,7 @@ export const setUserStatusBulkApiV1AdminUsersStatusBatchPatch = <ThrowOnError ex
 /**
  * 批量软删除用户
  *
- * 将明确选中的用户账户移入回收站并停用，撤销其全部会话。
+ * 将明确选中的用户账户移入回收站并停用，记录可选删除原因并撤销其全部会话。
  */
 export const deleteUsersBulkApiV1AdminUsersBatchDelete = <ThrowOnError extends boolean = false>(options: Options<DeleteUsersBulkApiV1AdminUsersBatchDeleteData, ThrowOnError>): RequestResult<DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses, DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors, ThrowOnError> => (options.client ?? client).delete<DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses, DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors, ThrowOnError>({
     responseType: 'json',
@@ -294,7 +294,7 @@ export const deleteUsersBulkApiV1AdminUsersBatchDelete = <ThrowOnError extends b
 /**
  * 批量恢复回收站用户
  *
- * 恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。
+ * 恢复回收站中的用户，恢复后账户保持停用。
  */
 export const restoreUsersBulkApiV1AdminUsersRestoreBatchPost = <ThrowOnError extends boolean = false>(options: Options<RestoreUsersBulkApiV1AdminUsersRestoreBatchPostData, ThrowOnError>): RequestResult<RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors, ThrowOnError> => (options.client ?? client).post<RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses, RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors, ThrowOnError>({
     responseType: 'json',
@@ -309,7 +309,7 @@ export const restoreUsersBulkApiV1AdminUsersRestoreBatchPost = <ThrowOnError ext
 /**
  * 恢复回收站用户
  *
- * 恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。
+ * 恢复回收站中的用户，恢复后账户保持停用。
  */
 export const restoreUserApiV1AdminUsersUserIdRestorePost = <ThrowOnError extends boolean = false>(options: Options<RestoreUserApiV1AdminUsersUserIdRestorePostData, ThrowOnError>): RequestResult<RestoreUserApiV1AdminUsersUserIdRestorePostResponses, RestoreUserApiV1AdminUsersUserIdRestorePostErrors, ThrowOnError> => (options.client ?? client).post<RestoreUserApiV1AdminUsersUserIdRestorePostResponses, RestoreUserApiV1AdminUsersUserIdRestorePostErrors, ThrowOnError>({
     responseType: 'json',

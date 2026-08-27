@@ -108,6 +108,12 @@ def test_bulk_action_schemas_reject_duplicate_ids(schema, field_name: str) -> No
         schema.model_validate(payload)
 
 
+def test_user_bulk_delete_normalizes_blank_reason() -> None:
+    payload = UserBulkDeleteIn(user_ids=[new_uuid7()], deletion_reason="   ")
+
+    assert payload.deletion_reason is None
+
+
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_refresh_rotation_and_reuse_revokes_session_family() -> None:
@@ -699,7 +705,9 @@ async def test_user_and_role_bulk_lifecycle_operations_are_atomic_and_audited() 
             )
 
         async with resources.session_factory() as current_session:
-            result = await service(current_session).delete_users_bulk(UserBulkDeleteIn(user_ids=user_ids))
+            result = await service(current_session).delete_users_bulk(
+                UserBulkDeleteIn(user_ids=user_ids, deletion_reason="管理员批量清理")
+            )
             assert result.completed_count == 2
             assert result.target_ids == sorted(user_ids)
 
@@ -712,9 +720,9 @@ async def test_user_and_role_bulk_lifecycle_operations_are_atomic_and_audited() 
                 and not user.is_active
                 and user.credential_version == 3
                 and user.deleted_at is not None
-                and user.deleted_by_admin_id == actor_id
-                and user.deletion_reason == "admin_deleted"
-                and user.anonymized_at is None
+                and user.deleted_by_id == actor_id
+                and user.deleted_by_type == "admin"
+                and user.deletion_reason == "管理员批量清理"
                 for user in deleted_users
             )
 
@@ -735,9 +743,9 @@ async def test_user_and_role_bulk_lifecycle_operations_are_atomic_and_audited() 
                 not user.is_active
                 and user.credential_version == 4
                 and user.deleted_at is None
-                and user.deleted_by_admin_id is None
+                and user.deleted_by_id is None
+                and user.deleted_by_type is None
                 and user.deletion_reason is None
-                and user.anonymized_at is None
                 for user in restored_users
             )
 

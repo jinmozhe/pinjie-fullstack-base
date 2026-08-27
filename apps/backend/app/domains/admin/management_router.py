@@ -105,7 +105,7 @@ async def set_user_status_bulk(
         Depends(require_permission(PermissionCode.USERS_DELETE)),
     ],
     summary="批量软删除用户",
-    description="将明确选中的用户账户移入回收站并停用，撤销其全部会话。",
+    description="将明确选中的用户账户移入回收站并停用，记录可选删除原因并撤销其全部会话。",
 )
 async def delete_users_bulk(
     payload: UserBulkDeleteIn,
@@ -126,7 +126,7 @@ async def delete_users_bulk(
         Depends(require_permission(PermissionCode.USERS_RESTORE)),
     ],
     summary="批量恢复回收站用户",
-    description="恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+    description="恢复回收站中的用户，恢复后账户保持停用。",
 )
 async def restore_users_bulk(
     payload: UserRestoreBatchIn,
@@ -147,7 +147,7 @@ async def restore_users_bulk(
         Depends(require_permission(PermissionCode.USERS_RESTORE)),
     ],
     summary="恢复回收站用户",
-    description="恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+    description="恢复回收站中的用户，恢复后账户保持停用。",
 )
 async def restore_user(
     user_id: uuid.UUID,

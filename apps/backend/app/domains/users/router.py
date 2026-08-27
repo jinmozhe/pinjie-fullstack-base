@@ -138,7 +138,7 @@ async def revoke_other_sessions(
     return success_response(data=ActionResult(), request_id=current_request_id(), message="其他会话撤销成功")
 
 
-@router.delete("", response_model=ResponseModel[ActionResult], summary="注销并匿名化当前用户账户")
+@router.delete("", response_model=ResponseModel[ActionResult], summary="注销当前用户账户并移入回收站")
 async def delete_account(
     payload: AccountDeleteIn,
     request: Request,

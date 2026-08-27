@@ -77,12 +77,6 @@ class Settings(BaseSettings):
     refresh_idle_ttl_days: int = Field(default=7, validation_alias="REFRESH_IDLE_TTL_DAYS", ge=1, le=14)
     session_absolute_ttl_days: int = Field(default=30, validation_alias="SESSION_ABSOLUTE_TTL_DAYS", ge=2, le=90)
     session_retention_days: int = Field(default=30, validation_alias="SESSION_RETENTION_DAYS", ge=1, le=365)
-    user_recycle_bin_retention_days: int = Field(
-        default=30,
-        validation_alias="USER_RECYCLE_BIN_RETENTION_DAYS",
-        ge=1,
-        le=365,
-    )
     password_hash_concurrency: int = Field(default=4, validation_alias="PASSWORD_HASH_CONCURRENCY", ge=1, le=16)
     request_log_mode: RequestLogMode = Field(default="disabled", validation_alias="REQUEST_LOG_MODE")
     security_event_retention_days: int = Field(

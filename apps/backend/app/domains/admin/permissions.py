@@ -41,7 +41,7 @@ PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
     PermissionDefinition("users:read", "查看用户", "查看用户列表和详情"),
     PermissionDefinition("users:update", "修改用户", "修改用户资料和状态"),
     PermissionDefinition("users:delete", "删除用户", "将用户账户移入回收站"),
-    PermissionDefinition("users:restore", "恢复用户", "从回收站恢复尚未匿名化的用户账户"),
+    PermissionDefinition("users:restore", "恢复用户", "从回收站恢复软删除用户账户"),
     PermissionDefinition("users:credentials:reset", "重置用户密码", "重置用户登录密码"),
     PermissionDefinition("users:sessions:read", "查看用户会话", "查看用户设备与会话"),
     PermissionDefinition("users:sessions:revoke", "撤销用户会话", "撤销用户一个或全部会话"),
