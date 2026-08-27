@@ -13,6 +13,7 @@ function isAllowedRoute(method: string, path: string[]): boolean {
   if (method === "POST" && /^(auth\/(register|login|refresh|logout)|users\/me\/(password|sessions\/revoke-others))$/.test(route)) return true;
   if (method === "POST" && route === "assets/upload") return true;
   if (["GET", "PATCH", "DELETE"].includes(method) && route === "users/me") return true;
+  if (method === "PUT" && route === "users/me/avatar") return true;
   if (method === "GET" && route === "users/me/sessions") return true;
   return method === "DELETE" && path.length === 4 && path.slice(0, 3).join("/") === "users/me/sessions" && SESSION_ID.test(path[3] ?? "");
 }

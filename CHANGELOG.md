@@ -59,6 +59,7 @@
 
 ### Fixed
 
+- 修复 Web BFF 遗漏 `PUT /api/v1/users/me/avatar` 导致头像绑定在到达 Backend 前返回 `404`；同步以表驱动用例覆盖全部 13 个浏览器端代理接口，并继续拒绝 Admin 与未登记接口。
 - 统一 Admin 列表空态：使用 `ProTable` 的页面只显示表格内建“暂无数据”，外层查询状态仅处理加载、失败和重试；无 `ProTable` 的列表、抽屉和面板继续保留独立空态。
 - 补齐管理员头像输入输出字段的 OpenAPI 中文说明、隔离测试 Redis 变量与 pytest 临时目录，并以前向迁移修复 `request_logs` 表注释漂移。
 - 移除 Umi `4.7.5` 未使用的 Vite 4 构建链，通过精确 pnpm Hook 和受控补丁关闭不安全入口，修复 Webpack 开发服务器忽略 host 的行为，并增加版本漂移、锁文件和补丁门禁。
