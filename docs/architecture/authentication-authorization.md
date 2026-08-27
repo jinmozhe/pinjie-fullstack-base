@@ -44,7 +44,7 @@
 - JWT 必需 Claims 为 `iss`、`aud`、`sub`、`sid`、`jti`、`iat`、`nbf`、`exp`、`token_type` 和 `credential_version`，允许最多 30 秒时钟偏差。JWT 不保存角色、权限和个人资料。
 - Web Access 默认 15 分钟，Admin Access 默认 10 分钟。验签后继续校验 PostgreSQL Session、主体状态与凭据版本。
 - 密码使用 Argon2id。Hash 和 Verify 通过线程池执行，并由进程内信号量限制并发。未知用户名执行固定虚拟密码校验，避免明显的账号枚举时序差异。
-- 用户和管理员在注册、修改、重置及初始创建时，新密码统一要求 6 至 64 个字符。登录、当前密码和二次确认输入最多接受 64 个字符；现存超过 64 个字符的密码需要先通过受控重置改为符合当前策略的密码。
+- 用户和管理员在注册、修改、重置及初始创建时，新密码统一要求 6 至 64 个字符。登录和修改本人密码时的当前密码最多接受 64 个字符；现存超过 64 个字符的密码需要先通过受控重置改为符合当前策略的密码。
 - PostgreSQL 是 Session 和 Refresh Token 的权威来源。Refresh 原值只进入 `HttpOnly` Cookie，数据库保存 HMAC-SHA256 摘要。
 - Refresh 闲置期限默认 7 天，Session 绝对期限默认 30 天。刷新通过行锁单次消费并旋转，已消费 Token 重放会撤销整个 Session Family。
 - Session 列表统一使用 `items`、`total`、`page` 和 `page_size` 分页契约。超过绝对期限或撤销时间 30 天的 Session 由显式保留工具清理，关联 Refresh Token 通过外键级联删除。
@@ -64,9 +64,15 @@
 
 母版提供规范化 RBAC 基础，不预设复杂 ABAC、组织树和多租户数据权限。`PermissionCode` 与 `PERMISSION_CATALOG` 是权限目录源码，数据库通过显式 `scripts.sync_permissions --check/--apply` 同步；应用启动不自动修改权限表。
 
-管理员、角色、权限及关联关系使用规范化表和外键。Admin 导航由前端代码维护，并按服务端返回的权限过滤，不建立动态菜单表。Dependency 校验端点权限，Service 在事务内读取权威资源状态并执行最终授权。超级管理员仍经过 Session、CSRF、二次确认、最后超级管理员保护和审计链；会减少有效超级管理员数量的写操作在同一 PostgreSQL 事务内取得固定 advisory lock，串行执行计数和修改。
+管理员、角色、权限及关联关系使用规范化表和外键。Admin 导航由前端代码维护，并按服务端返回的权限过滤，不建立动态菜单表。Dependency 校验端点权限，Service 在事务内读取权威资源状态并执行最终授权。超级管理员仍经过 Session、CSRF、最后超级管理员保护和审计链；会减少有效超级管理员数量的写操作在同一 PostgreSQL 事务内取得固定 advisory lock，串行执行计数和修改。
 
-高风险管理操作使用 5 分钟、一次性、动作与 Session 绑定的二次确认 Token。前端隐藏路由或按钮只改善体验，不承担授权控制。
+Admin 不提供管理操作的密码二次确认 Token 或确认请求头。所有单条和批量管理端点必须通过管理员会话、准确资源权限、CSRF、事务内资源校验和审计；前端隐藏路由或按钮只改善体验，不承担授权控制。只有物理硬删除在 Admin 提交前显示统一标准警告弹窗，软删除、启停、凭据重置、身份与权限变更、会话撤销及其他操作直接提交。
+
+每个新增 Admin 管理端点必须在 Router 显式声明准确 `PermissionCode`。管理员登录态、超级管理员客户端显示、Admin Access 和通用权限均不能替代端点资源权限；权限目录缺少代码时先更新 `PermissionCode` 与 `PERMISSION_CATALOG`，通过目录检查后再按受控 `scripts.sync_permissions --check/--apply` 流程同步目标环境。应用启动不自动修改权限表。
+
+Admin 数据列表的批量写操作使用显式 UUID 集合和专用 Backend 端点，每次限制 1 至 100 个且拒绝重复 ID。目标集合按固定顺序锁定并在一个事务中完成，任一目标缺失、生命周期冲突、仍被引用或会话撤销失败时整批回滚。用户批量删除使用 `users:delete` 权限，把账户移入回收站、停用账户、提升凭据版本并撤销会话；保留期内继续保留并占用用户名和邮箱，避免恢复冲突。用户单条和批量恢复使用独立 `users:restore` 权限，恢复后保持停用且历史会话继续失效。超过 `USER_RECYCLE_BIN_RETENTION_DAYS` 的记录不能恢复，由默认 dry-run、显式 `--apply` 的受控脚本永久匿名化；旧版本已经匿名化的用户只允许查看删除记录。用户自助注销继续立即匿名化且不可恢复。角色与文件资产批量硬删除分别使用 `roles:delete`、`assets:delete` 权限，并在 Admin 使用统一标准警告弹窗。角色只允许删除未分配给管理员的记录，文件资产删除还必须完成存储暂存和失败恢复。角色批量停用使用 `roles:update` 权限，并撤销关联管理员会话。管理员账户继续使用启用和停用表达生命周期，不提供删除接口。
+
+登录安全事件、审计事件和请求元数据属于保留策略管理的安全事实，Admin 不提供人工选择或批量删除入口。
 
 ## 8. 审计与请求元数据
 
@@ -80,7 +86,7 @@
 
 审计记录至少关联操作者、动作、目标、结果、时间和 `request_id`。高风险业务通过 `AuditCoordinator` 建立审计意图，成功变更与审计结果在同一事务提交；拒绝和异常由独立终结器记录。登录安全事件属于认证结果，写入失败时认证失败关闭。
 
-普通访问日志使用结构化输出。可选请求持久化只支持 `REQUEST_LOG_MODE=metadata`，由 Redis Stream、Consumer Group、pending reclaim、DLQ 和 PostgreSQL `request_id` 唯一约束组成。正常请求不保存请求体；错误 JSON 请求只在非敏感路由捕获，递归脱敏敏感字段并限制为 4096 字符。登录、改密、二次确认等敏感路由、响应体、Cookie、Authorization 和 Token 永不进入请求日志。
+普通访问日志使用结构化输出。可选请求持久化只支持 `REQUEST_LOG_MODE=metadata`，由 Redis Stream、Consumer Group、pending reclaim、DLQ 和 PostgreSQL `request_id` 唯一约束组成。正常请求不保存请求体；错误 JSON 请求只在非敏感路由捕获，递归脱敏敏感字段并限制为 4096 字符。登录和改密等敏感路由、响应体、Cookie、Authorization 和 Token 永不进入请求日志。
 
 登录安全事件和审计事件默认保留 180 天，请求元数据默认保留 30 天，已过期或已撤销 Session 默认额外保留 30 天。清理由显式 dry-run/`--apply` 脚本执行，不在请求进程内自动删除。应用日志、审计日志、指标和 Trace 各自承担独立职责。
 

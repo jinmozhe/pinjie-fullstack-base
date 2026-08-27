@@ -24,7 +24,7 @@ function state(permissions: string[] = [], isSuperuser = false): AdminInitialSta
 
 describe("admin access mapping", () => {
   it("denies every protected area without a current administrator", () => {
-    expect(access({ settings })).toEqual({ canUsers: false, canAdmins: false, canRoles: false, canSecurity: false });
+    expect(access({ settings })).toEqual({ canUsers: false, canAdmins: false, canRoles: false, canAssets: false, canSecurity: false });
   });
 
   it.each(["security:login-events:read", "security:audit-events:read", "system:request-logs:read"])(
@@ -35,12 +35,13 @@ describe("admin access mapping", () => {
   );
 
   it("maps ordinary read permissions and grants every area to superusers", () => {
-    expect(access(state(["users:read", "admins:read", "roles:read"]))).toEqual({
+    expect(access(state(["users:read", "admins:read", "roles:read", "assets:read"]))).toEqual({
       canUsers: true,
       canAdmins: true,
       canRoles: true,
+      canAssets: true,
       canSecurity: false,
     });
-    expect(access(state([], true))).toEqual({ canUsers: true, canAdmins: true, canRoles: true, canSecurity: true });
+    expect(access(state([], true))).toEqual({ canUsers: true, canAdmins: true, canRoles: true, canAssets: true, canSecurity: true });
   });
 });

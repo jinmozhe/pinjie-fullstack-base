@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.core.pagination import PageResult
 
@@ -42,4 +42,36 @@ class AssetRead(BaseModel):
 
 AssetPage = PageResult[AssetRead]
 
-__all__ = ["AssetPage", "AssetRead", "UploaderType", "UploadScene"]
+
+class AssetBulkDeleteIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    asset_ids: list[uuid.UUID] = Field(
+        min_length=1,
+        max_length=100,
+        description="待批量硬删除的文件资产唯一标识列表",
+    )
+
+    @field_validator("asset_ids")
+    @classmethod
+    def validate_unique_asset_ids(cls, value: list[uuid.UUID]) -> list[uuid.UUID]:
+        if len(value) != len(set(value)):
+            raise ValueError("asset_ids must be unique")
+        return value
+
+
+class AssetBulkDeleteResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    completed_count: int = Field(ge=0, description="本次批量硬删除完成的资产数量")
+    target_ids: list[uuid.UUID] = Field(description="本次批量硬删除处理的资产唯一标识列表")
+
+
+__all__ = [
+    "AssetBulkDeleteIn",
+    "AssetBulkDeleteResult",
+    "AssetPage",
+    "AssetRead",
+    "UploaderType",
+    "UploadScene",
+]

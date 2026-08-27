@@ -294,6 +294,55 @@
             }
           },
           {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "scene",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/UploadScene"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scene"
+            }
+          },
+          {
+            "name": "uploader_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/UploaderType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Uploader Type"
+            }
+          },
+          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -334,28 +383,18 @@
         }
       }
     },
-    "/api/v1/assets/{asset_id}": {
+    "/api/v1/assets/batch": {
       "delete": {
         "tags": [
           "文件资产"
         ],
-        "summary": "删除文件资产",
-        "description": "通过管理员二次确认与审计链删除资产元数据和对应存储文件。",
-        "operationId": "delete_asset_api_v1_assets__asset_id__delete",
+        "summary": "批量删除文件资产",
+        "description": "通过权限、CSRF 与审计链原子删除明确选中的资产元数据和对应存储文件。",
+        "operationId": "delete_assets_bulk_api_v1_assets_batch_delete",
         "parameters": [
           {
-            "name": "asset_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Asset Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
+            "name": "pinjie_admin_access",
+            "in": "cookie",
             "required": false,
             "schema": {
               "anyOf": [
@@ -366,7 +405,61 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Admin-Confirmation"
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetBulkDeleteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AssetBulkDeleteResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}": {
+      "delete": {
+        "tags": [
+          "文件资产"
+        ],
+        "summary": "删除文件资产",
+        "description": "通过权限、CSRF 与审计链删除资产元数据和对应存储文件。",
+        "operationId": "delete_asset_api_v1_assets__asset_id__delete",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
             }
           },
           {
@@ -1118,65 +1211,6 @@
         }
       }
     },
-    "/api/v1/admin/auth/confirm": {
-      "post": {
-        "tags": [
-          "管理员认证"
-        ],
-        "summary": "确认管理员敏感操作",
-        "operationId": "confirm_api_v1_admin_auth_confirm_post",
-        "parameters": [
-          {
-            "name": "pinjie_admin_access",
-            "in": "cookie",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Pinjie Admin Access"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AdminConfirmIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "请求成功",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_AdminConfirmOut_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "请求参数校验失败",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/admin/users": {
       "get": {
         "tags": [
@@ -1226,6 +1260,22 @@
             }
           },
           {
+            "name": "lifecycle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "active",
+                "inactive",
+                "deleted"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Lifecycle"
+            }
+          },
+          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -1248,7 +1298,246 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseModel_PageResult_UserPrincipalOut__"
+                  "$ref": "#/components/schemas/ResponseModel_PageResult_AdminUserRead__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/status/batch": {
+      "patch": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "批量修改用户状态",
+        "operationId": "set_user_status_bulk_api_v1_admin_users_status_batch_patch",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserBulkStatusUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_BatchActionResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/batch": {
+      "delete": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "批量软删除用户",
+        "description": "将明确选中的用户账户移入回收站并停用，撤销其全部会话。",
+        "operationId": "delete_users_bulk_api_v1_admin_users_batch_delete",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserBulkDeleteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_BatchActionResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/restore/batch": {
+      "post": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "批量恢复回收站用户",
+        "description": "恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+        "operationId": "restore_users_bulk_api_v1_admin_users_restore_batch_post",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRestoreBatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_BatchActionResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/restore": {
+      "post": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "恢复回收站用户",
+        "description": "恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+        "operationId": "restore_user_api_v1_admin_users__user_id__restore_post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminUserRead_"
                 }
               }
             }
@@ -1411,22 +1700,6 @@
             }
           },
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -1493,22 +1766,6 @@
               "type": "string",
               "format": "uuid",
               "title": "User Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
             }
           },
           {
@@ -1673,22 +1930,6 @@
             }
           },
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -1745,22 +1986,6 @@
               "type": "string",
               "format": "uuid",
               "title": "User Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
             }
           },
           {
@@ -1883,22 +2108,6 @@
         "operationId": "create_admin_api_v1_admin_admins_post",
         "parameters": [
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -1957,22 +2166,6 @@
         "summary": "批量修改管理员状态",
         "operationId": "set_admin_status_bulk_api_v1_admin_admins_status_batch_patch",
         "parameters": [
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
           {
             "name": "pinjie_admin_access",
             "in": "cookie",
@@ -2100,22 +2293,6 @@
             }
           },
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -2182,22 +2359,6 @@
               "type": "string",
               "format": "uuid",
               "title": "Admin Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
             }
           },
           {
@@ -2270,22 +2431,6 @@
             }
           },
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -2352,22 +2497,6 @@
               "type": "string",
               "format": "uuid",
               "title": "Admin Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
             }
           },
           {
@@ -2519,22 +2648,6 @@
               "type": "string",
               "format": "uuid",
               "title": "Admin Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
             }
           },
           {
@@ -2707,6 +2820,124 @@
         }
       }
     },
+    "/api/v1/admin/roles/status/batch": {
+      "patch": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "批量修改角色状态",
+        "operationId": "set_role_status_bulk_api_v1_admin_roles_status_batch_patch",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleBulkStatusUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_BatchActionResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/roles/batch": {
+      "delete": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "批量删除未使用角色",
+        "operationId": "delete_roles_bulk_api_v1_admin_roles_batch_delete",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleBulkDeleteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_BatchActionResult_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/roles/{role_id}": {
       "get": {
         "tags": [
@@ -2783,22 +3014,6 @@
             }
           },
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -2866,22 +3081,6 @@
             }
           },
           {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
-            }
-          },
-          {
             "name": "pinjie_admin_access",
             "in": "cookie",
             "required": false,
@@ -2938,22 +3137,6 @@
               "type": "string",
               "format": "uuid",
               "title": "Role Id"
-            }
-          },
-          {
-            "name": "X-Admin-Confirmation",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Admin-Confirmation"
             }
           },
           {
@@ -3437,55 +3620,6 @@
         ],
         "title": "AdminBulkStatusUpdateIn"
       },
-      "AdminConfirmIn": {
-        "properties": {
-          "current_password": {
-            "type": "string",
-            "maxLength": 64,
-            "minLength": 1,
-            "title": "Current Password",
-            "description": "当前密码，最多 64 个字符"
-          },
-          "action": {
-            "$ref": "#/components/schemas/ConfirmationAction",
-            "description": "操作代码"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "current_password",
-          "action"
-        ],
-        "title": "AdminConfirmIn"
-      },
-      "AdminConfirmOut": {
-        "properties": {
-          "confirmation_token": {
-            "type": "string",
-            "title": "Confirmation Token",
-            "description": "敏感操作短期确认凭据"
-          },
-          "action": {
-            "$ref": "#/components/schemas/ConfirmationAction",
-            "description": "操作代码"
-          },
-          "expires_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Expires At",
-            "description": "凭据过期时间"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "confirmation_token",
-          "action",
-          "expires_at"
-        ],
-        "title": "AdminConfirmOut"
-      },
       "AdminCreateIn": {
         "properties": {
           "username": {
@@ -3754,6 +3888,196 @@
         "type": "object",
         "title": "AdminUpdateIn"
       },
+      "AdminUserRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "资源唯一标识"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username",
+            "description": "登录用户名"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "展示名称"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "电子邮箱地址"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "资源当前是否启用"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "创建时间"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "最近更新时间"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At",
+            "description": "账户进入回收站的时间"
+          },
+          "deleted_by_admin_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted By Admin Id",
+            "description": "执行软删除的管理员唯一标识"
+          },
+          "deletion_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deletion Reason",
+            "description": "账户删除原因代码"
+          },
+          "anonymized_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anonymized At",
+            "description": "身份资料永久匿名化时间"
+          },
+          "restore_expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restore Expires At",
+            "description": "允许恢复的截止时间"
+          },
+          "can_restore": {
+            "type": "boolean",
+            "title": "Can Restore",
+            "description": "当前是否允许恢复"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "display_name",
+          "email",
+          "is_active",
+          "created_at",
+          "updated_at",
+          "deleted_at",
+          "deleted_by_admin_id",
+          "deletion_reason",
+          "anonymized_at",
+          "restore_expires_at",
+          "can_restore"
+        ],
+        "title": "AdminUserRead"
+      },
+      "AssetBulkDeleteIn": {
+        "properties": {
+          "asset_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Asset Ids",
+            "description": "待批量硬删除的文件资产唯一标识列表"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "asset_ids"
+        ],
+        "title": "AssetBulkDeleteIn"
+      },
+      "AssetBulkDeleteResult": {
+        "properties": {
+          "completed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Completed Count",
+            "description": "本次批量硬删除完成的资产数量"
+          },
+          "target_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Target Ids",
+            "description": "本次批量硬删除处理的资产唯一标识列表"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "completed_count",
+          "target_ids"
+        ],
+        "title": "AssetBulkDeleteResult"
+      },
       "AssetRead": {
         "properties": {
           "id": {
@@ -3946,6 +4270,32 @@
         ],
         "title": "AuditEventRead"
       },
+      "BatchActionResult": {
+        "properties": {
+          "completed_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Completed Count",
+            "description": "本次批量操作完成的目标数量"
+          },
+          "target_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Target Ids",
+            "description": "本次批量操作处理的目标唯一标识列表"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "completed_count",
+          "target_ids"
+        ],
+        "title": "BatchActionResult"
+      },
       "Body_upload_asset_api_v1_assets_upload_post": {
         "properties": {
           "file": {
@@ -3965,24 +4315,6 @@
           "scene"
         ],
         "title": "Body_upload_asset_api_v1_assets_upload_post"
-      },
-      "ConfirmationAction": {
-        "type": "string",
-        "enum": [
-          "users:disable",
-          "users:credentials:reset",
-          "users:sessions:revoke",
-          "admins:create",
-          "admins:superuser:change",
-          "admins:status:change",
-          "admins:credentials:reset",
-          "admins:roles:assign",
-          "admins:sessions:revoke",
-          "roles:delete",
-          "roles:permissions:assign",
-          "assets:delete"
-        ],
-        "title": "ConfirmationAction"
       },
       "HTTPValidationError": {
         "properties": {
@@ -4153,6 +4485,53 @@
           "total_pages"
         ],
         "title": "PageResult[AdminRead]"
+      },
+      "PageResult_AdminUserRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminUserRead"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "当前分页中的资源列表"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page",
+            "description": "当前页码，从 1 开始"
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "description": "每页资源数量"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "符合条件的资源总数"
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Pages",
+            "description": "符合条件的总页数"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
+          "total_pages"
+        ],
+        "title": "PageResult[AdminUserRead]"
       },
       "PageResult_AssetRead_": {
         "properties": {
@@ -4435,53 +4814,6 @@
           "total_pages"
         ],
         "title": "PageResult[SessionRead]"
-      },
-      "PageResult_UserPrincipalOut_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/UserPrincipalOut"
-            },
-            "type": "array",
-            "title": "Items",
-            "description": "当前分页中的资源列表"
-          },
-          "page": {
-            "type": "integer",
-            "minimum": 1.0,
-            "title": "Page",
-            "description": "当前页码，从 1 开始"
-          },
-          "page_size": {
-            "type": "integer",
-            "maximum": 100.0,
-            "minimum": 1.0,
-            "title": "Page Size",
-            "description": "每页资源数量"
-          },
-          "total": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Total",
-            "description": "符合条件的资源总数"
-          },
-          "total_pages": {
-            "type": "integer",
-            "minimum": 0.0,
-            "title": "Total Pages",
-            "description": "符合条件的总页数"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total",
-          "total_pages"
-        ],
-        "title": "PageResult[UserPrincipalOut]"
       },
       "PasswordChangeIn": {
         "properties": {
@@ -4805,38 +5137,6 @@
         ],
         "title": "ResponseModel[AdminAuthSessionOut]"
       },
-      "ResponseModel_AdminConfirmOut_": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code",
-            "description": "稳定程序代码"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "面向调用方的中文结果消息"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AdminConfirmOut",
-            "description": "响应业务数据"
-          },
-          "request_id": {
-            "type": "string",
-            "title": "Request Id",
-            "description": "用于定位本次请求的唯一标识"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "code",
-          "message",
-          "data",
-          "request_id"
-        ],
-        "title": "ResponseModel[AdminConfirmOut]"
-      },
       "ResponseModel_AdminRead_": {
         "properties": {
           "code": {
@@ -4868,6 +5168,70 @@
           "request_id"
         ],
         "title": "ResponseModel[AdminRead]"
+      },
+      "ResponseModel_AdminUserRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminUserRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[AdminUserRead]"
+      },
+      "ResponseModel_AssetBulkDeleteResult_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AssetBulkDeleteResult",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[AssetBulkDeleteResult]"
       },
       "ResponseModel_AssetRead_": {
         "properties": {
@@ -4901,6 +5265,38 @@
         ],
         "title": "ResponseModel[AssetRead]"
       },
+      "ResponseModel_BatchActionResult_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BatchActionResult",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[BatchActionResult]"
+      },
       "ResponseModel_PageResult_AdminRead__": {
         "properties": {
           "code": {
@@ -4932,6 +5328,38 @@
           "request_id"
         ],
         "title": "ResponseModel[PageResult[AdminRead]]"
+      },
+      "ResponseModel_PageResult_AdminUserRead__": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PageResult_AdminUserRead_",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[PageResult[AdminUserRead]]"
       },
       "ResponseModel_PageResult_AssetRead__": {
         "properties": {
@@ -5124,38 +5552,6 @@
           "request_id"
         ],
         "title": "ResponseModel[PageResult[SessionRead]]"
-      },
-      "ResponseModel_PageResult_UserPrincipalOut__": {
-        "properties": {
-          "code": {
-            "type": "string",
-            "title": "Code",
-            "description": "稳定程序代码"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "面向调用方的中文结果消息"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PageResult_UserPrincipalOut_",
-            "description": "响应业务数据"
-          },
-          "request_id": {
-            "type": "string",
-            "title": "Request Id",
-            "description": "用于定位本次请求的唯一标识"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "code",
-          "message",
-          "data",
-          "request_id"
-        ],
-        "title": "ResponseModel[PageResult[UserPrincipalOut]]"
       },
       "ResponseModel_RefreshSessionOut_": {
         "properties": {
@@ -5421,6 +5817,54 @@
           "request_id"
         ],
         "title": "ResponseModel[list[PermissionRead]]"
+      },
+      "RoleBulkDeleteIn": {
+        "properties": {
+          "role_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Role Ids",
+            "description": "待批量操作的角色唯一标识列表"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role_ids"
+        ],
+        "title": "RoleBulkDeleteIn"
+      },
+      "RoleBulkStatusUpdateIn": {
+        "properties": {
+          "role_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Role Ids",
+            "description": "待批量操作的角色唯一标识列表"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "批量操作后的角色启用状态"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role_ids",
+          "is_active"
+        ],
+        "title": "RoleBulkStatusUpdateIn"
       },
       "RoleCreateIn": {
         "properties": {
@@ -5824,6 +6268,54 @@
         ],
         "title": "UserAuthSessionOut"
       },
+      "UserBulkDeleteIn": {
+        "properties": {
+          "user_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "User Ids",
+            "description": "待批量操作的用户唯一标识列表"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_ids"
+        ],
+        "title": "UserBulkDeleteIn"
+      },
+      "UserBulkStatusUpdateIn": {
+        "properties": {
+          "user_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "User Ids",
+            "description": "待批量操作的用户唯一标识列表"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "批量操作后的用户启用状态"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_ids",
+          "is_active"
+        ],
+        "title": "UserBulkStatusUpdateIn"
+      },
       "UserLoginIn": {
         "properties": {
           "username": {
@@ -5963,6 +6455,27 @@
           "password"
         ],
         "title": "UserRegisterIn"
+      },
+      "UserRestoreBatchIn": {
+        "properties": {
+          "user_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "User Ids",
+            "description": "待批量操作的用户唯一标识列表"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_ids"
+        ],
+        "title": "UserRestoreBatchIn"
       },
       "UserUpdateIn": {
         "properties": {

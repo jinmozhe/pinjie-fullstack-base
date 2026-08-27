@@ -50,6 +50,7 @@ def test_file_logging_defaults_are_local_file_safe() -> None:
     assert settings.log_file_path == "logs/app_{time:YYYY-MM-DD}.log"
     assert settings.log_file_rotation == "50 MB"
     assert settings.log_file_retention == "10 days"
+    assert settings.user_recycle_bin_retention_days == 30
 
 
 def test_configure_logging_adds_async_file_sink_when_enabled(tmp_path, monkeypatch) -> None:

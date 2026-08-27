@@ -1,4 +1,6 @@
 import uuid
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -26,22 +28,28 @@ from app.domains.admin.schemas import (
     AdminRead,
     AdminRoleAssignIn,
     AdminUpdateIn,
+    AdminUserRead,
     AuditEventPage,
     AuditEventRead,
+    BatchActionResult,
     LoginEventPage,
     LoginEventRead,
     PasswordResetIn,
     PermissionRead,
     RequestLogPage,
     RequestLogRead,
+    RoleBulkDeleteIn,
+    RoleBulkStatusUpdateIn,
     RoleCreateIn,
     RolePage,
     RolePermissionAssignIn,
     RoleUpdateIn,
     StatusUpdateIn,
+    UserBulkDeleteIn,
+    UserBulkStatusUpdateIn,
     UserPage,
+    UserRestoreBatchIn,
 )
-from app.domains.auth.schemas import UserPrincipalOut
 from app.domains.users.schemas import UserUpdateIn
 from app.services.security_events import AuditCoordinator
 
@@ -73,10 +81,45 @@ class AdminManagementService:
         )
         self.actor_id = actor_id
 
-    async def list_users(self, *, page: int, page_size: int, search: str | None) -> UserPage:
-        items, total = await self.users.list_users(page=page, page_size=page_size, search=search)
+    def _user_read(self, user: User, *, now: datetime | None = None) -> AdminUserRead:
+        restore_expires_at = None
+        can_restore = False
+        if user.deleted_at is not None:
+            restore_expires_at = user.deleted_at + timedelta(days=self.settings.user_recycle_bin_retention_days)
+            can_restore = user.anonymized_at is None and (now or datetime.now(UTC)) <= restore_expires_at
+        return AdminUserRead(
+            id=user.id,
+            username=user.username,
+            display_name=user.display_name,
+            email=user.email,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+            deleted_at=user.deleted_at,
+            deleted_by_admin_id=user.deleted_by_admin_id,
+            deletion_reason=user.deletion_reason,
+            anonymized_at=user.anonymized_at,
+            restore_expires_at=restore_expires_at,
+            can_restore=can_restore,
+        )
+
+    async def list_users(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        search: str | None,
+        lifecycle: Literal["all", "active", "inactive", "deleted"],
+    ) -> UserPage:
+        items, total = await self.users.list_users(
+            page=page,
+            page_size=page_size,
+            search=search,
+            lifecycle=lifecycle,
+        )
+        now = datetime.now(UTC)
         return UserPage.create(
-            items=[UserPrincipalOut.model_validate(item) for item in items],
+            items=[self._user_read(item, now=now) for item in items],
             page=page,
             page_size=page_size,
             total=total,
@@ -127,6 +170,128 @@ class AdminManagementService:
             target_type="user",
             target_id=user_id,
             changed_fields={"is_active": payload.is_active},
+            operation=operation,
+        )
+
+    async def set_user_status_bulk(self, payload: UserBulkStatusUpdateIn) -> BatchActionResult:
+        async def operation() -> BatchActionResult:
+            users = await self.users.get_many(payload.user_ids, for_update=True)
+            if len(users) != len(payload.user_ids) or any(user.deleted_at is not None for user in users):
+                raise AppException(
+                    status_code=404,
+                    code=ErrorCode.USER_NOT_FOUND,
+                    message="一个或多个用户不存在",
+                )
+            for user in users:
+                if user.is_active == payload.is_active:
+                    continue
+                user.is_active = payload.is_active
+                user.credential_version += 1
+                await self.sessions.revoke_web_for_user(user.id, reason="account_status_changed")
+            return BatchActionResult(completed_count=len(users), target_ids=[user.id for user in users])
+
+        return await self.audit.execute(
+            action="users:status:update-bulk",
+            target_type="user_batch",
+            target_id=None,
+            changed_fields={
+                "user_ids": [str(user_id) for user_id in payload.user_ids],
+                "is_active": payload.is_active,
+            },
+            operation=operation,
+        )
+
+    async def delete_users_bulk(self, payload: UserBulkDeleteIn) -> BatchActionResult:
+        async def operation() -> BatchActionResult:
+            users = await self.users.get_many(payload.user_ids, for_update=True)
+            if len(users) != len(payload.user_ids) or any(user.deleted_at is not None for user in users):
+                raise AppException(
+                    status_code=404,
+                    code=ErrorCode.USER_NOT_FOUND,
+                    message="一个或多个用户不存在",
+                )
+            deleted_at = datetime.now(UTC)
+            for user in users:
+                user.is_active = False
+                user.credential_version += 1
+                user.deleted_at = deleted_at
+                user.deleted_by_admin_id = self.actor_id
+                user.deletion_reason = "admin_deleted"
+                user.anonymized_at = None
+                await self.sessions.revoke_web_for_user(user.id, reason="account_deleted_by_admin")
+            return BatchActionResult(completed_count=len(users), target_ids=[user.id for user in users])
+
+        return await self.audit.execute(
+            action="users:delete-bulk",
+            target_type="user_batch",
+            target_id=None,
+            changed_fields={
+                "user_ids": [str(user_id) for user_id in payload.user_ids],
+                "deleted": True,
+            },
+            operation=operation,
+        )
+
+    def _validate_user_restore(self, user: User, *, now: datetime) -> None:
+        if user.deleted_at is None:
+            raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户未处于回收站")
+        if user.anonymized_at is not None:
+            raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户身份资料已匿名化，无法恢复")
+        restore_expires_at = user.deleted_at + timedelta(days=self.settings.user_recycle_bin_retention_days)
+        if now > restore_expires_at:
+            raise AppException(
+                status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户已超过回收站保留期，无法恢复"
+            )
+
+    async def restore_user(self, user_id: uuid.UUID) -> AdminUserRead:
+        async def operation() -> AdminUserRead:
+            user = await self.users.get(user_id, for_update=True)
+            if user is None:
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
+            now = datetime.now(UTC)
+            self._validate_user_restore(user, now=now)
+            user.deleted_at = None
+            user.deleted_by_admin_id = None
+            user.deletion_reason = None
+            user.is_active = False
+            user.credential_version += 1
+            await self.sessions.revoke_web_for_user(user.id, reason="account_restored_by_admin")
+            return self._user_read(user, now=now)
+
+        return await self.audit.execute(
+            action="users:restore",
+            target_type="user",
+            target_id=user_id,
+            changed_fields={"restored": True, "is_active": False},
+            operation=operation,
+        )
+
+    async def restore_users_bulk(self, payload: UserRestoreBatchIn) -> BatchActionResult:
+        async def operation() -> BatchActionResult:
+            users = await self.users.get_many(payload.user_ids, for_update=True)
+            if len(users) != len(payload.user_ids):
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="一个或多个用户不存在")
+            now = datetime.now(UTC)
+            for user in users:
+                self._validate_user_restore(user, now=now)
+            for user in users:
+                user.deleted_at = None
+                user.deleted_by_admin_id = None
+                user.deletion_reason = None
+                user.is_active = False
+                user.credential_version += 1
+                await self.sessions.revoke_web_for_user(user.id, reason="account_restored_by_admin")
+            return BatchActionResult(completed_count=len(users), target_ids=[user.id for user in users])
+
+        return await self.audit.execute(
+            action="users:restore-bulk",
+            target_type="user_batch",
+            target_id=None,
+            changed_fields={
+                "user_ids": [str(user_id) for user_id in payload.user_ids],
+                "restored": True,
+                "is_active": False,
+            },
             operation=operation,
         )
 
@@ -457,6 +622,35 @@ class AdminManagementService:
             operation=operation,
         )
 
+    async def set_role_status_bulk(self, payload: RoleBulkStatusUpdateIn) -> BatchActionResult:
+        async def operation() -> BatchActionResult:
+            roles = await self.admins.get_many_roles(payload.role_ids, for_update=True)
+            if len(roles) != len(payload.role_ids):
+                raise AppException(
+                    status_code=404,
+                    code=ErrorCode.ROLE_NOT_FOUND,
+                    message="一个或多个角色不存在",
+                )
+            changed_role_ids: list[uuid.UUID] = []
+            for role in roles:
+                if role.is_active == payload.is_active:
+                    continue
+                role.is_active = payload.is_active
+                changed_role_ids.append(role.id)
+            await self._invalidate_role_admins_bulk(changed_role_ids, reason="role_status_changed")
+            return BatchActionResult(completed_count=len(roles), target_ids=[role.id for role in roles])
+
+        return await self.audit.execute(
+            action="roles:status:update-bulk",
+            target_type="role_batch",
+            target_id=None,
+            changed_fields={
+                "role_ids": [str(role_id) for role_id in payload.role_ids],
+                "is_active": payload.is_active,
+            },
+            operation=operation,
+        )
+
     async def delete_role(self, role_id: uuid.UUID) -> None:
         async def operation() -> None:
             role = await self.admins.get_role(role_id, for_update=True)
@@ -471,6 +665,36 @@ class AdminManagementService:
             target_type="role",
             target_id=role_id,
             changed_fields={"deleted": True},
+            operation=operation,
+        )
+
+    async def delete_roles_bulk(self, payload: RoleBulkDeleteIn) -> BatchActionResult:
+        async def operation() -> BatchActionResult:
+            roles = await self.admins.get_many_roles(payload.role_ids, for_update=True)
+            if len(roles) != len(payload.role_ids):
+                raise AppException(
+                    status_code=404,
+                    code=ErrorCode.ROLE_NOT_FOUND,
+                    message="一个或多个角色不存在",
+                )
+            if await self.admins.role_ids_with_admins(payload.role_ids):
+                raise AppException(
+                    status_code=409,
+                    code=ErrorCode.STATE_CONFLICT,
+                    message="一个或多个角色仍分配给管理员",
+                )
+            for role in roles:
+                await self.admins.delete_role(role)
+            return BatchActionResult(completed_count=len(roles), target_ids=[role.id for role in roles])
+
+        return await self.audit.execute(
+            action="roles:delete-bulk",
+            target_type="role_batch",
+            target_id=None,
+            changed_fields={
+                "role_ids": [str(role_id) for role_id in payload.role_ids],
+                "deleted": True,
+            },
             operation=operation,
         )
 
@@ -554,6 +778,11 @@ class AdminManagementService:
         for admin in await self.admins.get_admins_by_role(role_id):
             admin.credential_version += 1
             await self.sessions.revoke_admin_for_admin(admin.id, reason="role_permissions_changed")
+
+    async def _invalidate_role_admins_bulk(self, role_ids: list[uuid.UUID], *, reason: str) -> None:
+        for admin in await self.admins.get_admins_by_roles(role_ids):
+            admin.credential_version += 1
+            await self.sessions.revoke_admin_for_admin(admin.id, reason=reason)
 
 
 __all__ = ["AdminManagementService"]

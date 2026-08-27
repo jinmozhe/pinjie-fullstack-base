@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, validate_new_password_length
 from app.core.response import public_message, success_response
-from app.domains.admin.schemas import AdminConfirmIn, AdminCreateIn, AdminLoginIn, ConfirmationAction, PasswordResetIn
+from app.domains.admin.schemas import AdminCreateIn, AdminLoginIn, PasswordResetIn
 from app.domains.auth.schemas import UserLoginIn, UserRegisterIn
 from app.domains.users.schemas import AccountDeleteIn, PasswordChangeIn
 
@@ -38,9 +38,6 @@ def test_credential_verification_models_accept_up_to_maximum(password: str) -> N
     assert UserLoginIn(username="policy-user", password=password).password == password
     assert AdminLoginIn(username="policy-admin", password=password).password == password
     assert AccountDeleteIn(current_password=password).current_password == password
-    assert (
-        AdminConfirmIn(current_password=password, action=ConfirmationAction.ADMIN_CREATE).current_password == password
-    )
 
 
 def test_credential_verification_models_reject_over_maximum() -> None:
@@ -51,8 +48,6 @@ def test_credential_verification_models_reject_over_maximum() -> None:
         AdminLoginIn(username="policy-admin", password=password)
     with pytest.raises(ValidationError):
         AccountDeleteIn(current_password=password)
-    with pytest.raises(ValidationError):
-        AdminConfirmIn(current_password=password, action=ConfirmationAction.ADMIN_CREATE)
 
 
 def test_public_response_messages_fail_closed_to_chinese() -> None:

@@ -1,22 +1,25 @@
-import json
 import uuid
 from datetime import UTC, datetime, timedelta
 
 from redis.asyncio import Redis
-from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.core.cache_keys import cache_keys
 from app.core.config import Settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
 from app.core.identifiers import new_uuid7
 from app.core.request_metadata import RequestMetadata
-from app.core.security import PasswordManager, create_access_token, new_opaque_token, token_digest
+from app.core.security import (
+    PasswordManager,
+    create_access_token,
+    new_anonymized_username,
+    new_opaque_token,
+    token_digest,
+)
 from app.db.models import Admin, AdminRefreshToken, AdminSession, User, UserRefreshToken, UserSession
 from app.db.repositories import AdminRepository, SecurityRepository, SessionRepository, UserRepository
 from app.db.transaction import transaction_scope
-from app.domains.admin.schemas import AdminConfirmIn, AdminConfirmOut, AdminProfileUpdateIn
+from app.domains.admin.schemas import AdminProfileUpdateIn
 from app.domains.users.schemas import AccountDeleteIn, PasswordChangeIn, UserUpdateIn
 from app.services.authentication import SessionArtifacts
 from app.services.security_events import login_event
@@ -167,13 +170,16 @@ class UserAccountService:
             locked = await self.users.get(user.id, for_update=True)
             if locked is None or locked.deleted_at is not None:
                 raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
-            locked.username = f"deleted-{locked.id.hex}"
+            locked.username = new_anonymized_username(locked.id)
             locked.email = None
             locked.display_name = None
             locked.password_hash = replacement_hash
             locked.is_active = False
             locked.credential_version += 1
             locked.deleted_at = now
+            locked.deleted_by_admin_id = None
+            locked.deletion_reason = "self_deleted"
+            locked.anonymized_at = now
             await self.sessions.revoke_web_for_user(locked.id, reason="account_deleted")
 
 
@@ -296,49 +302,6 @@ class AdminAccountService:
             access_expires_at=access_expires,
             idle_expires_at=idle,
             absolute_expires_at=absolute,
-        )
-
-    async def create_confirmation(
-        self,
-        *,
-        admin: Admin,
-        login_session: AdminSession,
-        payload: AdminConfirmIn,
-    ) -> AdminConfirmOut:
-        if not await self.password_manager.verify(payload.current_password, admin.password_hash):
-            raise AppException(
-                status_code=401,
-                code=ErrorCode.AUTH_INVALID_CREDENTIALS,
-                message="当前密码错误",
-            )
-        if self.redis is None:
-            raise AppException(
-                status_code=503,
-                code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="认证服务暂时不可用",
-            )
-        token = new_opaque_token()
-        key = cache_keys(self.settings).admin_confirmation(token_digest(token, self.hmac_key))
-        value = json.dumps(
-            {
-                "admin_id": str(admin.id),
-                "session_id": str(login_session.id),
-                "action": payload.action.value,
-            },
-            separators=(",", ":"),
-        )
-        try:
-            await self.redis.set(key, value, ex=300, nx=True)
-        except RedisError as exc:
-            raise AppException(
-                status_code=503,
-                code=ErrorCode.SERVICE_UNAVAILABLE,
-                message="认证服务暂时不可用",
-            ) from exc
-        return AdminConfirmOut(
-            confirmation_token=token,
-            action=payload.action,
-            expires_at=datetime.now(UTC) + timedelta(minutes=5),
         )
 
 

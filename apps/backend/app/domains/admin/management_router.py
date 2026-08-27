@@ -1,13 +1,10 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Header, Query, Request
+from fastapi import APIRouter, Depends, Query
 
 from app.api.dependencies import (
     AdminManagementServiceDependency,
-    CurrentAdmin,
-    consume_admin_confirmation,
-    require_admin_confirmation,
     require_admin_csrf,
     require_permission,
 )
@@ -27,19 +24,25 @@ from .schemas import (
     AdminRead,
     AdminRoleAssignIn,
     AdminUpdateIn,
+    AdminUserRead,
     AuditEventPage,
-    ConfirmationAction,
+    BatchActionResult,
     LoginEventPage,
     PasswordResetIn,
     PermissionRead,
     RequestLogPage,
+    RoleBulkDeleteIn,
+    RoleBulkStatusUpdateIn,
     RoleCreateIn,
     RolePage,
     RolePermissionAssignIn,
     RoleRead,
     RoleUpdateIn,
     StatusUpdateIn,
+    UserBulkDeleteIn,
+    UserBulkStatusUpdateIn,
     UserPage,
+    UserRestoreBatchIn,
 )
 
 router = APIRouter(prefix="/admin", tags=["后台管理"])
@@ -71,9 +74,90 @@ async def list_users(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     search: Annotated[str | None, Query(max_length=100)] = None,
+    lifecycle: Annotated[Literal["all", "active", "inactive", "deleted"], Query()] = "all",
 ) -> ResponseModel[UserPage]:
-    result = await service.list_users(page=page, page_size=page_size, search=search)
+    result = await service.list_users(page=page, page_size=page_size, search=search, lifecycle=lifecycle)
     return success_response(data=result, request_id=current_request_id())
+
+
+@router.patch(
+    "/users/status/batch",
+    response_model=ResponseModel[BatchActionResult],
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.USERS_UPDATE))],
+    summary="批量修改用户状态",
+)
+async def set_user_status_bulk(
+    payload: UserBulkStatusUpdateIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[BatchActionResult]:
+    return success_response(
+        data=await service.set_user_status_bulk(payload),
+        request_id=current_request_id(),
+        message="用户状态批量更新成功",
+    )
+
+
+@router.delete(
+    "/users/batch",
+    response_model=ResponseModel[BatchActionResult],
+    dependencies=[
+        Depends(require_admin_csrf),
+        Depends(require_permission(PermissionCode.USERS_DELETE)),
+    ],
+    summary="批量软删除用户",
+    description="将明确选中的用户账户移入回收站并停用，撤销其全部会话。",
+)
+async def delete_users_bulk(
+    payload: UserBulkDeleteIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[BatchActionResult]:
+    return success_response(
+        data=await service.delete_users_bulk(payload),
+        request_id=current_request_id(),
+        message="用户批量删除成功",
+    )
+
+
+@router.post(
+    "/users/restore/batch",
+    response_model=ResponseModel[BatchActionResult],
+    dependencies=[
+        Depends(require_admin_csrf),
+        Depends(require_permission(PermissionCode.USERS_RESTORE)),
+    ],
+    summary="批量恢复回收站用户",
+    description="恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+)
+async def restore_users_bulk(
+    payload: UserRestoreBatchIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[BatchActionResult]:
+    return success_response(
+        data=await service.restore_users_bulk(payload),
+        request_id=current_request_id(),
+        message="用户批量恢复成功",
+    )
+
+
+@router.post(
+    "/users/{user_id}/restore",
+    response_model=ResponseModel[AdminUserRead],
+    dependencies=[
+        Depends(require_admin_csrf),
+        Depends(require_permission(PermissionCode.USERS_RESTORE)),
+    ],
+    summary="恢复回收站用户",
+    description="恢复保留期内且尚未匿名化的用户，恢复后账户保持停用。",
+)
+async def restore_user(
+    user_id: uuid.UUID,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[AdminUserRead]:
+    return success_response(
+        data=await service.restore_user(user_id),
+        request_id=current_request_id(),
+        message="用户恢复成功",
+    )
 
 
 @router.get(
@@ -108,19 +192,14 @@ async def update_user(
 @router.patch(
     "/users/{user_id}/status",
     response_model=ResponseModel[UserPrincipalOut],
-    dependencies=[Depends(require_permission(PermissionCode.USERS_UPDATE))],
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.USERS_UPDATE))],
     summary="修改用户状态",
 )
 async def set_user_status(
     user_id: uuid.UUID,
     payload: StatusUpdateIn,
-    request: Request,
     service: AdminManagementServiceDependency,
-    current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
-    confirmation_token: Annotated[str | None, Header(alias="X-Admin-Confirmation")] = None,
 ) -> ResponseModel[UserPrincipalOut]:
-    if not payload.is_active:
-        await consume_admin_confirmation(request, current, ConfirmationAction.USER_DISABLE, confirmation_token)
     user = await service.set_user_status(user_id, payload)
     return success_response(
         data=UserPrincipalOut.model_validate(user), request_id=current_request_id(), message="用户状态更新成功"
@@ -131,8 +210,8 @@ async def set_user_status(
     "/users/{user_id}/credentials/password",
     response_model=ResponseModel[ActionResult],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.USERS_CREDENTIALS_RESET)),
-        Depends(require_admin_confirmation(ConfirmationAction.USER_PASSWORD_RESET)),
     ],
     summary="重置用户密码",
 )
@@ -170,8 +249,8 @@ async def list_user_sessions(
     "/users/{user_id}/sessions/{session_id}",
     response_model=ResponseModel[ActionResult],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.USERS_SESSIONS_REVOKE)),
-        Depends(require_admin_confirmation(ConfirmationAction.USER_SESSION_REVOKE)),
     ],
     summary="撤销用户指定会话",
 )
@@ -188,8 +267,8 @@ async def revoke_user_session(
     "/users/{user_id}/sessions/revoke-all",
     response_model=ResponseModel[ActionResult],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.USERS_SESSIONS_REVOKE)),
-        Depends(require_admin_confirmation(ConfirmationAction.USER_SESSION_REVOKE)),
     ],
     summary="撤销用户全部会话",
 )
@@ -220,8 +299,8 @@ async def list_admins(
     "/admins/status/batch",
     response_model=ResponseModel[list[AdminRead]],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ADMINS_UPDATE)),
-        Depends(require_admin_confirmation(ConfirmationAction.ADMIN_STATUS_CHANGE)),
     ],
     summary="批量修改管理员状态",
 )
@@ -242,8 +321,8 @@ async def set_admin_status_bulk(
     response_model=ResponseModel[AdminRead],
     status_code=201,
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ADMINS_CREATE)),
-        Depends(require_admin_confirmation(ConfirmationAction.ADMIN_CREATE)),
     ],
     summary="创建管理员",
 )
@@ -268,21 +347,14 @@ async def get_admin(admin_id: uuid.UUID, service: AdminManagementServiceDependen
 @router.patch(
     "/admins/{admin_id}",
     response_model=ResponseModel[AdminRead],
-    dependencies=[Depends(require_permission(PermissionCode.ADMINS_UPDATE))],
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.ADMINS_UPDATE))],
     summary="更新管理员资料",
 )
 async def update_admin(
     admin_id: uuid.UUID,
     payload: AdminUpdateIn,
-    request: Request,
     service: AdminManagementServiceDependency,
-    current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
-    confirmation_token: Annotated[str | None, Header(alias="X-Admin-Confirmation")] = None,
 ) -> ResponseModel[AdminRead]:
-    if payload.is_superuser is not None:
-        await consume_admin_confirmation(
-            request, current, ConfirmationAction.ADMIN_SUPERUSER_CHANGE, confirmation_token
-        )
     return success_response(
         data=admin_read(await service.update_admin(admin_id, payload)),
         request_id=current_request_id(),
@@ -293,14 +365,13 @@ async def update_admin(
 @router.patch(
     "/admins/{admin_id}/status",
     response_model=ResponseModel[AdminRead],
-    dependencies=[Depends(require_permission(PermissionCode.ADMINS_UPDATE))],
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.ADMINS_UPDATE))],
     summary="修改管理员状态",
 )
 async def set_admin_status(
     admin_id: uuid.UUID,
     payload: StatusUpdateIn,
     service: AdminManagementServiceDependency,
-    _: Annotated[CurrentAdmin, Depends(require_admin_confirmation(ConfirmationAction.ADMIN_STATUS_CHANGE))],
 ) -> ResponseModel[AdminRead]:
     return success_response(
         data=admin_read(await service.set_admin_status(admin_id, payload)),
@@ -313,8 +384,8 @@ async def set_admin_status(
     "/admins/{admin_id}/credentials/password",
     response_model=ResponseModel[ActionResult],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ADMINS_CREDENTIALS_RESET)),
-        Depends(require_admin_confirmation(ConfirmationAction.ADMIN_PASSWORD_RESET)),
     ],
     summary="重置管理员密码",
 )
@@ -331,8 +402,8 @@ async def reset_admin_password(
     "/admins/{admin_id}/roles",
     response_model=ResponseModel[AdminRead],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ADMINS_ROLES_ASSIGN)),
-        Depends(require_admin_confirmation(ConfirmationAction.ADMIN_ROLES_ASSIGN)),
     ],
     summary="分配管理员角色",
 )
@@ -373,8 +444,8 @@ async def list_admin_sessions(
     "/admins/{admin_id}/sessions/revoke-all",
     response_model=ResponseModel[ActionResult],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ADMINS_SESSIONS_REVOKE)),
-        Depends(require_admin_confirmation(ConfirmationAction.ADMIN_SESSIONS_REVOKE)),
     ],
     summary="撤销管理员全部会话",
 )
@@ -398,6 +469,43 @@ async def list_roles(
 ) -> ResponseModel[RolePage]:
     return success_response(
         data=await service.list_roles(page=page, page_size=page_size), request_id=current_request_id()
+    )
+
+
+@router.patch(
+    "/roles/status/batch",
+    response_model=ResponseModel[BatchActionResult],
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.ROLES_UPDATE))],
+    summary="批量修改角色状态",
+)
+async def set_role_status_bulk(
+    payload: RoleBulkStatusUpdateIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[BatchActionResult]:
+    return success_response(
+        data=await service.set_role_status_bulk(payload),
+        request_id=current_request_id(),
+        message="角色状态批量更新成功",
+    )
+
+
+@router.delete(
+    "/roles/batch",
+    response_model=ResponseModel[BatchActionResult],
+    dependencies=[
+        Depends(require_admin_csrf),
+        Depends(require_permission(PermissionCode.ROLES_DELETE)),
+    ],
+    summary="批量删除未使用角色",
+)
+async def delete_roles_bulk(
+    payload: RoleBulkDeleteIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[BatchActionResult]:
+    return success_response(
+        data=await service.delete_roles_bulk(payload),
+        request_id=current_request_id(),
+        message="角色批量删除成功",
     )
 
 
@@ -427,19 +535,14 @@ async def get_role(role_id: uuid.UUID, service: AdminManagementServiceDependency
 @router.patch(
     "/roles/{role_id}",
     response_model=ResponseModel[RoleRead],
-    dependencies=[Depends(require_permission(PermissionCode.ROLES_UPDATE))],
+    dependencies=[Depends(require_admin_csrf), Depends(require_permission(PermissionCode.ROLES_UPDATE))],
     summary="更新角色",
 )
 async def update_role(
     role_id: uuid.UUID,
     payload: RoleUpdateIn,
-    request: Request,
     service: AdminManagementServiceDependency,
-    current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
-    confirmation_token: Annotated[str | None, Header(alias="X-Admin-Confirmation")] = None,
 ) -> ResponseModel[RoleRead]:
-    if payload.is_active is False:
-        await consume_admin_confirmation(request, current, ConfirmationAction.ROLE_DELETE, confirmation_token)
     return success_response(
         data=role_read(await service.update_role(role_id, payload)),
         request_id=current_request_id(),
@@ -451,8 +554,8 @@ async def update_role(
     "/roles/{role_id}",
     response_model=ResponseModel[ActionResult],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ROLES_DELETE)),
-        Depends(require_admin_confirmation(ConfirmationAction.ROLE_DELETE)),
     ],
     summary="删除未使用的角色",
 )
@@ -465,8 +568,8 @@ async def delete_role(role_id: uuid.UUID, service: AdminManagementServiceDepende
     "/roles/{role_id}/permissions",
     response_model=ResponseModel[RoleRead],
     dependencies=[
+        Depends(require_admin_csrf),
         Depends(require_permission(PermissionCode.ROLES_PERMISSIONS_ASSIGN)),
-        Depends(require_admin_confirmation(ConfirmationAction.ROLE_PERMISSIONS_ASSIGN)),
     ],
     summary="分配角色权限",
 )

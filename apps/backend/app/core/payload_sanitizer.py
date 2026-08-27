@@ -21,7 +21,6 @@ _SENSITIVE_ROUTES = frozenset(
         "/api/v1/admin/account/confirm",
         "/api/v1/users/me/password",
         "/api/v1/admin/auth/password",
-        "/api/v1/admin/auth/confirm",
     }
 )
 

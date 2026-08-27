@@ -1,17 +1,14 @@
 import hmac
-import json
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, cast
 
-from fastapi import Cookie, Depends, Header, Request
+from fastapi import Cookie, Depends, Request
 from jwt import InvalidTokenError
-from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache_keys import cache_keys
 from app.core.config import Settings
 from app.core.cookies import ADMIN_COOKIES, WEB_COOKIES
 from app.core.error_codes import ErrorCode
@@ -23,7 +20,6 @@ from app.db.models import Admin, AdminSession, User, UserSession
 from app.db.repositories import SessionRepository
 from app.db.session import session_scope
 from app.domains.admin.permissions import PERMISSION_CODES, PermissionCode
-from app.domains.admin.schemas import ConfirmationAction
 from app.domains.assets.schemas import UploaderType
 from app.services.accounts import AdminAccountService, UserAccountService
 from app.services.admin_management import AdminManagementService
@@ -450,67 +446,6 @@ def require_permission(code: PermissionCode) -> Callable[[CurrentAdmin], Awaitab
     return dependency
 
 
-def require_admin_confirmation(
-    action: ConfirmationAction,
-) -> Callable[[Request, CurrentAdmin, str | None], Awaitable[CurrentAdmin]]:
-    async def dependency(
-        request: Request,
-        current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
-        confirmation_token: Annotated[str | None, Header(alias="X-Admin-Confirmation")] = None,
-    ) -> CurrentAdmin:
-        await consume_admin_confirmation(request, current, action, confirmation_token)
-        return current
-
-    return dependency
-
-
-async def consume_admin_confirmation(
-    request: Request,
-    current: CurrentAdmin,
-    action: ConfirmationAction,
-    confirmation_token: str | None,
-) -> None:
-    if not confirmation_token:
-        raise AppException(
-            status_code=403,
-            code=ErrorCode.ADMIN_CONFIRMATION_REQUIRED,
-            message="需要管理员二次确认",
-        )
-    settings = get_request_settings(request)
-    resources = get_resources(request)
-    if resources.redis is None:
-        raise AppException(
-            status_code=503,
-            code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="认证服务暂时不可用",
-        )
-    _, _, _, admin_hmac = settings.authentication_secrets()
-    key = cache_keys(settings).admin_confirmation(token_digest(confirmation_token, admin_hmac))
-    try:
-        raw = await resources.redis.getdel(key)
-    except RedisError as exc:
-        raise AppException(
-            status_code=503,
-            code=ErrorCode.SERVICE_UNAVAILABLE,
-            message="认证服务暂时不可用",
-        ) from exc
-    try:
-        value = json.loads(raw) if raw else None
-    except json.JSONDecodeError:
-        value = None
-    expected = {
-        "admin_id": str(current.admin.id),
-        "session_id": str(current.login_session.id),
-        "action": action.value,
-    }
-    if value != expected:
-        raise AppException(
-            status_code=403,
-            code=ErrorCode.ADMIN_CONFIRMATION_INVALID,
-            message="管理员二次确认无效或已过期",
-        )
-
-
 __all__ = [
     "CurrentAdmin",
     "CurrentUser",
@@ -519,14 +454,12 @@ __all__ = [
     "AssetUploaderDependency",
     "AdminAuthServiceDependency",
     "AdminManagementServiceDependency",
-    "consume_admin_confirmation",
     "DatabaseSession",
     "get_current_admin",
     "get_current_user",
     "get_db_session",
     "get_request_settings",
     "get_resources",
-    "require_admin_confirmation",
     "require_admin_csrf",
     "require_admin_csrf_pair",
     "require_admin_origin",

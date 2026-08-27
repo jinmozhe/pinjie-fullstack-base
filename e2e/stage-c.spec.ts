@@ -127,14 +127,8 @@ test.describe("stage C cross-stack journeys", () => {
     await expectPageQuality(page);
 
     const commonHeaders = { Origin: origin, "X-CSRF-Token": csrf };
-    const confirmResponse = await page.request.post(`${origin}/api/v1/admin/auth/confirm`, {
-      headers: commonHeaders,
-      data: { current_password: adminPassword, action: "admins:create" },
-    });
-    expect(confirmResponse.ok()).toBe(true);
-    const confirmationToken = (await confirmResponse.json()).data.confirmation_token as string;
     const createResponse = await page.request.post(`${origin}/api/v1/admin/admins`, {
-      headers: { ...commonHeaders, "X-Admin-Confirmation": confirmationToken },
+      headers: commonHeaders,
       data: {
         username: limitedUsername,
         initial_password: limitedAdminPassword,

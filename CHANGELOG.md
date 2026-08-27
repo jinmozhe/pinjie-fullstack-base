@@ -6,8 +6,12 @@
 
 ### Added
 
+- 增加 Admin 用户回收站：新软删除用户在可配置保留期内保留身份资料，支持受 `users:restore` 权限控制的单条和原子批量恢复，恢复后保持停用；旧匿名化用户明确不可恢复，并增加默认 dry-run、显式应用的到期匿名化脚本与 Alembic 迁移。
+- 增加 Admin 文件资产管理页与受权限控制的资产筛选、预览、地址复制、单条删除和批量硬删除；Backend 资产列表支持文件名、场景和上传主体筛选，批量删除通过固定锁顺序、文件暂存、失败恢复、权限、CSRF 和审计保持可补偿一致性。
+- 建立 Admin 列表治理基线：除明确登记的只读日志外，数据列表必须按权限提供批量选择和与实体生命周期一致的批量操作；新增 Admin 管理端点必须显式声明资源权限并通过受控权限目录同步进入目标环境。
+- 为 Admin 用户和角色列表增加受权限控制的批量选择、启用、停用和删除操作：用户删除采用可恢复软删除，角色删除采用未被管理员引用时的硬删除；Backend 提供四个原子批量端点，并保留管理员列表既有批量启停及安全日志只读边界。
 - 完善 Admin 管理员列表：展示头像与显示名称，提供资料编辑、身份列超级管理员切换、独立密码重置、批量启用或停用，以及“编辑、角色、会话、更多”的紧凑不换行操作布局；Backend 同步增加头像更新和原子批量状态接口。
-- 增加统一文件与多媒体资产服务：本地存储端口、Magic Number 与场景策略、同主体 SHA-256 去重、双域 Cookie/CSRF 上传、RBAC 资产查询、二次确认审计删除、Admin/Web 上传组件及生产持久卷。
+- 增加统一文件与多媒体资产服务：本地存储端口、Magic Number 与场景策略、同主体 SHA-256 去重、双域 Cookie/CSRF 上传、RBAC 资产查询、标准警告审计删除、Admin/Web 上传组件及生产持久卷。
 - 增加 Session 分页契约、Refresh Token 级联清理和默认 dry-run 的会话保留清理工具，支持显式 `--apply`、结果统计和隔离测试库验证。
 - 增加 Admin 认证 HTTP、启动生命周期、权限映射和 Web BFF/SSR 会话恢复回归测试，将高风险传输边界纳入前端覆盖率门禁。
 - 增加 Web App Router PNG favicon，使用 Next.js `ImageResponse` 生成业务中立的 Pinjie 图标，并通过 production build、桌面和移动浏览器及真实资源响应检查。
@@ -51,6 +55,7 @@
 
 ### Fixed
 
+- 统一 Admin 列表空态：使用 `ProTable` 的页面只显示表格内建“暂无数据”，外层查询状态仅处理加载、失败和重试；无 `ProTable` 的列表、抽屉和面板继续保留独立空态。
 - 补齐管理员头像输入输出字段的 OpenAPI 中文说明、隔离测试 Redis 变量与 pytest 临时目录，并以前向迁移修复 `request_logs` 表注释漂移。
 - 移除 Umi `4.7.5` 未使用的 Vite 4 构建链，通过精确 pnpm Hook 和受控补丁关闭不安全入口，修复 Webpack 开发服务器忽略 host 的行为，并增加版本漂移、锁文件和补丁门禁。
 - 修复 Web/Admin Cookie Profile 共享 Origin 与代理路径导致的跨端会话越权面；Backend 按 Profile 精确校验 Origin，Web BFF 和 Admin Nginx 只允许各自路径并过滤另一端 Cookie。
@@ -79,11 +84,12 @@
 
 ### Changed
 
+- 统一 Admin 管理操作确认规则：整个管理端移除密码二次确认 Token、确认请求头和密码确认弹窗；只有角色、文件资产等物理硬删除在单条和批量入口共用标准警告弹窗，按钮固定为“确定”和“取消”，用户软删除、启停、凭据重置、会话撤销、身份与权限调整直接提交；Backend 继续执行管理员会话、资源权限、CSRF、事务内资源校验和审计。
 - 三端日常开发、`$git-sync`、Push 与 Pull Request 收敛为轻量门禁：Admin/Web 只自动运行 typecheck 和 lint，Backend 只自动运行静态、导入与契约检查；前端 build、Vitest、pytest、Playwright 和测试数据库验证仅在用户明确授权后执行，GitHub Actions 不再自动运行这些重型验证。
 - Admin 桌面布局按 Ant Design Pro 官方比例调整：展开侧栏统一为 `256px`，PageContainer 移除 `1480px` 固定上限并改用流式工作区，桌面与移动端按 `40px`、`24px`、`16px` 三级内边距响应，保留现有页面、表格和业务操作。
 - 保留 `Protect main` Ruleset 和 13 项必需检查，启用 rebase Auto-merge 与合并后自动删除分支；`$git-sync` 现可一次完成当前任务的分支、提交、推送、PR、检查等待、自动合并、分支清理和本地 `main` 同步，失败时保留 PR 与分支并停止。
 - 四个自动 GitHub Actions 工作流收敛为目标为 `main` 的 Pull Request 和 `main` push 触发，Security 继续保留每周定时扫描；功能分支 push 不再重复运行整套检查，合并后的 `main` 仍生成镜像发布所需的四项 Push Run。
-- Admin 全面采用官方 Ant Design 6 与 ProComponents 视觉交互体系：以 ProLayout 官方 Token 实现浅色侧栏、白色 Header 和浅灰工作区，恢复 ProTable 原生工具栏与轻量操作列，移除侧栏 Logo，并新增 `/welcome` 默认主页和管理快捷入口；认证、RBAC、CSRF、Refresh 和二次确认流程保持不变。
+- Admin 全面采用官方 Ant Design 6 与 ProComponents 视觉交互体系：以 ProLayout 官方 Token 实现浅色侧栏、白色 Header 和浅灰工作区，恢复 ProTable 原生工具栏与轻量操作列，移除侧栏 Logo，并新增 `/welcome` 默认主页和管理快捷入口；认证、RBAC、CSRF 与 Refresh 流程保持不变。
 - 收紧 `main` Ruleset：移除维护者永久 bypass，保留 Pull Request、会话解决和 13 项状态检查；日常交付统一通过开发分支和 Pull Request。
 - 移除把 Umi bundler 的 Vite 4 强制覆盖到 Vite 6 的不兼容 override；随后从 Webpack 模式依赖树移除未使用的 Umi Vite 4 构建链，Admin Vitest 独立使用 `vite@6.4.3`。
 - Backend、Admin、Web、PostgreSQL 和 Redis 的生产基础镜像全部固定完整 digest，生产 Compose 门禁同时覆盖 Dockerfile、应用镜像变量、基础设施引用和可变引用反例。
@@ -92,9 +98,9 @@
 - 将内部自用单维护者的自审、管理员 bypass 和 Ruleset bypass 明确为已接受治理模型；不增加第二维护者，继续保留自动状态检查、不可变发布、操作审计以及提交、推送、发布和部署的独立授权边界。
 - 将七个 GitHub Actions 工作流中的十个旧版 JavaScript Action 升级到原生 Node.js 24 的正式版本；全部引用继续固定完整 Commit SHA，不再依赖 GitHub Runner 对 `node20` Action 的兼容覆盖。
 - Browser E2E 改为 GitHub Actions 人工按需触发，不再随 Push 或 Pull Request 自动运行；Publish Images 取消 E2E 成功记录依赖，继续校验同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四项自动门禁。
-- Admin 全面迁移到官方 Ant Design Pro v6/Umi Max：采用 `@umijs/max`、Ant Design 6、ProComponents 3、Icons 6、ProLayout、Umi 配置式路由和运行时 Access；保留 Cookie/CSRF/Refresh/RBAC、共享 API Client、危险操作二次确认和现有管理页面。
+- Admin 全面迁移到官方 Ant Design Pro v6/Umi Max：采用 `@umijs/max`、Ant Design 6、ProComponents 3、Icons 6、ProLayout、Umi 配置式路由和运行时 Access；保留 Cookie/CSRF/Refresh/RBAC、共享 API Client 和现有管理页面。
 - 完成 Admin Umi 运行时收尾：通过跨平台 `PORT=3001` 启动包装器固定端口，修复 Umi 环境变量和 initialState 接线，适配 Ant Design 6 弃用属性，并完成桌面/移动登录页浏览器冒烟。
-- 用户与管理员的新密码规则统一为 6 至 64 个字符，登录、当前密码和二次确认输入统一限制为最多 64 个字符；Backend、Admin、Web 和初始管理员脚本保持一致。
+- 用户与管理员的新密码规则统一为 6 至 64 个字符，登录及本人改密时的当前密码输入限制为最多 64 个字符；Backend、Admin、Web 和初始管理员脚本保持一致。
 - FastAPI 文档的接口分组、摘要、字段说明和响应说明改为中文，API 成功与失败响应的顶层 `message` 统一为中文；路径、参数、字段、错误 `code` 和 `operationId` 保持英文程序标识。
 - 停用 Dependabot 定期依赖升级分支和 Pull Request，依赖版本调整改为人工发起、评审和验证；保留漏洞告警、Dependency Review、依赖审计和静态代码扫描安全门禁。
 - 因个人私有仓库无法启用 GitHub Code Security，将不可运行的 CodeQL Job 替换为固定版本、无账号且不上传源码的 Semgrep CE SAST 门禁。

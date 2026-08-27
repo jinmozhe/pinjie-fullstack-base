@@ -146,6 +146,10 @@ def new_opaque_token() -> str:
     return secrets.token_urlsafe(48)
 
 
+def new_anonymized_username(user_id: uuid.UUID) -> str:
+    return f"deleted-{user_id.hex[:24]}-{secrets.token_hex(8)}"
+
+
 def token_digest(token: str, key: str) -> str:
     return hmac.new(key.encode("utf-8"), token.encode("utf-8"), hashlib.sha256).hexdigest()
 
@@ -162,6 +166,7 @@ __all__ = [
     "constant_time_token_matches",
     "create_access_token",
     "decode_access_token",
+    "new_anonymized_username",
     "new_opaque_token",
     "token_digest",
 ]

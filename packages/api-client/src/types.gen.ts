@@ -81,44 +81,6 @@ export type AdminBulkStatusUpdateIn = {
 };
 
 /**
- * AdminConfirmIn
- */
-export type AdminConfirmIn = {
-    /**
-     * Current Password
-     *
-     * 当前密码，最多 64 个字符
-     */
-    current_password: string;
-    /**
-     * 操作代码
-     */
-    action: ConfirmationAction;
-};
-
-/**
- * AdminConfirmOut
- */
-export type AdminConfirmOut = {
-    /**
-     * Confirmation Token
-     *
-     * 敏感操作短期确认凭据
-     */
-    confirmation_token: string;
-    /**
-     * 操作代码
-     */
-    action: ConfirmationAction;
-    /**
-     * Expires At
-     *
-     * 凭据过期时间
-     */
-    expires_at: string;
-};
-
-/**
  * AdminCreateIn
  */
 export type AdminCreateIn = {
@@ -299,6 +261,120 @@ export type AdminUpdateIn = {
 };
 
 /**
+ * AdminUserRead
+ */
+export type AdminUserRead = {
+    /**
+     * Id
+     *
+     * 资源唯一标识
+     */
+    id: string;
+    /**
+     * Username
+     *
+     * 登录用户名
+     */
+    username: string;
+    /**
+     * Display Name
+     *
+     * 展示名称
+     */
+    display_name: string | null;
+    /**
+     * Email
+     *
+     * 电子邮箱地址
+     */
+    email: string | null;
+    /**
+     * Is Active
+     *
+     * 资源当前是否启用
+     */
+    is_active: boolean;
+    /**
+     * Created At
+     *
+     * 创建时间
+     */
+    created_at: string;
+    /**
+     * Updated At
+     *
+     * 最近更新时间
+     */
+    updated_at: string;
+    /**
+     * Deleted At
+     *
+     * 账户进入回收站的时间
+     */
+    deleted_at: string | null;
+    /**
+     * Deleted By Admin Id
+     *
+     * 执行软删除的管理员唯一标识
+     */
+    deleted_by_admin_id: string | null;
+    /**
+     * Deletion Reason
+     *
+     * 账户删除原因代码
+     */
+    deletion_reason: string | null;
+    /**
+     * Anonymized At
+     *
+     * 身份资料永久匿名化时间
+     */
+    anonymized_at: string | null;
+    /**
+     * Restore Expires At
+     *
+     * 允许恢复的截止时间
+     */
+    restore_expires_at: string | null;
+    /**
+     * Can Restore
+     *
+     * 当前是否允许恢复
+     */
+    can_restore: boolean;
+};
+
+/**
+ * AssetBulkDeleteIn
+ */
+export type AssetBulkDeleteIn = {
+    /**
+     * Asset Ids
+     *
+     * 待批量硬删除的文件资产唯一标识列表
+     */
+    asset_ids: Array<string>;
+};
+
+/**
+ * AssetBulkDeleteResult
+ */
+export type AssetBulkDeleteResult = {
+    /**
+     * Completed Count
+     *
+     * 本次批量硬删除完成的资产数量
+     */
+    completed_count: number;
+    /**
+     * Target Ids
+     *
+     * 本次批量硬删除处理的资产唯一标识列表
+     */
+    target_ids: Array<string>;
+};
+
+/**
  * AssetRead
  */
 export type AssetRead = {
@@ -447,6 +523,24 @@ export type AuditEventRead = {
 };
 
 /**
+ * BatchActionResult
+ */
+export type BatchActionResult = {
+    /**
+     * Completed Count
+     *
+     * 本次批量操作完成的目标数量
+     */
+    completed_count: number;
+    /**
+     * Target Ids
+     *
+     * 本次批量操作处理的目标唯一标识列表
+     */
+    target_ids: Array<string>;
+};
+
+/**
  * Body_upload_asset_api_v1_assets_upload_post
  */
 export type BodyUploadAssetApiV1AssetsUploadPost = {
@@ -461,11 +555,6 @@ export type BodyUploadAssetApiV1AssetsUploadPost = {
      */
     scene: UploadScene;
 };
-
-/**
- * ConfirmationAction
- */
-export type ConfirmationAction = 'users:disable' | 'users:credentials:reset' | 'users:sessions:revoke' | 'admins:create' | 'admins:superuser:change' | 'admins:status:change' | 'admins:credentials:reset' | 'admins:roles:assign' | 'admins:sessions:revoke' | 'roles:delete' | 'roles:permissions:assign' | 'assets:delete';
 
 /**
  * HTTPValidationError
@@ -567,6 +656,42 @@ export type PageResultAdminRead = {
      * 当前分页中的资源列表
      */
     items: Array<AdminRead>;
+    /**
+     * Page
+     *
+     * 当前页码，从 1 开始
+     */
+    page: number;
+    /**
+     * Page Size
+     *
+     * 每页资源数量
+     */
+    page_size: number;
+    /**
+     * Total
+     *
+     * 符合条件的资源总数
+     */
+    total: number;
+    /**
+     * Total Pages
+     *
+     * 符合条件的总页数
+     */
+    total_pages: number;
+};
+
+/**
+ * PageResult[AdminUserRead]
+ */
+export type PageResultAdminUserRead = {
+    /**
+     * Items
+     *
+     * 当前分页中的资源列表
+     */
+    items: Array<AdminUserRead>;
     /**
      * Page
      *
@@ -783,42 +908,6 @@ export type PageResultSessionRead = {
      * 当前分页中的资源列表
      */
     items: Array<SessionRead>;
-    /**
-     * Page
-     *
-     * 当前页码，从 1 开始
-     */
-    page: number;
-    /**
-     * Page Size
-     *
-     * 每页资源数量
-     */
-    page_size: number;
-    /**
-     * Total
-     *
-     * 符合条件的资源总数
-     */
-    total: number;
-    /**
-     * Total Pages
-     *
-     * 符合条件的总页数
-     */
-    total_pages: number;
-};
-
-/**
- * PageResult[UserPrincipalOut]
- */
-export type PageResultUserPrincipalOut = {
-    /**
-     * Items
-     *
-     * 当前分页中的资源列表
-     */
-    items: Array<UserPrincipalOut>;
     /**
      * Page
      *
@@ -1096,34 +1185,6 @@ export type ResponseModelAdminAuthSessionOut = {
 };
 
 /**
- * ResponseModel[AdminConfirmOut]
- */
-export type ResponseModelAdminConfirmOut = {
-    /**
-     * Code
-     *
-     * 稳定程序代码
-     */
-    code: string;
-    /**
-     * Message
-     *
-     * 面向调用方的中文结果消息
-     */
-    message: string;
-    /**
-     * 响应业务数据
-     */
-    data: AdminConfirmOut;
-    /**
-     * Request Id
-     *
-     * 用于定位本次请求的唯一标识
-     */
-    request_id: string;
-};
-
-/**
  * ResponseModel[AdminRead]
  */
 export type ResponseModelAdminRead = {
@@ -1143,6 +1204,62 @@ export type ResponseModelAdminRead = {
      * 响应业务数据
      */
     data: AdminRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminUserRead]
+ */
+export type ResponseModelAdminUserRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: AdminUserRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AssetBulkDeleteResult]
+ */
+export type ResponseModelAssetBulkDeleteResult = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: AssetBulkDeleteResult;
     /**
      * Request Id
      *
@@ -1180,6 +1297,34 @@ export type ResponseModelAssetRead = {
 };
 
 /**
+ * ResponseModel[BatchActionResult]
+ */
+export type ResponseModelBatchActionResult = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: BatchActionResult;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
  * ResponseModel[PageResult[AdminRead]]
  */
 export type ResponseModelPageResultAdminRead = {
@@ -1199,6 +1344,34 @@ export type ResponseModelPageResultAdminRead = {
      * 响应业务数据
      */
     data: PageResultAdminRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[PageResult[AdminUserRead]]
+ */
+export type ResponseModelPageResultAdminUserRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: PageResultAdminUserRead;
     /**
      * Request Id
      *
@@ -1367,34 +1540,6 @@ export type ResponseModelPageResultSessionRead = {
      * 响应业务数据
      */
     data: PageResultSessionRead;
-    /**
-     * Request Id
-     *
-     * 用于定位本次请求的唯一标识
-     */
-    request_id: string;
-};
-
-/**
- * ResponseModel[PageResult[UserPrincipalOut]]
- */
-export type ResponseModelPageResultUserPrincipalOut = {
-    /**
-     * Code
-     *
-     * 稳定程序代码
-     */
-    code: string;
-    /**
-     * Message
-     *
-     * 面向调用方的中文结果消息
-     */
-    message: string;
-    /**
-     * 响应业务数据
-     */
-    data: PageResultUserPrincipalOut;
     /**
      * Request Id
      *
@@ -1631,6 +1776,36 @@ export type ResponseModelListPermissionRead = {
      * 用于定位本次请求的唯一标识
      */
     request_id: string;
+};
+
+/**
+ * RoleBulkDeleteIn
+ */
+export type RoleBulkDeleteIn = {
+    /**
+     * Role Ids
+     *
+     * 待批量操作的角色唯一标识列表
+     */
+    role_ids: Array<string>;
+};
+
+/**
+ * RoleBulkStatusUpdateIn
+ */
+export type RoleBulkStatusUpdateIn = {
+    /**
+     * Role Ids
+     *
+     * 待批量操作的角色唯一标识列表
+     */
+    role_ids: Array<string>;
+    /**
+     * Is Active
+     *
+     * 批量操作后的角色启用状态
+     */
+    is_active: boolean;
 };
 
 /**
@@ -1912,6 +2087,36 @@ export type UserAuthSessionOut = {
 };
 
 /**
+ * UserBulkDeleteIn
+ */
+export type UserBulkDeleteIn = {
+    /**
+     * User Ids
+     *
+     * 待批量操作的用户唯一标识列表
+     */
+    user_ids: Array<string>;
+};
+
+/**
+ * UserBulkStatusUpdateIn
+ */
+export type UserBulkStatusUpdateIn = {
+    /**
+     * User Ids
+     *
+     * 待批量操作的用户唯一标识列表
+     */
+    user_ids: Array<string>;
+    /**
+     * Is Active
+     *
+     * 批量操作后的用户启用状态
+     */
+    is_active: boolean;
+};
+
+/**
  * UserLoginIn
  */
 export type UserLoginIn = {
@@ -2005,6 +2210,18 @@ export type UserRegisterIn = {
      * 电子邮箱地址
      */
     email?: string | null;
+};
+
+/**
+ * UserRestoreBatchIn
+ */
+export type UserRestoreBatchIn = {
+    /**
+     * User Ids
+     *
+     * 待批量操作的用户唯一标识列表
+     */
+    user_ids: Array<string>;
 };
 
 /**
@@ -2200,6 +2417,18 @@ export type ListAssetsApiV1AssetsGetData = {
          * Page Size
          */
         page_size?: number;
+        /**
+         * Search
+         */
+        search?: string | null;
+        /**
+         * Scene
+         */
+        scene?: UploadScene | null;
+        /**
+         * Uploader Type
+         */
+        uploader_type?: UploaderType | null;
     };
     url: '/api/v1/assets';
 };
@@ -2222,14 +2451,33 @@ export type ListAssetsApiV1AssetsGetResponses = {
 
 export type ListAssetsApiV1AssetsGetResponse = ListAssetsApiV1AssetsGetResponses[keyof ListAssetsApiV1AssetsGetResponses];
 
+export type DeleteAssetsBulkApiV1AssetsBatchDeleteData = {
+    body: AssetBulkDeleteIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/assets/batch';
+};
+
+export type DeleteAssetsBulkApiV1AssetsBatchDeleteErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteAssetsBulkApiV1AssetsBatchDeleteError = DeleteAssetsBulkApiV1AssetsBatchDeleteErrors[keyof DeleteAssetsBulkApiV1AssetsBatchDeleteErrors];
+
+export type DeleteAssetsBulkApiV1AssetsBatchDeleteResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAssetBulkDeleteResult;
+};
+
+export type DeleteAssetsBulkApiV1AssetsBatchDeleteResponse = DeleteAssetsBulkApiV1AssetsBatchDeleteResponses[keyof DeleteAssetsBulkApiV1AssetsBatchDeleteResponses];
+
 export type DeleteAssetApiV1AssetsAssetIdDeleteData = {
     body?: never;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Asset Id
@@ -2597,31 +2845,6 @@ export type ChangePasswordApiV1AdminAuthPasswordPostResponses = {
 
 export type ChangePasswordApiV1AdminAuthPasswordPostResponse = ChangePasswordApiV1AdminAuthPasswordPostResponses[keyof ChangePasswordApiV1AdminAuthPasswordPostResponses];
 
-export type ConfirmApiV1AdminAuthConfirmPostData = {
-    body: AdminConfirmIn;
-    path?: never;
-    query?: never;
-    url: '/api/v1/admin/auth/confirm';
-};
-
-export type ConfirmApiV1AdminAuthConfirmPostErrors = {
-    /**
-     * 请求参数校验失败
-     */
-    422: HttpValidationError;
-};
-
-export type ConfirmApiV1AdminAuthConfirmPostError = ConfirmApiV1AdminAuthConfirmPostErrors[keyof ConfirmApiV1AdminAuthConfirmPostErrors];
-
-export type ConfirmApiV1AdminAuthConfirmPostResponses = {
-    /**
-     * 请求成功
-     */
-    200: ResponseModelAdminConfirmOut;
-};
-
-export type ConfirmApiV1AdminAuthConfirmPostResponse = ConfirmApiV1AdminAuthConfirmPostResponses[keyof ConfirmApiV1AdminAuthConfirmPostResponses];
-
 export type ListUsersApiV1AdminUsersGetData = {
     body?: never;
     path?: never;
@@ -2638,6 +2861,10 @@ export type ListUsersApiV1AdminUsersGetData = {
          * Search
          */
         search?: string | null;
+        /**
+         * Lifecycle
+         */
+        lifecycle?: 'all' | 'active' | 'inactive' | 'deleted';
     };
     url: '/api/v1/admin/users';
 };
@@ -2655,10 +2882,115 @@ export type ListUsersApiV1AdminUsersGetResponses = {
     /**
      * 请求成功
      */
-    200: ResponseModelPageResultUserPrincipalOut;
+    200: ResponseModelPageResultAdminUserRead;
 };
 
 export type ListUsersApiV1AdminUsersGetResponse = ListUsersApiV1AdminUsersGetResponses[keyof ListUsersApiV1AdminUsersGetResponses];
+
+export type SetUserStatusBulkApiV1AdminUsersStatusBatchPatchData = {
+    body: UserBulkStatusUpdateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/users/status/batch';
+};
+
+export type SetUserStatusBulkApiV1AdminUsersStatusBatchPatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type SetUserStatusBulkApiV1AdminUsersStatusBatchPatchError = SetUserStatusBulkApiV1AdminUsersStatusBatchPatchErrors[keyof SetUserStatusBulkApiV1AdminUsersStatusBatchPatchErrors];
+
+export type SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelBatchActionResult;
+};
+
+export type SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponse = SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponses[keyof SetUserStatusBulkApiV1AdminUsersStatusBatchPatchResponses];
+
+export type DeleteUsersBulkApiV1AdminUsersBatchDeleteData = {
+    body: UserBulkDeleteIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/users/batch';
+};
+
+export type DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteUsersBulkApiV1AdminUsersBatchDeleteError = DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors[keyof DeleteUsersBulkApiV1AdminUsersBatchDeleteErrors];
+
+export type DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelBatchActionResult;
+};
+
+export type DeleteUsersBulkApiV1AdminUsersBatchDeleteResponse = DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses[keyof DeleteUsersBulkApiV1AdminUsersBatchDeleteResponses];
+
+export type RestoreUsersBulkApiV1AdminUsersRestoreBatchPostData = {
+    body: UserRestoreBatchIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/users/restore/batch';
+};
+
+export type RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type RestoreUsersBulkApiV1AdminUsersRestoreBatchPostError = RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors[keyof RestoreUsersBulkApiV1AdminUsersRestoreBatchPostErrors];
+
+export type RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelBatchActionResult;
+};
+
+export type RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponse = RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses[keyof RestoreUsersBulkApiV1AdminUsersRestoreBatchPostResponses];
+
+export type RestoreUserApiV1AdminUsersUserIdRestorePostData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/users/{user_id}/restore';
+};
+
+export type RestoreUserApiV1AdminUsersUserIdRestorePostErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type RestoreUserApiV1AdminUsersUserIdRestorePostError = RestoreUserApiV1AdminUsersUserIdRestorePostErrors[keyof RestoreUserApiV1AdminUsersUserIdRestorePostErrors];
+
+export type RestoreUserApiV1AdminUsersUserIdRestorePostResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminUserRead;
+};
+
+export type RestoreUserApiV1AdminUsersUserIdRestorePostResponse = RestoreUserApiV1AdminUsersUserIdRestorePostResponses[keyof RestoreUserApiV1AdminUsersUserIdRestorePostResponses];
 
 export type GetUserApiV1AdminUsersUserIdGetData = {
     body?: never;
@@ -2722,12 +3054,6 @@ export type UpdateUserApiV1AdminUsersUserIdPatchResponse = UpdateUserApiV1AdminU
 
 export type SetUserStatusApiV1AdminUsersUserIdStatusPatchData = {
     body: StatusUpdateIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * User Id
@@ -2758,12 +3084,6 @@ export type SetUserStatusApiV1AdminUsersUserIdStatusPatchResponse = SetUserStatu
 
 export type ResetUserPasswordApiV1AdminUsersUserIdCredentialsPasswordPutData = {
     body: PasswordResetIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * User Id
@@ -2833,12 +3153,6 @@ export type ListUserSessionsApiV1AdminUsersUserIdSessionsGetResponse = ListUserS
 
 export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteData = {
     body?: never;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * User Id
@@ -2873,12 +3187,6 @@ export type RevokeUserSessionApiV1AdminUsersUserIdSessionsSessionIdDeleteRespons
 
 export type RevokeAllUserSessionsApiV1AdminUsersUserIdSessionsRevokeAllPostData = {
     body?: never;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * User Id
@@ -2943,12 +3251,6 @@ export type ListAdminsApiV1AdminAdminsGetResponse = ListAdminsApiV1AdminAdminsGe
 
 export type CreateAdminApiV1AdminAdminsPostData = {
     body: AdminCreateIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path?: never;
     query?: never;
     url: '/api/v1/admin/admins';
@@ -2974,12 +3276,6 @@ export type CreateAdminApiV1AdminAdminsPostResponse = CreateAdminApiV1AdminAdmin
 
 export type SetAdminStatusBulkApiV1AdminAdminsStatusBatchPatchData = {
     body: AdminBulkStatusUpdateIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path?: never;
     query?: never;
     url: '/api/v1/admin/admins/status/batch';
@@ -3035,12 +3331,6 @@ export type GetAdminApiV1AdminAdminsAdminIdGetResponse = GetAdminApiV1AdminAdmin
 
 export type UpdateAdminApiV1AdminAdminsAdminIdPatchData = {
     body: AdminUpdateIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Admin Id
@@ -3071,12 +3361,6 @@ export type UpdateAdminApiV1AdminAdminsAdminIdPatchResponse = UpdateAdminApiV1Ad
 
 export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData = {
     body: StatusUpdateIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Admin Id
@@ -3107,12 +3391,6 @@ export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchResponse = SetAdminS
 
 export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutData = {
     body: PasswordResetIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Admin Id
@@ -3143,12 +3421,6 @@ export type ResetAdminPasswordApiV1AdminAdminsAdminIdCredentialsPasswordPutRespo
 
 export type AssignAdminRolesApiV1AdminAdminsAdminIdRolesPutData = {
     body: AdminRoleAssignIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Admin Id
@@ -3218,12 +3490,6 @@ export type ListAdminSessionsApiV1AdminAdminsAdminIdSessionsGetResponse = ListAd
 
 export type RevokeAllAdminSessionsApiV1AdminAdminsAdminIdSessionsRevokeAllPostData = {
     body?: never;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Admin Id
@@ -3311,14 +3577,58 @@ export type CreateRoleApiV1AdminRolesPostResponses = {
 
 export type CreateRoleApiV1AdminRolesPostResponse = CreateRoleApiV1AdminRolesPostResponses[keyof CreateRoleApiV1AdminRolesPostResponses];
 
+export type SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchData = {
+    body: RoleBulkStatusUpdateIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/roles/status/batch';
+};
+
+export type SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchError = SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchErrors[keyof SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchErrors];
+
+export type SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelBatchActionResult;
+};
+
+export type SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponse = SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponses[keyof SetRoleStatusBulkApiV1AdminRolesStatusBatchPatchResponses];
+
+export type DeleteRolesBulkApiV1AdminRolesBatchDeleteData = {
+    body: RoleBulkDeleteIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/roles/batch';
+};
+
+export type DeleteRolesBulkApiV1AdminRolesBatchDeleteErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteRolesBulkApiV1AdminRolesBatchDeleteError = DeleteRolesBulkApiV1AdminRolesBatchDeleteErrors[keyof DeleteRolesBulkApiV1AdminRolesBatchDeleteErrors];
+
+export type DeleteRolesBulkApiV1AdminRolesBatchDeleteResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelBatchActionResult;
+};
+
+export type DeleteRolesBulkApiV1AdminRolesBatchDeleteResponse = DeleteRolesBulkApiV1AdminRolesBatchDeleteResponses[keyof DeleteRolesBulkApiV1AdminRolesBatchDeleteResponses];
+
 export type DeleteRoleApiV1AdminRolesRoleIdDeleteData = {
     body?: never;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Role Id
@@ -3379,12 +3689,6 @@ export type GetRoleApiV1AdminRolesRoleIdGetResponse = GetRoleApiV1AdminRolesRole
 
 export type UpdateRoleApiV1AdminRolesRoleIdPatchData = {
     body: RoleUpdateIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Role Id
@@ -3415,12 +3719,6 @@ export type UpdateRoleApiV1AdminRolesRoleIdPatchResponse = UpdateRoleApiV1AdminR
 
 export type AssignRolePermissionsApiV1AdminRolesRoleIdPermissionsPutData = {
     body: RolePermissionAssignIn;
-    headers?: {
-        /**
-         * X-Admin-Confirmation
-         */
-        'X-Admin-Confirmation'?: string | null;
-    };
     path: {
         /**
          * Role Id

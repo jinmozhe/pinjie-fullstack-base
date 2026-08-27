@@ -34,7 +34,16 @@ from app.db.models import (
     UserSession,
 )
 from app.db.transaction import transaction_scope
-from app.domains.admin.schemas import AdminBulkStatusUpdateIn, AdminUpdateIn, RolePermissionAssignIn
+from app.domains.admin.schemas import (
+    AdminBulkStatusUpdateIn,
+    AdminUpdateIn,
+    RoleBulkDeleteIn,
+    RoleBulkStatusUpdateIn,
+    RolePermissionAssignIn,
+    UserBulkDeleteIn,
+    UserBulkStatusUpdateIn,
+    UserRestoreBatchIn,
+)
 from app.domains.auth.schemas import UserRegisterIn
 from app.services.admin_management import AdminManagementService
 from app.services.authentication import WebAuthService
@@ -78,6 +87,25 @@ def test_admin_bulk_status_rejects_duplicate_ids() -> None:
 
     with pytest.raises(ValidationError):
         AdminBulkStatusUpdateIn(admin_ids=[admin_id, admin_id], is_active=False)
+
+
+@pytest.mark.parametrize(
+    ("schema", "field_name"),
+    [
+        (UserBulkDeleteIn, "user_ids"),
+        (UserBulkStatusUpdateIn, "user_ids"),
+        (RoleBulkDeleteIn, "role_ids"),
+        (RoleBulkStatusUpdateIn, "role_ids"),
+    ],
+)
+def test_bulk_action_schemas_reject_duplicate_ids(schema, field_name: str) -> None:
+    target_id = new_uuid7()
+    payload: dict[str, object] = {field_name: [target_id, target_id]}
+    if schema in {UserBulkStatusUpdateIn, RoleBulkStatusUpdateIn}:
+        payload["is_active"] = False
+
+    with pytest.raises(ValidationError):
+        schema.model_validate(payload)
 
 
 @pytest.mark.integration
@@ -533,6 +561,253 @@ async def test_admin_avatar_and_bulk_status_are_atomic_and_audited() -> None:
                         updated_at=updated_at,
                     )
                 )
+        await resources.close()
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_user_and_role_bulk_lifecycle_operations_are_atomic_and_audited() -> None:
+    database_url = os.getenv("TEST_DATABASE_URL")
+    if not database_url:
+        pytest.fail("TEST_DATABASE_URL is required for admin management integration tests")
+    settings = Settings(
+        ENVIRONMENT="local",
+        DATABASE_URL=database_url,
+        TEST_DATABASE_URL=database_url,
+        REDIS_MODE="disabled",
+        **{key: value for key, value in TEST_SECRETS.items() if "REDIS" not in key},
+    )
+    resources = create_resources(settings)
+    actor_id = new_uuid7()
+    admin_id = new_uuid7()
+    user_ids = [new_uuid7(), new_uuid7()]
+    user_session_ids = [new_uuid7(), new_uuid7()]
+    admin_session_id = new_uuid7()
+    assigned_role_id = new_uuid7()
+    unused_role_ids = [new_uuid7(), new_uuid7()]
+    request_ids: list[str] = []
+    now = datetime.now(UTC)
+
+    def service(session: AsyncSession) -> AdminManagementService:
+        metadata = _request_metadata()
+        request_ids.append(metadata.request_id)
+        return AdminManagementService(
+            session=session,
+            session_factory=resources.session_factory,
+            settings=settings,
+            password_manager=resources.password_manager,
+            metadata=metadata,
+            actor_id=actor_id,
+        )
+
+    try:
+        async with resources.session_factory() as session, transaction_scope(session):
+            assigned_role = Role(
+                id=assigned_role_id,
+                code=f"assigned-{assigned_role_id.hex[-12:]}",
+                name="Assigned Role",
+                is_active=True,
+            )
+            session.add_all(
+                [
+                    Admin(
+                        id=actor_id,
+                        username=f"lifecycle-actor-{actor_id.hex[-12:]}",
+                        display_name="Lifecycle Actor",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        is_superuser=False,
+                        credential_version=1,
+                    ),
+                    Admin(
+                        id=admin_id,
+                        username=f"lifecycle-admin-{admin_id.hex[-12:]}",
+                        display_name="Lifecycle Admin",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        is_superuser=False,
+                        credential_version=1,
+                        roles=[assigned_role],
+                    ),
+                    assigned_role,
+                    *[
+                        Role(
+                            id=role_id,
+                            code=f"unused-{role_id.hex[-12:]}",
+                            name=f"Unused Role {index}",
+                            is_active=True,
+                        )
+                        for index, role_id in enumerate(unused_role_ids)
+                    ],
+                ]
+            )
+            for index, user_id in enumerate(user_ids):
+                session.add(
+                    User(
+                        id=user_id,
+                        username=f"lifecycle-user-{user_id.hex[-12:]}",
+                        email=f"lifecycle-{user_id.hex[-12:]}@example.com",
+                        display_name=f"Lifecycle User {index}",
+                        password_hash="not-used-by-this-test",
+                        is_active=True,
+                        credential_version=1,
+                    )
+                )
+                session.add(
+                    UserSession(
+                        id=user_session_ids[index],
+                        user_id=user_id,
+                        family_id=new_uuid7(),
+                        credential_profile="browser_cookie",
+                        client_id="pinjie-web",
+                        csrf_digest="a" * 64,
+                        last_seen_at=now,
+                        idle_expires_at=now + timedelta(days=7),
+                        absolute_expires_at=now + timedelta(days=30),
+                    )
+                )
+            session.add(
+                AdminSession(
+                    id=admin_session_id,
+                    admin_id=admin_id,
+                    family_id=new_uuid7(),
+                    credential_profile="browser_cookie",
+                    client_id="pinjie-admin",
+                    csrf_digest="b" * 64,
+                    last_seen_at=now,
+                    idle_expires_at=now + timedelta(days=7),
+                    absolute_expires_at=now + timedelta(days=30),
+                )
+            )
+
+        async with resources.session_factory() as current_session:
+            result = await service(current_session).set_user_status_bulk(
+                UserBulkStatusUpdateIn(user_ids=list(reversed(user_ids)), is_active=False)
+            )
+            assert result.completed_count == 2
+            assert result.target_ids == sorted(user_ids)
+
+        async with resources.session_factory() as session:
+            stored_users = list((await session.scalars(select(User).where(User.id.in_(user_ids)))).all())
+            stored_sessions = list(
+                (await session.scalars(select(UserSession).where(UserSession.id.in_(user_session_ids)))).all()
+            )
+            assert all(not user.is_active and user.credential_version == 2 for user in stored_users)
+            assert all(
+                item.revoked_at is not None and item.revoke_reason == "account_status_changed"
+                for item in stored_sessions
+            )
+
+        async with resources.session_factory() as current_session:
+            result = await service(current_session).delete_users_bulk(UserBulkDeleteIn(user_ids=user_ids))
+            assert result.completed_count == 2
+            assert result.target_ids == sorted(user_ids)
+
+        async with resources.session_factory() as session:
+            deleted_users = list((await session.scalars(select(User).where(User.id.in_(user_ids)))).all())
+            assert all(
+                user.username.startswith("lifecycle-user-")
+                and user.email is not None
+                and user.display_name is not None
+                and not user.is_active
+                and user.credential_version == 3
+                and user.deleted_at is not None
+                and user.deleted_by_admin_id == actor_id
+                and user.deletion_reason == "admin_deleted"
+                and user.anonymized_at is None
+                for user in deleted_users
+            )
+
+        async with resources.session_factory() as current_session:
+            restored = await service(current_session).restore_user(user_ids[0])
+            assert restored.id == user_ids[0]
+            assert not restored.is_active
+            assert restored.deleted_at is None
+
+        async with resources.session_factory() as current_session:
+            result = await service(current_session).restore_users_bulk(UserRestoreBatchIn(user_ids=[user_ids[1]]))
+            assert result.completed_count == 1
+            assert result.target_ids == [user_ids[1]]
+
+        async with resources.session_factory() as session:
+            restored_users = list((await session.scalars(select(User).where(User.id.in_(user_ids)))).all())
+            assert all(
+                not user.is_active
+                and user.credential_version == 4
+                and user.deleted_at is None
+                and user.deleted_by_admin_id is None
+                and user.deletion_reason is None
+                and user.anonymized_at is None
+                for user in restored_users
+            )
+
+        async with resources.session_factory() as current_session:
+            result = await service(current_session).set_role_status_bulk(
+                RoleBulkStatusUpdateIn(role_ids=[assigned_role_id], is_active=False)
+            )
+            assert result.completed_count == 1
+            assert result.target_ids == [assigned_role_id]
+
+        async with resources.session_factory() as session:
+            stored_admin = await session.get(Admin, admin_id)
+            stored_admin_session = await session.get(AdminSession, admin_session_id)
+            stored_role = await session.get(Role, assigned_role_id)
+            assert stored_admin is not None and stored_admin.credential_version == 2
+            assert stored_admin_session is not None
+            assert stored_admin_session.revoked_at is not None
+            assert stored_admin_session.revoke_reason == "role_status_changed"
+            assert stored_role is not None and not stored_role.is_active
+
+        async with resources.session_factory() as current_session:
+            with pytest.raises(AppException) as blocked_exc:
+                await service(current_session).delete_roles_bulk(
+                    RoleBulkDeleteIn(role_ids=[assigned_role_id, unused_role_ids[0]])
+                )
+            assert blocked_exc.value.code == ErrorCode.STATE_CONFLICT
+
+        async with resources.session_factory() as session:
+            remaining_roles = list(
+                (await session.scalars(select(Role).where(Role.id.in_([assigned_role_id, *unused_role_ids])))).all()
+            )
+            denied_audit = await session.scalar(select(AuditEvent).where(AuditEvent.request_id == request_ids[-1]))
+            assert {role.id for role in remaining_roles} == {assigned_role_id, *unused_role_ids}
+            assert denied_audit is not None and denied_audit.result == "denied"
+
+        async with resources.session_factory() as current_session:
+            result = await service(current_session).delete_roles_bulk(
+                RoleBulkDeleteIn(role_ids=list(reversed(unused_role_ids)))
+            )
+            assert result.completed_count == 2
+            assert result.target_ids == sorted(unused_role_ids)
+
+        async with resources.session_factory() as session:
+            assert await session.scalar(select(func.count()).select_from(Role).where(Role.id.in_(unused_role_ids))) == 0
+            succeeded_audits = list(
+                (
+                    await session.scalars(
+                        select(AuditEvent).where(
+                            AuditEvent.request_id.in_(request_ids),
+                            AuditEvent.result == "succeeded",
+                        )
+                    )
+                ).all()
+            )
+            assert {event.action for event in succeeded_audits} == {
+                "users:status:update-bulk",
+                "users:delete-bulk",
+                "users:restore",
+                "users:restore-bulk",
+                "roles:status:update-bulk",
+                "roles:delete-bulk",
+            }
+    finally:
+        async with resources.session_factory() as session, transaction_scope(session):
+            await session.execute(delete(UserSession).where(UserSession.id.in_(user_session_ids)))
+            await session.execute(delete(AdminSession).where(AdminSession.id == admin_session_id))
+            await session.execute(delete(AuditEvent).where(AuditEvent.actor_id == actor_id))
+            await session.execute(delete(Admin).where(Admin.id.in_([actor_id, admin_id])))
+            await session.execute(delete(Role).where(Role.id.in_([assigned_role_id, *unused_role_ids])))
+            await session.execute(delete(User).where(User.id.in_(user_ids)))
         await resources.close()
 
 

@@ -1,31 +1,40 @@
 import type {
   AdminAuthSessionOut,
   AdminBulkStatusUpdateIn,
-  AdminConfirmOut,
   AdminCreateIn,
   AdminLoginIn,
   AdminProfileUpdateIn,
   AdminRead,
+  AdminUserRead,
   AdminUpdateIn,
+  AssetBulkDeleteIn,
+  AssetBulkDeleteResult,
   AssetRead,
-  ConfirmationAction,
+  BatchActionResult,
   PageResultSessionRead,
   PageResultAdminRead,
   PageResultAuditEventRead,
+  PageResultAssetRead,
   PageResultLoginEventRead,
   PageResultRequestLogRead,
   PageResultRoleRead,
-  PageResultUserPrincipalOut,
+  PageResultAdminUserRead,
   PermissionRead,
   RoleCreateIn,
+  RoleBulkDeleteIn,
+  RoleBulkStatusUpdateIn,
   RoleRead,
   RefreshSessionOut,
   RolePermissionAssignIn,
   RoleUpdateIn,
   StatusUpdateIn,
   UserUpdateIn,
+  UserBulkDeleteIn,
+  UserBulkStatusUpdateIn,
   UserPrincipalOut,
+  UserRestoreBatchIn,
   UploadScene,
+  UploaderType,
 } from "@pinjie/api-client";
 
 import { apiRequest, jsonBody } from "./http";
@@ -48,104 +57,138 @@ export const adminApi = {
     body.set("scene", scene);
     return apiRequest<AssetRead>("/api/v1/assets/upload", { method: "POST", body });
   },
+  assets: ({ page, search, scene, uploaderType }: { page: number; search?: string; scene?: UploadScene; uploaderType?: UploaderType }) => {
+    const query = new URLSearchParams({ page: String(page), page_size: "20" });
+    if (search) query.set("search", search);
+    if (scene) query.set("scene", scene);
+    if (uploaderType) query.set("uploader_type", uploaderType);
+    return apiRequest<PageResultAssetRead>(`/api/v1/assets?${query}`);
+  },
+  deleteAsset: (id: string) =>
+    apiRequest<boolean>(`/api/v1/assets/${id}`, { method: "DELETE" }),
+  deleteAssetsBulk: (input: AssetBulkDeleteIn) =>
+    apiRequest<AssetBulkDeleteResult>(
+      "/api/v1/assets/batch",
+      { method: "DELETE", body: jsonBody(input) },
+    ),
   logout: () => apiRequest<boolean>("/api/v1/admin/auth/logout", { method: "POST" }, { retryAuth: false }),
-  confirm: (action: ConfirmationAction, currentPassword: string) =>
-    apiRequest<AdminConfirmOut>("/api/v1/admin/auth/confirm", {
-      method: "POST",
-      body: jsonBody({ action, current_password: currentPassword }),
-    }),
   changePassword: (currentPassword: string, newPassword: string) =>
     apiRequest<RefreshSessionOut>("/api/v1/admin/auth/password", {
       method: "POST",
       body: jsonBody({ current_password: currentPassword, new_password: newPassword }),
     }),
-  users: (page: number, search?: string) => {
+  users: ({
+    page,
+    search,
+    lifecycle,
+  }: {
+    page: number;
+    search?: string;
+    lifecycle: "all" | "active" | "inactive" | "deleted";
+  }) => {
     const query = new URLSearchParams({ page: String(page), page_size: "20" });
     if (search) query.set("search", search);
-    return apiRequest<PageResultUserPrincipalOut>(`/api/v1/admin/users?${query}`);
+    query.set("lifecycle", lifecycle);
+    return apiRequest<PageResultAdminUserRead>(`/api/v1/admin/users?${query}`);
   },
   updateUser: (id: string, input: UserUpdateIn) =>
     apiRequest<UserPrincipalOut>(`/api/v1/admin/users/${id}`, { method: "PATCH", body: jsonBody(input) }),
-  setUserStatus: (id: string, isActive: boolean, confirmationToken?: string) =>
+  setUserStatus: (id: string, isActive: boolean) =>
     apiRequest<UserPrincipalOut>(
       `/api/v1/admin/users/${id}/status`,
       { method: "PATCH", body: jsonBody({ is_active: isActive } satisfies StatusUpdateIn) },
-      { confirmationToken },
     ),
-  resetUserPassword: (id: string, newPassword: string, confirmationToken: string) =>
+  setUserStatusBulk: (input: UserBulkStatusUpdateIn) =>
+    apiRequest<BatchActionResult>(
+      "/api/v1/admin/users/status/batch",
+      { method: "PATCH", body: jsonBody(input) },
+    ),
+  deleteUsersBulk: (input: UserBulkDeleteIn) =>
+    apiRequest<BatchActionResult>(
+      "/api/v1/admin/users/batch",
+      { method: "DELETE", body: jsonBody(input) },
+    ),
+  restoreUser: (id: string) =>
+    apiRequest<AdminUserRead>(`/api/v1/admin/users/${id}/restore`, { method: "POST" }),
+  restoreUsersBulk: (input: UserRestoreBatchIn) =>
+    apiRequest<BatchActionResult>(
+      "/api/v1/admin/users/restore/batch",
+      { method: "POST", body: jsonBody(input) },
+    ),
+  resetUserPassword: (id: string, newPassword: string) =>
     apiRequest<{ completed?: boolean }>(
       `/api/v1/admin/users/${id}/credentials/password`,
       { method: "PUT", body: jsonBody({ new_password: newPassword }) },
-      { confirmationToken },
     ),
   userSessions: (id: string, page = 1) =>
     apiRequest<PageResultSessionRead>(`/api/v1/admin/users/${id}/sessions?page=${page}&page_size=20`),
-  revokeUserSessions: (id: string, confirmationToken: string) =>
+  revokeUserSessions: (id: string) =>
     apiRequest<{ completed?: boolean }>(
       `/api/v1/admin/users/${id}/sessions/revoke-all`,
       { method: "POST" },
-      { confirmationToken },
     ),
   admins: (page: number) => apiRequest<PageResultAdminRead>(`/api/v1/admin/admins?page=${page}&page_size=20`),
-  createAdmin: (input: AdminCreateIn, confirmationToken: string) =>
-    apiRequest<AdminRead>("/api/v1/admin/admins", { method: "POST", body: jsonBody(input) }, { confirmationToken }),
-  updateAdmin: (id: string, input: AdminUpdateIn, confirmationToken?: string) =>
+  createAdmin: (input: AdminCreateIn) =>
+    apiRequest<AdminRead>("/api/v1/admin/admins", { method: "POST", body: jsonBody(input) }),
+  updateAdmin: (id: string, input: AdminUpdateIn) =>
     apiRequest<AdminRead>(
       `/api/v1/admin/admins/${id}`,
       { method: "PATCH", body: jsonBody(input) },
-      { confirmationToken },
     ),
-  setAdminStatus: (id: string, isActive: boolean, confirmationToken: string) =>
+  setAdminStatus: (id: string, isActive: boolean) =>
     apiRequest<AdminRead>(
       `/api/v1/admin/admins/${id}/status`,
       { method: "PATCH", body: jsonBody({ is_active: isActive } satisfies StatusUpdateIn) },
-      { confirmationToken },
     ),
-  setAdminStatusBulk: (input: AdminBulkStatusUpdateIn, confirmationToken: string) =>
+  setAdminStatusBulk: (input: AdminBulkStatusUpdateIn) =>
     apiRequest<AdminRead[]>(
       "/api/v1/admin/admins/status/batch",
       { method: "PATCH", body: jsonBody(input) },
-      { confirmationToken },
     ),
-  resetAdminPassword: (id: string, newPassword: string, confirmationToken: string) =>
+  resetAdminPassword: (id: string, newPassword: string) =>
     apiRequest<{ completed?: boolean }>(
       `/api/v1/admin/admins/${id}/credentials/password`,
       { method: "PUT", body: jsonBody({ new_password: newPassword }) },
-      { confirmationToken },
     ),
-  assignAdminRoles: (id: string, roleIds: string[], confirmationToken: string) =>
+  assignAdminRoles: (id: string, roleIds: string[]) =>
     apiRequest<AdminRead>(
       `/api/v1/admin/admins/${id}/roles`,
       { method: "PUT", body: jsonBody({ role_ids: roleIds }) },
-      { confirmationToken },
     ),
   adminSessions: (id: string, page = 1) =>
     apiRequest<PageResultSessionRead>(`/api/v1/admin/admins/${id}/sessions?page=${page}&page_size=20`),
-  revokeAdminSessions: (id: string, confirmationToken: string) =>
+  revokeAdminSessions: (id: string) =>
     apiRequest<{ completed?: boolean }>(
       `/api/v1/admin/admins/${id}/sessions/revoke-all`,
       { method: "POST" },
-      { confirmationToken },
     ),
   roles: (page = 1) => apiRequest<PageResultRoleRead>(`/api/v1/admin/roles?page=${page}&page_size=100`),
   createRole: (input: RoleCreateIn) =>
     apiRequest<RoleRead>("/api/v1/admin/roles", { method: "POST", body: jsonBody(input) }),
-  updateRole: (id: string, input: RoleUpdateIn, confirmationToken?: string) =>
+  updateRole: (id: string, input: RoleUpdateIn) =>
     apiRequest<RoleRead>(
       `/api/v1/admin/roles/${id}`,
       { method: "PATCH", body: jsonBody(input) },
-      { confirmationToken },
     ),
-  deleteRole: (id: string, confirmationToken: string) =>
-    apiRequest<{ completed?: boolean }>(`/api/v1/admin/roles/${id}`, { method: "DELETE" }, { confirmationToken }),
-  assignPermissions: (id: string, permissionCodes: string[], confirmationToken: string) =>
+  deleteRole: (id: string) =>
+    apiRequest<{ completed?: boolean }>(`/api/v1/admin/roles/${id}`, { method: "DELETE" }),
+  setRoleStatusBulk: (input: RoleBulkStatusUpdateIn) =>
+    apiRequest<BatchActionResult>(
+      "/api/v1/admin/roles/status/batch",
+      { method: "PATCH", body: jsonBody(input) },
+    ),
+  deleteRolesBulk: (input: RoleBulkDeleteIn) =>
+    apiRequest<BatchActionResult>(
+      "/api/v1/admin/roles/batch",
+      { method: "DELETE", body: jsonBody(input) },
+    ),
+  assignPermissions: (id: string, permissionCodes: string[]) =>
     apiRequest<RoleRead>(
       `/api/v1/admin/roles/${id}/permissions`,
       {
         method: "PUT",
         body: jsonBody({ permission_codes: permissionCodes } satisfies RolePermissionAssignIn),
       },
-      { confirmationToken },
     ),
   permissions: () => apiRequest<PermissionRead[]>("/api/v1/admin/permissions"),
   loginEvents: (page = 1) => apiRequest<PageResultLoginEventRead>(`/api/v1/admin/security/login-events?page=${page}&page_size=20`),

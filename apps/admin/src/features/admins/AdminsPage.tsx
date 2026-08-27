@@ -1,4 +1,4 @@
-import type { AdminCreateIn, AdminRead, AdminUpdateIn, ConfirmationAction } from "@pinjie/api-client";
+import type { AdminCreateIn, AdminRead, AdminUpdateIn } from "@pinjie/api-client";
 import {
   CheckCircleOutlined,
   EditOutlined,
@@ -36,11 +36,10 @@ import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
 import { AvatarUploader } from "@/components/Uploader";
-import { ConfirmActionModal, canAccess, useCurrentAdmin } from "@/features/auth";
+import { canAccess, useCurrentAdmin } from "@/features/auth";
 import { adminApi } from "@/lib/api/admin";
 import { errorMessage } from "@/lib/api/http";
 
-type Confirmation = { action: ConfirmationAction; title: string; execute: (token: string) => Promise<void> };
 type PasswordFormValues = { new_password: string; confirm_password: string };
 
 function fallbackAvatarText(admin: AdminRead) {
@@ -58,7 +57,6 @@ export function AdminsPage() {
   const [sessionTarget, setSessionTarget] = useState<AdminRead | null>(null);
   const [sessionPage, setSessionPage] = useState(1);
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
-  const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [createForm] = Form.useForm<AdminCreateIn>();
   const [editForm] = Form.useForm<AdminUpdateIn>();
   const [roleForm] = Form.useForm<{ role_ids: string[] }>();
@@ -77,17 +75,13 @@ export function AdminsPage() {
     enabled: Boolean(sessionTarget) && canReadSessions,
   });
   const invalidate = async () => queryClient.invalidateQueries({ queryKey: ["admins"] });
-  const begin = (action: ConfirmationAction, title: string, execute: (token: string) => Promise<void>) =>
-    setConfirmation({ action, title, execute });
   const create = useMutation({
-    mutationFn: async (values: AdminCreateIn) => {
-      begin("admins:create", "确认创建管理员", async (token) => {
-        await adminApi.createAdmin(values, token);
-        message.success("管理员已创建");
-        setCreating(false);
-        createForm.resetFields();
-        await invalidate();
-      });
+    mutationFn: (values: AdminCreateIn) => adminApi.createAdmin(values),
+    onSuccess: async () => {
+      message.success("管理员已创建");
+      setCreating(false);
+      createForm.resetFields();
+      await invalidate();
     },
   });
   const edit = useMutation({
@@ -101,6 +95,59 @@ export function AdminsPage() {
       editForm.resetFields();
       await invalidate();
     },
+  });
+  const batchStatusMutation = useMutation({
+    mutationFn: ({ adminIds, isActive }: { adminIds: string[]; isActive: boolean }) =>
+      adminApi.setAdminStatusBulk({ admin_ids: adminIds, is_active: isActive }),
+    onSuccess: async (_result, { adminIds, isActive }) => {
+      message.success(`已批量${isActive ? "启用" : "停用"} ${adminIds.length} 名管理员`);
+      setSelectedRowKeys([]);
+      await invalidate();
+    },
+  });
+  const statusMutation = useMutation({
+    mutationFn: ({ adminId, isActive }: { adminId: string; isActive: boolean }) =>
+      adminApi.setAdminStatus(adminId, isActive),
+    onSuccess: async () => {
+      message.success("管理员状态已更新");
+      await invalidate();
+    },
+    onError: (error) => message.error(errorMessage(error)),
+  });
+  const superuserMutation = useMutation({
+    mutationFn: ({ adminId, isSuperuser }: { adminId: string; isSuperuser: boolean }) =>
+      adminApi.updateAdmin(adminId, { is_superuser: isSuperuser }),
+    onSuccess: async () => {
+      message.success("管理员身份已更新，相关会话已撤销");
+      await invalidate();
+    },
+    onError: (error) => message.error(errorMessage(error)),
+  });
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ adminId, newPassword }: { adminId: string; newPassword: string }) =>
+      adminApi.resetAdminPassword(adminId, newPassword),
+    onSuccess: () => {
+      message.success("密码已重置，历史会话已撤销");
+      setPasswordTarget(null);
+      passwordForm.resetFields();
+    },
+  });
+  const assignRolesMutation = useMutation({
+    mutationFn: ({ adminId, roleIds }: { adminId: string; roleIds: string[] }) =>
+      adminApi.assignAdminRoles(adminId, roleIds),
+    onSuccess: async () => {
+      message.success("角色已更新，相关会话已撤销");
+      setRoleTarget(null);
+      await invalidate();
+    },
+  });
+  const revokeSessionsMutation = useMutation({
+    mutationFn: (adminId: string) => adminApi.revokeAdminSessions(adminId),
+    onSuccess: async () => {
+      message.success("会话已撤销");
+      await sessions.refetch();
+    },
+    onError: (error) => message.error(errorMessage(error)),
   });
 
   const closeEdit = () => {
@@ -117,16 +164,9 @@ export function AdminsPage() {
 
   const beginBulkStatusChange = (isActive: boolean) => {
     const adminIds = [...selectedRowKeys];
-    begin(
-      "admins:status:change",
-      `${isActive ? "启用" : "停用"}选中的 ${adminIds.length} 名管理员`,
-      async (token) => {
-        await adminApi.setAdminStatusBulk({ admin_ids: adminIds, is_active: isActive }, token);
-        message.success(`已批量${isActive ? "启用" : "停用"} ${adminIds.length} 名管理员`);
-        setSelectedRowKeys([]);
-        await invalidate();
-      },
-    );
+    void batchStatusMutation
+      .mutateAsync({ adminIds, isActive })
+      .catch((error: unknown) => message.error(errorMessage(error)));
   };
 
   const moreMenu = (admin: AdminRead): MenuProps => {
@@ -149,12 +189,7 @@ export function AdminsPage() {
         danger: admin.is_active,
         icon: admin.is_active ? <StopOutlined /> : <CheckCircleOutlined />,
         label: admin.is_active ? "停用" : "启用",
-        onClick: () =>
-          begin("admins:status:change", `${admin.is_active ? "停用" : "启用"}管理员`, async (token) => {
-            await adminApi.setAdminStatus(admin.id, !admin.is_active, token);
-            message.success("管理员状态已更新");
-            await invalidate();
-          }),
+        onClick: () => statusMutation.mutate({ adminId: admin.id, isActive: !admin.is_active }),
       });
     }
     return { items };
@@ -182,17 +217,8 @@ export function AdminsPage() {
           size="small"
           aria-label={`${admin.is_superuser ? "取消" : "设为"}超级管理员：${admin.username}`}
           style={{ height: "auto", padding: 0 }}
-          onClick={() =>
-            begin(
-              "admins:superuser:change",
-              `${admin.is_superuser ? "取消" : "设为"}超级管理员`,
-              async (token) => {
-                await adminApi.updateAdmin(admin.id, { is_superuser: !admin.is_superuser }, token);
-                message.success("管理员身份已更新，相关会话已撤销");
-                await invalidate();
-              },
-            )
-          }
+          loading={superuserMutation.isPending && superuserMutation.variables?.adminId === admin.id}
+          onClick={() => superuserMutation.mutate({ adminId: admin.id, isSuperuser: !admin.is_superuser })}
         >
           {tag}
         </Button>
@@ -205,7 +231,6 @@ export function AdminsPage() {
       <QueryState
         loading={admins.isLoading}
         error={admins.isError ? errorMessage(admins.error) : undefined}
-        empty={admins.data?.items.length === 0}
         onRetry={() => void admins.refetch()}
       />
       {admins.data && (
@@ -239,10 +264,23 @@ export function AdminsPage() {
           tableAlertRender={({ selectedRowKeys: keys }) => <span>已选择 {keys.length} 项</span>}
           tableAlertOptionRender={({ onCleanSelected }) => (
             <Space size={8} wrap={false}>
-              <Button size="small" icon={<CheckCircleOutlined />} onClick={() => beginBulkStatusChange(true)}>
+              <Button
+                size="small"
+                icon={<CheckCircleOutlined />}
+                disabled={batchStatusMutation.isPending}
+                loading={batchStatusMutation.isPending && batchStatusMutation.variables?.isActive}
+                onClick={() => beginBulkStatusChange(true)}
+              >
                 批量启用
               </Button>
-              <Button size="small" danger icon={<StopOutlined />} onClick={() => beginBulkStatusChange(false)}>
+              <Button
+                size="small"
+                danger
+                icon={<StopOutlined />}
+                disabled={batchStatusMutation.isPending}
+                loading={batchStatusMutation.isPending && !batchStatusMutation.variables?.isActive}
+                onClick={() => beginBulkStatusChange(false)}
+              >
                 批量停用
               </Button>
               <Button type="link" size="small" onClick={onCleanSelected}>
@@ -374,7 +412,7 @@ export function AdminsPage() {
         />
       )}
 
-      <Modal open={creating} title="新建管理员" okText="下一步" onCancel={() => setCreating(false)} onOk={() => createForm.submit()}>
+      <Modal open={creating} title="新建管理员" okText="保存" confirmLoading={create.isPending} onCancel={() => setCreating(false)} onOk={() => createForm.submit()}>
         {create.isError && <Alert type="error" showIcon title={errorMessage(create.error)} />}
         <Form<AdminCreateIn> form={createForm} layout="vertical" initialValues={{ is_active: true, is_superuser: false, role_ids: [] }} onFinish={(values) => create.mutate(values)}>
           <Form.Item label="用户名" name="username" rules={[{ required: true }, { min: 3 }]}><Input autoComplete="off" /></Form.Item>
@@ -399,42 +437,33 @@ export function AdminsPage() {
         </Form>
       </Drawer>
 
-      <Modal open={Boolean(passwordTarget)} title={passwordTarget ? `重置密码：${passwordTarget.username}` : "重置密码"} okText="下一步" destroyOnHidden onCancel={() => { setPasswordTarget(null); passwordForm.resetFields(); }} onOk={() => passwordForm.submit()}>
+      <Modal open={Boolean(passwordTarget)} title={passwordTarget ? `重置密码：${passwordTarget.username}` : "重置密码"} okText="确定" confirmLoading={resetPasswordMutation.isPending} destroyOnHidden onCancel={() => { setPasswordTarget(null); passwordForm.resetFields(); }} onOk={() => passwordForm.submit()}>
+        {resetPasswordMutation.isError && <Alert type="error" showIcon title={errorMessage(resetPasswordMutation.error)} />}
         <Form<PasswordFormValues> form={passwordForm} layout="vertical" onFinish={({ new_password }) => {
           const target = passwordTarget;
           if (!target) return;
-          setPasswordTarget(null);
-          passwordForm.resetFields();
-          begin("admins:credentials:reset", "确认重置管理员密码", async (token) => {
-            await adminApi.resetAdminPassword(target.id, new_password, token);
-            message.success("密码已重置，历史会话已撤销");
-          });
+          resetPasswordMutation.mutate({ adminId: target.id, newPassword: new_password });
         }}>
           <Form.Item label="新密码" name="new_password" rules={[{ required: true, message: "请输入新密码" }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
           <Form.Item label="确认新密码" name="confirm_password" dependencies={["new_password"]} rules={[{ required: true, message: "请再次输入新密码" }, ({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue("new_password") === value) return Promise.resolve(); return Promise.reject(new Error("两次输入的密码不一致")); } })]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
         </Form>
       </Modal>
 
-      <Modal open={Boolean(roleTarget)} title="分配角色" okText="下一步" onCancel={() => setRoleTarget(null)} onOk={() => roleForm.submit()}>
+      <Modal open={Boolean(roleTarget)} title="分配角色" okText="保存" confirmLoading={assignRolesMutation.isPending} onCancel={() => setRoleTarget(null)} onOk={() => roleForm.submit()}>
+        {assignRolesMutation.isError && <Alert type="error" showIcon title={errorMessage(assignRolesMutation.error)} />}
         <Form form={roleForm} layout="vertical" onFinish={({ role_ids }) => {
           const target = roleTarget;
           if (!target) return;
-          setRoleTarget(null);
-          begin("admins:roles:assign", "确认修改管理员角色", async (token) => {
-            await adminApi.assignAdminRoles(target.id, role_ids, token);
-            message.success("角色已更新，相关会话已撤销");
-            await invalidate();
-          });
+          assignRolesMutation.mutate({ adminId: target.id, roleIds: role_ids });
         }}><Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item></Form>
       </Modal>
 
-      <Drawer open={Boolean(sessionTarget)} styles={{ wrapper: { width: 560 } }} title={sessionTarget ? `${sessionTarget.username} 的会话` : "管理员会话"} onClose={() => { setSessionTarget(null); setSessionPage(1); }} extra={sessionTarget && canAccess(current, "admins:sessions:revoke") ? <Tooltip title={sessionTarget.id === current.id ? "不能在此处撤销自己的会话" : undefined}><span><Button danger disabled={sessionTarget.id === current.id} onClick={() => begin("admins:sessions:revoke", "撤销管理员全部会话", async (token) => { await adminApi.revokeAdminSessions(sessionTarget.id, token); message.success("会话已撤销"); await sessions.refetch(); })}>撤销全部</Button></span></Tooltip> : null}>
+      <Drawer open={Boolean(sessionTarget)} styles={{ wrapper: { width: 560 } }} title={sessionTarget ? `${sessionTarget.username} 的会话` : "管理员会话"} onClose={() => { setSessionTarget(null); setSessionPage(1); }} extra={sessionTarget && canAccess(current, "admins:sessions:revoke") ? <Tooltip title={sessionTarget.id === current.id ? "不能在此处撤销自己的会话" : undefined}><span><Button danger disabled={sessionTarget.id === current.id} loading={revokeSessionsMutation.isPending} onClick={() => revokeSessionsMutation.mutate(sessionTarget.id)}>撤销全部</Button></span></Tooltip> : null}>
         <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.items.length === 0} onRetry={() => void sessions.refetch()} />
         {sessions.data?.items.map((session) => <div className="session-row" key={session.id}><Flex justify="space-between"><Typography.Text strong>{session.device_name || "未知设备"}</Typography.Text>{session.revoked_at ? <Tag>已撤销</Tag> : <Tag color="success">有效</Tag>}</Flex><Typography.Text type="secondary">{session.ip_masked || "未知地址"} · {formatTime(session.last_seen_at)}</Typography.Text></div>)}
         {sessions.data && sessions.data.total_pages > 1 && <Pagination current={sessionPage} pageSize={sessions.data.page_size} total={sessions.data.total} showSizeChanger={false} onChange={setSessionPage} />}
       </Drawer>
 
-      {confirmation && <ConfirmActionModal action={confirmation.action} open title={confirmation.title} onCancel={() => setConfirmation(null)} onConfirmed={confirmation.execute} />}
     </PageFrame>
   );
 }

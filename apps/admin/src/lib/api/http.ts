@@ -75,7 +75,7 @@ async function refreshSession(): Promise<boolean> {
 export async function apiRequest<T>(
   path: string,
   init: RequestInit = {},
-  options: { retryAuth?: boolean; confirmationToken?: string } = {},
+  options: { retryAuth?: boolean } = {},
 ): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
@@ -86,8 +86,6 @@ export async function apiRequest<T>(
     const csrf = readCookie("pinjie_admin_csrf");
     if (csrf) headers.set("X-CSRF-Token", csrf);
   }
-  if (options.confirmationToken) headers.set("X-Admin-Confirmation", options.confirmationToken);
-
   const response = await fetch(`${API_BASE}${path}`, { ...init, method, headers, credentials: "include" });
   if (response.status === 401 && options.retryAuth !== false && !AUTH_RETRY_EXCLUDED.has(path)) {
     if (await refreshSession()) return apiRequest<T>(path, init, { ...options, retryAuth: false });

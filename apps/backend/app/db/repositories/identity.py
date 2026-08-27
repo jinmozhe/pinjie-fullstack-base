@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+from typing import Literal
 
 from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,17 +41,42 @@ class UserRepository:
             statement = statement.with_for_update()
         return (await self.session.execute(statement)).scalar_one_or_none()
 
+    async def get_many(self, user_ids: list[uuid.UUID], *, for_update: bool = False) -> list[User]:
+        if not user_ids:
+            return []
+        statement = select(User).where(User.id.in_(user_ids)).order_by(User.id)
+        if for_update:
+            statement = statement.with_for_update()
+        return list((await self.session.scalars(statement)).all())
+
     async def get_by_email(self, email: str) -> User | None:
         return (await self.session.execute(select(User).where(User.email == email))).scalar_one_or_none()
 
     def add(self, user: User) -> None:
         self.session.add(user)
 
-    async def list_users(self, *, page: int, page_size: int, search: str | None = None) -> tuple[list[User], int]:
-        filters: list[ColumnElement[bool]] = [User.deleted_at.is_(None)]
+    async def list_users(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        search: str | None = None,
+        lifecycle: Literal["all", "active", "inactive", "deleted"] = "all",
+    ) -> tuple[list[User], int]:
+        filters: list[ColumnElement[bool]] = []
+        if lifecycle == "all":
+            filters.append(User.deleted_at.is_(None))
+        elif lifecycle == "active":
+            filters.extend((User.deleted_at.is_(None), User.is_active.is_(True)))
+        elif lifecycle == "inactive":
+            filters.extend((User.deleted_at.is_(None), User.is_active.is_(False)))
+        elif lifecycle == "deleted":
+            filters.append(User.deleted_at.is_not(None))
         if search:
             pattern = f"%{search}%"
-            filters.append(or_(User.username.ilike(pattern), User.display_name.ilike(pattern)))
+            filters.append(
+                or_(User.username.ilike(pattern), User.display_name.ilike(pattern), User.email.ilike(pattern))
+            )
         total = int((await self.session.scalar(select(func.count()).select_from(User).where(*filters))) or 0)
         statement = (
             select(User)
@@ -142,6 +168,14 @@ class AdminRepository:
             statement = statement.with_for_update()
         return (await self.session.execute(statement)).scalar_one_or_none()
 
+    async def get_many_roles(self, role_ids: list[uuid.UUID], *, for_update: bool = False) -> list[Role]:
+        if not role_ids:
+            return []
+        statement = select(Role).where(Role.id.in_(role_ids)).options(selectinload(Role.permissions)).order_by(Role.id)
+        if for_update:
+            statement = statement.with_for_update()
+        return list((await self.session.scalars(statement)).unique().all())
+
     async def list_roles(self, *, page: int, page_size: int) -> tuple[list[Role], int]:
         total = int((await self.session.scalar(select(func.count()).select_from(Role))) or 0)
         statement = (
@@ -167,6 +201,29 @@ class AdminRepository:
 
         statement = select(func.count()).select_from(admin_roles).where(admin_roles.c.role_id == role_id)
         return int((await self.session.scalar(statement)) or 0)
+
+    async def role_ids_with_admins(self, role_ids: list[uuid.UUID]) -> set[uuid.UUID]:
+        if not role_ids:
+            return set()
+        from app.db.models import admin_roles
+
+        statement = select(admin_roles.c.role_id).where(admin_roles.c.role_id.in_(role_ids)).distinct()
+        return set((await self.session.scalars(statement)).all())
+
+    async def get_admins_by_roles(self, role_ids: list[uuid.UUID]) -> list[Admin]:
+        if not role_ids:
+            return []
+        from app.db.models import admin_roles
+
+        statement = (
+            select(Admin)
+            .join(admin_roles, Admin.id == admin_roles.c.admin_id)
+            .where(admin_roles.c.role_id.in_(role_ids))
+            .options(self._with_permissions())
+            .order_by(Admin.id)
+            .with_for_update()
+        )
+        return list((await self.session.scalars(statement)).unique().all())
 
     async def delete_role(self, role: Role) -> None:
         await self.session.delete(role)

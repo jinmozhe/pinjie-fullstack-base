@@ -150,7 +150,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=[
             "Accept",
             "Content-Type",
-            "X-Admin-Confirmation",
             "X-CSRF-Token",
             "X-Request-ID",
             "X-Trace-ID",

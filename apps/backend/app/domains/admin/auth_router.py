@@ -22,7 +22,7 @@ from app.domains.users.schemas import PasswordChangeIn
 from app.services.authentication import SessionArtifacts
 
 from .presenters import admin_read
-from .schemas import AdminAuthSessionOut, AdminConfirmIn, AdminConfirmOut, AdminLoginIn, AdminProfileUpdateIn, AdminRead
+from .schemas import AdminAuthSessionOut, AdminLoginIn, AdminProfileUpdateIn, AdminRead
 
 router = APIRouter(prefix="/admin/auth", tags=["管理员认证"])
 
@@ -163,22 +163,6 @@ async def change_password(
         request_id=current_request_id(),
         message="密码修改成功",
     )
-
-
-@router.post("/confirm", response_model=ResponseModel[AdminConfirmOut], summary="确认管理员敏感操作")
-async def confirm(
-    payload: AdminConfirmIn,
-    response: Response,
-    service: AdminAccountServiceDependency,
-    current: Annotated[CurrentAdmin, Depends(require_admin_csrf)],
-) -> ResponseModel[AdminConfirmOut]:
-    result = await service.create_confirmation(
-        admin=current.admin,
-        login_session=current.login_session,
-        payload=payload,
-    )
-    response.headers["Cache-Control"] = "no-store"
-    return success_response(data=result, request_id=current_request_id(), message="敏感操作确认成功")
 
 
 __all__ = ["router"]
