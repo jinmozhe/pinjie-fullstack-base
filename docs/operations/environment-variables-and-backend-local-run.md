@@ -67,7 +67,7 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `WEB_ORIGINS` 与 `ADMIN_ORIGINS`
 - `WEB_JWT_SECRET` 与 `ADMIN_JWT_SECRET`
 - `WEB_TOKEN_HMAC_KEY` 与 `ADMIN_TOKEN_HMAC_KEY`
-- `AUTH_COOKIE_SECURE`、注册模式、Token、Session 期限与 `SESSION_RETENTION_DAYS`
+- `AUTH_COOKIE_SECURE`、`REGISTRATION_MODE`、Token、Session 期限与 `SESSION_RETENTION_DAYS`
 - 请求元数据模式及安全日志保留期
 - Loguru 控制台与本地文件日志开关、路径、轮转大小和保留周期
 - `UPLOAD_STORAGE_DRIVER`、`UPLOAD_LOCAL_ROOT`、`UPLOAD_BASE_URL`
@@ -89,6 +89,8 @@ environment:
 该覆盖同时应用于 request-log-consumer。需要生产文件落盘时，必须修改 Compose 并提供明确的可写持久挂载、非 Root 权限、轮转和容量告警，不能只改 Backend `.env`。
 
 根 `.env` 决定启动哪个 Backend 镜像，`apps/backend/.env` 决定这个 Backend 容器如何连接数据库、Redis及如何运行。两者不能合并，避免部署版本和应用秘密形成同一职责边界。
+
+`REGISTRATION_MODE=open|closed` 只控制 Web 公开注册。设置为 `closed` 后，Backend 拒绝公开注册，Web 隐藏注册入口并阻止进入注册表单；具备 `users:create` 权限的管理员仍可在 Admin 用户管理中创建账户。新增权限进入目标环境前必须先运行权限目录 `--check`，经独立授权后执行 `--apply` 和角色分配。
 
 ### 3.3 Web `.env.local`
 

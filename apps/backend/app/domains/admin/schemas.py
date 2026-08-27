@@ -112,6 +112,37 @@ class AdminCreateIn(BaseModel):
         return normalize_username(value)
 
 
+class AdminUserCreateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    username: str = Field(description="普通用户登录用户名，长度为 3 至 50 个字符")
+    initial_password: str = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="初始密码，长度为 6 至 64 个字符",
+    )
+    display_name: str | None = Field(default=None, max_length=100, description="用户显示名称")
+    email: str | None = Field(default=None, max_length=320, description="用户邮箱，保存时规范化为小写")
+    is_active: bool = Field(default=True, description="是否允许用户登录")
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str) -> str:
+        return normalize_username(value)
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str | None) -> str | None:
+        normalized = value.strip().lower() if value else None
+        return normalized or None
+
+    @field_validator("display_name")
+    @classmethod
+    def normalize_display_name(cls, value: str | None) -> str | None:
+        normalized = value.strip() if value else None
+        return normalized or None
+
+
 class AdminUpdateIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -456,6 +487,7 @@ __all__ = [
     "AdminRead",
     "AdminRoleAssignIn",
     "AdminUpdateIn",
+    "AdminUserCreateIn",
     "AdminUserRead",
     "AuditEventPage",
     "AuditEventRead",

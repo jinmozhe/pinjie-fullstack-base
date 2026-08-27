@@ -69,6 +69,54 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
   });
 
+  it("creates a user with an administrator supplied initial password", async () => {
+    const user = userEvent.setup();
+    let createPayload: unknown;
+    server.use(
+      http.post("http://localhost:3000/api/v1/admin/users", async ({ request }) => {
+        createPayload = await request.json();
+        return HttpResponse.json({
+          code: "OK",
+          message: "用户创建成功",
+          data: {
+            id: "01900000-0000-7000-8000-000000000011",
+            username: "managed-user",
+            display_name: "Managed User",
+            email: "managed@example.com",
+            is_active: false,
+            created_at: now,
+            updated_at: now,
+            deleted_at: null,
+            deleted_by_id: null,
+            deleted_by_type: null,
+            deletion_reason: null,
+            can_restore: false,
+          },
+          request_id: "test-request",
+        });
+      }),
+    );
+    renderPage(<UsersPage />);
+
+    expect(await screen.findByText("Browser User")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /新建用户/ }));
+    await user.type(screen.getByLabelText("用户名"), "managed-user");
+    await user.type(screen.getByLabelText("显示名称"), "Managed User");
+    await user.type(screen.getByLabelText("邮箱"), "managed@example.com");
+    await user.type(screen.getByLabelText("初始密码"), "initial-password");
+    await user.type(screen.getByLabelText("确认初始密码"), "initial-password");
+    await user.click(screen.getByRole("checkbox", { name: "允许登录" }));
+    await user.click(screen.getByRole("button", { name: "创建" }));
+
+    await waitFor(() => expect(createPayload).toEqual({
+      username: "managed-user",
+      display_name: "Managed User",
+      email: "managed@example.com",
+      initial_password: "initial-password",
+      is_active: false,
+    }));
+  });
+
   it("executes user status, credential, and session operations without password confirmation", async () => {
     const user = userEvent.setup();
     renderPage(<UsersPage />);
@@ -598,7 +646,7 @@ describe("stage C admin workspace", () => {
   it("hides mutation controls from read-only administrators", async () => {
     const users = renderPage(<UsersPage />, restricted);
     expect(await screen.findByText("Browser User")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /编辑|停用|会话|重置密码/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /新建用户|编辑|停用|会话|重置密码/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     users.unmount();
 

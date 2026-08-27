@@ -1375,6 +1375,64 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "创建用户",
+        "description": "由具备独立权限的管理员创建普通用户账户，不受公开注册开关影响且不创建登录会话。",
+        "operationId": "create_user_api_v1_admin_users_post",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminUserCreateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminUserRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/admin/users/status/batch": {
@@ -3566,6 +3624,28 @@
         }
       }
     },
+    "/api/v1/system/capabilities": {
+      "get": {
+        "tags": [
+          "系统"
+        ],
+        "summary": "获取公共系统能力",
+        "description": "返回允许公开展示的最小功能开关，不暴露内部配置或安全信息。",
+        "operationId": "get_system_capabilities_api_v1_system_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_SystemCapabilitiesRead_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/system/status": {
       "get": {
         "tags": [
@@ -4047,6 +4127,61 @@
         "additionalProperties": false,
         "type": "object",
         "title": "AdminUpdateIn"
+      },
+      "AdminUserCreateIn": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username",
+            "description": "普通用户登录用户名，长度为 3 至 50 个字符"
+          },
+          "initial_password": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 6,
+            "title": "Initial Password",
+            "description": "初始密码，长度为 6 至 64 个字符"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "用户显示名称"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 320
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "用户邮箱，保存时规范化为小写"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active",
+            "description": "是否允许用户登录",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "initial_password"
+        ],
+        "title": "AdminUserCreateIn"
       },
       "AdminUserRead": {
         "properties": {
@@ -5906,6 +6041,38 @@
         ],
         "title": "ResponseModel[RoleRead]"
       },
+      "ResponseModel_SystemCapabilitiesRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SystemCapabilitiesRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[SystemCapabilitiesRead]"
+      },
       "ResponseModel_SystemOverviewRead_": {
         "properties": {
           "code": {
@@ -6558,6 +6725,21 @@
           "public_base_url"
         ],
         "title": "StorageConfigurationRead"
+      },
+      "SystemCapabilitiesRead": {
+        "properties": {
+          "registration_enabled": {
+            "type": "boolean",
+            "title": "Registration Enabled",
+            "description": "是否允许 Web 公开注册普通用户"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "registration_enabled"
+        ],
+        "title": "SystemCapabilitiesRead"
       },
       "SystemOverviewRead": {
         "properties": {

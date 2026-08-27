@@ -1,6 +1,8 @@
-import { getSystemStatusApiV1SystemStatusGet } from "@pinjie/api-client";
-import type { SystemStatus } from "@pinjie/api-client";
-import type { UserPrincipalOut } from "@pinjie/api-client";
+import {
+  getSystemCapabilitiesApiV1SystemCapabilitiesGet,
+  getSystemStatusApiV1SystemStatusGet,
+} from "@pinjie/api-client";
+import type { SystemStatus, UserPrincipalOut } from "@pinjie/api-client";
 import { createClient } from "@pinjie/api-client/client";
 import { cookies } from "next/headers";
 
@@ -25,6 +27,24 @@ export async function fetchInitialSystemStatus(): Promise<SystemStatus> {
     return result.data.data;
   } catch {
     return { status: "unavailable" };
+  }
+}
+
+export type RegistrationState = "enabled" | "disabled" | "unavailable";
+
+export async function fetchRegistrationState(): Promise<RegistrationState> {
+  const baseURL = process.env.BACKEND_INTERNAL_URL;
+  if (!baseURL) return "unavailable";
+
+  const serverClient = createClient({ baseURL });
+  try {
+    const result = await getSystemCapabilitiesApiV1SystemCapabilitiesGet({
+      client: serverClient,
+      throwOnError: true,
+    });
+    return result.data.data.registration_enabled ? "enabled" : "disabled";
+  } catch {
+    return "unavailable";
   }
 }
 

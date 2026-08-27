@@ -9,6 +9,9 @@ export const handlers = [
   http.get("http://localhost:3000/api/v1/system/status", () =>
     HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "test-request" }),
   ),
+  http.get("http://localhost:3000/api/v1/system/capabilities", () =>
+    ok({ registration_enabled: true }),
+  ),
   http.post("http://localhost:3000/api/v1/auth/login", () => ok({ principal: user, session_id: session.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),
   http.post("http://localhost:3000/api/v1/auth/register", () => ok({ principal: user, session_id: session.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),
   http.post("http://localhost:3000/api/v1/auth/logout", () => ok({ completed: true })),

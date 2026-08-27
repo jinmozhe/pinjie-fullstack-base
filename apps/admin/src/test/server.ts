@@ -69,6 +69,7 @@ export const handlers = [
   http.post("http://localhost:3000/api/v1/admin/auth/logout", () => ok({ completed: true })),
   http.post("http://localhost:3000/api/v1/admin/auth/password", () => ok({ completed: true })),
   http.get("http://localhost:3000/api/v1/admin/users", () => ok({ items: [user], page: 1, page_size: 20, total: 1, total_pages: 1 })),
+  http.post("http://localhost:3000/api/v1/admin/users", () => ok(user)),
   http.patch("http://localhost:3000/api/v1/admin/users/status/batch", () => ok({ completed_count: 1, target_ids: [user.id] })),
   http.delete("http://localhost:3000/api/v1/admin/users/batch", () => ok({ completed_count: 1, target_ids: [user.id] })),
   http.post("http://localhost:3000/api/v1/admin/users/restore/batch", () => ok({ completed_count: 1, target_ids: [user.id] })),

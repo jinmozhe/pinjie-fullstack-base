@@ -9,7 +9,13 @@ import { useState } from "react";
 import { webAuthApi } from "./api";
 import { ApiError, errorMessage } from "@/lib/api/http";
 
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
+export function AuthForm({
+  mode,
+  registrationEnabled = true,
+}: {
+  mode: "login" | "register";
+  registrationEnabled?: boolean;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
@@ -64,7 +70,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           {mode === "register" && <p className="field-hint">至少 6 个字符，最多 64 个字符。</p>}
           <button className="primary-action" disabled={pending} type="submit">{pending ? "正在提交" : mode === "login" ? "登录" : "注册并登录"}<ArrowRight aria-hidden="true" size={18} /></button>
         </form>
-        <p className="auth-switch">{mode === "login" ? "还没有账户？" : "已经有账户？"}<Link href={mode === "login" ? "/register" : "/login"}>{mode === "login" ? "立即注册" : "返回登录"}</Link></p>
+        {(mode === "register" || registrationEnabled) && <p className="auth-switch">{mode === "login" ? "还没有账户？" : "已经有账户？"}<Link href={mode === "login" ? "/register" : "/login"}>{mode === "login" ? "立即注册" : "返回登录"}</Link></p>}
       </section>
       <aside className="auth-context" aria-label="账户安全说明">
         <div><p className="kicker">SECURE SESSION</p><h2>凭据留在浏览器的安全边界内</h2><p>访问令牌和刷新令牌由 HttpOnly Cookie 管理。用户中心不会把令牌写入页面、URL 或浏览器持久化存储。</p></div>

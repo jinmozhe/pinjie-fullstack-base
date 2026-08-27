@@ -52,6 +52,17 @@
 
 四个 JWT/HMAC Secret 必须至少包含 32 个 UTF-8 字节、彼此不同且不能使用模板值。认证启用后 Redis 必须为 `required`；生产缺少安全 Cookie、可信代理、明确 CORS 或 Release 配置时拒绝启动。
 
+### 5.1 普通用户创建来源
+
+普通用户有两种独立创建来源：
+
+- Web 公开注册受 `REGISTRATION_MODE=open|closed` 控制。注册成功后创建 Web Session、Refresh Token 和登录安全事件，并按 Browser Cookie Profile 建立登录态。
+- Admin 创建用户使用 `POST /api/v1/admin/users`，受 `users:create`、管理员会话和 CSRF 保护，不受公开注册开关影响。该流程只创建账户和 `users:create` 审计事件，不创建 Web Session、Refresh Token 或公开注册登录事件。
+
+两种来源复用相同的用户名、邮箱唯一性和密码规则。软删除账户继续占用用户名与邮箱，管理员应恢复原账户，不能用同一标识创建新账户。Admin 创建审计只记录目标、启用状态和可选资料是否存在，不保存初始密码、密码摘要或邮箱明文。
+
+公共端点 `GET /api/v1/system/capabilities` 只返回 `registration_enabled`。Web 在能力关闭时隐藏注册入口并把 `/register` 重定向到登录页；查询失败时按未知且不开放处理，并显示服务不可用状态。Backend 的公开注册端点始终执行权威开关校验，前端隐藏不承担安全控制。
+
 ## 6. CSRF 与来源校验
 
 - Cookie 身份的 `POST`、`PUT`、`PATCH` 和 `DELETE` 请求必须同时通过精确 Origin allowlist 与 `X-CSRF-Token` 校验。

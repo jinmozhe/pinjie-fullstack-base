@@ -41,6 +41,7 @@ from app.domains.admin.schemas import (
     AdminRead,
     AdminRoleAssignIn,
     AdminUpdateIn,
+    AdminUserCreateIn,
     AdminUserRead,
     AuditEventPage,
     AuditEventRead,
@@ -155,6 +156,49 @@ class AdminManagementService:
         if user is None or user.deleted_at is not None:
             raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
         return user
+
+    async def create_user(self, payload: AdminUserCreateIn) -> AdminUserRead:
+        password_hash = await self.password_manager.hash(payload.initial_password)
+        user_id = new_uuid7()
+
+        async def operation() -> User:
+            if await self.users.get_by_username(payload.username) is not None:
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户名已被使用")
+            if payload.email and await self.users.get_by_email(payload.email) is not None:
+                raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="邮箱已被使用")
+            user = User(
+                id=user_id,
+                username=payload.username,
+                email=payload.email,
+                display_name=payload.display_name,
+                password_hash=password_hash,
+                is_active=payload.is_active,
+                credential_version=1,
+                deleted_at=None,
+            )
+            self.users.add(user)
+            return user
+
+        try:
+            user = await self.audit.execute(
+                action="users:create",
+                target_type="user",
+                target_id=user_id,
+                changed_fields={
+                    "created": True,
+                    "is_active": payload.is_active,
+                    "has_display_name": bool(payload.display_name),
+                    "has_email": payload.email is not None,
+                },
+                operation=operation,
+            )
+        except IntegrityError as exc:
+            raise AppException(
+                status_code=409,
+                code=ErrorCode.STATE_CONFLICT,
+                message="用户名或邮箱已被使用",
+            ) from exc
+        return self._user_read(user)
 
     async def update_user(self, user_id: uuid.UUID, payload: UserUpdateIn) -> User:
         async def operation() -> User:
