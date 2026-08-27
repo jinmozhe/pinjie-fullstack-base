@@ -1,7 +1,7 @@
-import type { SystemStatus } from "@pinjie/api-client";
+import type { SystemOverviewRead } from "@pinjie/api-client";
 
-import { apiRequest } from "@/lib/api/http";
+import { adminApi } from "@/lib/api/admin";
 
-export async function fetchSystemStatus(): Promise<SystemStatus> {
-  return apiRequest<SystemStatus>("/api/v1/system/status");
+export async function fetchSystemOverview(): Promise<SystemOverviewRead> {
+  return adminApi.systemOverview();
 }

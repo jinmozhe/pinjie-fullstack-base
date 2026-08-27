@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -123,6 +124,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app_settings.validate_runtime()
         configure_logging(app_settings)
         resources: AppResources = create_resources(app_settings)
+        app.state.started_at = datetime.now(UTC)
         app.state.settings = app_settings
         app.state.resources = resources
         try:

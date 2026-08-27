@@ -1,6 +1,7 @@
 import re
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -337,6 +338,77 @@ AuditEventPage = PageResult[AuditEventRead]
 RequestLogPage = PageResult[RequestLogRead]
 UserPage = PageResult[AdminUserRead]
 
+
+class DatabaseHealthRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "unavailable", "mismatch", "timeout"] = Field(description="数据库连接和迁移状态")
+    latency_ms: float = Field(description="探测往返耗时（毫秒）")
+    details: str = Field(description="诊断详情，如 migration_heads_matched 或错误原因")
+
+
+class RedisHealthRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "unavailable", "disabled"] = Field(description="Redis 连接状态")
+    latency_ms: float = Field(description="探测往返耗时（毫秒）")
+    mode: Literal["required", "disabled"] = Field(description="Redis 运行模式")
+
+
+class StorageConfigurationRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    driver: Literal["local"] = Field(description="存储驱动名称")
+    public_base_url: str = Field(description="文件公开访问根路径")
+
+
+class SecurityConfigurationRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session_isolation: Literal["separate_cookie_profiles"] = Field(description="C/B 端会话隔离策略")
+    csrf_strategy: Literal["double_submit_hmac"] = Field(description="CSRF 校验策略")
+    refresh_rotation: Literal["single_use_rotation"] = Field(description="Refresh Token 轮换策略")
+
+
+class InfrastructureOverviewRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    database: DatabaseHealthRead
+    redis: RedisHealthRead
+    storage: StorageConfigurationRead
+    security: SecurityConfigurationRead
+
+
+class SystemTelemetryRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ok", "unavailable"] = Field(description="业务遥测采样状态")
+    sampled_at: datetime = Field(description="业务遥测数据采样时间")
+    source: Literal["database", "redis_cache", "unavailable"] = Field(description="业务遥测数据来源")
+    user_count: int | None = Field(description="未进入回收站的普通用户数")
+    admin_count: int | None = Field(description="启用管理员数")
+    role_count: int | None = Field(description="启用角色数")
+    asset_count: int | None = Field(description="现存文件资产记录数")
+    audit_event_count: int | None = Field(description="保留期内现存安全审计事件数")
+    cached: bool = Field(default=False, description="统计数据是否命中 Redis 缓存")
+
+
+class SystemOverviewRead(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["healthy", "degraded", "unavailable"] = Field(description="系统综合健康状态")
+    started_at: datetime = Field(description="服务启动时间")
+    uptime_seconds: int = Field(description="服务已稳定运行时长（秒）")
+    environment: Literal["local", "test", "production"] = Field(description="部署运行环境")
+    release_version: str = Field(description="系统发行版本号")
+    python_version: str = Field(description="当前 CPython 运行时版本")
+    fastapi_version: str = Field(description="当前 FastAPI 运行时版本")
+    timezone: str = Field(description="服务器基准时区")
+    cors_origin_count: int = Field(description="已配置的受信任跨域来源数量")
+    infrastructure: InfrastructureOverviewRead
+    telemetry: SystemTelemetryRead
+
+
 __all__ = [
     "AdminAuthSessionOut",
     "AdminBulkStatusUpdateIn",
@@ -351,10 +423,13 @@ __all__ = [
     "AuditEventPage",
     "AuditEventRead",
     "BatchActionResult",
+    "DatabaseHealthRead",
+    "InfrastructureOverviewRead",
     "LoginEventPage",
     "LoginEventRead",
     "PasswordResetIn",
     "PermissionRead",
+    "RedisHealthRead",
     "RoleCreateIn",
     "RoleBulkDeleteIn",
     "RoleBulkStatusUpdateIn",
@@ -364,6 +439,10 @@ __all__ = [
     "RoleSummary",
     "RoleUpdateIn",
     "StatusUpdateIn",
+    "SecurityConfigurationRead",
+    "StorageConfigurationRead",
+    "SystemOverviewRead",
+    "SystemTelemetryRead",
     "RequestLogPage",
     "RequestLogRead",
     "UserPage",
