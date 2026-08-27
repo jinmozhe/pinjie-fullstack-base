@@ -1,13 +1,13 @@
 import type { AdminRead } from "@pinjie/api-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AdminsPage } from "./admins/AdminsPage";
 import { AssetsPage } from "./assets/AssetsPage";
@@ -30,12 +30,16 @@ function renderPage(node: ReactNode, principal: AdminRead | null = current) {
 }
 
 async function confirmWarning(user: ReturnType<typeof userEvent.setup>, title: string) {
-  const dialog = screen.getByRole("dialog", { name: title });
+  const titleElement = await screen.findByText(title);
+  const dialog = titleElement.closest('[role="dialog"]');
+  if (!(dialog instanceof globalThis.HTMLElement)) throw new Error(`警告标题“${title}”未处于对话框中`);
   expect(within(dialog).queryByLabelText("当前密码")).not.toBeInTheDocument();
-  await user.click(within(dialog).getByRole("button", { name: "确定" }));
+  await user.click(within(dialog).getByRole("button", { name: /确\s*定/ }));
 }
 
 describe("stage C admin workspace", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it("logs in with an accessible form", async () => {
     const user = userEvent.setup();
     renderPage(<LoginPage authenticated={false} />, null);
@@ -106,7 +110,7 @@ describe("stage C admin workspace", () => {
     await user.type(screen.getByLabelText("初始密码"), "initial-password");
     await user.type(screen.getByLabelText("确认初始密码"), "initial-password");
     await user.click(screen.getByRole("checkbox", { name: "允许登录" }));
-    await user.click(screen.getByRole("button", { name: "创建" }));
+    await user.click(screen.getByRole("button", { name: /创\s*建/ }));
 
     await waitFor(() => expect(createPayload).toEqual({
       username: "managed-user",
@@ -127,7 +131,7 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("button", { name: /重置密码/ }));
     expect(screen.getByLabelText("新密码")).toHaveAttribute("maxlength", "64");
     await user.type(screen.getByLabelText("新密码"), "replacement-password");
-    await user.click(screen.getByRole("button", { name: "确定" }));
+    await user.click(screen.getByRole("button", { name: /确\s*定/ }));
 
     await user.click(await screen.findByRole("button", { name: /会话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
@@ -154,7 +158,7 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("Browser User")).toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
     expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "批量删除" }));
+    await user.click(screen.getByRole("button", { name: /批量删除/ }));
     const dialog = screen.getByRole("dialog", { name: "填写删除原因（可选）" });
     expect(within(dialog).getByLabelText("删除原因")).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "移入回收站" }));
@@ -200,10 +204,10 @@ describe("stage C admin workspace", () => {
     );
     renderPage(<UsersPage />);
 
-    await user.click(screen.getByText("回收站"));
+    await user.click(await screen.findByText("回收站"));
     expect(await screen.findByText("可恢复")).toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
-    await user.click(screen.getByRole("button", { name: "批量恢复" }));
+    await user.click(screen.getByRole("button", { name: /批量恢复/ }));
 
     await waitFor(() => expect(restorePayload).toEqual({ user_ids: [deletedUser.id] }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -292,7 +296,7 @@ describe("stage C admin workspace", () => {
     await user.click(await screen.findByRole("menuitem", { name: /重置密码/ }));
     await user.type(screen.getByLabelText("新密码"), "replacement-password");
     await user.type(screen.getByLabelText("确认新密码"), "replacement-password");
-    await user.click(screen.getByRole("button", { name: "确定" }));
+    await user.click(screen.getByRole("button", { name: /确\s*定/ }));
 
     await waitFor(() => expect(resetPayload).toEqual({ new_password: "replacement-password" }));
   }, 60_000);
@@ -439,7 +443,7 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
     expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "批量删除" }));
+    await user.click(screen.getByRole("button", { name: /批量删除/ }));
     await confirmWarning(user, "确认批量删除 1 个角色");
 
     await waitFor(() =>
@@ -505,6 +509,16 @@ describe("stage C admin workspace", () => {
 
   it("loads file assets and applies filename, scene, and uploader filters", async () => {
     const user = userEvent.setup();
+    const matchMedia = vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: query.includes("min-width"),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }));
     let lastQuery = "";
     server.use(
       http.get("http://localhost:3000/api/v1/assets", ({ request }) => {
@@ -541,13 +555,17 @@ describe("stage C admin workspace", () => {
 
     expect(await screen.findByText("catalog-cover.png")).toBeInTheDocument();
     expect(screen.queryByText(current.id)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "复制上传主体 ID" }));
+    await user.click(screen.getByRole("button", { name: /复制上传主体 ID/ }));
     expect(await screen.findByText("上传主体 ID 已复制")).toBeInTheDocument();
     await user.type(screen.getByLabelText("搜索文件名"), "catalog{Enter}");
-    await user.click(screen.getByLabelText("筛选使用场景"));
-    await user.click(await screen.findByRole("option", { name: "商品" }));
-    await user.click(screen.getByLabelText("筛选上传主体"));
-    await user.click(await screen.findByRole("option", { name: "管理员" }));
+    const sceneSelector = screen.getByLabelText("筛选使用场景").closest(".ant-select");
+    if (!(sceneSelector instanceof globalThis.HTMLElement)) throw new Error("使用场景筛选控件未完整渲染");
+    fireEvent.mouseDown(sceneSelector);
+    await user.click(await screen.findByText("商品", { selector: ".ant-select-item-option-content" }));
+    const uploaderSelector = screen.getByLabelText("筛选上传主体").closest(".ant-select");
+    if (!(uploaderSelector instanceof globalThis.HTMLElement)) throw new Error("上传主体筛选控件未完整渲染");
+    fireEvent.mouseDown(uploaderSelector);
+    await user.click(await screen.findByText("管理员", { selector: ".ant-select-item-option-content" }));
 
     await waitFor(() => {
       const params = new URLSearchParams(lastQuery);
@@ -555,6 +573,14 @@ describe("stage C admin workspace", () => {
       expect(params.get("scene")).toBe("product");
       expect(params.get("uploader_type")).toBe("admin");
     });
+    await user.click(screen.getByRole("button", { name: /重置/ }));
+    await waitFor(() => {
+      const params = new URLSearchParams(lastQuery);
+      expect(params.get("search")).toBeNull();
+      expect(params.get("scene")).toBeNull();
+      expect(params.get("uploader_type")).toBeNull();
+    });
+    matchMedia.mockRestore();
   }, 60_000);
 
   it("previews image assets in place and keeps other files opening in a new tab", async () => {
@@ -607,13 +633,97 @@ describe("stage C admin workspace", () => {
     renderPage(<AssetsPage />);
 
     expect(await screen.findByText("guide.pdf")).toBeInTheDocument();
-    const imageOpen = screen.getByRole("button", { name: "打开" });
-    const documentOpen = screen.getByRole("link", { name: "打开" });
+    const imageOpen = screen.getByRole("button", { name: /打\s*开/ });
+    const documentOpen = screen.getByRole("link", { name: /打\s*开/ });
     expect(documentOpen).toHaveAttribute("href", "/static/uploads/document/guide.pdf");
     expect(documentOpen).toHaveAttribute("target", "_blank");
 
     await user.click(imageOpen);
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
+  }, 60_000);
+
+  it("handles compact assets, copy failures, pagination, and single deletion", async () => {
+    const user = userEvent.setup();
+    const matchMedia = vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+      matches: query.includes("min-width"),
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }));
+    let lastPage = "";
+    let deletedAssetId = "";
+    server.use(
+      http.get("http://localhost:3000/api/v1/assets", ({ request }) => {
+        lastPage = new globalThis.URL(request.url).searchParams.get("page") ?? "";
+        return HttpResponse.json({
+          code: "OK",
+          message: "操作成功",
+          data: {
+            items: [
+              {
+                id: "01900000-0000-7000-8000-000000000030",
+                uploader_type: "system",
+                uploader_id: null,
+                storage_driver: "local",
+                file_key: "temp/tiny.txt",
+                original_name: "tiny.txt",
+                mime_type: "text/plain",
+                file_size: 512,
+                file_hash: "c".repeat(64),
+                url: "/static/uploads/temp/tiny.txt",
+                scene: "temp",
+                created_at: now,
+                updated_at: now,
+              },
+              {
+                id: "01900000-0000-7000-8000-000000000031",
+                uploader_type: "admin",
+                uploader_id: current.id,
+                storage_driver: "local",
+                file_key: "document/archive.zip",
+                original_name: "archive.zip",
+                mime_type: "application/zip",
+                file_size: 2 * 1024 * 1024,
+                file_hash: "d".repeat(64),
+                url: "/static/uploads/document/archive.zip",
+                scene: "document",
+                created_at: now,
+                updated_at: now,
+              },
+            ],
+            page: Number(lastPage),
+            page_size: 20,
+            total: 21,
+            total_pages: 2,
+          },
+          request_id: "test-request",
+        });
+      }),
+      http.delete("http://localhost:3000/api/v1/assets/:id", ({ params }) => {
+        deletedAssetId = String(params.id);
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: true, request_id: "test-request" });
+      }),
+    );
+    vi.spyOn(globalThis.navigator.clipboard, "writeText").mockRejectedValueOnce(new Error("clipboard denied"));
+    renderPage(<AssetsPage />);
+
+    expect(await screen.findByText(/512 B/)).toBeInTheDocument();
+    expect(screen.getByText(/2\.0 MB/)).toBeInTheDocument();
+    expect(screen.getByText("系统任务")).toBeInTheDocument();
+    const tinyRow = screen.getByRole("row", { name: /tiny\.txt/ });
+    await user.click(within(tinyRow).getByRole("button", { name: /复制地址/ }));
+    expect(await screen.findByText("clipboard denied")).toBeInTheDocument();
+    await user.click(within(tinyRow).getByRole("button", { name: /删除/ }));
+    await confirmWarning(user, "永久删除文件“tiny.txt”");
+    await waitFor(() => expect(deletedAssetId).toBe("01900000-0000-7000-8000-000000000030"));
+
+    await user.click(screen.getByTitle("下一页"));
+    await waitFor(() => expect(lastPage).toBe("2"));
+    matchMedia.mockRestore();
   }, 60_000);
 
   it("selects assets and sends one atomic bulk hard-delete request", async () => {
@@ -635,7 +745,10 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("catalog-cover.png")).toBeInTheDocument();
     await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
     expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "批量删除" }));
+    await user.click(screen.getByRole("button", { name: "取消选择" }));
+    expect(screen.queryByText("已选择 1 项")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
+    await user.click(screen.getByRole("button", { name: /批量删除/ }));
     await confirmWarning(user, "确认批量删除 1 个文件资产");
 
     await waitFor(() =>

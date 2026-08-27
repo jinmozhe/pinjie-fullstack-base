@@ -4735,16 +4735,20 @@
       "InfrastructureOverviewRead": {
         "properties": {
           "database": {
-            "$ref": "#/components/schemas/DatabaseHealthRead"
+            "$ref": "#/components/schemas/DatabaseHealthRead",
+            "description": "PostgreSQL 实时健康探针结果"
           },
           "redis": {
-            "$ref": "#/components/schemas/RedisHealthRead"
+            "$ref": "#/components/schemas/RedisHealthRead",
+            "description": "Redis 实时健康探针结果"
           },
           "storage": {
-            "$ref": "#/components/schemas/StorageConfigurationRead"
+            "$ref": "#/components/schemas/StorageConfigurationRead",
+            "description": "文件存储公开配置摘要"
           },
           "security": {
-            "$ref": "#/components/schemas/SecurityConfigurationRead"
+            "$ref": "#/components/schemas/SecurityConfigurationRead",
+            "description": "认证与会话安全机制摘要"
           }
         },
         "additionalProperties": false,
@@ -6871,10 +6875,12 @@
             "description": "已配置的受信任跨域来源数量"
           },
           "infrastructure": {
-            "$ref": "#/components/schemas/InfrastructureOverviewRead"
+            "$ref": "#/components/schemas/InfrastructureOverviewRead",
+            "description": "基础设施健康与公开配置摘要"
           },
           "telemetry": {
-            "$ref": "#/components/schemas/SystemTelemetryRead"
+            "$ref": "#/components/schemas/SystemTelemetryRead",
+            "description": "业务资产统计遥测结果"
           }
         },
         "additionalProperties": false,

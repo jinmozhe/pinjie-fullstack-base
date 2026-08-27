@@ -72,6 +72,22 @@ async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
 DatabaseSession = Annotated[AsyncSession, Depends(get_db_session)]
 
 
+def require_admin_access_token(
+    access_token: Annotated[str | None, Cookie(alias=ADMIN_COOKIES.access)] = None,
+) -> str:
+    if not access_token:
+        raise AppException(
+            status_code=401,
+            code=ErrorCode.AUTH_REQUIRED,
+            message="需要管理员身份认证",
+            headers={"WWW-Authenticate": "Cookie"},
+        )
+    return access_token
+
+
+AdminAccessToken = Annotated[str, Depends(require_admin_access_token)]
+
+
 def get_web_auth_service(request: Request, session: DatabaseSession) -> WebAuthService:
     resources = get_resources(request)
     return WebAuthService(
@@ -275,16 +291,9 @@ async def get_current_user(
 
 async def get_current_admin(
     request: Request,
+    access_token: AdminAccessToken,
     session: DatabaseSession,
-    access_token: Annotated[str | None, Cookie(alias=ADMIN_COOKIES.access)] = None,
 ) -> CurrentAdmin:
-    if not access_token:
-        raise AppException(
-            status_code=401,
-            code=ErrorCode.AUTH_REQUIRED,
-            message="需要管理员身份认证",
-            headers={"WWW-Authenticate": "Cookie"},
-        )
     settings = get_request_settings(request)
     resources = get_resources(request)
     if resources.redis is None:
@@ -380,7 +389,11 @@ async def get_asset_uploader(
         require_web_csrf(request, current_user)
         return AssetUploader(type=UploaderType.USER, id=current_user.user.id)
     if origin in settings.admin_origins and admin_access_token:
-        current_admin = await get_current_admin(request, session, admin_access_token)
+        current_admin = await get_current_admin(
+            request=request,
+            access_token=admin_access_token,
+            session=session,
+        )
         require_admin_csrf(request, current_admin)
         return AssetUploader(type=UploaderType.ADMIN, id=current_admin.admin.id)
     raise AppException(
@@ -465,6 +478,7 @@ __all__ = [
     "get_resources",
     "require_admin_csrf",
     "require_admin_csrf_pair",
+    "require_admin_access_token",
     "require_admin_origin",
     "require_permission",
     "require_web_csrf",

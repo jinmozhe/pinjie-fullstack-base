@@ -675,9 +675,21 @@ export type HttpValidationError = {
  * InfrastructureOverviewRead
  */
 export type InfrastructureOverviewRead = {
+    /**
+     * PostgreSQL 实时健康探针结果
+     */
     database: DatabaseHealthRead;
+    /**
+     * Redis 实时健康探针结果
+     */
     redis: RedisHealthRead;
+    /**
+     * 文件存储公开配置摘要
+     */
     storage: StorageConfigurationRead;
+    /**
+     * 认证与会话安全机制摘要
+     */
     security: SecurityConfigurationRead;
 };
 
@@ -2363,7 +2375,13 @@ export type SystemOverviewRead = {
      * 已配置的受信任跨域来源数量
      */
     cors_origin_count: number;
+    /**
+     * 基础设施健康与公开配置摘要
+     */
     infrastructure: InfrastructureOverviewRead;
+    /**
+     * 业务资产统计遥测结果
+     */
     telemetry: SystemTelemetryRead;
 };
 

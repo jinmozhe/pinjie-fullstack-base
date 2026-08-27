@@ -1,6 +1,6 @@
 import type { SystemOverviewRead } from "@pinjie/api-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { describe, expect, it } from "vitest";
 
@@ -88,7 +88,7 @@ describe("SystemStatusPage", () => {
         HttpResponse.json({ code: "OK", message: "操作成功", data: mockOverview, request_id: "retry-req" }),
       ),
     );
-    fireEvent.click(screen.getByRole("button", { name: "重新检查状态" }));
+    fireEvent.click(screen.getByRole("button", { name: /重\s*试/ }));
 
     expect(await screen.findByText("所有系统组件运行正常")).toBeInTheDocument();
   });
@@ -109,5 +109,74 @@ describe("SystemStatusPage", () => {
 
     expect(await screen.findByText("刷新失败，当前展示上次成功数据")).toBeInTheDocument();
     expect(screen.getByText("所有系统组件运行正常")).toBeInTheDocument();
+
+    shouldFail = false;
+    fireEvent.click(screen.getByRole("button", { name: /重\s*试/ }));
+    await waitFor(() => expect(screen.queryByText("刷新失败，当前展示上次成功数据")).not.toBeInTheDocument());
+  });
+
+  it("renders degraded infrastructure and unavailable telemetry", async () => {
+    const degradedOverview: SystemOverviewRead = {
+      ...mockOverview,
+      status: "degraded",
+      uptime_seconds: 125,
+      infrastructure: {
+        ...mockOverview.infrastructure,
+        database: { status: "mismatch", latency_ms: 9.5, details: "migration_head_mismatch" },
+        redis: { status: "disabled", latency_ms: 0, mode: "disabled" },
+      },
+      telemetry: {
+        status: "unavailable",
+        sampled_at: mockOverview.telemetry.sampled_at,
+        source: "unavailable",
+        user_count: null,
+        admin_count: null,
+        role_count: null,
+        asset_count: null,
+        audit_event_count: null,
+        cached: true,
+      },
+    };
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/system/overview", () =>
+        HttpResponse.json({ code: "OK", message: "操作成功", data: degradedOverview, request_id: "degraded-req" }),
+      ),
+    );
+    renderPage();
+
+    expect(await screen.findByText("部分系统组件处于降级状态")).toBeInTheDocument();
+    expect(screen.getByText("2 分钟 5 秒")).toBeInTheDocument();
+    expect(screen.getByText("异常")).toBeInTheDocument();
+    expect(screen.getByText("未启用")).toBeInTheDocument();
+    expect(screen.getByText("暂不可用")).toBeInTheDocument();
+    expect(screen.getAllByText("--").length).toBeGreaterThan(0);
+    expect(screen.getByText("C/B Cookie 隔离")).toBeInTheDocument();
+  });
+
+  it("renders failed infrastructure, cached telemetry, and multi-day uptime", async () => {
+    const failedOverview: SystemOverviewRead = {
+      ...mockOverview,
+      status: "unavailable",
+      uptime_seconds: 90_000,
+      infrastructure: {
+        ...mockOverview.infrastructure,
+        redis: { status: "unavailable", latency_ms: 12, mode: "required" },
+      },
+      telemetry: {
+        ...mockOverview.telemetry,
+        source: "redis_cache",
+        cached: true,
+      },
+    };
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/system/overview", () =>
+        HttpResponse.json({ code: "OK", message: "操作成功", data: failedOverview, request_id: "failed-req" }),
+      ),
+    );
+    renderPage();
+
+    expect(await screen.findByText("核心基础设施不可用")).toBeInTheDocument();
+    expect(screen.getByText("1 天 1 小时")).toBeInTheDocument();
+    expect(screen.getByText("Redis 缓存")).toBeInTheDocument();
   });
 });

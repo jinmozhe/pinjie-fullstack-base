@@ -145,6 +145,8 @@ a { color: inherit; }
   .account-nav nav { grid-template-columns: repeat(4, 132px); }
   .account-nav nav button { justify-content: flex-start; }
   .account-content { padding: 26px 20px; }
+  .profile-avatar-row { flex-direction: column; }
+  .profile-avatar-row > div:last-child { width: 100%; min-width: 0; }
   .section-heading--action { align-items: stretch; flex-direction: column; }
   .session-item { grid-template-columns: 38px minmax(0, 1fr); }
   .session-item > button, .session-item > .revoked-label { grid-column: 2; justify-self: start; }

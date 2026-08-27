@@ -42,6 +42,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Documentation | 已完成全量 pytest、Vitest、生产构建和四项目浏览器 E2E 回归修复与验证 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | Backend、Web、API Client、Database、Documentation | 已完成用户头像资料闭环，并补齐 Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖；轻量门禁通过，重型验证与真实迁移按授权边界未执行 |
 | `plans/2026-08-27_Admin创建用户与公开注册开关联动计划.md` | 已结束 | Backend、Admin、Web、API Client、Documentation | 已完成 Admin 独立创建用户、公共注册能力契约和 Web 注册入口联动 |
 | `plans/2026-08-27_Admin系统状态页面全景监控升级计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 已完成受权系统概览、实时探针、可解释缓存遥测、公开配置摘要与旧数据提示 |
@@ -88,6 +89,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | 已完成；Backend 183 项 pytest、Admin 62 项 Vitest、Web 50 项 Vitest、两端 production build 和四项目 Playwright E2E 均达标 | Backend、Admin、Web、API Client、Database、Documentation | 修复全量 pytest、Vitest、生产构建和浏览器 E2E 暴露的回归并完成提交推送 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | 已完成；用户头像资料、资产引用保护和契约已同步，Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖已补齐；轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Web、API Client、Database、Documentation | 支持用户上传、绑定、移除和持久化头像，并保护在用资产 |
 | `plans/2026-08-27_Admin创建用户与公开注册开关联动计划.md` | 已结束 | 已完成；轻量门禁通过，重型测试按规则未执行，目标环境权限同步仍需独立授权 | Backend、Admin、Web、API Client、Documentation | 支持关闭公开注册的派生项目由 Admin 创建可登录用户 |
 | `plans/2026-08-27_Admin系统状态页面全景监控升级计划.md` | 已结束 | 已完成；缓存、权限、健康语义、公开配置、统计口径、运行时版本和旧数据提示已修正，轻量门禁通过；重型测试和目标环境权限同步未执行 | Backend、Admin、API Client、Documentation | 建立管理端单接口全景监控、基础设施实时探针、Redis 缓存遥测与美观多卡片看板 |
@@ -153,9 +155,9 @@
 
 | 范围 | 当前状态 | 事实依据 |
 | --- | --- | --- |
-| Backend | 认证、RBAC、会话、审计、统一资产及用户和角色原子批量能力已实现；旧版管理员确认端点仅作为弃用契约兼容保留至 2026-09-26，不承担授权；本次轻量门禁通过，pytest 按策略未执行 | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
-| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留既有能力；用户、管理员、角色和文件资产普通数据列表均支持受权限控制的批量操作，安全日志继续只读；本次 typecheck 与 lint 通过，Vitest、production build 和浏览器验证按策略未执行 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
-| Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、31 项 Vitest、88.30% 语句与行覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
+| Backend | 认证、RBAC、会话、审计、统一资产及用户和角色原子批量能力已实现；旧版管理员确认端点仅作为弃用契约兼容保留至 2026-09-26，不承担授权；轻量门禁及 183 项 pytest 通过，综合覆盖率 90.13% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
+| Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留既有能力；用户、管理员、角色和文件资产普通数据列表均支持受权限控制的批量操作，安全日志继续只读；typecheck、lint、62 项 Vitest、四项不低于 80% 覆盖率、production build 和桌面/移动跨栈 E2E 通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
+| Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、50 项 Vitest、四项不低于 80% 覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
 | API Client | 根 OpenAPI 共 52 条路径、60 个操作，357 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC、安全日志与统一资产迁移已实现，本地开发库已到 `20260825_03`；PostgreSQL advisory lock 并发保护、级联删除、资产元数据、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/`、`apps/backend/scripts/cleanup_security_logs.py` |
 | Deployment | 自动 Backend CI 只运行静态、导入与契约门禁，自动 Frontend CI 只运行 Admin/Web typecheck 和 lint；Browser E2E 保持纯人工触发，生产 Compose 与镜像发布职责不变 | `.github/workflows/ci-backend.yml`、`.github/workflows/ci-frontend.yml`、`.github/workflows/ci-e2e.yml` |

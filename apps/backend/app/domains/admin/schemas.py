@@ -440,10 +440,10 @@ class SecurityConfigurationRead(BaseModel):
 class InfrastructureOverviewRead(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    database: DatabaseHealthRead
-    redis: RedisHealthRead
-    storage: StorageConfigurationRead
-    security: SecurityConfigurationRead
+    database: DatabaseHealthRead = Field(description="PostgreSQL 实时健康探针结果")
+    redis: RedisHealthRead = Field(description="Redis 实时健康探针结果")
+    storage: StorageConfigurationRead = Field(description="文件存储公开配置摘要")
+    security: SecurityConfigurationRead = Field(description="认证与会话安全机制摘要")
 
 
 class SystemTelemetryRead(BaseModel):
@@ -472,8 +472,8 @@ class SystemOverviewRead(BaseModel):
     fastapi_version: str = Field(description="当前 FastAPI 运行时版本")
     timezone: str = Field(description="服务器基准时区")
     cors_origin_count: int = Field(description="已配置的受信任跨域来源数量")
-    infrastructure: InfrastructureOverviewRead
-    telemetry: SystemTelemetryRead
+    infrastructure: InfrastructureOverviewRead = Field(description="基础设施健康与公开配置摘要")
+    telemetry: SystemTelemetryRead = Field(description="业务资产统计遥测结果")
 
 
 __all__ = [
