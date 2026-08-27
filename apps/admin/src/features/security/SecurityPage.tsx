@@ -42,9 +42,9 @@ function LoginEvents() {
     { title: "主体", dataIndex: "principal_type", width: 90, render: (_, row) => translatedLabel(principalLabels, row.principal_type) },
     { title: "事件", dataIndex: "event_type", width: 120, render: (_, row) => translatedLabel(loginEventLabels, row.event_type) },
     { title: "结果", dataIndex: "succeeded", width: 90, render: (_, row) => <Tag color={row.succeeded ? "success" : "error"}>{row.succeeded ? "成功" : "拒绝"}</Tag> },
-    { title: "原因", dataIndex: "reason_code", width: 180, render: (_, row) => translatedLabel(loginReasonLabels, row.reason_code) },
+    { title: "原因", dataIndex: "reason_code", render: (_, row) => translatedLabel(loginReasonLabels, row.reason_code) },
     { title: "来源", dataIndex: "ip_address", width: 140, render: (_, row) => row.ip_address || "-" },
-    { title: "Request ID", dataIndex: "request_id", render: (_, row) => <Typography.Text code copyable>{row.request_id}</Typography.Text> },
+    { title: "Request ID", dataIndex: "request_id", width: "1%", onHeaderCell: () => ({ style: { whiteSpace: "nowrap" } }), onCell: () => ({ style: { whiteSpace: "nowrap" } }), render: (_, row) => <Typography.Text code copyable>{row.request_id}</Typography.Text> },
   ]} />}</>;
 }
 function AuditEvents() {
@@ -52,10 +52,10 @@ function AuditEvents() {
   const query = useQuery({ queryKey: ["audit-events", page], queryFn: () => adminApi.auditEvents(page) });
   return <><QueryState loading={query.isLoading} error={query.isError ? errorMessage(query.error) : undefined} onRetry={() => void query.refetch()} />{query.data && <ProTable<AuditEventRead> className="controlled-table" rowKey="id" dataSource={query.data.items} search={false} options={{ reload: () => void query.refetch() }} cardProps={false} pagination={{ current: page, pageSize: query.data.page_size, total: query.data.total, showSizeChanger: false, onChange: setPage }} scroll={{ x: 980 }} columns={[
     { title: "时间", dataIndex: "occurred_at", width: 170, render: (_, row) => formatTime(row.occurred_at) },
-    { title: "动作", dataIndex: "action", width: 220 },
-    { title: "目标", key: "target", width: 220, render: (_, row) => `${row.target_type}:${row.target_id || "-"}` },
+    { title: "动作", dataIndex: "action" },
+    { title: "目标", key: "target", render: (_, row) => `${row.target_type}:${row.target_id || "-"}` },
     { title: "结果", dataIndex: "result", width: 100, render: (_, row) => <Tag color={row.result === "succeeded" ? "success" : row.result === "started" ? "processing" : "error"}>{translatedLabel(auditResultLabels, row.result)}</Tag> },
-    { title: "Request ID", dataIndex: "request_id", render: (_, row) => <Typography.Text code copyable>{row.request_id}</Typography.Text> },
+    { title: "Request ID", dataIndex: "request_id", width: "1%", onHeaderCell: () => ({ style: { whiteSpace: "nowrap" } }), onCell: () => ({ style: { whiteSpace: "nowrap" } }), render: (_, row) => <Typography.Text code copyable>{row.request_id}</Typography.Text> },
   ]} />}</>;
 }
 
@@ -86,7 +86,7 @@ function RequestLogs() {
           columns={[
             { title: "时间", dataIndex: "occurred_at", width: 170, render: (_, row) => formatTime(row.occurred_at) },
             { title: "方法", dataIndex: "method", width: 80 },
-            { title: "路由模板", dataIndex: "route_template", width: 280 },
+            { title: "路由模板", dataIndex: "route_template" },
             {
               title: "状态",
               dataIndex: "status_code",
@@ -113,6 +113,9 @@ function RequestLogs() {
             {
               title: "Request ID",
               dataIndex: "request_id",
+              width: "1%",
+              onHeaderCell: () => ({ style: { whiteSpace: "nowrap" } }),
+              onCell: () => ({ style: { whiteSpace: "nowrap" } }),
               render: (_, row) => <Typography.Text code copyable>{row.request_id}</Typography.Text>,
             },
           ]}
