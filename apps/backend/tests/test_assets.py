@@ -128,6 +128,7 @@ def _asset_delete_service(*, storage: AsyncMock, assets: list[SimpleNamespace]) 
     service._assets = SimpleNamespace(  # type: ignore[assignment]
         get_many=AsyncMock(return_value=assets),
         delete=AsyncMock(),
+        is_referenced_by_avatar=AsyncMock(return_value=False),
     )
     return service
 
@@ -146,8 +147,8 @@ async def test_asset_bulk_delete_restores_staged_files_when_later_staging_fails(
     service = _asset_delete_service(
         storage=storage,
         assets=[
-            SimpleNamespace(id=first_id, file_key=first_deletion.file_key),
-            SimpleNamespace(id=second_id, file_key="product/two.png"),
+            SimpleNamespace(id=first_id, file_key=first_deletion.file_key, url="/static/uploads/product/one.png"),
+            SimpleNamespace(id=second_id, file_key="product/two.png", url="/static/uploads/product/two.png"),
         ],
     )
     monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
@@ -157,6 +158,26 @@ async def test_asset_bulk_delete_restores_staged_files_when_later_staging_fails(
 
     assert exc_info.value.code == ErrorCode.ASSET_STORAGE_FAILED
     storage.restore.assert_awaited_once_with(first_deletion)
+    service._assets.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_asset_delete_rejects_assets_referenced_by_avatar(monkeypatch) -> None:
+    asset_id = uuid.uuid7()
+    storage = AsyncMock()
+    service = _asset_delete_service(
+        storage=storage,
+        assets=[SimpleNamespace(id=asset_id, file_key="avatar/used.png", url="/static/uploads/avatar/used.png")],
+    )
+    service._assets.is_referenced_by_avatar.return_value = True
+    monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
+
+    with pytest.raises(AppException) as exc_info:
+        await service.delete(asset_id=asset_id, actor_id=uuid.uuid7())
+
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.code == ErrorCode.STATE_CONFLICT
+    storage.stage_delete.assert_not_awaited()
     service._assets.delete.assert_not_awaited()
 
 
@@ -171,8 +192,8 @@ async def test_asset_bulk_delete_restores_in_reverse_order_when_database_commit_
     service = _asset_delete_service(
         storage=storage,
         assets=[
-            SimpleNamespace(id=first_id, file_key=first_deletion.file_key),
-            SimpleNamespace(id=second_id, file_key=second_deletion.file_key),
+            SimpleNamespace(id=first_id, file_key=first_deletion.file_key, url="/static/uploads/product/one.png"),
+            SimpleNamespace(id=second_id, file_key=second_deletion.file_key, url="/static/uploads/product/two.png"),
         ],
     )
 
@@ -198,8 +219,8 @@ async def test_asset_bulk_delete_reports_manual_review_when_restore_fails(monkey
     service = _asset_delete_service(
         storage=storage,
         assets=[
-            SimpleNamespace(id=first_id, file_key=first_deletion.file_key),
-            SimpleNamespace(id=uuid.uuid7(), file_key="product/two.png"),
+            SimpleNamespace(id=first_id, file_key=first_deletion.file_key, url="/static/uploads/product/one.png"),
+            SimpleNamespace(id=uuid.uuid7(), file_key="product/two.png", url="/static/uploads/product/two.png"),
         ],
     )
     monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
@@ -222,7 +243,7 @@ async def test_asset_bulk_delete_keeps_committed_result_when_trash_purge_fails(m
     storage.purge.side_effect = OSError("purge failed")
     service = _asset_delete_service(
         storage=storage,
-        assets=[SimpleNamespace(id=asset_id, file_key=deletion.file_key)],
+        assets=[SimpleNamespace(id=asset_id, file_key=deletion.file_key, url="/static/uploads/product/one.png")],
     )
     monkeypatch.setattr(AuditCoordinator, "execute", _execute_audit_operation)
 

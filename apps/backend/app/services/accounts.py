@@ -16,10 +16,11 @@ from app.core.security import (
     token_digest,
 )
 from app.db.models import Admin, AdminRefreshToken, AdminSession, User, UserRefreshToken, UserSession
-from app.db.repositories import AdminRepository, SecurityRepository, SessionRepository, UserRepository
+from app.db.repositories import AdminRepository, AssetRepository, SecurityRepository, SessionRepository, UserRepository
 from app.db.transaction import transaction_scope
 from app.domains.admin.schemas import AdminConfirmIn, AdminConfirmOut, AdminProfileUpdateIn
-from app.domains.users.schemas import AccountDeleteIn, PasswordChangeIn, UserUpdateIn
+from app.domains.assets.schemas import UploaderType, UploadScene
+from app.domains.users.schemas import AccountDeleteIn, PasswordChangeIn, UserAvatarUpdateIn, UserUpdateIn
 from app.services.authentication import SessionArtifacts
 from app.services.security_events import login_event
 
@@ -38,6 +39,7 @@ class UserAccountService:
         self.password_manager = password_manager
         self.metadata = metadata
         self.users = UserRepository(session)
+        self.assets = AssetRepository(session)
         self.sessions = SessionRepository(session)
         web_secret, _, web_hmac, _ = settings.authentication_secrets()
         self.jwt_secret = web_secret
@@ -60,6 +62,27 @@ class UserAccountService:
                 user.display_name = payload.display_name.strip() if payload.display_name else None
             if "email" in payload.model_fields_set:
                 user.email = payload.email
+        return user
+
+    async def update_avatar(self, user_id: uuid.UUID, payload: UserAvatarUpdateIn) -> User:
+        async with transaction_scope(self.session):
+            user = await self.users.get(user_id, for_update=True)
+            if user is None or user.deleted_at is not None:
+                raise AppException(status_code=404, code=ErrorCode.USER_NOT_FOUND, message="用户不存在")
+            if payload.asset_id is None:
+                user.avatar = None
+                return user
+            asset = await self.assets.get(payload.asset_id, for_update=True)
+            if asset is None:
+                raise AppException(status_code=404, code=ErrorCode.ASSET_NOT_FOUND, message="头像资产不存在")
+            if (
+                asset.uploader_type != UploaderType.USER.value
+                or asset.uploader_id != user.id
+                or asset.scene != UploadScene.AVATAR.value
+                or not asset.url.startswith(self.settings.upload_base_url.rstrip("/") + "/")
+            ):
+                raise AppException(status_code=403, code=ErrorCode.PERMISSION_DENIED, message="无权使用该头像资产")
+            user.avatar = asset.url
         return user
 
     async def change_password(

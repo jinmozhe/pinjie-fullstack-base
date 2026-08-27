@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.elements import ColumnElement
 
-from app.db.models import Asset
+from app.db.models import Admin, Asset, User
 
 
 class AssetRepository:
@@ -74,6 +74,13 @@ class AssetRepository:
 
     async def delete(self, asset: Asset) -> None:
         await self._session.delete(asset)
+
+    async def is_referenced_by_avatar(self, url: str) -> bool:
+        user_reference = await self._session.scalar(select(User.id).where(User.avatar == url).limit(1))
+        if user_reference is not None:
+            return True
+        admin_reference = await self._session.scalar(select(Admin.id).where(Admin.avatar == url).limit(1))
+        return admin_reference is not None
 
 
 __all__ = ["AssetRepository"]

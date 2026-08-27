@@ -666,6 +666,65 @@
         }
       }
     },
+    "/api/v1/users/me/avatar": {
+      "put": {
+        "tags": [
+          "用户账户"
+        ],
+        "summary": "更新当前用户头像",
+        "operationId": "update_avatar_api_v1_users_me_avatar_put",
+        "parameters": [
+          {
+            "name": "pinjie_web_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Web Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserAvatarUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_UserPrincipalOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/me/password": {
       "post": {
         "tags": [
@@ -4220,6 +4279,18 @@
             "title": "Email",
             "description": "电子邮箱地址"
           },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar",
+            "description": "用户头像站内资源路径"
+          },
           "is_active": {
             "type": "boolean",
             "title": "Is Active",
@@ -7013,6 +7084,26 @@
         ],
         "title": "UserAuthSessionOut"
       },
+      "UserAvatarUpdateIn": {
+        "properties": {
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id",
+            "description": "本人上传的头像资产唯一标识，传 null 表示移除"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "UserAvatarUpdateIn"
+      },
       "UserBulkDeleteIn": {
         "properties": {
           "user_ids": {
@@ -7133,6 +7224,18 @@
             ],
             "title": "Email",
             "description": "电子邮箱地址"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatar",
+            "description": "用户头像站内资源路径"
           },
           "is_active": {
             "type": "boolean",

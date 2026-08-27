@@ -58,6 +58,7 @@ class UserPrincipalOut(BaseModel):
     username: str
     display_name: str | None
     email: str | None
+    avatar: str | None = Field(default=None, description="用户头像站内资源路径")
     is_active: bool
     created_at: datetime
     updated_at: datetime

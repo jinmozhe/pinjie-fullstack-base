@@ -27,8 +27,9 @@ describe("AvatarUploader", () => {
       updated_at: "2026-08-25T00:00:00Z",
     });
     const onChange = vi.fn();
+    const onUploaded = vi.fn();
     const user = userEvent.setup();
-    render(<AvatarUploader onChange={onChange} />);
+    render(<AvatarUploader onChange={onChange} onUploaded={onUploaded} />);
 
     await user.upload(
       screen.getByLabelText("选择图片文件"),
@@ -39,6 +40,7 @@ describe("AvatarUploader", () => {
       expect(onChange).toHaveBeenCalledWith("/static/uploads/avatar/20260825/avatar.png");
     });
     expect(upload).toHaveBeenCalledWith(expect.any(globalThis.File), "avatar");
+    expect(onUploaded).toHaveBeenCalledWith(expect.objectContaining({ id: "01900000-0000-0000-0000-000000000020" }));
   });
 
   it("rejects unsupported image types before sending a request", async () => {

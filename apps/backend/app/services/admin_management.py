@@ -120,6 +120,7 @@ class AdminManagementService:
             username=user.username,
             display_name=user.display_name,
             email=user.email,
+            avatar=user.avatar,
             is_active=user.is_active,
             created_at=user.created_at,
             updated_at=user.updated_at,

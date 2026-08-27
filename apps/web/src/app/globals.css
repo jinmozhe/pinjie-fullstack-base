@@ -85,6 +85,12 @@ a { color: inherit; }
 .account-identity > div:last-child { display: grid; }
 .account-identity span { color: var(--muted); font-size: 12px; }
 .avatar { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; color: #fff; background: var(--brand); font-weight: 800; }
+.avatar--image { position: relative; overflow: hidden; background: #e6efeb; color: var(--brand); }
+.avatar--profile { width: 88px; height: 88px; font-size: 30px; }
+.profile-avatar-row { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 30px; }
+.profile-avatar-row > div:last-child { display: grid; gap: 8px; }
+.profile-avatar-row p { margin: 0; }
+.profile-avatar-actions { min-height: 38px; }
 .account-layout { display: grid; width: min(100% - 40px, 1180px); grid-template-columns: 248px minmax(0, 1fr); gap: 56px; margin: 0 auto; padding: 56px 0 80px; }
 .account-nav { align-self: start; }
 .account-nav h1 { margin: 0 0 32px; font-family: Georgia, "Times New Roman", serif; font-size: 32px; font-weight: 600; }

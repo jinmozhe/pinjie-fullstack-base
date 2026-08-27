@@ -1,26 +1,27 @@
 import type { UserPrincipalOut } from "@pinjie/api-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { server } from "@/test/setup";
 
 import { Providers } from "../app/providers";
+import { assetApi } from "../lib/api/assets";
+import { fetchRegistrationState } from "../lib/api/server";
 import { AccountCenter } from "./account/AccountCenter";
 import { AccountSessionRecovery } from "./account/AccountSessionRecovery";
 import { AuthForm } from "./auth/AuthForm";
 import { webAuthApi } from "./auth/api";
-import { fetchRegistrationState } from "../lib/api/server";
 
 const replace = vi.fn();
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, refresh }) }));
 
 const now = "2026-08-15T00:00:00Z";
-const initialUser: UserPrincipalOut = { id: "01900000-0000-7000-8000-000000000002", username: "browser-user", display_name: "Browser User", email: "browser@example.test", is_active: true, created_at: now, updated_at: now };
+const initialUser: UserPrincipalOut = { id: "01900000-0000-7000-8000-000000000002", username: "browser-user", display_name: "Browser User", email: "browser@example.test", avatar: null, is_active: true, created_at: now, updated_at: now };
 
 function renderWithQuery(node: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -29,6 +30,7 @@ function renderWithQuery(node: ReactNode) {
 
 describe("stage C web account", () => {
   beforeEach(() => { replace.mockReset(); refresh.mockReset(); window.history.replaceState({}, "", "/"); });
+  afterEach(() => { vi.restoreAllMocks(); });
 
   it("preserves an intentional login navigation when a protected request returns late", () => {
     window.history.replaceState({}, "", "/login");
@@ -150,6 +152,82 @@ describe("stage C web account", () => {
     await user.click(screen.getByRole("button", { name: "保存资料" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("资料暂时无法保存");
     expect(screen.getByLabelText("显示名称")).toBeInTheDocument();
+  });
+
+  it("uploads and binds a user-owned avatar asset", async () => {
+    const upload = vi.spyOn(assetApi, "upload").mockResolvedValue({
+      id: "01900000-0000-0000-0000-000000000020",
+      uploader_type: "user",
+      uploader_id: initialUser.id,
+      storage_driver: "local",
+      file_key: "avatar/20260825/avatar.png",
+      original_name: "avatar.png",
+      mime_type: "image/png",
+      file_size: 16,
+      file_hash: "b".repeat(64),
+      url: "/static/uploads/avatar/20260825/avatar.png",
+      scene: "avatar",
+      created_at: now,
+      updated_at: now,
+    });
+    const updateAvatar = vi.spyOn(webAuthApi, "updateAvatar").mockResolvedValue({ ...initialUser, avatar: "/static/uploads/avatar/20260825/avatar.png" });
+    const user = userEvent.setup();
+    renderWithQuery(<AccountCenter initialUser={initialUser} />);
+
+    await user.upload(screen.getByLabelText("选择图片文件"), new globalThis.File(["png-content"], "avatar.png", { type: "image/png" }));
+
+    await waitFor(() => expect(updateAvatar).toHaveBeenCalledWith("01900000-0000-0000-0000-000000000020"));
+    expect(upload).toHaveBeenCalledWith(expect.any(globalThis.File), "avatar");
+    expect(await screen.findByText("头像已更新")).toBeInTheDocument();
+  });
+
+  it("shows a binding failure after avatar upload", async () => {
+    vi.spyOn(assetApi, "upload").mockResolvedValue({
+      id: "01900000-0000-0000-0000-000000000021",
+      uploader_type: "user",
+      uploader_id: initialUser.id,
+      storage_driver: "local",
+      file_key: "avatar/20260825/avatar.png",
+      original_name: "avatar.png",
+      mime_type: "image/png",
+      file_size: 16,
+      file_hash: "c".repeat(64),
+      url: "/static/uploads/avatar/20260825/avatar.png",
+      scene: "avatar",
+      created_at: now,
+      updated_at: now,
+    });
+    vi.spyOn(webAuthApi, "updateAvatar").mockRejectedValue(new Error("头像绑定失败"));
+    const user = userEvent.setup();
+    renderWithQuery(<AccountCenter initialUser={initialUser} />);
+
+    await user.upload(screen.getByLabelText("选择图片文件"), new globalThis.File(["png-content"], "avatar.png", { type: "image/png" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("头像绑定失败");
+  });
+
+  it("removes the avatar through the binding endpoint", async () => {
+    const currentAvatar = { ...initialUser, avatar: "/static/uploads/avatar/current.png" };
+    const updateAvatar = vi.spyOn(webAuthApi, "updateAvatar").mockResolvedValue({ ...currentAvatar, avatar: null });
+    const user = userEvent.setup();
+    renderWithQuery(<AccountCenter initialUser={currentAvatar} />);
+
+    await user.click(screen.getByRole("button", { name: "移除头像" }));
+
+    await waitFor(() => expect(updateAvatar).toHaveBeenCalledWith(null));
+    expect(await screen.findByText("头像已更新")).toBeInTheDocument();
+  });
+
+  it("falls back to the display-name initial when an avatar is broken", () => {
+    const currentAvatar = { ...initialUser, avatar: "/static/uploads/avatar/current.png" };
+    renderWithQuery(<AccountCenter initialUser={currentAvatar} />);
+
+    const images = screen.getAllByAltText("Browser User头像");
+    const image = images[0];
+    if (!image) throw new Error("头像图片未渲染");
+    fireEvent.error(image);
+
+    expect(screen.getAllByText("B").length).toBeGreaterThanOrEqual(1);
   });
 
   it("validates password and account deletion workflows", async () => {
