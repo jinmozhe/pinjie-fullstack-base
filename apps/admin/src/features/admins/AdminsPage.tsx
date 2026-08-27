@@ -14,7 +14,6 @@ import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
-  Avatar,
   Button,
   Checkbox,
   Drawer,
@@ -34,6 +33,7 @@ import {
 import type { MenuProps } from "antd";
 import { useState } from "react";
 
+import { AdminAvatar } from "@/components/AdminAvatar";
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
 import { AvatarUploader } from "@/components/Uploader";
 import { canAccess, useCurrentAdmin } from "@/features/auth";
@@ -41,10 +41,6 @@ import { adminApi } from "@/lib/api/admin";
 import { errorMessage } from "@/lib/api/http";
 
 type PasswordFormValues = { new_password: string; confirm_password: string };
-
-function fallbackAvatarText(admin: AdminRead) {
-  return (admin.display_name?.trim() || admin.username.trim()).slice(0, 1).toUpperCase();
-}
 
 export function AdminsPage() {
   const current = useCurrentAdmin();
@@ -303,29 +299,19 @@ export function AdminsPage() {
             {
               title: "管理员",
               dataIndex: "username",
-              render: (_, admin) => {
-                const fallback = fallbackAvatarText(admin);
-                return (
-                  <Flex align="center" gap={10} style={{ minWidth: 180 }}>
-                    <Avatar
-                      size={36}
-                      src={admin.avatar || undefined}
-                      alt={`${admin.display_name || admin.username}的头像`}
-                      icon={!admin.avatar && !fallback ? <UserOutlined /> : undefined}
-                    >
-                      {!admin.avatar ? fallback : null}
-                    </Avatar>
-                    <div className="table-primary-cell" style={{ minWidth: 0 }}>
-                      <Typography.Text strong ellipsis={{ tooltip: admin.display_name || admin.username }}>
-                        {admin.display_name || admin.username}
-                      </Typography.Text>
-                      <Typography.Text type="secondary" ellipsis={{ tooltip: admin.username }}>
-                        {admin.username}
-                      </Typography.Text>
-                    </div>
-                  </Flex>
-                );
-              },
+              render: (_, admin) => (
+                <Flex align="center" gap={10} style={{ minWidth: 180 }}>
+                  <AdminAvatar admin={admin} size={36} />
+                  <div className="table-primary-cell" style={{ minWidth: 0 }}>
+                    <Typography.Text strong ellipsis={{ tooltip: admin.display_name || admin.username }}>
+                      {admin.display_name || admin.username}
+                    </Typography.Text>
+                    <Typography.Text type="secondary" ellipsis={{ tooltip: admin.username }}>
+                      {admin.username}
+                    </Typography.Text>
+                  </div>
+                </Flex>
+              ),
             },
             { title: "身份", key: "identity", render: (_, admin) => identityTag(admin) },
             {

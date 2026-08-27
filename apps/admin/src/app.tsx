@@ -1,12 +1,13 @@
 import type { AdminRead } from "@pinjie/api-client";
-import { LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import { LogoutOutlined, SettingOutlined } from "@ant-design/icons";
 import { history, Link } from "@umijs/max";
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
-import { Avatar, Button, ConfigProvider, Dropdown, Result, Typography, message, theme } from "antd";
+import { Button, ConfigProvider, Dropdown, Result, Typography, message, theme } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import type { ReactNode } from "react";
 
 import defaultSettings from "../config/defaultSettings";
+import { AdminAvatar } from "./components/AdminAvatar";
 import { AdminContext } from "./features/auth/auth-context";
 import { adminApi } from "./lib/api/admin";
 import { ApiError, errorMessage } from "./lib/api/http";
@@ -59,12 +60,7 @@ function AccountMenu({ admin }: { admin: AdminRead }) {
       }}
     >
       <Button type="text" className="account-trigger" aria-label={`账户菜单：${admin.display_name || admin.username}`}>
-        <Avatar
-          size="small"
-          src={admin.avatar ?? undefined}
-          alt={`${admin.display_name || admin.username}的头像`}
-          icon={<UserOutlined />}
-        />
+        <AdminAvatar admin={admin} />
         <span>{admin.display_name || admin.username}</span>
       </Button>
     </Dropdown>

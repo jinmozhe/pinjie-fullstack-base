@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | Admin 用户永久回收站恢复策略调整计划已结束；统一 SoftDeleteMixin、永久可恢复回收站和用户自助注销软删除已完成，目标环境迁移、权限同步、发布和部署仍需独立授权 |
+| 当前阶段 | Admin 管理员头像统一回退样式与文件资产交互调整已完成；目标环境迁移、权限同步、发布和部署仍需独立授权 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -42,6 +42,9 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-27_Admin管理员头像统一回退样式计划.md` | 已结束 | Admin、Documentation | 已统一管理员列表与顶部账户头像的浅色首字符回退 |
+| `plans/2026-08-27_Admin文件资产上传主体标识精简计划.md` | 已结束 | Admin、Documentation | 已隐藏上传主体 UUID 文本，并在主体类型后保留图标复制能力 |
+| `plans/2026-08-27_Admin文件资产图片当前页预览计划.md` | 已结束 | Admin、Documentation | 已完成图片资产当前页预览，非图片继续新窗口打开 |
 | `plans/2026-08-27_Admin用户永久回收站恢复策略调整计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Documentation | 实施统一 SoftDeleteMixin，移除恢复截止和匿名化，用户自助注销统一进入可恢复软删除回收站 |
 | `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | Documentation、Developer Workflow | 已建立功能单元本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | Database、Backend、Admin、API Client、Documentation | 已完成用户回收站、单条与批量恢复、到期匿名化和独立恢复权限；目标环境迁移与权限同步仍需独立授权 |
@@ -82,6 +85,9 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-27_Admin管理员头像统一回退样式计划.md` | 已结束 | 已完成；空头像和失效图片统一显示浅色首字符回退，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 统一管理员列表与顶部账户头像的浅色首字符回退 |
+| `plans/2026-08-27_Admin文件资产上传主体标识精简计划.md` | 已结束 | 已完成；UUID 文本已隐藏，主体类型后保留复制图标，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 隐藏上传主体 UUID 文本，在主体类型后保留图标复制能力 |
+| `plans/2026-08-27_Admin文件资产图片当前页预览计划.md` | 已结束 | 已完成；图片“打开”使用 Ant Design 当前页预览，非图片保留新窗口，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 图片资产点击“打开”时使用 Ant Design 当前页预览，非图片继续新窗口打开 |
 | `plans/2026-08-27_Admin用户永久回收站恢复策略调整计划.md` | 已结束 | 已完成统一 SoftDeleteMixin、移除匿名化、用户自助注销走可恢复软删除及删除原因可选方案；轻量门禁通过，重型验证和真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Documentation | 实施统一 SoftDeleteMixin，移除恢复截止和匿名化，用户自助注销统一进入可恢复软删除回收站 |
 | `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | 已完成；功能单元完成后请求本地检查点授权、分阶段授权后立即精确提交，高风险整文件写入具备恢复基线和严格校验，治理轻量门禁通过 | Documentation、Developer Workflow | 建立本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | 已完成；回收站、恢复后保持停用、默认 30 天到期匿名化、迁移、契约、Admin 页面和文档已同步，轻量门禁通过，重型验证按策略未执行 | Database、Backend、Admin、API Client、Documentation | 为软删除用户增加可恢复生命周期和受控数据最小化机制 |
