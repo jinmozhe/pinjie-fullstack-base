@@ -150,6 +150,7 @@ textarea {
 
 .workspace-panel .ant-table-cell {
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .admins-table .ant-table-measure-row {

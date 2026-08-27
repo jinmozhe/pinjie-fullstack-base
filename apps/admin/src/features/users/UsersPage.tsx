@@ -275,7 +275,7 @@ export function UsersPage() {
               { title: "删除主体", dataIndex: "deleted_by_type", width: 100, render: (_: unknown, row: AdminUserRead) => deletionActorLabel(row.deleted_by_type) },
               { title: "删除原因", dataIndex: "deletion_reason", width: 120, render: (_: unknown, row: AdminUserRead) => deletionReasonLabel(row.deletion_reason) },
             ] : []),
-            { title: "操作", key: "actions", width: "1%", render: (_, row) => lifecycle === "deleted" ? (
+            { title: "操作", key: "actions", width: "1%", onHeaderCell: () => ({ style: { whiteSpace: "nowrap" } }), onCell: () => ({ style: { whiteSpace: "nowrap" } }), render: (_, row) => lifecycle === "deleted" ? (
               canRestore && (
                 <Button
                   type="link"
