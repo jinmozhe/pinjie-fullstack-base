@@ -1211,6 +1211,67 @@
         }
       }
     },
+    "/api/v1/admin/auth/confirm": {
+      "post": {
+        "tags": [
+          "管理员认证"
+        ],
+        "summary": "兼容旧版管理员敏感操作确认",
+        "description": "仅供旧版 Admin 客户端迁移使用，已弃用并计划于 2026-09-26 删除。确认回执不参与后续操作授权。",
+        "operationId": "confirm_api_v1_admin_auth_confirm_post",
+        "deprecated": true,
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminConfirmIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminConfirmOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/users": {
       "get": {
         "tags": [
@@ -3670,6 +3731,55 @@
         ],
         "title": "AdminBulkStatusUpdateIn"
       },
+      "AdminConfirmIn": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Current Password",
+            "description": "当前管理员密码，最多 64 个字符"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ConfirmationAction",
+            "description": "旧客户端声明的敏感操作类型"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "current_password",
+          "action"
+        ],
+        "title": "AdminConfirmIn"
+      },
+      "AdminConfirmOut": {
+        "properties": {
+          "confirmation_token": {
+            "type": "string",
+            "title": "Confirmation Token",
+            "description": "旧客户端兼容确认回执，不作为后续操作授权凭据"
+          },
+          "action": {
+            "$ref": "#/components/schemas/ConfirmationAction",
+            "description": "旧客户端声明的敏感操作类型"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "兼容确认回执的客户端有效期提示"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "confirmation_token",
+          "action",
+          "expires_at"
+        ],
+        "title": "AdminConfirmOut"
+      },
       "AdminCreateIn": {
         "properties": {
           "username": {
@@ -4350,6 +4460,24 @@
           "scene"
         ],
         "title": "Body_upload_asset_api_v1_assets_upload_post"
+      },
+      "ConfirmationAction": {
+        "type": "string",
+        "enum": [
+          "users:disable",
+          "users:credentials:reset",
+          "users:sessions:revoke",
+          "admins:create",
+          "admins:superuser:change",
+          "admins:status:change",
+          "admins:credentials:reset",
+          "admins:roles:assign",
+          "admins:sessions:revoke",
+          "roles:delete",
+          "roles:permissions:assign",
+          "assets:delete"
+        ],
+        "title": "ConfirmationAction"
       },
       "DatabaseHealthRead": {
         "properties": {
@@ -5265,6 +5393,38 @@
           "request_id"
         ],
         "title": "ResponseModel[AdminAuthSessionOut]"
+      },
+      "ResponseModel_AdminConfirmOut_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminConfirmOut",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[AdminConfirmOut]"
       },
       "ResponseModel_AdminRead_": {
         "properties": {

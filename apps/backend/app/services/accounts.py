@@ -18,7 +18,7 @@ from app.core.security import (
 from app.db.models import Admin, AdminRefreshToken, AdminSession, User, UserRefreshToken, UserSession
 from app.db.repositories import AdminRepository, SecurityRepository, SessionRepository, UserRepository
 from app.db.transaction import transaction_scope
-from app.domains.admin.schemas import AdminProfileUpdateIn
+from app.domains.admin.schemas import AdminConfirmIn, AdminConfirmOut, AdminProfileUpdateIn
 from app.domains.users.schemas import AccountDeleteIn, PasswordChangeIn, UserUpdateIn
 from app.services.authentication import SessionArtifacts
 from app.services.security_events import login_event
@@ -298,6 +298,24 @@ class AdminAccountService:
             access_expires_at=access_expires,
             idle_expires_at=idle,
             absolute_expires_at=absolute,
+        )
+
+    async def create_confirmation_compatibility(
+        self,
+        *,
+        admin: Admin,
+        payload: AdminConfirmIn,
+    ) -> AdminConfirmOut:
+        if not await self.password_manager.verify(payload.current_password, admin.password_hash):
+            raise AppException(
+                status_code=401,
+                code=ErrorCode.AUTH_INVALID_CREDENTIALS,
+                message="当前密码错误",
+            )
+        return AdminConfirmOut(
+            confirmation_token=new_opaque_token(),
+            action=payload.action,
+            expires_at=datetime.now(UTC) + timedelta(minutes=5),
         )
 
 

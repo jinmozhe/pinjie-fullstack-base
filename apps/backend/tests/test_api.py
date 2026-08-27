@@ -117,11 +117,20 @@ def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
     assert "password" in schema["components"]["schemas"]["UserLoginIn"]["properties"]
 
 
-def test_admin_operations_do_not_expose_password_confirmation_contract() -> None:
+def test_admin_confirmation_contract_is_deprecated_during_compatibility_window() -> None:
     from app.main import app
 
     schema = app.openapi()
-    assert "/api/v1/admin/auth/confirm" not in schema["paths"]
+    operation = schema["paths"]["/api/v1/admin/auth/confirm"]["post"]
+    assert operation["deprecated"] is True
+    assert "2026-09-26" in operation["description"]
+    assert operation["operationId"] == "confirm_api_v1_admin_auth_confirm_post"
+
+
+def test_admin_operations_do_not_require_password_confirmation_header() -> None:
+    from app.main import app
+
+    schema = app.openapi()
     for path_item in schema["paths"].values():
         for operation in path_item.values():
             if not isinstance(operation, dict):

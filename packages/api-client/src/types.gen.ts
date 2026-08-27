@@ -81,6 +81,44 @@ export type AdminBulkStatusUpdateIn = {
 };
 
 /**
+ * AdminConfirmIn
+ */
+export type AdminConfirmIn = {
+    /**
+     * Current Password
+     *
+     * 当前管理员密码，最多 64 个字符
+     */
+    current_password: string;
+    /**
+     * 旧客户端声明的敏感操作类型
+     */
+    action: ConfirmationAction;
+};
+
+/**
+ * AdminConfirmOut
+ */
+export type AdminConfirmOut = {
+    /**
+     * Confirmation Token
+     *
+     * 旧客户端兼容确认回执，不作为后续操作授权凭据
+     */
+    confirmation_token: string;
+    /**
+     * 旧客户端声明的敏感操作类型
+     */
+    action: ConfirmationAction;
+    /**
+     * Expires At
+     *
+     * 兼容确认回执的客户端有效期提示
+     */
+    expires_at: string;
+};
+
+/**
  * AdminCreateIn
  */
 export type AdminCreateIn = {
@@ -549,6 +587,11 @@ export type BodyUploadAssetApiV1AssetsUploadPost = {
      */
     scene: UploadScene;
 };
+
+/**
+ * ConfirmationAction
+ */
+export type ConfirmationAction = 'users:disable' | 'users:credentials:reset' | 'users:sessions:revoke' | 'admins:create' | 'admins:superuser:change' | 'admins:status:change' | 'admins:credentials:reset' | 'admins:roles:assign' | 'admins:sessions:revoke' | 'roles:delete' | 'roles:permissions:assign' | 'assets:delete';
 
 /**
  * DatabaseHealthRead
@@ -1228,6 +1271,34 @@ export type ResponseModelAdminAuthSessionOut = {
      * 响应业务数据
      */
     data: AdminAuthSessionOut;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminConfirmOut]
+ */
+export type ResponseModelAdminConfirmOut = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: AdminConfirmOut;
     /**
      * Request Id
      *
@@ -3094,6 +3165,31 @@ export type ChangePasswordApiV1AdminAuthPasswordPostResponses = {
 };
 
 export type ChangePasswordApiV1AdminAuthPasswordPostResponse = ChangePasswordApiV1AdminAuthPasswordPostResponses[keyof ChangePasswordApiV1AdminAuthPasswordPostResponses];
+
+export type ConfirmApiV1AdminAuthConfirmPostData = {
+    body: AdminConfirmIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/auth/confirm';
+};
+
+export type ConfirmApiV1AdminAuthConfirmPostErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type ConfirmApiV1AdminAuthConfirmPostError = ConfirmApiV1AdminAuthConfirmPostErrors[keyof ConfirmApiV1AdminAuthConfirmPostErrors];
+
+export type ConfirmApiV1AdminAuthConfirmPostResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminConfirmOut;
+};
+
+export type ConfirmApiV1AdminAuthConfirmPostResponse = ConfirmApiV1AdminAuthConfirmPostResponses[keyof ConfirmApiV1AdminAuthConfirmPostResponses];
 
 export type ListUsersApiV1AdminUsersGetData = {
     body?: never;

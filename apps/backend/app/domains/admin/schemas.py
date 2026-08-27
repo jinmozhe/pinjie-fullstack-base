@@ -1,6 +1,7 @@
 import re
 import uuid
 from datetime import datetime
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -10,6 +11,21 @@ from app.core.password_policy import PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 from app.domains.auth.schemas import normalize_username
 
 _ROLE_CODE = re.compile(r"^[a-z][a-z0-9_-]{2,99}$")
+
+
+class ConfirmationAction(StrEnum):
+    USER_DISABLE = "users:disable"
+    USER_PASSWORD_RESET = "users:credentials:reset"
+    USER_SESSION_REVOKE = "users:sessions:revoke"
+    ADMIN_CREATE = "admins:create"
+    ADMIN_SUPERUSER_CHANGE = "admins:superuser:change"
+    ADMIN_STATUS_CHANGE = "admins:status:change"
+    ADMIN_PASSWORD_RESET = "admins:credentials:reset"
+    ADMIN_ROLES_ASSIGN = "admins:roles:assign"
+    ADMIN_SESSIONS_REVOKE = "admins:sessions:revoke"
+    ROLE_DELETE = "roles:delete"
+    ROLE_PERMISSIONS_ASSIGN = "roles:permissions:assign"
+    ASSET_DELETE = "assets:delete"
 
 
 class AdminLoginIn(BaseModel):
@@ -55,6 +71,25 @@ class AdminAuthSessionOut(BaseModel):
     access_expires_at: datetime
     idle_expires_at: datetime
     absolute_expires_at: datetime
+
+
+class AdminConfirmIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    current_password: str = Field(
+        min_length=1,
+        max_length=PASSWORD_MAX_LENGTH,
+        description="当前管理员密码，最多 64 个字符",
+    )
+    action: ConfirmationAction = Field(description="旧客户端声明的敏感操作类型")
+
+
+class AdminConfirmOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    confirmation_token: str = Field(description="旧客户端兼容确认回执，不作为后续操作授权凭据")
+    action: ConfirmationAction = Field(description="旧客户端声明的敏感操作类型")
+    expires_at: datetime = Field(description="兼容确认回执的客户端有效期提示")
 
 
 class AdminCreateIn(BaseModel):
@@ -412,6 +447,8 @@ class SystemOverviewRead(BaseModel):
 __all__ = [
     "AdminAuthSessionOut",
     "AdminBulkStatusUpdateIn",
+    "AdminConfirmIn",
+    "AdminConfirmOut",
     "AdminCreateIn",
     "AdminLoginIn",
     "AdminPage",
@@ -423,6 +460,7 @@ __all__ = [
     "AuditEventPage",
     "AuditEventRead",
     "BatchActionResult",
+    "ConfirmationAction",
     "DatabaseHealthRead",
     "InfrastructureOverviewRead",
     "LoginEventPage",
