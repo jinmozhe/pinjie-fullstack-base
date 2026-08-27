@@ -39,6 +39,7 @@ from .schemas import (
     RoleRead,
     RoleUpdateIn,
     StatusUpdateIn,
+    SystemOverviewRead,
     UserBulkDeleteIn,
     UserBulkStatusUpdateIn,
     UserPage,
@@ -642,6 +643,22 @@ async def list_request_logs(
 ) -> ResponseModel[RequestLogPage]:
     return success_response(
         data=await service.list_request_logs(page=page, page_size=page_size), request_id=current_request_id()
+    )
+
+
+@router.get(
+    "/system/overview",
+    response_model=ResponseModel[SystemOverviewRead],
+    dependencies=[Depends(require_permission(PermissionCode.SYSTEM_OVERVIEW_READ))],
+    summary="获取系统全景监控概览",
+    description="聚合实时基础设施探针、公开运行环境摘要以及带 Redis 缓存和采样时间的业务资产统计。",
+)
+async def get_system_overview(
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[SystemOverviewRead]:
+    return success_response(
+        data=await service.get_system_overview(),
+        request_id=current_request_id(),
     )
 
 

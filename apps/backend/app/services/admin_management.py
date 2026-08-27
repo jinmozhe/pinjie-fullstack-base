@@ -1,18 +1,31 @@
+import asyncio
+import json
+import time
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from importlib.metadata import version
+from platform import python_version
 from typing import Literal
 
+from loguru import logger
+from pydantic import ValidationError
+from redis.exceptions import RedisError
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.core.cache_keys import CacheKeys, cache_keys
 from app.core.config import Settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
+from app.core.health import check_database
 from app.core.identifiers import new_uuid7
 from app.core.pagination import PageResult
+from app.core.redis import check_redis
 from app.core.request_metadata import RequestMetadata
+from app.core.resources import AppResources
 from app.core.security import PasswordManager
-from app.db.models import Admin, AdminSession, Role, User, UserSession
+from app.db.models import Admin, AdminSession, Asset, AuditEvent, Role, User, UserSession
 from app.db.repositories import (
     AdminRepository,
     RequestLogRepository,
@@ -32,10 +45,13 @@ from app.domains.admin.schemas import (
     AuditEventPage,
     AuditEventRead,
     BatchActionResult,
+    DatabaseHealthRead,
+    InfrastructureOverviewRead,
     LoginEventPage,
     LoginEventRead,
     PasswordResetIn,
     PermissionRead,
+    RedisHealthRead,
     RequestLogPage,
     RequestLogRead,
     RoleBulkDeleteIn,
@@ -44,7 +60,11 @@ from app.domains.admin.schemas import (
     RolePage,
     RolePermissionAssignIn,
     RoleUpdateIn,
+    SecurityConfigurationRead,
     StatusUpdateIn,
+    StorageConfigurationRead,
+    SystemOverviewRead,
+    SystemTelemetryRead,
     UserBulkDeleteIn,
     UserBulkStatusUpdateIn,
     UserPage,
@@ -52,6 +72,13 @@ from app.domains.admin.schemas import (
 )
 from app.domains.users.schemas import UserUpdateIn
 from app.services.security_events import AuditCoordinator
+
+_FASTAPI_VERSION = version("fastapi")
+_PYTHON_VERSION = python_version()
+_SYSTEM_TELEMETRY_TTL_SECONDS = 120
+
+# 当前默认部署为单 Backend 实例；该锁避免同一实例内缓存失效时重复执行精确统计。
+_SYSTEM_TELEMETRY_REFRESH_LOCK = asyncio.Lock()
 
 
 class AdminManagementService:
@@ -64,10 +91,15 @@ class AdminManagementService:
         password_manager: PasswordManager,
         metadata: RequestMetadata,
         actor_id: uuid.UUID,
+        resources: AppResources | None = None,
+        started_at: datetime | None = None,
     ) -> None:
         self.session = session
         self.settings = settings
         self.password_manager = password_manager
+        self.resources = resources
+        self.started_at = started_at
+        self.cache_keys: CacheKeys = cache_keys(settings)
         self.users = UserRepository(session)
         self.admins = AdminRepository(session)
         self.sessions = SessionRepository(session)
@@ -770,6 +802,205 @@ class AdminManagementService:
         for admin in await self.admins.get_admins_by_roles(role_ids):
             admin.credential_version += 1
             await self.sessions.revoke_admin_for_admin(admin.id, reason=reason)
+
+    async def _read_system_telemetry_cache(self, cache_key: str) -> SystemTelemetryRead | None:
+        if self.resources is None or self.resources.redis is None:
+            return None
+        try:
+            cached_value = await self.resources.redis.get(cache_key)
+            if cached_value is None:
+                return None
+            payload = json.loads(cached_value)
+            payload["cached"] = True
+            payload["source"] = "redis_cache"
+            return SystemTelemetryRead.model_validate(payload)
+        except (RedisError, json.JSONDecodeError, TypeError, ValidationError) as exc:
+            logger.bind(cache_key=cache_key).opt(exception=exc).warning("failed to read system telemetry cache")
+            return None
+
+    async def _query_system_telemetry(self, sampled_at: datetime) -> SystemTelemetryRead:
+        audit_cutoff = sampled_at - timedelta(days=self.settings.security_event_retention_days)
+        statement = select(
+            select(func.count()).select_from(User).where(User.deleted_at.is_(None)).scalar_subquery(),
+            select(func.count()).select_from(Admin).where(Admin.is_active.is_(True)).scalar_subquery(),
+            select(func.count()).select_from(Role).where(Role.is_active.is_(True)).scalar_subquery(),
+            select(func.count()).select_from(Asset).scalar_subquery(),
+            select(func.count())
+            .select_from(AuditEvent)
+            .where(AuditEvent.occurred_at >= audit_cutoff)
+            .scalar_subquery(),
+        )
+        try:
+            async with asyncio.timeout(self.settings.dependency_timeout):
+                user_count, admin_count, role_count, asset_count, audit_event_count = (
+                    await self.session.execute(statement)
+                ).one()
+        except TimeoutError as exc:
+            logger.bind(timeout_seconds=self.settings.dependency_timeout).opt(exception=exc).error(
+                "system telemetry database query timed out"
+            )
+            return SystemTelemetryRead(
+                status="unavailable",
+                sampled_at=sampled_at,
+                source="unavailable",
+                user_count=None,
+                admin_count=None,
+                role_count=None,
+                asset_count=None,
+                audit_event_count=None,
+                cached=False,
+            )
+        except Exception as exc:
+            logger.opt(exception=exc).error("failed to query system telemetry")
+            return SystemTelemetryRead(
+                status="unavailable",
+                sampled_at=sampled_at,
+                source="unavailable",
+                user_count=None,
+                admin_count=None,
+                role_count=None,
+                asset_count=None,
+                audit_event_count=None,
+                cached=False,
+            )
+
+        return SystemTelemetryRead(
+            status="ok",
+            sampled_at=sampled_at,
+            source="database",
+            user_count=int(user_count),
+            admin_count=int(admin_count),
+            role_count=int(role_count),
+            asset_count=int(asset_count),
+            audit_event_count=int(audit_event_count),
+            cached=False,
+        )
+
+    async def _write_system_telemetry_cache(self, cache_key: str, telemetry: SystemTelemetryRead) -> None:
+        if self.resources is None or self.resources.redis is None or telemetry.status != "ok":
+            return
+        payload = telemetry.model_dump(mode="json", exclude={"cached", "source"})
+        try:
+            await self.resources.redis.setex(
+                cache_key,
+                _SYSTEM_TELEMETRY_TTL_SECONDS,
+                json.dumps(payload),
+            )
+        except RedisError as exc:
+            logger.bind(cache_key=cache_key).opt(exception=exc).warning("failed to write system telemetry cache")
+
+    async def _load_system_telemetry(self, *, redis_available: bool, sampled_at: datetime) -> SystemTelemetryRead:
+        cache_key = self.cache_keys.system_telemetry()
+        if redis_available:
+            cached = await self._read_system_telemetry_cache(cache_key)
+            if cached is not None:
+                return cached
+
+        async with _SYSTEM_TELEMETRY_REFRESH_LOCK:
+            if redis_available:
+                cached = await self._read_system_telemetry_cache(cache_key)
+                if cached is not None:
+                    return cached
+            telemetry = await self._query_system_telemetry(sampled_at)
+            if redis_available:
+                await self._write_system_telemetry_cache(cache_key, telemetry)
+            return telemetry
+
+    async def get_system_overview(self) -> SystemOverviewRead:
+        now = datetime.now(UTC)
+        started_at = self.started_at or now
+        uptime_seconds = max(0, int((now - started_at).total_seconds()))
+
+        # 1. 数据库探针
+        db_status: Literal["ok", "unavailable", "mismatch", "timeout"] = "unavailable"
+        db_latency = 0.0
+        db_details = "database_check_failed"
+        if self.resources is not None:
+            start_db = time.perf_counter()
+            db_ok, db_state = await check_database(self.resources.engine, self.settings.dependency_timeout)
+            db_latency = round((time.perf_counter() - start_db) * 1000.0, 2)
+            if db_ok:
+                db_status = "ok"
+            elif db_state == "migration_revision_mismatch":
+                db_status = "mismatch"
+            elif db_state == "timeout":
+                db_status = "timeout"
+            db_details = "migration_heads_matched" if db_ok else db_state
+
+        # 2. Redis 探针
+        redis_status: Literal["ok", "unavailable", "disabled"] = "disabled"
+        redis_latency = 0.0
+        redis_mode = self.settings.redis_mode
+        if self.resources is not None and self.resources.redis is not None:
+            start_redis = time.perf_counter()
+            redis_ok = await check_redis(self.resources.redis, self.settings.dependency_timeout)
+            redis_latency = round((time.perf_counter() - start_redis) * 1000.0, 2)
+            redis_status = "ok" if redis_ok else "unavailable"
+
+        # 3. 只返回可公开的存储与安全机制摘要，不把配置摘要冒充健康探针。
+        storage_configuration = StorageConfigurationRead(
+            driver=self.settings.upload_storage_driver,
+            public_base_url=self.settings.upload_base_url,
+        )
+        security_configuration = SecurityConfigurationRead(
+            session_isolation="separate_cookie_profiles",
+            csrf_strategy="double_submit_hmac",
+            refresh_rotation="single_use_rotation",
+        )
+
+        infrastructure = InfrastructureOverviewRead(
+            database=DatabaseHealthRead(
+                status=db_status,
+                latency_ms=db_latency,
+                details=db_details,
+            ),
+            redis=RedisHealthRead(
+                status=redis_status,
+                latency_ms=redis_latency,
+                mode=redis_mode,
+            ),
+            storage=storage_configuration,
+            security=security_configuration,
+        )
+
+        # 4. 业务资产遥测（Redis 缓存 120s，缓存失效时单次数据库往返精确采样）
+        if db_status == "ok":
+            telemetry = await self._load_system_telemetry(redis_available=redis_status == "ok", sampled_at=now)
+        else:
+            telemetry = SystemTelemetryRead(
+                status="unavailable",
+                sampled_at=now,
+                source="unavailable",
+                user_count=None,
+                admin_count=None,
+                role_count=None,
+                asset_count=None,
+                audit_event_count=None,
+                cached=False,
+            )
+
+        # 5. 综合健康评估
+        overall_status: Literal["healthy", "degraded", "unavailable"] = "healthy"
+        if db_status != "ok":
+            overall_status = "unavailable"
+        elif redis_mode == "required" and redis_status != "ok":
+            overall_status = "unavailable"
+        elif telemetry.status != "ok":
+            overall_status = "degraded"
+
+        return SystemOverviewRead(
+            status=overall_status,
+            started_at=started_at,
+            uptime_seconds=uptime_seconds,
+            environment=self.settings.environment,
+            release_version=self.settings.release_version or "0.1.0",
+            python_version=_PYTHON_VERSION,
+            fastapi_version=_FASTAPI_VERSION,
+            timezone="UTC",
+            cors_origin_count=len(self.settings.cors_origins),
+            infrastructure=infrastructure,
+            telemetry=telemetry,
+        )
 
 
 __all__ = ["AdminManagementService"]

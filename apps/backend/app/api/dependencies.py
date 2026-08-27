@@ -400,6 +400,7 @@ def get_admin_management_service(
     current: Annotated[CurrentAdmin, Depends(get_current_admin)],
 ) -> AdminManagementService:
     resources = get_resources(request)
+    started_at = getattr(request.app.state, "started_at", None)
     return AdminManagementService(
         session=session,
         session_factory=resources.session_factory,
@@ -407,6 +408,8 @@ def get_admin_management_service(
         password_manager=resources.password_manager,
         metadata=request_metadata(request),
         actor_id=current.admin.id,
+        resources=resources,
+        started_at=started_at,
     )
 
 

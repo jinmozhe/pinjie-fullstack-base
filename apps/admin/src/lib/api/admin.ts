@@ -28,6 +28,7 @@ import type {
   RolePermissionAssignIn,
   RoleUpdateIn,
   StatusUpdateIn,
+  SystemOverviewRead,
   UserUpdateIn,
   UserBulkDeleteIn,
   UserBulkStatusUpdateIn,
@@ -194,4 +195,5 @@ export const adminApi = {
   loginEvents: (page = 1) => apiRequest<PageResultLoginEventRead>(`/api/v1/admin/security/login-events?page=${page}&page_size=20`),
   auditEvents: (page = 1) => apiRequest<PageResultAuditEventRead>(`/api/v1/admin/security/audit-events?page=${page}&page_size=20`),
   requestLogs: (page = 1) => apiRequest<PageResultRequestLogRead>(`/api/v1/admin/system/request-logs?page=${page}&page_size=20`),
+  systemOverview: () => apiRequest<SystemOverviewRead>("/api/v1/admin/system/overview"),
 };

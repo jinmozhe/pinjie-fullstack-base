@@ -35,6 +35,9 @@ class CacheKeys:
     def request_log_dead_letter(self) -> str:
         return self._key("system", "request-log-dlq", "events")
 
+    def system_telemetry(self) -> str:
+        return self._key("system", "telemetry", "overview")
+
 
 def cache_keys(settings: Settings) -> CacheKeys:
     project = settings.project_name.lower().replace(" ", "-")

@@ -3455,6 +3455,56 @@
         }
       }
     },
+    "/api/v1/admin/system/overview": {
+      "get": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "获取系统全景监控概览",
+        "description": "聚合实时基础设施探针、公开运行环境摘要以及带 Redis 缓存和采样时间的业务资产统计。",
+        "operationId": "get_system_overview_api_v1_admin_system_overview_get",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_SystemOverviewRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/system/status": {
       "get": {
         "tags": [
@@ -4301,6 +4351,39 @@
         ],
         "title": "Body_upload_asset_api_v1_assets_upload_post"
       },
+      "DatabaseHealthRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unavailable",
+              "mismatch",
+              "timeout"
+            ],
+            "title": "Status",
+            "description": "数据库连接和迁移状态"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms",
+            "description": "探测往返耗时（毫秒）"
+          },
+          "details": {
+            "type": "string",
+            "title": "Details",
+            "description": "诊断详情，如 migration_heads_matched 或错误原因"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "latency_ms",
+          "details"
+        ],
+        "title": "DatabaseHealthRead"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -4314,6 +4397,31 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "InfrastructureOverviewRead": {
+        "properties": {
+          "database": {
+            "$ref": "#/components/schemas/DatabaseHealthRead"
+          },
+          "redis": {
+            "$ref": "#/components/schemas/RedisHealthRead"
+          },
+          "storage": {
+            "$ref": "#/components/schemas/StorageConfigurationRead"
+          },
+          "security": {
+            "$ref": "#/components/schemas/SecurityConfigurationRead"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "database",
+          "redis",
+          "storage",
+          "security"
+        ],
+        "title": "InfrastructureOverviewRead"
       },
       "LiveStatus": {
         "properties": {
@@ -4922,6 +5030,42 @@
           "checks"
         ],
         "title": "ReadinessStatus"
+      },
+      "RedisHealthRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unavailable",
+              "disabled"
+            ],
+            "title": "Status",
+            "description": "Redis 连接状态"
+          },
+          "latency_ms": {
+            "type": "number",
+            "title": "Latency Ms",
+            "description": "探测往返耗时（毫秒）"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "required",
+              "disabled"
+            ],
+            "title": "Mode",
+            "description": "Redis 运行模式"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "latency_ms",
+          "mode"
+        ],
+        "title": "RedisHealthRead"
       },
       "RefreshSessionOut": {
         "properties": {
@@ -5602,6 +5746,38 @@
         ],
         "title": "ResponseModel[RoleRead]"
       },
+      "ResponseModel_SystemOverviewRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SystemOverviewRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[SystemOverviewRead]"
+      },
       "ResponseModel_SystemStatus_": {
         "properties": {
           "code": {
@@ -6053,6 +6229,36 @@
         "type": "object",
         "title": "RoleUpdateIn"
       },
+      "SecurityConfigurationRead": {
+        "properties": {
+          "session_isolation": {
+            "type": "string",
+            "const": "separate_cookie_profiles",
+            "title": "Session Isolation",
+            "description": "C/B 端会话隔离策略"
+          },
+          "csrf_strategy": {
+            "type": "string",
+            "const": "double_submit_hmac",
+            "title": "Csrf Strategy",
+            "description": "CSRF 校验策略"
+          },
+          "refresh_rotation": {
+            "type": "string",
+            "const": "single_use_rotation",
+            "title": "Refresh Rotation",
+            "description": "Refresh Token 轮换策略"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session_isolation",
+          "csrf_strategy",
+          "refresh_rotation"
+        ],
+        "title": "SecurityConfigurationRead"
+      },
       "SessionRead": {
         "properties": {
           "id": {
@@ -6171,6 +6377,110 @@
         ],
         "title": "StatusUpdateIn"
       },
+      "StorageConfigurationRead": {
+        "properties": {
+          "driver": {
+            "type": "string",
+            "const": "local",
+            "title": "Driver",
+            "description": "存储驱动名称"
+          },
+          "public_base_url": {
+            "type": "string",
+            "title": "Public Base Url",
+            "description": "文件公开访问根路径"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "driver",
+          "public_base_url"
+        ],
+        "title": "StorageConfigurationRead"
+      },
+      "SystemOverviewRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unavailable"
+            ],
+            "title": "Status",
+            "description": "系统综合健康状态"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Started At",
+            "description": "服务启动时间"
+          },
+          "uptime_seconds": {
+            "type": "integer",
+            "title": "Uptime Seconds",
+            "description": "服务已稳定运行时长（秒）"
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "local",
+              "test",
+              "production"
+            ],
+            "title": "Environment",
+            "description": "部署运行环境"
+          },
+          "release_version": {
+            "type": "string",
+            "title": "Release Version",
+            "description": "系统发行版本号"
+          },
+          "python_version": {
+            "type": "string",
+            "title": "Python Version",
+            "description": "当前 CPython 运行时版本"
+          },
+          "fastapi_version": {
+            "type": "string",
+            "title": "Fastapi Version",
+            "description": "当前 FastAPI 运行时版本"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "description": "服务器基准时区"
+          },
+          "cors_origin_count": {
+            "type": "integer",
+            "title": "Cors Origin Count",
+            "description": "已配置的受信任跨域来源数量"
+          },
+          "infrastructure": {
+            "$ref": "#/components/schemas/InfrastructureOverviewRead"
+          },
+          "telemetry": {
+            "$ref": "#/components/schemas/SystemTelemetryRead"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "started_at",
+          "uptime_seconds",
+          "environment",
+          "release_version",
+          "python_version",
+          "fastapi_version",
+          "timezone",
+          "cors_origin_count",
+          "infrastructure",
+          "telemetry"
+        ],
+        "title": "SystemOverviewRead"
+      },
       "SystemStatus": {
         "properties": {
           "status": {
@@ -6189,6 +6499,114 @@
           "status"
         ],
         "title": "SystemStatus"
+      },
+      "SystemTelemetryRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "description": "业务遥测采样状态"
+          },
+          "sampled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Sampled At",
+            "description": "业务遥测数据采样时间"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "database",
+              "redis_cache",
+              "unavailable"
+            ],
+            "title": "Source",
+            "description": "业务遥测数据来源"
+          },
+          "user_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Count",
+            "description": "未进入回收站的普通用户数"
+          },
+          "admin_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admin Count",
+            "description": "启用管理员数"
+          },
+          "role_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role Count",
+            "description": "启用角色数"
+          },
+          "asset_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Count",
+            "description": "现存文件资产记录数"
+          },
+          "audit_event_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Event Count",
+            "description": "保留期内现存安全审计事件数"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "description": "统计数据是否命中 Redis 缓存",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "sampled_at",
+          "source",
+          "user_count",
+          "admin_count",
+          "role_count",
+          "asset_count",
+          "audit_event_count"
+        ],
+        "title": "SystemTelemetryRead"
       },
       "UploadScene": {
         "type": "string",

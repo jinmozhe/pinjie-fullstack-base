@@ -551,6 +551,30 @@ export type BodyUploadAssetApiV1AssetsUploadPost = {
 };
 
 /**
+ * DatabaseHealthRead
+ */
+export type DatabaseHealthRead = {
+    /**
+     * Status
+     *
+     * 数据库连接和迁移状态
+     */
+    status: 'ok' | 'unavailable' | 'mismatch' | 'timeout';
+    /**
+     * Latency Ms
+     *
+     * 探测往返耗时（毫秒）
+     */
+    latency_ms: number;
+    /**
+     * Details
+     *
+     * 诊断详情，如 migration_heads_matched 或错误原因
+     */
+    details: string;
+};
+
+/**
  * HTTPValidationError
  */
 export type HttpValidationError = {
@@ -560,6 +584,16 @@ export type HttpValidationError = {
      * 请求参数校验错误详情列表
      */
     detail?: Array<ValidationError>;
+};
+
+/**
+ * InfrastructureOverviewRead
+ */
+export type InfrastructureOverviewRead = {
+    database: DatabaseHealthRead;
+    redis: RedisHealthRead;
+    storage: StorageConfigurationRead;
+    security: SecurityConfigurationRead;
 };
 
 /**
@@ -1018,6 +1052,30 @@ export type ReadinessStatus = {
     checks: {
         [key: string]: string;
     };
+};
+
+/**
+ * RedisHealthRead
+ */
+export type RedisHealthRead = {
+    /**
+     * Status
+     *
+     * Redis 连接状态
+     */
+    status: 'ok' | 'unavailable' | 'disabled';
+    /**
+     * Latency Ms
+     *
+     * 探测往返耗时（毫秒）
+     */
+    latency_ms: number;
+    /**
+     * Mode
+     *
+     * Redis 运行模式
+     */
+    mode: 'required' | 'disabled';
 };
 
 /**
@@ -1599,6 +1657,34 @@ export type ResponseModelRoleRead = {
 };
 
 /**
+ * ResponseModel[SystemOverviewRead]
+ */
+export type ResponseModelSystemOverviewRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: SystemOverviewRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
  * ResponseModel[SystemStatus]
  */
 export type ResponseModelSystemStatus = {
@@ -1947,6 +2033,30 @@ export type RoleUpdateIn = {
 };
 
 /**
+ * SecurityConfigurationRead
+ */
+export type SecurityConfigurationRead = {
+    /**
+     * Session Isolation
+     *
+     * C/B 端会话隔离策略
+     */
+    session_isolation: 'separate_cookie_profiles';
+    /**
+     * Csrf Strategy
+     *
+     * CSRF 校验策略
+     */
+    csrf_strategy: 'double_submit_hmac';
+    /**
+     * Refresh Rotation
+     *
+     * Refresh Token 轮换策略
+     */
+    refresh_rotation: 'single_use_rotation';
+};
+
+/**
  * SessionRead
  */
 export type SessionRead = {
@@ -2025,6 +2135,86 @@ export type StatusUpdateIn = {
 };
 
 /**
+ * StorageConfigurationRead
+ */
+export type StorageConfigurationRead = {
+    /**
+     * Driver
+     *
+     * 存储驱动名称
+     */
+    driver: 'local';
+    /**
+     * Public Base Url
+     *
+     * 文件公开访问根路径
+     */
+    public_base_url: string;
+};
+
+/**
+ * SystemOverviewRead
+ */
+export type SystemOverviewRead = {
+    /**
+     * Status
+     *
+     * 系统综合健康状态
+     */
+    status: 'healthy' | 'degraded' | 'unavailable';
+    /**
+     * Started At
+     *
+     * 服务启动时间
+     */
+    started_at: string;
+    /**
+     * Uptime Seconds
+     *
+     * 服务已稳定运行时长（秒）
+     */
+    uptime_seconds: number;
+    /**
+     * Environment
+     *
+     * 部署运行环境
+     */
+    environment: 'local' | 'test' | 'production';
+    /**
+     * Release Version
+     *
+     * 系统发行版本号
+     */
+    release_version: string;
+    /**
+     * Python Version
+     *
+     * 当前 CPython 运行时版本
+     */
+    python_version: string;
+    /**
+     * Fastapi Version
+     *
+     * 当前 FastAPI 运行时版本
+     */
+    fastapi_version: string;
+    /**
+     * Timezone
+     *
+     * 服务器基准时区
+     */
+    timezone: string;
+    /**
+     * Cors Origin Count
+     *
+     * 已配置的受信任跨域来源数量
+     */
+    cors_origin_count: number;
+    infrastructure: InfrastructureOverviewRead;
+    telemetry: SystemTelemetryRead;
+};
+
+/**
  * SystemStatus
  */
 export type SystemStatus = {
@@ -2034,6 +2224,66 @@ export type SystemStatus = {
      * 当前状态代码
      */
     status: 'available' | 'unavailable';
+};
+
+/**
+ * SystemTelemetryRead
+ */
+export type SystemTelemetryRead = {
+    /**
+     * Status
+     *
+     * 业务遥测采样状态
+     */
+    status: 'ok' | 'unavailable';
+    /**
+     * Sampled At
+     *
+     * 业务遥测数据采样时间
+     */
+    sampled_at: string;
+    /**
+     * Source
+     *
+     * 业务遥测数据来源
+     */
+    source: 'database' | 'redis_cache' | 'unavailable';
+    /**
+     * User Count
+     *
+     * 未进入回收站的普通用户数
+     */
+    user_count: number | null;
+    /**
+     * Admin Count
+     *
+     * 启用管理员数
+     */
+    admin_count: number | null;
+    /**
+     * Role Count
+     *
+     * 启用角色数
+     */
+    role_count: number | null;
+    /**
+     * Asset Count
+     *
+     * 现存文件资产记录数
+     */
+    asset_count: number | null;
+    /**
+     * Audit Event Count
+     *
+     * 保留期内现存安全审计事件数
+     */
+    audit_event_count: number | null;
+    /**
+     * Cached
+     *
+     * 统计数据是否命中 Redis 缓存
+     */
+    cached?: boolean;
 };
 
 /**
@@ -3873,6 +4123,31 @@ export type ListRequestLogsApiV1AdminSystemRequestLogsGetResponses = {
 };
 
 export type ListRequestLogsApiV1AdminSystemRequestLogsGetResponse = ListRequestLogsApiV1AdminSystemRequestLogsGetResponses[keyof ListRequestLogsApiV1AdminSystemRequestLogsGetResponses];
+
+export type GetSystemOverviewApiV1AdminSystemOverviewGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/system/overview';
+};
+
+export type GetSystemOverviewApiV1AdminSystemOverviewGetErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type GetSystemOverviewApiV1AdminSystemOverviewGetError = GetSystemOverviewApiV1AdminSystemOverviewGetErrors[keyof GetSystemOverviewApiV1AdminSystemOverviewGetErrors];
+
+export type GetSystemOverviewApiV1AdminSystemOverviewGetResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelSystemOverviewRead;
+};
+
+export type GetSystemOverviewApiV1AdminSystemOverviewGetResponse = GetSystemOverviewApiV1AdminSystemOverviewGetResponses[keyof GetSystemOverviewApiV1AdminSystemOverviewGetResponses];
 
 export type GetSystemStatusApiV1SystemStatusGetData = {
     body?: never;

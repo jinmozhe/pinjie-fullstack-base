@@ -41,6 +41,7 @@ def test_opaque_tokens_and_cache_keys_do_not_expose_identifiers() -> None:
     keys = CacheKeys(project="pinjie", environment="test")
     key = keys.login_identifier(digest)
     assert key == f"pinjie:test:auth-web:login-id:v1:{digest}"
+    assert keys.system_telemetry() == "pinjie:test:system:telemetry:v1:overview"
     assert token not in key
 
 
