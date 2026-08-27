@@ -1,8 +1,27 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { DELETE, GET, POST } from "./route";
+import { DELETE, GET, PATCH, POST, PUT } from "./route";
 
 const context = (path: string[]) => ({ params: Promise.resolve({ path }) });
+const proxyHandlers = { DELETE, GET, PATCH, POST, PUT };
+const sessionId = "01900000-0000-7000-8000-000000000003";
+type BrowserApiRoute = { method: keyof typeof proxyHandlers; path: readonly string[]; query?: string };
+
+const browserApiRoutes: readonly BrowserApiRoute[] = [
+  { method: "POST", path: ["auth", "register"] },
+  { method: "POST", path: ["auth", "login"] },
+  { method: "POST", path: ["auth", "refresh"] },
+  { method: "POST", path: ["auth", "logout"] },
+  { method: "POST", path: ["assets", "upload"] },
+  { method: "GET", path: ["users", "me"] },
+  { method: "PATCH", path: ["users", "me"] },
+  { method: "DELETE", path: ["users", "me"] },
+  { method: "PUT", path: ["users", "me", "avatar"] },
+  { method: "POST", path: ["users", "me", "password"] },
+  { method: "GET", path: ["users", "me", "sessions"], query: "?page=1&page_size=100" },
+  { method: "DELETE", path: ["users", "me", "sessions", sessionId] },
+  { method: "POST", path: ["users", "me", "sessions", "revoke-others"] },
+];
 
 describe("Web API profile proxy", () => {
   const fetchMock = vi.fn<typeof fetch>();
@@ -27,6 +46,26 @@ describe("Web API profile proxy", () => {
 
     expect(response.status).toBe(404);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(browserApiRoutes)("forwards Web browser API $method $path", async ({ method, path, query = "" }) => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+    const routePath = [...path];
+    const requestInit: RequestInit = {
+      method,
+      headers: method === "GET" ? undefined : { origin: "http://localhost:3000" },
+    };
+    if (!["GET", "HEAD"].includes(method)) requestInit.body = "{}";
+
+    const response = await proxyHandlers[method](
+      new Request(`http://localhost:3000/api/v1/${routePath.join("/")}${query}`, requestInit),
+      context(routePath),
+    );
+
+    expect(response.status).toBe(204);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    const [target] = fetchMock.mock.calls[0] ?? [];
+    expect(String(target)).toBe(`http://backend.test/api/v1/${routePath.join("/")}${query}`);
   });
 
   it("rejects unsafe requests from another origin", async () => {
@@ -85,7 +124,6 @@ describe("Web API profile proxy", () => {
 
   it("allows only UUID session deletion paths", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
-    const sessionId = "01900000-0000-7000-8000-000000000003";
     const allowed = await DELETE(
       new Request(`http://localhost:3000/api/v1/users/me/sessions/${sessionId}`, {
         method: "DELETE",
