@@ -27,7 +27,7 @@
 | `plans/README.md` | 生效 | 全栈计划创建、状态、模板、完成和永久保护规则 |
 | `docs/PROJECT_REQUIREMENTS.md` | 生效 | 母版目标用户、场景、目标能力、非目标、派生规则和验收基线 |
 | `docs/README.md` | 生效 | `docs/` 下全部项目文档的专项索引 |
-| `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则读取、任务路由、计划交付、验证和独立授权指南 |
+| `docs/operations/ai-assisted-development-workflow.md` | 生效 | AI 助手规则读取、任务路由、计划交付、本地检查点、高风险编辑、验证和独立授权指南 |
 | `docs/operations/codex-windows-config-acl-governance.md` | 生效 | Codex Windows `config.toml`、默认联网、Schannel、GitHub CLI Keyring、沙箱、ACL 诊断、验证、最小修复和回滚的权威标准 |
 | `docs/operations/github-actions-workflows.md` | 生效 | GitHub Actions 自动检查、人工镜像发布和生产部署的逐工作流说明 |
 | `SECURITY.md` | 生效 | 漏洞报告、安全响应目标和安全开发要求 |
@@ -42,6 +42,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | Documentation、Developer Workflow | 已建立功能单元本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | Database、Backend、Admin、API Client、Documentation | 已完成用户回收站、单条与批量恢复、到期匿名化和独立恢复权限；目标环境迁移与权限同步仍需独立授权 |
 | `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 用户、管理员、角色和资产普通数据列表已具备批量操作；安全日志保持只读，管理端点显式权限和长期规则已同步 |
 | `plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` | 已结束 | Backend、Admin、Web、API Client、Deployment、Documentation | 三端本地、GitSync 与 GitHub Actions 已收敛为轻量静态检查，重型验证只在用户明确授权后执行 |
@@ -80,6 +81,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | 已完成；功能单元完成后请求本地检查点授权、分阶段授权后立即精确提交，高风险整文件写入具备恢复基线和严格校验，治理轻量门禁通过 | Documentation、Developer Workflow | 建立本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | 已完成；回收站、恢复后保持停用、默认 30 天到期匿名化、迁移、契约、Admin 页面和文档已同步，轻量门禁通过，重型验证按策略未执行 | Database、Backend、Admin、API Client、Documentation | 为软删除用户增加可恢复生命周期和受控数据最小化机制 |
 | `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | 已完成；普通数据列表批量操作、资产筛选与批量硬删除、管理端点显式权限和日志只读规则已落地，轻量门禁通过，重型验证按策略未执行 | Backend、Admin、API Client、Documentation | 为现有非日志类 Admin 列表补齐批量选择、状态变更和匹配实体生命周期的删除能力 |
 | `plans/2026-08-26_三端本地与GitHubActions轻量验证规则计划.md` | 已结束 | 已完成；四级规则、权威文档与两条自动 CI 已同步，轻量门禁和契约幂等检查通过，重型验证按策略未执行 | Backend、Admin、Web、API Client、Deployment、Documentation | 三端本地、GitSync 与 GitHub Actions 已收敛为轻量静态检查，重型验证只在用户明确授权后执行 |
