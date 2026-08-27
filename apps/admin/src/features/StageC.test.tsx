@@ -492,6 +492,9 @@ describe("stage C admin workspace", () => {
     renderPage(<AssetsPage />);
 
     expect(await screen.findByText("catalog-cover.png")).toBeInTheDocument();
+    expect(screen.queryByText(current.id)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "复制上传主体 ID" }));
+    expect(await screen.findByText("上传主体 ID 已复制")).toBeInTheDocument();
     await user.type(screen.getByLabelText("搜索文件名"), "catalog{Enter}");
     await user.click(screen.getByLabelText("筛选使用场景"));
     await user.click(await screen.findByRole("option", { name: "商品" }));
@@ -504,6 +507,65 @@ describe("stage C admin workspace", () => {
       expect(params.get("scene")).toBe("product");
       expect(params.get("uploader_type")).toBe("admin");
     });
+  }, 60_000);
+
+  it("previews image assets in place and keeps other files opening in a new tab", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("http://localhost:3000/api/v1/assets", () => HttpResponse.json({
+        code: "OK",
+        message: "操作成功",
+        data: {
+          items: [
+            {
+              id: "01900000-0000-7000-8000-000000000008",
+              uploader_type: "admin",
+              uploader_id: current.id,
+              storage_driver: "local",
+              file_key: "product/catalog-cover.png",
+              original_name: "catalog-cover.png",
+              mime_type: "image/png",
+              file_size: 2048,
+              file_hash: "a".repeat(64),
+              url: "/static/uploads/product/catalog-cover.png",
+              scene: "product",
+              created_at: now,
+              updated_at: now,
+            },
+            {
+              id: "01900000-0000-7000-8000-000000000011",
+              uploader_type: "admin",
+              uploader_id: current.id,
+              storage_driver: "local",
+              file_key: "document/guide.pdf",
+              original_name: "guide.pdf",
+              mime_type: "application/pdf",
+              file_size: 4096,
+              file_hash: "b".repeat(64),
+              url: "/static/uploads/document/guide.pdf",
+              scene: "document",
+              created_at: now,
+              updated_at: now,
+            },
+          ],
+          page: 1,
+          page_size: 20,
+          total: 2,
+          total_pages: 1,
+        },
+        request_id: "test-request",
+      })),
+    );
+    renderPage(<AssetsPage />);
+
+    expect(await screen.findByText("guide.pdf")).toBeInTheDocument();
+    const imageOpen = screen.getByRole("button", { name: "打开" });
+    const documentOpen = screen.getByRole("link", { name: "打开" });
+    expect(documentOpen).toHaveAttribute("href", "/static/uploads/document/guide.pdf");
+    expect(documentOpen).toHaveAttribute("target", "_blank");
+
+    await user.click(imageOpen);
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   }, 60_000);
 
   it("selects assets and sends one atomic bulk hard-delete request", async () => {

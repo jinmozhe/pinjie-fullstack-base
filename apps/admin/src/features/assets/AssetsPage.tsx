@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Image, Input, Select, Space, Tag, Typography, message } from "antd";
+import { Button, Image, Input, Select, Space, Tag, Tooltip, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -54,6 +54,7 @@ export function AssetsPage() {
   const [uploaderType, setUploaderType] = useState<UploaderType | undefined>();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
+  const [previewAsset, setPreviewAsset] = useState<AssetRead | null>(null);
   const canDelete = canAccess(current, "assets:delete");
   const assets = useQuery({
     queryKey: ["assets", page, search, scene, uploaderType],
@@ -106,6 +107,14 @@ export function AssetsPage() {
     try {
       await globalThis.navigator.clipboard.writeText(url);
       message.success("文件地址已复制");
+    } catch (error) {
+      message.error(errorMessage(error));
+    }
+  };
+  const copyUploaderId = async (uploaderId: string) => {
+    try {
+      await globalThis.navigator.clipboard.writeText(uploaderId);
+      message.success("上传主体 ID 已复制");
     } catch (error) {
       message.error(errorMessage(error));
     }
@@ -232,12 +241,28 @@ export function AssetsPage() {
               dataIndex: "uploader_type",
               width: 180,
               responsive: ["lg"],
-              render: (_, row) => (
-                <div className="table-primary-cell">
-                  <Typography.Text>{uploaderLabels[row.uploader_type]}</Typography.Text>
-                  <Typography.Text type="secondary" code copyable={Boolean(row.uploader_id)}>{row.uploader_id || "系统任务"}</Typography.Text>
-                </div>
-              ),
+              render: (_, row) => {
+                const uploaderId = row.uploader_id;
+                return uploaderId ? (
+                  <Space size={2} wrap={false}>
+                    <Typography.Text>{uploaderLabels[row.uploader_type]}</Typography.Text>
+                    <Tooltip title="复制上传主体 ID">
+                      <Button
+                        type="text"
+                        size="small"
+                        aria-label="复制上传主体 ID"
+                        icon={<CopyOutlined />}
+                        onClick={() => void copyUploaderId(uploaderId)}
+                      />
+                    </Tooltip>
+                  </Space>
+                ) : (
+                  <div className="table-primary-cell">
+                    <Typography.Text>{uploaderLabels[row.uploader_type]}</Typography.Text>
+                    <Typography.Text type="secondary">系统任务</Typography.Text>
+                  </div>
+                );
+              },
             },
             { title: "创建时间", dataIndex: "created_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.created_at) },
             {
@@ -246,7 +271,27 @@ export function AssetsPage() {
               width: "1%",
               render: (_, row) => (
                 <Space className="table-actions" size={[2, 0]} wrap={false}>
-                  <Button type="link" size="small" icon={<EyeOutlined />} href={row.url} target="_blank" rel="noreferrer">打开</Button>
+                  {isImage(row) ? (
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EyeOutlined />}
+                      onClick={() => setPreviewAsset(row)}
+                    >
+                      打开
+                    </Button>
+                  ) : (
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<EyeOutlined />}
+                      href={row.url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      打开
+                    </Button>
+                  )}
                   <Button type="link" size="small" icon={<CopyOutlined />} onClick={() => void copyUrl(row.url)}>复制地址</Button>
                   {canDelete && (
                     <Button
@@ -267,6 +312,19 @@ export function AssetsPage() {
               ),
             },
           ]}
+        />
+      )}
+      {previewAsset && (
+        <Image
+          alt={previewAsset.original_name}
+          src={previewAsset.url}
+          style={{ display: "none" }}
+          preview={{
+            open: true,
+            onOpenChange: (open) => {
+              if (!open) setPreviewAsset(null);
+            },
+          }}
         />
       )}
       <StandardConfirmModal
