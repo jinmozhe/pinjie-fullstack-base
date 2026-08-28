@@ -8,7 +8,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Environment = Literal["local", "test", "production"]
 RedisMode = Literal["disabled", "required"]
-RegistrationMode = Literal["open", "closed"]
 RequestLogMode = Literal["disabled", "metadata"]
 UploadStorageDriver = Literal["local"]
 
@@ -65,7 +64,6 @@ class Settings(BaseSettings):
     admin_jwt_secret: str | None = Field(default=None, validation_alias="ADMIN_JWT_SECRET")
     web_token_hmac_key: str | None = Field(default=None, validation_alias="WEB_TOKEN_HMAC_KEY")
     admin_token_hmac_key: str | None = Field(default=None, validation_alias="ADMIN_TOKEN_HMAC_KEY")
-    registration_mode: RegistrationMode = Field(default="closed", validation_alias="REGISTRATION_MODE")
     auth_cookie_secure: bool = Field(default=False, validation_alias="AUTH_COOKIE_SECURE")
     web_access_ttl_seconds: int = Field(default=900, validation_alias="WEB_ACCESS_TTL_SECONDS", ge=300, le=1800)
     admin_access_ttl_seconds: int = Field(
@@ -122,6 +120,8 @@ class Settings(BaseSettings):
         ge=1,
         le=16,
     )
+    settings_media_root: Path = Field(default=Path("settings-media"), validation_alias="SETTINGS_MEDIA_ROOT")
+    settings_media_base_url: str = Field(default="/static/settings", validation_alias="SETTINGS_MEDIA_BASE_URL")
 
     @field_validator("api_v1_str")
     @classmethod
@@ -138,20 +138,20 @@ class Settings(BaseSettings):
             raise ValueError("LOG_LEVEL must be a supported standard logging level")
         return level
 
-    @field_validator("upload_base_url")
+    @field_validator("upload_base_url", "settings_media_base_url")
     @classmethod
     def validate_upload_base_url(cls, value: str) -> str:
         if not value.startswith("/") or value == "/" or value.endswith("/"):
-            raise ValueError("UPLOAD_BASE_URL must be an absolute URL path without a trailing slash")
+            raise ValueError("public media base URLs must be absolute paths without a trailing slash")
         if ".." in value.split("/"):
-            raise ValueError("UPLOAD_BASE_URL must not contain parent path segments")
+            raise ValueError("public media base URLs must not contain parent path segments")
         return value
 
-    @field_validator("upload_local_root")
+    @field_validator("upload_local_root", "settings_media_root")
     @classmethod
     def validate_upload_local_root(cls, value: Path) -> Path:
         if not str(value).strip():
-            raise ValueError("UPLOAD_LOCAL_ROOT must not be empty")
+            raise ValueError("local media roots must not be empty")
         return value
 
     @field_validator("upload_allowed_extensions")
@@ -188,6 +188,18 @@ class Settings(BaseSettings):
 
     def validate_runtime(self) -> None:
         self.validate_database_runtime()
+        upload_root = self.upload_local_root.resolve()
+        settings_root = self.settings_media_root.resolve()
+        if (
+            upload_root == settings_root
+            or upload_root.is_relative_to(settings_root)
+            or settings_root.is_relative_to(upload_root)
+        ):
+            raise ValueError("UPLOAD_LOCAL_ROOT and SETTINGS_MEDIA_ROOT must be separate sibling trees")
+        upload_url = self.upload_base_url.rstrip("/") + "/"
+        settings_url = self.settings_media_base_url.rstrip("/") + "/"
+        if upload_url.startswith(settings_url) or settings_url.startswith(upload_url):
+            raise ValueError("UPLOAD_BASE_URL and SETTINGS_MEDIA_BASE_URL must not overlap")
         if self.redis_mode == "required":
             if self.redis_url is None:
                 raise ValueError("REDIS_URL is required when REDIS_MODE=required")

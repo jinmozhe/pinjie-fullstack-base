@@ -3,15 +3,19 @@ import type { ReactNode } from "react";
 
 import "./globals.css";
 import { Providers } from "./providers";
+import { fetchSiteProfile } from "@/lib/api/server";
 
 export const dynamic = "force-dynamic";
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
   const publicOrigin = process.env.WEB_PUBLIC_ORIGIN ?? "http://localhost:3000";
+  const site = await fetchSiteProfile();
   return {
     metadataBase: new URL(publicOrigin),
-    title: { default: "Pinjie", template: "%s | Pinjie" },
-    description: "通用全栈应用基础",
+    title: { default: site.title, template: `%s | ${site.name}` },
+    description: site.description,
+    keywords: site.keywords,
+    ...(site.logo_url ? { icons: { icon: site.logo_url } } : {}),
     alternates: { canonical: "/" },
   };
 }

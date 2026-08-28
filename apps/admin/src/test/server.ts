@@ -52,6 +52,16 @@ const asset = {
   created_at: now,
   updated_at: now,
 };
+const siteSetting = {
+  name: "品界",
+  logo: null,
+  title: "品界网络科技",
+  keywords: ["品界", "网络科技"],
+  description: "可靠的数字产品与服务",
+  revision: 1,
+  updated_at: now,
+  updated_by: null,
+};
 
 const ok = <T>(data: T) => HttpResponse.json({ code: "OK", message: "操作成功", data, request_id: "test-request" });
 
@@ -66,6 +76,12 @@ export const handlers = [
     HttpResponse.json({ code: "OK", message: "操作成功", data: { status: "available" }, request_id: "test-request" }),
   ),
   http.get("http://localhost:3000/api/v1/admin/auth/me", () => ok(admin)),
+  http.get("http://localhost:3000/api/v1/admin/settings/site", () => ok(siteSetting)),
+  http.patch("http://localhost:3000/api/v1/admin/settings/site", () => ok({ ...siteSetting, revision: 2 })),
+  http.put("http://localhost:3000/api/v1/admin/settings/site/logo", () => ok({ ...siteSetting, revision: 2, logo: { url: "/static/settings/site/logo.png?v=2", mime_type: "image/png", file_size: 128 } })),
+  http.delete("http://localhost:3000/api/v1/admin/settings/site/logo", () => ok({ ...siteSetting, revision: 2 })),
+  http.get("http://localhost:3000/api/v1/admin/settings/registration", () => ok({ enabled: false, revision: 1, updated_at: now, updated_by: null })),
+  http.patch("http://localhost:3000/api/v1/admin/settings/registration", () => ok({ enabled: true, revision: 2, updated_at: now, updated_by: null })),
   http.post("http://localhost:3000/api/v1/admin/auth/login", () => ok({ principal: admin, session_id: admin.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),
   http.post("http://localhost:3000/api/v1/admin/auth/logout", () => ok({ completed: true })),
   http.post("http://localhost:3000/api/v1/admin/auth/password", () => ok({ completed: true })),

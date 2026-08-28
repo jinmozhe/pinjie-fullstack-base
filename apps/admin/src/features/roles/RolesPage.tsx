@@ -44,6 +44,7 @@ const PERMISSION_GROUPS = [
   { key: "roles", label: "角色与权限", prefixes: ["roles", "permissions"] },
   { key: "security", label: "安全与系统", prefixes: ["security", "system"] },
   { key: "assets", label: "文件资产", prefixes: ["assets"] },
+  { key: "settings", label: "系统设置", prefixes: ["settings"] },
 ] as const;
 
 function permissionTitle(permission: PermissionRead) {

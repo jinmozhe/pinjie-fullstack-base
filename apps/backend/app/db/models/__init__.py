@@ -17,6 +17,7 @@ from .identity import (
     admin_roles,
     role_permissions,
 )
+from .system_setting import SystemSetting
 
 __all__ = [
     "Admin",
@@ -30,6 +31,7 @@ __all__ = [
     "Role",
     "SecurityLoginEvent",
     "SoftDeleteMixin",
+    "SystemSetting",
     "TimestampMixin",
     "UUIDPrimaryKeyMixin",
     "User",

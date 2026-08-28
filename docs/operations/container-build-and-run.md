@@ -74,7 +74,6 @@ ADMIN_JWT_SECRET=<至少32字节的独立密钥>
 WEB_TOKEN_HMAC_KEY=<至少32字节的独立密钥>
 ADMIN_TOKEN_HMAC_KEY=<至少32字节的独立密钥>
 AUTH_COOKIE_SECURE=true
-REGISTRATION_MODE=closed
 REQUEST_LOG_MODE=disabled
 LOG_FILE_ENABLED=false
 UPLOAD_STORAGE_DRIVER=local
@@ -82,13 +81,17 @@ UPLOAD_BASE_URL=/static/uploads
 UPLOAD_MAX_FILE_SIZE_MB=50
 UPLOAD_ALLOWED_EXTENSIONS=jpg,jpeg,png,webp,gif,pdf,doc,docx,xls,xlsx,zip
 UPLOAD_IO_CONCURRENCY=4
+SETTINGS_MEDIA_ROOT=/app/storage/settings-media
+SETTINGS_MEDIA_BASE_URL=/static/settings
 ```
 
 真实密码、域名和应用镜像 digest 不得写入仓库。仓库中的基础镜像 digest 来自官方 registry manifest，并由生产配置正反例门禁检查所有 Dockerfile `FROM`、PostgreSQL、Redis 和应用镜像变量。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
 
 PostgreSQL 18 的命名卷挂载到 `/var/lib/postgresql`。已有 PostgreSQL 17 及以下数据卷不能通过直接改挂载路径完成升级，必须先验证备份，再按独立迁移方案恢复到 PostgreSQL 18 新卷。
 
-Backend 的 `backend_uploads` 命名卷挂载到 `/app/storage`，Compose 固定 `UPLOAD_LOCAL_ROOT=/app/storage/uploads`。镜像内的 UID `10001` 必须能写入该卷；公开目录与 `.uploads-staging`、`.uploads-trash` 位于同一卷，但静态路由只暴露 `uploads/`。生产备份必须同时覆盖 PostgreSQL 和 `backend_uploads`，并记录同一备份窗口。
+Backend 的 `backend_uploads` 命名卷挂载到 `/app/storage`，Compose 固定 `UPLOAD_LOCAL_ROOT=/app/storage/uploads` 与 `SETTINGS_MEDIA_ROOT=/app/storage/settings-media`。镜像内的 UID `10001` 必须能写入该卷；统一资产与配置媒体使用独立目录和私有补偿区，静态路由只暴露各自公开根。生产备份必须同时覆盖 PostgreSQL 和完整 `backend_uploads` 卷，并记录同一备份窗口。
+
+系统设置迁移会以关闭状态创建公开注册配置。部署完成后由具备权限的管理员在 `/settings` 明确开启；生产环境不通过环境变量自动继承旧状态。配置媒体本地驱动只适用于单实例，或所有 Backend 实例共享同一可靠文件系统并具备写入协调的部署。
 
 ## 5. 迁移、权限与初始管理员
 

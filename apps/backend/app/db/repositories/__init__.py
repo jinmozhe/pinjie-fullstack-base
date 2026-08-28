@@ -1,5 +1,6 @@
 from .asset import AssetRepository
 from .identity import AdminRepository, RequestLogRepository, SecurityRepository, SessionRepository, UserRepository
+from .system_setting import SystemSettingRepository
 
 __all__ = [
     "AdminRepository",
@@ -7,5 +8,6 @@ __all__ = [
     "RequestLogRepository",
     "SecurityRepository",
     "SessionRepository",
+    "SystemSettingRepository",
     "UserRepository",
 ]

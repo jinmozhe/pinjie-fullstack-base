@@ -33,6 +33,7 @@ from app.db.models import (
     UserRefreshToken,
     UserSession,
 )
+from app.db.repositories import SystemSettingRepository
 from app.db.transaction import transaction_scope
 from app.domains.admin.schemas import (
     AdminBulkStatusUpdateIn,
@@ -66,7 +67,6 @@ def _integration_settings() -> Settings:
         TEST_DATABASE_URL=database_url,
         REDIS_MODE="required",
         REDIS_URL=redis_url,
-        REGISTRATION_MODE="open",
         **{key: value for key, value in TEST_SECRETS.items() if key not in {"REDIS_MODE", "REDIS_URL"}},
     )
     settings.validate_runtime()
@@ -124,6 +124,11 @@ async def test_refresh_rotation_and_reuse_revokes_session_family() -> None:
     metadata = _request_metadata()
     username = f"rotation-{uuid.uuid7().hex[:16]}"
     try:
+        async with resources.session_factory() as session, transaction_scope(session):
+            registration = await SystemSettingRepository(session).get("registration", for_update=True)
+            assert registration is not None
+            registration.setting_value = {"enabled": True}
+            registration.revision += 1
         async with resources.session_factory() as session:
             service = WebAuthService(
                 session=session,

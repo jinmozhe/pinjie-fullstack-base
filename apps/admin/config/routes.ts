@@ -6,6 +6,7 @@ export default [
   { path: "/admins", name: "管理员", icon: "TeamOutlined", component: "../features/admins/AdminsPage", access: "canAdmins" },
   { path: "/roles", name: "角色权限", icon: "SafetyCertificateOutlined", component: "../features/roles/RolesPage", access: "canRoles" },
   { path: "/assets", name: "文件资产", icon: "FolderOpenOutlined", component: "../features/assets/AssetsPage", access: "canAssets" },
+  { path: "/settings", name: "系统设置", icon: "SettingOutlined", component: "../features/settings/SettingsPage", access: "canSettings" },
   { path: "/security", name: "安全日志", icon: "AuditOutlined", component: "../features/security/SecurityPage", access: "canSecurity" },
   { path: "/system", name: "系统状态", icon: "DashboardOutlined", component: "../features/system/SystemStatusPage", access: "canSystem" },
   { path: "/account/settings", name: "个人设置", component: "../features/account/AccountSettingsPage", hideInMenu: true },

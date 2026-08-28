@@ -14,6 +14,7 @@ class AppResources:
     session_factory: async_sessionmaker[AsyncSession]
     redis: Redis | None
     password_manager: PasswordManager
+    settings_media_ready: bool = False
 
     async def close(self) -> None:
         if self.redis is not None:

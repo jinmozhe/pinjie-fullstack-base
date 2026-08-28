@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.core.config import Settings
 from app.core.identifiers import new_uuid7
-from app.db.models import Admin, Permission
+from app.db.models import Admin, Permission, SystemSetting
 from app.db.transaction import transaction_scope
 from app.domains.admin.permissions import CATALOG_VERSION, PERMISSION_CATALOG
 from app.main import create_app
@@ -36,7 +36,6 @@ def _settings() -> Settings:
         TEST_DATABASE_URL=database_url,
         REDIS_MODE="required",
         REDIS_URL=redis_url,
-        REGISTRATION_MODE="open",
         REQUEST_LOG_MODE="metadata",
         **{key: value for key, value in TEST_SECRETS.items() if key not in {"REDIS_MODE", "REDIS_URL"}},
     )
@@ -49,6 +48,13 @@ async def coverage_app() -> AsyncIterator[FastAPI]:
         resources = test_app.state.resources
         assert resources.redis is not None
         await resources.redis.flushdb()
+        async with resources.session_factory() as session, transaction_scope(session):
+            registration = await session.scalar(
+                select(SystemSetting).where(SystemSetting.setting_group == "registration").with_for_update()
+            )
+            assert registration is not None
+            registration.setting_value = {"enabled": True}
+            registration.revision += 1
         yield test_app
         await resources.redis.flushdb()
 

@@ -1,5 +1,7 @@
 import type {
   AdminAuthSessionOut,
+  AdminRegistrationSettingRead,
+  AdminSiteSettingRead,
   AdminBulkStatusUpdateIn,
   AdminCreateIn,
   AdminLoginIn,
@@ -27,9 +29,11 @@ import type {
   RoleBulkStatusUpdateIn,
   RoleRead,
   RefreshSessionOut,
+  RegistrationSettingPatchIn,
   RolePermissionAssignIn,
   RoleUpdateIn,
   StatusUpdateIn,
+  SiteSettingPatchIn,
   SystemOverviewRead,
   UserUpdateIn,
   UserBulkDeleteIn,
@@ -205,4 +209,31 @@ export const adminApi = {
   auditEvents: (page = 1) => apiRequest<PageResultAuditEventRead>(`/api/v1/admin/security/audit-events?page=${page}&page_size=20`),
   requestLogs: (page = 1) => apiRequest<PageResultRequestLogRead>(`/api/v1/admin/system/request-logs?page=${page}&page_size=20`),
   systemOverview: () => apiRequest<SystemOverviewRead>("/api/v1/admin/system/overview"),
+  siteSetting: () => apiRequest<AdminSiteSettingRead>("/api/v1/admin/settings/site"),
+  updateSiteSetting: (input: SiteSettingPatchIn) =>
+    apiRequest<AdminSiteSettingRead>("/api/v1/admin/settings/site", {
+      method: "PATCH",
+      body: jsonBody(input),
+    }),
+  uploadSiteLogo: (file: globalThis.File, revision: number) => {
+    const body = new globalThis.FormData();
+    body.set("file", file);
+    body.set("revision", String(revision));
+    return apiRequest<AdminSiteSettingRead>("/api/v1/admin/settings/site/logo", {
+      method: "PUT",
+      body,
+    });
+  },
+  deleteSiteLogo: (revision: number) =>
+    apiRequest<AdminSiteSettingRead>(
+      `/api/v1/admin/settings/site/logo?revision=${encodeURIComponent(String(revision))}`,
+      { method: "DELETE" },
+    ),
+  registrationSetting: () =>
+    apiRequest<AdminRegistrationSettingRead>("/api/v1/admin/settings/registration"),
+  updateRegistrationSetting: (input: RegistrationSettingPatchIn) =>
+    apiRequest<AdminRegistrationSettingRead>("/api/v1/admin/settings/registration", {
+      method: "PATCH",
+      body: jsonBody(input),
+    }),
 };

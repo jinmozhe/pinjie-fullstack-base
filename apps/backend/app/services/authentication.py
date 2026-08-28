@@ -3,9 +3,10 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+from pydantic import ValidationError
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.cache_keys import CacheKeys, cache_keys
@@ -17,10 +18,17 @@ from app.core.rate_limit import acquire_refresh_lock, enforce_rate_limit, releas
 from app.core.request_metadata import RequestMetadata
 from app.core.security import PasswordManager, create_access_token, new_opaque_token, token_digest
 from app.db.models import Admin, AdminRefreshToken, AdminSession, User, UserRefreshToken, UserSession
-from app.db.repositories import AdminRepository, SecurityRepository, SessionRepository, UserRepository
+from app.db.repositories import (
+    AdminRepository,
+    SecurityRepository,
+    SessionRepository,
+    SystemSettingRepository,
+    UserRepository,
+)
 from app.db.transaction import transaction_scope
 from app.domains.admin.schemas import AdminLoginIn
 from app.domains.auth.schemas import UserLoginIn, UserRegisterIn
+from app.domains.settings.schemas import RegistrationSettingValue
 from app.services.security_events import SecurityEventWriter, login_event
 
 
@@ -177,8 +185,6 @@ class WebAuthService(_AuthBase):
         self.sessions = SessionRepository(session)
 
     async def register(self, payload: UserRegisterIn) -> tuple[User, SessionArtifacts]:
-        if self.settings.registration_mode != "open":
-            raise AppException(status_code=403, code=ErrorCode.REGISTRATION_CLOSED, message="用户注册功能已关闭")
         await self.enforce_login_limit(payload.username)
         password_hash = await self.password_manager.hash(payload.password)
         now = datetime.now(UTC)
@@ -205,6 +211,25 @@ class WebAuthService(_AuthBase):
         )
         try:
             async with transaction_scope(self.session):
+                try:
+                    registration = await SystemSettingRepository(self.session).get("registration", for_share=True)
+                    registration_value = (
+                        RegistrationSettingValue.model_validate(registration.setting_value)
+                        if registration is not None
+                        else None
+                    )
+                except (SQLAlchemyError, ValidationError, TypeError) as exc:
+                    raise AppException(
+                        status_code=503,
+                        code=ErrorCode.SERVICE_UNAVAILABLE,
+                        message="注册服务暂时不可用",
+                    ) from exc
+                if registration_value is None or not registration_value.enabled:
+                    raise AppException(
+                        status_code=403,
+                        code=ErrorCode.REGISTRATION_CLOSED,
+                        message="用户注册功能已关闭",
+                    )
                 if await self.users.get_by_username(payload.username) is not None:
                     raise AppException(
                         status_code=409,

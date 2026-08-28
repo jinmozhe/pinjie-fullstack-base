@@ -10,6 +10,10 @@ export default {
       target: backendURL,
       changeOrigin: false,
     },
+    "/static/settings": {
+      target: backendURL,
+      changeOrigin: false,
+    },
   },
   test: {
     "/api/v1": {
@@ -17,6 +21,10 @@ export default {
       changeOrigin: false,
     },
     "/static/uploads": {
+      target: backendURL,
+      changeOrigin: false,
+    },
+    "/static/settings": {
       target: backendURL,
       changeOrigin: false,
     },
