@@ -42,6 +42,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md` | 已结束 | Admin、Documentation | 已完成可搜索、可分组并过滤真实权限码的 Ant Design TreeSelect 角色权限配置 |
 | `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Documentation | 已完成全量 pytest、Vitest、生产构建和四项目浏览器 E2E 回归修复与验证 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | Backend、Web、API Client、Database、Documentation | 已完成用户头像资料闭环，并补齐 Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖；轻量门禁通过，重型验证与真实迁移按授权边界未执行 |
 | `plans/2026-08-27_Admin创建用户与公开注册开关联动计划.md` | 已结束 | Backend、Admin、Web、API Client、Documentation | 已完成 Admin 独立创建用户、公共注册能力契约和 Web 注册入口联动 |
@@ -89,6 +90,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md` | 已结束 | 已完成；Admin typecheck 与 lint 通过，重型验证按授权边界未执行 | Admin、Documentation | 将角色权限配置升级为可搜索、可分组的 Ant Design TreeSelect 树选择 |
 | `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | 已完成；Backend 183 项 pytest、Admin 62 项 Vitest、Web 50 项 Vitest、两端 production build 和四项目 Playwright E2E 均达标 | Backend、Admin、Web、API Client、Database、Documentation | 修复全量 pytest、Vitest、生产构建和浏览器 E2E 暴露的回归并完成提交推送 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | 已完成；用户头像资料、资产引用保护和契约已同步，Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖已补齐；轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Web、API Client、Database、Documentation | 支持用户上传、绑定、移除和持久化头像，并保护在用资产 |
 | `plans/2026-08-27_Admin创建用户与公开注册开关联动计划.md` | 已结束 | 已完成；轻量门禁通过，重型测试按规则未执行，目标环境权限同步仍需独立授权 | Backend、Admin、Web、API Client、Documentation | 支持关闭公开注册的派生项目由 Admin 创建可登录用户 |

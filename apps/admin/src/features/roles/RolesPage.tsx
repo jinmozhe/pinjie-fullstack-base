@@ -1,4 +1,4 @@
-import type { RoleCreateIn, RoleRead } from "@pinjie/api-client";
+import type { PermissionRead, RoleCreateIn, RoleRead } from "@pinjie/api-client";
 import {
   CheckCircleOutlined,
   DeleteOutlined,
@@ -9,8 +9,9 @@ import {
 } from "@ant-design/icons";
 import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Checkbox, Form, Input, Modal, Space, Tag, Typography, message } from "antd";
-import { useState } from "react";
+import { Alert, Button, Checkbox, Form, Input, Modal, Space, Tag, TreeSelect, Typography, message } from "antd";
+import type { ReactNode } from "react";
+import { useMemo, useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
 import { StandardConfirmModal } from "@/components/StandardConfirmModal";
@@ -20,6 +21,75 @@ import { errorMessage } from "@/lib/api/http";
 
 type RoleForm = RoleCreateIn;
 type Confirmation = { description: string; title: string; execute: () => Promise<unknown> };
+type PermissionTreeNode = {
+  children?: PermissionTreeNode[];
+  disabled?: boolean;
+  key: string;
+  label: string;
+  searchText: string;
+  title: ReactNode;
+  value: string;
+};
+
+const PERMISSION_GROUPS = [
+  { key: "users", label: "用户管理", prefixes: ["users"] },
+  { key: "admins", label: "管理员管理", prefixes: ["admins"] },
+  { key: "roles", label: "角色与权限", prefixes: ["roles", "permissions"] },
+  { key: "security", label: "安全与系统", prefixes: ["security", "system"] },
+  { key: "assets", label: "文件资产", prefixes: ["assets"] },
+] as const;
+
+function permissionTitle(permission: PermissionRead) {
+  return (
+    <span className="permission-tree-node">
+      <span className="permission-tree-name">{permission.name}</span>
+      <span className="permission-tree-code">{permission.code}</span>
+      {!permission.is_active && <Tag bordered={false}>停用</Tag>}
+    </span>
+  );
+}
+
+export function buildPermissionTree(permissions: PermissionRead[]): PermissionTreeNode[] {
+  const grouped = new Map(PERMISSION_GROUPS.map((group) => [group.key, [] as PermissionRead[]]));
+  const unmatched: PermissionRead[] = [];
+
+  for (const permission of permissions) {
+    const prefix = permission.code.split(":", 1)[0];
+    const group = PERMISSION_GROUPS.find((item) => item.prefixes.some((itemPrefix) => itemPrefix === prefix));
+    if (group) grouped.get(group.key)!.push(permission);
+    else unmatched.push(permission);
+  }
+
+  const groups = [
+    ...PERMISSION_GROUPS.map((group) => ({ ...group, permissions: grouped.get(group.key)! })),
+    { key: "other", label: "其他权限", prefixes: [], permissions: unmatched },
+  ];
+
+  return groups.flatMap((group) => {
+    if (group.permissions.length === 0) return [];
+    const children = group.permissions.map((permission) => ({
+      disabled: !permission.is_active,
+      key: permission.code,
+      label: permission.name,
+      searchText: `${group.label} ${permission.name} ${permission.code}`.toLocaleLowerCase(),
+      title: permissionTitle(permission),
+      value: permission.code,
+    }));
+    return [{
+      children,
+      key: `__permission_group__:${group.key}`,
+      label: group.label,
+      searchText: group.label.toLocaleLowerCase(),
+      title: <span className="permission-tree-group">{group.label}<span>{children.length}</span></span>,
+      value: `__permission_group__:${group.key}`,
+    }];
+  });
+}
+
+export function filterPermissionCodes(values: string[], permissions: PermissionRead[]): string[] {
+  const allowed = new Set(permissions.map((permission) => permission.code));
+  return [...new Set(values.filter((value) => allowed.has(value)))];
+}
 
 export function RolesPage() {
   const current = useCurrentAdmin();
@@ -36,6 +106,7 @@ export function RolesPage() {
   const canDelete = canAccess(current, "roles:delete");
   const canAssignPermissions = canAccess(current, "roles:permissions:assign") && canReadPermissions;
   const permissions = useQuery({ queryKey: ["permissions"], queryFn: adminApi.permissions, enabled: canReadPermissions });
+  const permissionTree = useMemo(() => buildPermissionTree(permissions.data ?? []), [permissions.data]);
   const invalidate = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["roles"] }),
@@ -218,12 +289,33 @@ export function RolesPage() {
         </Form>
       </Modal>
 
-      <Modal width={720} open={Boolean(permissionTarget)} title={permissionTarget ? `配置 ${permissionTarget.name} 的权限` : "配置权限"} okText="保存" confirmLoading={assignPermissionsMutation.isPending} onCancel={() => setPermissionTarget(null)} onOk={() => permissionForm.submit()}>
+      <Modal width={760} open={Boolean(permissionTarget)} title={permissionTarget ? `配置 ${permissionTarget.name} 的权限` : "配置权限"} okText="保存" confirmLoading={assignPermissionsMutation.isPending} onCancel={() => setPermissionTarget(null)} onOk={() => permissionForm.submit()}>
         <QueryState loading={permissions.isLoading} error={permissions.isError ? errorMessage(permissions.error) : undefined} empty={permissions.data?.length === 0} onRetry={() => void permissions.refetch()} />
         {assignPermissionsMutation.isError && <Alert showIcon type="error" title={errorMessage(assignPermissionsMutation.error)} />}
-        <Form form={permissionForm} onFinish={({ permission_codes }) => { const target = permissionTarget; if (!target) return; assignPermissionsMutation.mutate({ roleId: target.id, permissionCodes: permission_codes }); }}>
-          <Form.Item name="permission_codes">
-            <Checkbox.Group className="permission-grid" options={permissions.data?.map((permission) => ({ label: <span><strong>{permission.name}</strong><small>{permission.code}</small></span>, value: permission.code, disabled: !permission.is_active }))} />
+        <Form form={permissionForm} layout="vertical" onFinish={({ permission_codes }) => {
+          const target = permissionTarget;
+          if (!target) return;
+          assignPermissionsMutation.mutate({
+            roleId: target.id,
+            permissionCodes: filterPermissionCodes(permission_codes, permissions.data ?? []),
+          });
+        }}>
+          <Form.Item label="权限范围" name="permission_codes">
+            <TreeSelect
+              aria-label="角色权限"
+              className="permission-tree-select"
+              disabled={!permissions.isSuccess}
+              filterTreeNode={(input, node) => String(node.searchText ?? "").includes(input.trim().toLocaleLowerCase())}
+              maxTagCount="responsive"
+              placeholder="选择权限"
+              showCheckedStrategy={TreeSelect.SHOW_CHILD}
+              showSearch
+              treeCheckable
+              treeData={permissionTree}
+              treeDefaultExpandAll
+              treeNodeFilterProp="searchText"
+              treeNodeLabelProp="label"
+            />
           </Form.Item>
         </Form>
       </Modal>

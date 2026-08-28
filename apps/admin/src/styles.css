@@ -221,25 +221,44 @@ textarea {
   border-bottom: 1px solid #f2f4f7;
 }
 
-.permission-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 16px;
+.permission-tree-select {
   width: 100%;
 }
 
-.permission-grid .ant-checkbox-wrapper {
+.permission-tree-select .ant-select-selector {
+  min-height: 88px;
   align-items: flex-start;
-  margin-inline-start: 0;
-  padding: 9px;
-  border: 1px solid #e4e7ec;
-  border-radius: 6px;
+  padding-block: 5px;
 }
 
-.permission-grid small {
-  display: block;
+.permission-tree-node {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.permission-tree-name {
+  color: #101828;
+}
+
+.permission-tree-code {
   color: #667085;
   font-family: Consolas, monospace;
+  font-size: 12px;
+}
+
+.permission-tree-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.permission-tree-group > span {
+  color: #98a2b3;
+  font-size: 12px;
+  font-weight: 400;
 }
 
 .modal-copy {
