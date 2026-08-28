@@ -122,6 +122,12 @@ Antigravity：~/.gemini/GEMINI.md
 4. 修改一条测试规则后确认正文只需在对应 `AGENTS.md` 中维护，桥接文件无需同步正文。
 5. 确认 Codex 合并后的项目指令未超过 `project_doc_max_bytes`，并确认每个 Antigravity Rule 未超过 12,000 字符。
 
+## 2026-08-29 指令容量门禁补充
+
+Codex 默认 `project_doc_max_bytes` 为 32 KiB。仓库治理门禁按 UTF-8 字节数检查根 `AGENTS.md` 与每个应用级 `AGENTS.md` 的组合，组合上限采用 32 KiB，并至少保留 1 KiB 余量。超限时优先把具体机制迁移到对应专题文档，通过规则入口保留可执行约束和链接，不依赖修改个人 Codex 配置绕过容量问题。
+
+门禁同时确认四个 `.agents/rules/` 桥接文件及其目标存在、引用准确，并拒绝仓库级 `AGENTS.override.md`、`.agents/AGENTS.md` 或其他第二份项目规则正文。
+
 ## 官方依据
 
 - [OpenAI Docs：Custom instructions with AGENTS.md](https://learn.chatgpt.com/docs/agent-configuration/agents-md)

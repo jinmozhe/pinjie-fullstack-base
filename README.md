@@ -54,14 +54,14 @@ SECURITY.md             漏洞报告和安全响应规则
 
 ## 开发规范
 
-- 所有任务先读取 `PROJECT_INDEX.md`，确认当前事实和权威入口
+- 所有任务先读取 `PROJECT_INDEX.md`，确认项目身份、当前阶段、活动计划和权威入口，再以实际文件确认详细实现状态
 - 新增功能或模块前，在 `plans/` 创建面向整个 Monorepo 的全栈实施计划，并同步登记到 `plans/INDEX.md`
 - 同一能力涉及 Backend、Admin 和 Web 时，在同一份计划中描述完整链路和联合验证
 - 已经存在的计划文档永久保留；删除、移动和重命名只能由用户人工处理
-- 修改文档后，同步更新 `docs/README.md` 中对应的索引记录
+- 新建、移动或修改专题项目文档后，同步更新 `docs/README.md` 中对应的登记；计划与根索引按各自规则单独同步
 - 新建或修改 Markdown 后，运行 `pnpm lint:md` 检查全仓库文档格式
 - 后端接口变更后，运行 `pnpm generate-api` 更新前端 SDK
-- 提交前运行 `pnpm check:governance` 和 `pnpm check:guards`，验证文本、三态完整性、模块边界和门禁正反例
+- 提交前运行 `pnpm check:governance`，验证文本、文档索引、计划登记、三态完整性、模块边界和门禁正反例
 
 ## 工程治理基线
 
