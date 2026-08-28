@@ -143,11 +143,6 @@ textarea {
   padding: 0;
 }
 
-.workspace-panel .ant-table-container {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
 .workspace-panel .ant-table-cell {
   vertical-align: middle;
   white-space: nowrap;
