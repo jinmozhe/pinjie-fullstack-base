@@ -75,7 +75,7 @@ packages/api-client/src/core :: auth.gen.ts, bodySerializer.gen.ts, params.gen.t
 packages/eslint-config :: index.js, package.json
 packages/typescript-config :: base.json, nextjs.json, package.json, vite.json
 plans :: INDEX.md, README.md, YYYY-MM-DD_*计划.md
-scripts/ci :: check-module-boundaries.ps1, check-production-compose.ps1, check-text-files.ps1, check-typescript-boundaries.mjs, check-workspace-state.ps1, test-governance-guards.ps1, test-production-compose-guard.ps1, test-typescript-boundary-guard.mjs
+scripts/ci :: check-document-governance.ps1, check-module-boundaries.ps1, check-production-compose.ps1, check-text-files.ps1, check-typescript-boundaries.mjs, check-workspace-state.ps1, test-document-governance-guard.ps1, test-governance-guards.ps1, test-production-compose-guard.ps1, test-typescript-boundary-guard.mjs
 scripts/e2e :: run-e2e.mjs
 scripts/operations :: test-postgres-backup-restore.ps1
 ```
@@ -94,7 +94,7 @@ scripts/operations :: test-postgres-backup-restore.ps1
 
 ### 为什么建立 `PROJECT_INDEX.md`
 
-`PROJECT_INDEX.md` 是全项目任务导航和当前事实入口，只记录项目身份、当前阶段、活动计划和权威入口。历史计划不会进入根索引，避免计划持续增长扩大每次任务的必读上下文。
+`PROJECT_INDEX.md` 是全项目任务导航和高频阶段入口，只记录项目身份、当前阶段、活动计划和权威入口。详细实现状态继续由实际源码、配置、迁移、生成契约和对应架构文档证明。历史计划不会进入根索引，避免计划持续增长扩大每次任务的必读上下文。
 
 该文件固定放在仓库根目录，与 `AGENTS.md`、`CHANGELOG.md` 同层，便于人和 AI 直接发现并在标准工作区权限内持续维护。`.agents/` 只承担 Antigravity 规则桥接职责，不保存需要频繁更新的项目索引。
 
@@ -121,7 +121,7 @@ scripts/operations :: test-postgres-backup-restore.ps1
 
 当前只有一份产品需求基线，直接使用 `docs/PROJECT_REQUIREMENTS.md` 可以保持入口短且稳定，不为单一文件提前创建 `docs/product/` 目录。
 
-该文件定义母版服务谁、解决什么问题、目标能力、非目标、派生规则和验收条件。技术选型理由继续由 ADR 承担，当前实现状态由全项目索引承担，具体实施步骤由 `plans/` 承担。未来出现至少三份职责独立的产品文档时，再通过人工评审决定是否新增 `docs/product/`；不得为整理目录而自动移动现有 PRD。
+该文件定义母版服务谁、解决什么问题、目标能力、非目标、派生规则和验收条件。技术选型理由继续由 ADR 承担，详细实现状态由实际源码、配置、迁移、生成契约和对应架构文档证明，项目阶段和活动计划由 `PROJECT_INDEX.md` 导航，具体实施步骤由 `plans/` 承担。未来出现至少三份职责独立的产品文档时，再通过人工评审决定是否新增 `docs/product/`；不得为整理目录而自动移动现有 PRD。
 
 ### 为什么 `plans/` 保持扁平
 

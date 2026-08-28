@@ -11,11 +11,13 @@
 3. 已完成、已取消和已替代计划永久保留原文件及登记记录。
 4. 删除、移动和重命名计划文件只能由用户人工处理。
 5. 本索引只保存路径、状态、结果、影响范围和一句话用途，不复制计划正文。
+6. 待确认、待实施和实施中的计划结果填写 `不适用`；已结束计划结果必须以 `已完成`、`已取消` 或 `已替代` 开头。
 
 ## 计划永久登记
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-29_文档权威边界与索引一致性门禁整改计划.md` | 已结束 | 已完成；权威来源、索引术语、专题文档载体和计划结果已收敛，自动一致性门禁与 9 类负向夹具通过 | Documentation、Developer Workflow | 收敛权威来源、索引术语和文档载体边界，并建立自动一致性门禁 |
 | `plans/2026-08-29_全项目索引与计划登记职责拆分计划.md` | 已结束 | 已完成；根索引已精简，全部计划永久登记已迁移并通过治理验证 | Documentation、Developer Workflow | 精简根项目索引并建立独立计划永久登记入口 |
 | `plans/2026-08-29_全项目索引根目录迁移计划.md` | 已结束 | 已完成；唯一索引已迁移到根目录，84 个关联文档引用已同步，治理门禁和链接检查通过 | Documentation、Developer Workflow | 将唯一全项目索引迁移到根目录并全量更新项目文档引用 |
 | `plans/2026-08-28_系统设置与站点配置媒体计划.md` | 已结束 | 已完成；单表分组 JSONB、固定强类型接口、注册 Fail Closed、配置媒体补偿、Admin 双 Tab 和 Web 品牌消费已落地，轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 建立站点资料、公开注册开关和独立站点 LOGO 配置媒体的完整跨栈实施边界 |
@@ -42,7 +44,7 @@
 | `plans/2026-08-27_Admin管理员头像统一回退样式计划.md` | 已结束 | 已完成；空头像和失效图片统一显示浅色首字符回退，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 统一管理员列表与顶部账户头像的浅色首字符回退 |
 | `plans/2026-08-27_Admin文件资产上传主体标识精简计划.md` | 已结束 | 已完成；UUID 文本已隐藏，主体类型后保留复制图标，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 隐藏上传主体 UUID 文本，在主体类型后保留图标复制能力 |
 | `plans/2026-08-27_Admin文件资产图片当前页预览计划.md` | 已结束 | 已完成；图片“打开”使用 Ant Design 当前页预览，非图片保留新窗口，Admin typecheck 与 lint 通过，重型验证按策略未执行 | Admin、Documentation | 图片资产点击“打开”时使用 Ant Design 当前页预览，非图片继续新窗口打开 |
-| `plans/2026-08-27_Admin用户永久回收站恢复策略调整计划.md` | 已结束 | 已完成统一 SoftDeleteMixin、移除匿名化、用户自助注销走可恢复软删除及删除原因可选方案；轻量门禁通过，重型验证和真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Documentation | 实施统一 SoftDeleteMixin，移除恢复截止和匿名化，用户自助注销统一进入可恢复软删除回收站 |
+| `plans/2026-08-27_Admin用户永久回收站恢复策略调整计划.md` | 已结束 | 已完成；统一 SoftDeleteMixin、移除匿名化、用户自助注销走可恢复软删除及删除原因可选方案；轻量门禁通过，重型验证和真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Documentation | 实施统一 SoftDeleteMixin，移除恢复截止和匿名化，用户自助注销统一进入可恢复软删除回收站 |
 | `plans/2026-08-27_本地检查点提交与高风险编辑治理计划.md` | 已结束 | 已完成；功能单元完成后请求本地检查点授权、分阶段授权后立即精确提交，高风险整文件写入具备恢复基线和严格校验，治理轻量门禁通过 | Documentation、Developer Workflow | 建立本地检查点授权、高风险文件编辑和可恢复验证规则 |
 | `plans/2026-08-27_Admin用户回收站与恢复能力计划.md` | 已结束 | 已完成；回收站、恢复后保持停用、默认 30 天到期匿名化、迁移、契约、Admin 页面和文档已同步，轻量门禁通过，重型验证按策略未执行 | Database、Backend、Admin、API Client、Documentation | 为软删除用户增加可恢复生命周期和受控数据最小化机制 |
 | `plans/2026-08-27_Admin列表批量操作与删除能力计划.md` | 已结束 | 已完成；批量治理已落地，旧版管理员确认端点限时兼容至 2026-09-26；轻量门禁通过，重型验证按策略未执行 | Backend、Admin、API Client、Documentation | 为现有非日志类 Admin 列表补齐批量能力，并登记管理员确认端点受控迁移窗口 |
@@ -55,13 +57,13 @@
 | `plans/2026-08-24_Admin左侧Logo移除与欢迎页面落地计划.md` | 已结束 | 已完成；已移除侧栏 Logo，新增官方风格 WelcomePage 及单元测试，36 项测试与门禁全量通过 | Admin、Documentation | 移除侧栏 Logo 并在菜单首位增加欢迎页面作为登录默认主页 |
 | `plans/2026-08-24_Admin官方标准浅色高质感视觉体系对齐计划.md` | 已结束 | 已完成；浅色侧栏、通透 Header、ProTable 原生工具条与轻量操作列已升级，33 项测试全量通过 | Admin、Documentation | 将管理端重构为官方 Ant Design Pro v6 标准浅色高质感视觉体系，恢复 ProTable 原生工具条与 Header 操作生态 |
 | `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md` | 已结束 | 已完成；远端合并设置、Skill、本地门禁和 PR #10 首轮 13 项检查均通过 | Deployment、Documentation | 自动化 Ruleset 保护下的日常 Git 交付闭环，并去除功能分支 Push 重复检查 |
-| `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md` | 已结束 | 已完成工作区设置、uv 使用边界说明与治理验证 | Backend、Documentation | 隔离 VS Code 扩展内置 Ruff 与 Backend 虚拟环境 Ruff，避免 Windows 文件占用阻断 uv 同步 |
-| `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` | 已结束 | 已完成深色侧栏、浅色工作区、PageContainer、受控 ProTable、五视口与 axe 验收 | Admin、Documentation | 官方 Ant Design 6、ProComponents 与 Umi Max ProLayout 全页面视觉交互升级 |
+| `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md` | 已结束 | 已完成；工作区设置、uv 使用边界说明与治理验证 | Backend、Documentation | 隔离 VS Code 扩展内置 Ruff 与 Backend 虚拟环境 Ruff，避免 Windows 文件占用阻断 uv 同步 |
+| `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md` | 已结束 | 已完成；深色侧栏、浅色工作区、PageContainer、受控 ProTable、五视口与 axe 验收 | Admin、Documentation | 官方 Ant Design 6、ProComponents 与 Umi Max ProLayout 全页面视觉交互升级 |
 | `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md` | 已结束 | 已完成；PR #7 rebase 合并，Rule Suite 与合并后四个工作流通过，Dependabot 为 0 Open | Admin、Deployment、Documentation | 收紧 `main` Ruleset 并消除 Umi 依赖链中的 Vite 4 高危漏洞 |
 | `plans/2026-08-24_ruleset-vite-security-remediation-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Documentation | 保留补丁工具异常后产生的重复计划审计记录 |
 | `plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md` | 已结束 | 已完成；根规则、权威运维文档、审批示例、安全边界和索引已同步，文档与治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 GitHub CLI 与 Windows Keyring 的宿主执行和审批边界 |
 | `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md` | 已结束 | 已完成；默认联网、Schannel 对照诊断、准确宿主升级兜底、禁止规避措施和升级复验删除条件已同步，全部治理门禁通过 | Documentation、Windows 本地开发治理 | 统一 Codex Windows 网络和系统 HTTPS 客户端边界 |
-| `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | P1-01 至 P1-09 与同步处理项已完成；当前工作区满足冻结候选条件，尚未提交或创建不可变 Tag | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成母版不可变基线冻结前的安全、兼容、一致性、交付和文档整改 |
+| `plans/2026-08-22_母版不可变基线冻结整改计划.md` | 已结束 | 已完成；P1-01 至 P1-09 与同步处理项已完成；当前工作区满足冻结候选条件，尚未提交或创建不可变 Tag | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 完成母版不可变基线冻结前的安全、兼容、一致性、交付和文档整改 |
 | `plans/2026-08-22_immutable-baseline-remediation-plan.md` | 已结束 | 已替代；活动实施统一维护在中文路径计划 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 保留补丁工具错误报告后产生的重复计划审计记录 |
 | `plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md` | 已结束 | 已完成；独立标准文档、既有入口去重、文档索引、全项目索引和 Changelog 已同步，全部文档与治理门禁通过 | Documentation、Windows 本地开发治理 | 建立 `config.toml`、`elevated + Custom`、初始化、迁移、验证、诊断、修复和回滚的完整标准 |
 | `plans/2026-08-22_CodexWindowsACL长期治理计划.md` | 已结束 | 已完成；采用 `elevated + Custom`、精确 uv Cache 根和代理环境过滤，Owner、uv、Node 子进程、工作区外写入和网络正反例均通过，未执行无实际故障的 Owner 归一 | Documentation、Windows 本地开发治理 | 解决 Codex 持续维护中的 Owner 混杂、ACL 误判、缓存越界和 Git 重复审批 |
@@ -73,13 +75,13 @@
 | `plans/2026-08-21_BrowserE2E人工触发与发布解耦计划.md` | 已结束 | 已完成 | Deployment、Documentation | 将 Browser E2E 改为人工触发，并取消镜像发布对 E2E 成功记录的依赖 |
 | `plans/2026-08-21_BrowserE2E就绪探测修复计划.md` | 已结束 | 已完成 | Admin、Deployment、Documentation | 修复 Umi 首次编译期间 2xx HTML 回退页导致 Browser E2E 过早启动的问题 |
 | `plans/2026-08-20_Admin技术栈文档一致性审计计划.md` | 已结束 | 已完成；当前性文档、历史边界和项目结构索引已同步 | Admin、Deployment、Documentation | 全量核对 Admin 技术栈、入口、命令、端口和验证文档与实现一致 |
-| `plans/2026-08-20_CI失败修复计划.md` | 已结束 | 已完成本机复验；Linux CI 兼容性仍待线上复验 | Backend、Web、依赖安全、CI、Documentation | 修复线上 CI 暴露的格式、类型和依赖漏洞门禁问题 |
-| `plans/2026-08-20_GitHub CI线上失败修复计划.md` | 已结束 | 本地修复与 Admin 验证完成；遗留的线上就绪失败由后续专门计划承接 | Backend、Admin、Database、CI、Documentation | 修复 Alembic 漂移、Admin 代理校验、E2E 登录方式、启动时序和 HTML 可访问性问题 |
+| `plans/2026-08-20_CI失败修复计划.md` | 已结束 | 已完成；本机复验；Linux CI 兼容性仍待线上复验 | Backend、Web、依赖安全、CI、Documentation | 修复线上 CI 暴露的格式、类型和依赖漏洞门禁问题 |
+| `plans/2026-08-20_GitHub CI线上失败修复计划.md` | 已结束 | 已完成；本地修复与 Admin 验证完成；遗留的线上就绪失败由后续专门计划承接 | Backend、Admin、Database、CI、Documentation | 修复 Alembic 漂移、Admin 代理校验、E2E 登录方式、启动时序和 HTML 可访问性问题 |
 | `plans/2026-08-20_Admin本地运行与故障排查文档治理计划.md` | 已结束 | 已完成；Admin 本地运行、测试、浏览器和跨栈验证排障手册及长期规则已同步 | Admin、Documentation、Windows 本地开发治理 | 沉淀 Admin 本地运行、测试和 Windows 系统故障的规则分层结果 |
 | `plans/2026-08-12_全项目索引与计划治理计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立总索引、计划治理和派生项目继承基线 |
 | `plans/2026-08-12_产品需求基线建设计划.md` | 已结束 | 已完成 | 全栈产品基线、文档 | 建立母版目标用户、能力范围、非目标和验收基线 |
 | `plans/2026-08-12_讨论结论知识沉淀规则计划.md` | 已结束 | 已完成 | 全栈治理、文档 | 建立讨论结论向现有权威文档收敛的规则 |
-| `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 已结束 | 已完成，Wiki 后续停用 | 全仓库、GitHub Wiki 历史 | 修复环境模板、提交完整项目基线并记录当时的 Wiki 初始化过程 |
+| `plans/2026-08-12_项目基线入库与Wiki初始化计划.md` | 已结束 | 已完成；Wiki 后续停用 | 全仓库、GitHub Wiki 历史 | 修复环境模板、提交完整项目基线并记录当时的 Wiki 初始化过程 |
 | `plans/2026-08-12_GitHub Wiki停用与文档单一来源计划.md` | 已结束 | 已完成 | 全仓库文档治理、GitHub Wiki | 清空并关闭 Wiki，建立 `docs/` 单一来源规则 |
 | `plans/2026-08-12_Markdown格式规范统一计划.md` | 已结束 | 已完成 | 全仓库 Markdown、文档治理 | 统一 GFM 语法基线、markdownlint 格式规则和项目级检查命令 |
 | `plans/2026-08-12_Git提交追溯规则计划.md` | 已结束 | 已完成 | 全仓库 Git、文档治理 | 明确普通提交和跨系统场景的 Commit SHA 记录边界 |
@@ -93,6 +95,6 @@
 | `plans/2026-08-17_密码规则与API中文化计划.md` | 已结束 | 已完成 | Backend、Admin、Web、API Client、Documentation | 统一密码规则、API 顶层消息和 OpenAPI 中文描述并完成跨栈验证 |
 | `plans/2026-08-17_初始管理员默认用户名计划.md` | 已结束 | 已取消 | Backend、Deployment、Documentation | 用户决定继续通过必填 `--username` 显式创建初始管理员，未实施默认用户名变更 |
 | `plans/2026-08-17_Web首页登录态操作按钮计划.md` | 已结束 | 已完成 | Web、Documentation | Web 首页根据服务端真实登录态隐藏登录和创建账户按钮，并补充登录前后浏览器验证 |
-| `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | Admin Umi Max/Ant Design 6 迁移、运行时修复、质量门禁和浏览器冒烟已完成；完整跨栈/容器验证受本机环境限制 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
+| `plans/2026-08-19_Admin升级AntDesign6计划.md` | 已结束 | 已完成；Admin Umi Max/Ant Design 6 迁移、运行时修复、质量门禁和浏览器冒烟已完成；完整跨栈/容器验证受本机环境限制 | Admin、API Client 消费验证、Deployment、Documentation | 全面迁移官方 Ant Design Pro v6/Umi Max，同时保留项目安全、契约和质量边界 |
 | `plans/2026-08-20_请求日志错误入参捕获与脱敏管道计划.md` | 已结束 | 已完成；105 项 Backend pytest 和真实 PostgreSQL/Redis 集成验证已通过 | Backend、Admin、API Client、Database、Documentation | 落地错误请求入参捕获、敏感字段脱敏与 4KB 截断兜底的最佳实践管道 |
 | `plans/2026-08-20_后端文件日志与环境变量配置化计划.md` | 已结束 | 已完成；后续修复为 UTF-8 JSON Lines，六个请求关联字段和 106 项真实依赖 pytest 已通过 | Backend、Deployment、Documentation | Loguru 异步文件落盘、环境变量受控配置化与自动清理轮转策略 |
