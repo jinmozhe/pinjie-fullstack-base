@@ -79,6 +79,7 @@ export function LoginPage({
                   placeholder="管理员用户名"
                   prefix={<UserOutlined className="login-prefix-icon" />}
                   size="large"
+                  variant="filled"
                 />
               </Form.Item>
               <Form.Item
@@ -96,6 +97,7 @@ export function LoginPage({
                   placeholder="登录密码"
                   prefix={<LockOutlined className="login-prefix-icon" />}
                   size="large"
+                  variant="filled"
                 />
               </Form.Item>
               <div className="login-other-actions">

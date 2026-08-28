@@ -48,6 +48,7 @@
 | `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | Admin、Documentation | 已移除表格容器的重复滚动层并恢复 Ant Design 受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | Admin、Documentation | 已将忘记密码点击弹窗替换为浅灰色悬浮提示 |
 | `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | Admin、Documentation | 已将输入内容、placeholder 和按钮文字统一收敛至 `14px / 400` |
+| `plans/2026-08-28_Admin登录输入框Filled半透明视觉计划.md` | 已结束 | Admin、Documentation | 已将登录页两个输入框改为视觉无边框的 Ant Design Filled 半透明控件 |
 | `plans/2026-08-28_Admin忘记密码弹窗安全图标优化计划.md` | 已结束 | Admin、Documentation | 已为忘记密码弹窗增加 Ant Design 双色安全图标 |
 | `plans/2026-08-28_Admin登录页能力文案优化计划.md` | 已结束 | Admin、Documentation | 已将登录页抽象描述替换为统一身份、精细权限与审计能力摘要 |
 | `plans/2026-08-28_Admin登录页背景透明度与Logo比例微调计划.md` | 已结束 | Admin、Documentation | 已降低登录页背景透明度并将 Logo 从 `36px` 放大至 `54px` |
@@ -111,6 +112,7 @@
 | `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | 已完成；重复滚动层已移除，Admin typecheck、lint 与 Markdown lint 通过，重型验证按项目策略未执行 | Admin、Documentation | 修复普通表格右侧异常滚动条并保留真实宽表受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | 已完成；浅灰色 Tooltip 已替换点击弹窗，Admin typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低忘记密码入口视觉重量并取消点击弹窗 |
 | `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | 已完成；输入内容、placeholder 和按钮文字统一为 `14px / 400`，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低登录表单控件的边界、字重和按钮色彩重量 |
+| `plans/2026-08-28_Admin登录输入框Filled半透明视觉计划.md` | 已结束 | 已完成；Filled 变体、透明默认边框和半透明状态背景已落地，Admin typecheck、lint、Markdown lint 与文本卫生检查通过，重型验证按项目策略未执行 | Admin、Documentation | 将登录输入框升级为视觉无边框的 Filled 半透明控件 |
 | `plans/2026-08-28_Admin忘记密码弹窗安全图标优化计划.md` | 已结束 | 已完成；双色安全徽章和居中布局已落地，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 增强忘记密码弹窗的安全感和人性化表达 |
 | `plans/2026-08-28_Admin登录页能力文案优化计划.md` | 已结束 | 已完成；20 字能力描述已替换，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 用具体项目能力替换抽象登录页描述 |
 | `plans/2026-08-28_Admin登录页背景透明度与Logo比例微调计划.md` | 已结束 | 已完成；背景透明度降低约三分之一，Logo 放大至 `54px`，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低背景色彩重量并放大登录页品牌标志 |

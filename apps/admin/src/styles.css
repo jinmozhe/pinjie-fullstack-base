@@ -435,7 +435,7 @@ textarea {
   place-items: center;
 }
 
-/* Admin 登录页：参考 Ant Design Pro 的无卡片居中构图。 */
+/* Admin 登录页：参考 Ant Design Pro 的无卡片上聚焦构图。 */
 .login-screen {
   --login-primary: #1677ff;
   --login-primary-hover: #4096ff;
@@ -474,13 +474,12 @@ textarea {
   display: grid;
   flex: 1;
   width: 100%;
-  padding: 64px 24px 28px;
-  place-items: center;
+  padding: clamp(72px, 15vh, 156px) 24px 28px;
+  place-items: start center;
 }
 
 .login-shell {
   width: min(100%, 368px);
-  transform: translateY(-3vh);
 }
 
 .login-top {
@@ -534,27 +533,27 @@ textarea {
   margin-bottom: 20px;
 }
 
-.login-main .ant-input-affix-wrapper {
+.login-main .ant-input-affix-wrapper.ant-input-filled {
   min-height: 44px;
   padding: 8px 12px;
-  border-color: var(--login-control-border);
+  border-color: transparent;
   border-radius: 7px;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.58);
   font-size: 14px;
   box-shadow: none;
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
 
-.login-main .ant-input-affix-wrapper:hover {
-  border-color: rgba(22, 119, 255, 0.28);
-  background: rgba(255, 255, 255, 0.92);
+.login-main .ant-input-affix-wrapper.ant-input-filled:hover {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.72);
 }
 
-.login-main .ant-input-affix-wrapper:focus,
-.login-main .ant-input-affix-wrapper-focused {
-  border-color: rgba(22, 119, 255, 0.46);
-  background: #ffffff;
-  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.07);
+.login-main .ant-input-affix-wrapper.ant-input-filled:focus,
+.login-main .ant-input-affix-wrapper.ant-input-filled.ant-input-affix-wrapper-focused {
+  border-color: rgba(22, 119, 255, 0.22);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.06);
 }
 
 .login-main .ant-input {
@@ -688,11 +687,10 @@ body .ant-tag.ant-tag-success {
 
 @media (max-width: 640px) {
   .login-content {
-    padding: 48px 20px 24px;
+    padding: clamp(48px, 10vh, 84px) 20px 24px;
   }
   .login-shell {
     width: 100%;
-    transform: none;
   }
   .login-main {
     width: 100%;
@@ -763,10 +761,7 @@ body .ant-tag.ant-tag-success {
 
 @media (max-height: 680px) {
   .login-content {
-    align-items: center;
-    padding-top: 48px;
-  }
-  .login-shell {
-    transform: none;
+    align-items: start;
+    padding-top: 36px;
   }
 }

@@ -19,6 +19,10 @@ htmlcov/
 /apps/backend/uploads/
 /apps/backend/.uploads-staging/
 /apps/backend/.uploads-trash/
+/apps/backend/settings-media/
+/apps/backend/.settings-media-staging/
+/apps/backend/.settings-media-trash/
+/apps/backend/.settings-media-operations/
 .e2e-uploads/
 .e2e-uploads-staging/
 ..e2e-uploads-staging/
