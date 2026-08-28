@@ -333,9 +333,26 @@ async def test_admin_browser_api_complete_management_lifecycle(coverage_app: Fas
         assigned_permissions = await admin_client.put(
             f"/api/v1/admin/roles/{role_id}/permissions",
             headers=_csrf_headers(admin_client, admin=True),
-            json={"permission_codes": ["users:read", "roles:read"]},
+            json={
+                "permission_codes": [
+                    "users:read",
+                    "roles:read",
+                    "admins:create",
+                    "admins:update",
+                    "admins:credentials:reset",
+                    "admins:roles:assign",
+                    "admins:sessions:read",
+                    "admins:sessions:revoke",
+                ]
+            },
         )
         assert assigned_permissions.status_code == 200, assigned_permissions.text
+        system_permission_rejected = await admin_client.put(
+            f"/api/v1/admin/roles/{role_id}/permissions",
+            headers=_csrf_headers(admin_client, admin=True),
+            json={"permission_codes": ["admins:superuser:change"]},
+        )
+        assert system_permission_rejected.status_code == 422
 
         created_admin = await admin_client.post(
             "/api/v1/admin/admins",
@@ -362,6 +379,49 @@ async def test_admin_browser_api_complete_management_lifecycle(coverage_app: Fas
             json={"username": target_username, "password": ADMIN_PASSWORD},
         )
         assert target_login.status_code == 200, target_login.text
+        forbidden_superuser_create = await target_client.post(
+            "/api/v1/admin/admins",
+            headers=_csrf_headers(target_client, admin=True),
+            json={
+                "username": f"forbidden-superuser-{suffix}",
+                "initial_password": ADMIN_PASSWORD,
+                "is_superuser": True,
+            },
+        )
+        assert forbidden_superuser_create.status_code == 403
+        protected_superuser_requests = [
+            await target_client.patch(
+                f"/api/v1/admin/admins/{root_id}",
+                headers=_csrf_headers(target_client, admin=True),
+                json={"display_name": "Forbidden Root Update"},
+            ),
+            await target_client.patch(
+                f"/api/v1/admin/admins/{root_id}/status",
+                headers=_csrf_headers(target_client, admin=True),
+                json={"is_active": False},
+            ),
+            await target_client.patch(
+                "/api/v1/admin/admins/status/batch",
+                headers=_csrf_headers(target_client, admin=True),
+                json={"admin_ids": [root_id], "is_active": False},
+            ),
+            await target_client.put(
+                f"/api/v1/admin/admins/{root_id}/credentials/password",
+                headers=_csrf_headers(target_client, admin=True),
+                json={"new_password": ADMIN_NEW_PASSWORD},
+            ),
+            await target_client.put(
+                f"/api/v1/admin/admins/{root_id}/roles",
+                headers=_csrf_headers(target_client, admin=True),
+                json={"role_ids": [role_id]},
+            ),
+            await target_client.get(f"/api/v1/admin/admins/{root_id}/sessions"),
+            await target_client.post(
+                f"/api/v1/admin/admins/{root_id}/sessions/revoke-all",
+                headers=_csrf_headers(target_client, admin=True),
+            ),
+        ]
+        assert all(response.status_code == 403 for response in protected_superuser_requests)
         assert (await admin_client.get("/api/v1/admin/admins")).status_code == 200
         assert (await admin_client.get(f"/api/v1/admin/admins/{target_id}")).status_code == 200
         assert (await admin_client.get(f"/api/v1/admin/admins/{target_id}/sessions")).status_code == 200
@@ -372,21 +432,27 @@ async def test_admin_browser_api_complete_management_lifecycle(coverage_app: Fas
             json={"display_name": " Updated Administrator "},
         )
         assert updated_admin.status_code == 200
-        promoted = await admin_client.patch(
+        legacy_superuser_change = await admin_client.patch(
             f"/api/v1/admin/admins/{target_id}",
+            headers=_csrf_headers(admin_client, admin=True),
+            json={"is_superuser": True},
+        )
+        assert legacy_superuser_change.status_code == 422
+        promoted = await admin_client.patch(
+            f"/api/v1/admin/admins/{target_id}/superuser",
             headers=_csrf_headers(admin_client, admin=True),
             json={"is_superuser": True},
         )
         assert promoted.status_code == 200
         demoted = await admin_client.patch(
-            f"/api/v1/admin/admins/{target_id}",
+            f"/api/v1/admin/admins/{target_id}/superuser",
             headers=_csrf_headers(admin_client, admin=True),
             json={"is_superuser": False},
         )
         assert demoted.status_code == 200
 
         own_superuser_change = await admin_client.patch(
-            f"/api/v1/admin/admins/{root_id}",
+            f"/api/v1/admin/admins/{root_id}/superuser",
             headers=_csrf_headers(admin_client, admin=True),
             json={"is_superuser": False},
         )

@@ -33,13 +33,14 @@ from app.db.repositories import (
     SessionRepository,
     UserRepository,
 )
-from app.domains.admin.permissions import PERMISSION_CODES
+from app.domains.admin.permissions import PERMISSION_CODES, ROLE_ASSIGNABLE_PERMISSION_CODES
 from app.domains.admin.presenters import admin_read, role_read
 from app.domains.admin.schemas import (
     AdminBulkStatusUpdateIn,
     AdminCreateIn,
     AdminRead,
     AdminRoleAssignIn,
+    AdminSuperuserUpdateIn,
     AdminUpdateIn,
     AdminUserCreateIn,
     AdminUserRead,
@@ -430,6 +431,8 @@ class AdminManagementService:
         admin_id = new_uuid7()
 
         async def operation() -> Admin:
+            if payload.is_superuser:
+                await self._require_actor_superuser()
             if await self.admins.get_by_username(payload.username) is not None:
                 raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="用户名已被使用")
             roles = await self.admins.get_roles(list(dict.fromkeys(payload.role_ids)))
@@ -469,23 +472,11 @@ class AdminManagementService:
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
                 raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+            await self._require_superuser_target_access(admin)
             if "display_name" in payload.model_fields_set:
                 admin.display_name = payload.display_name.strip() if payload.display_name else None
             if "avatar" in payload.model_fields_set:
                 admin.avatar = payload.avatar.strip() if payload.avatar else None
-            if "is_superuser" in payload.model_fields_set and payload.is_superuser is not None:
-                if admin.id == self.actor_id:
-                    raise AppException(
-                        status_code=409,
-                        code=ErrorCode.STATE_CONFLICT,
-                        message="不能修改自己的超级管理员状态",
-                    )
-                if admin.is_superuser and not payload.is_superuser and admin.is_active:
-                    await self._protect_last_superuser()
-                if admin.is_superuser != payload.is_superuser:
-                    admin.is_superuser = payload.is_superuser
-                    admin.credential_version += 1
-                    await self.sessions.revoke_admin_for_admin(admin.id, reason="superuser_status_changed")
             return admin
 
         return await self.audit.execute(
@@ -496,6 +487,34 @@ class AdminManagementService:
             operation=operation,
         )
 
+    async def set_admin_superuser(self, admin_id: uuid.UUID, payload: AdminSuperuserUpdateIn) -> Admin:
+        async def operation() -> Admin:
+            await self._require_actor_superuser()
+            if admin_id == self.actor_id:
+                raise AppException(
+                    status_code=409,
+                    code=ErrorCode.STATE_CONFLICT,
+                    message="不能修改自己的超级管理员状态",
+                )
+            admin = await self.admins.get(admin_id, for_update=True)
+            if admin is None:
+                raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+            if admin.is_superuser and not payload.is_superuser and admin.is_active:
+                await self._protect_last_superuser()
+            if admin.is_superuser != payload.is_superuser:
+                admin.is_superuser = payload.is_superuser
+                admin.credential_version += 1
+                await self.sessions.revoke_admin_for_admin(admin.id, reason="superuser_status_changed")
+            return admin
+
+        return await self.audit.execute(
+            action="admins:superuser:update",
+            target_type="admin",
+            target_id=admin_id,
+            changed_fields={"is_superuser": payload.is_superuser},
+            operation=operation,
+        )
+
     async def set_admin_status(self, admin_id: uuid.UUID, payload: StatusUpdateIn) -> Admin:
         async def operation() -> Admin:
             if admin_id == self.actor_id:
@@ -503,6 +522,7 @@ class AdminManagementService:
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
                 raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+            await self._require_superuser_target_access(admin)
             if admin.is_active and not payload.is_active and admin.is_superuser:
                 await self._protect_last_superuser()
             if admin.is_active != payload.is_active:
@@ -531,6 +551,8 @@ class AdminManagementService:
                     code=ErrorCode.ADMIN_NOT_FOUND,
                     message="一个或多个管理员不存在",
                 )
+            if any(admin.is_superuser for admin in admins):
+                await self._require_actor_superuser()
 
             superusers_to_disable = sum(
                 1 for admin in admins if admin.is_active and admin.is_superuser and not payload.is_active
@@ -568,6 +590,7 @@ class AdminManagementService:
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
                 raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+            await self._require_superuser_target_access(admin)
             admin.password_hash = password_hash
             admin.credential_version += 1
             await self.sessions.revoke_admin_for_admin(admin.id, reason="password_reset")
@@ -587,6 +610,7 @@ class AdminManagementService:
             admin = await self.admins.get(admin_id, for_update=True)
             if admin is None:
                 raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+            await self._require_superuser_target_access(admin)
             role_ids = list(dict.fromkeys(payload.role_ids))
             roles = await self.admins.get_roles(role_ids)
             if len(roles) != len(role_ids):
@@ -607,15 +631,20 @@ class AdminManagementService:
     async def list_admin_sessions(
         self, admin_id: uuid.UUID, *, page: int, page_size: int
     ) -> tuple[list[AdminSession], int]:
-        await self.get_admin(admin_id)
+        admin = await self.admins.get(admin_id, for_update=True)
+        if admin is None:
+            raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+        await self._require_superuser_target_access(admin)
         return await self.sessions.list_admin(admin_id, page=page, page_size=page_size)
 
     async def revoke_all_admin_sessions(self, admin_id: uuid.UUID) -> None:
         async def operation() -> None:
             if admin_id == self.actor_id:
                 raise AppException(status_code=409, code=ErrorCode.STATE_CONFLICT, message="不能在此处撤销自己的会话")
-            if await self.admins.get(admin_id) is None:
+            admin = await self.admins.get(admin_id, for_update=True)
+            if admin is None:
                 raise AppException(status_code=404, code=ErrorCode.ADMIN_NOT_FOUND, message="管理员不存在")
+            await self._require_superuser_target_access(admin)
             await self.sessions.revoke_admin_for_admin(admin_id, reason="admin_revoked_all")
 
         await self.audit.execute(
@@ -768,6 +797,12 @@ class AdminManagementService:
         async def operation() -> Role:
             if any(code not in PERMISSION_CODES for code in codes):
                 raise AppException(status_code=422, code=ErrorCode.VALIDATION_ERROR, message="权限代码未知")
+            if any(code not in ROLE_ASSIGNABLE_PERMISSION_CODES for code in codes):
+                raise AppException(
+                    status_code=422,
+                    code=ErrorCode.VALIDATION_ERROR,
+                    message="系统权限不能分配给普通角色",
+                )
             role = await self.admins.get_role(role_id, for_update=True)
             if role is None:
                 raise AppException(status_code=404, code=ErrorCode.ROLE_NOT_FOUND, message="角色不存在")
@@ -791,7 +826,18 @@ class AdminManagementService:
         )
 
     async def list_permissions(self) -> list[PermissionRead]:
-        return [PermissionRead.model_validate(item) for item in await self.admins.list_permissions()]
+        return [
+            PermissionRead(
+                id=item.id,
+                code=item.code,
+                name=item.name,
+                description=item.description,
+                is_active=item.is_active,
+                catalog_version=item.catalog_version,
+                assignable_to_roles=item.code in ROLE_ASSIGNABLE_PERMISSION_CODES,
+            )
+            for item in await self.admins.list_permissions()
+        ]
 
     async def list_login_events(self, *, page: int, page_size: int) -> LoginEventPage:
         items, total = await self.security.list_login_events(page=page, page_size=page_size)
@@ -825,6 +871,28 @@ class AdminManagementService:
             page_size=page_size,
             total=total,
         )
+
+    async def _require_actor_superuser(self) -> Admin:
+        actor = await self.admins.get(self.actor_id, for_update=True)
+        if actor is None or not actor.is_active or not actor.is_superuser:
+            raise AppException(
+                status_code=403,
+                code=ErrorCode.PERMISSION_DENIED,
+                message="仅超级管理员可执行此操作",
+            )
+        return actor
+
+    async def _require_superuser_target_access(self, admin: Admin) -> None:
+        if not admin.is_superuser:
+            return
+        try:
+            await self._require_actor_superuser()
+        except AppException as exc:
+            raise AppException(
+                status_code=403,
+                code=ErrorCode.PERMISSION_DENIED,
+                message="仅超级管理员可操作超级管理员账户",
+            ) from exc
 
     async def _protect_last_superuser(self) -> None:
         await self._protect_superuser_reduction(1)

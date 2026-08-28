@@ -86,6 +86,7 @@ export const handlers = [
   http.post("http://localhost:3000/api/v1/admin/admins", () => ok(admin)),
   http.patch("http://localhost:3000/api/v1/admin/admins/status/batch", () => ok([admin])),
   http.patch("http://localhost:3000/api/v1/admin/admins/:id", () => ok(admin)),
+  http.patch("http://localhost:3000/api/v1/admin/admins/:id/superuser", () => ok(admin)),
   http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () =>
     ok({ items: [], page: 1, page_size: 20, total: 0, total_pages: 0 }),
   ),
@@ -100,7 +101,7 @@ export const handlers = [
   http.patch("http://localhost:3000/api/v1/admin/roles/:id", () => ok(role)),
   http.delete("http://localhost:3000/api/v1/admin/roles/:id", () => ok({ completed: true })),
   http.put("http://localhost:3000/api/v1/admin/roles/:id/permissions", () => ok(role)),
-  http.get("http://localhost:3000/api/v1/admin/permissions", () => ok([{ id: "01900000-0000-7000-8000-000000000004", code: "users:read", name: "查看用户", description: "查看用户列表", is_active: true, catalog_version: "v1" }])),
+  http.get("http://localhost:3000/api/v1/admin/permissions", () => ok([{ id: "01900000-0000-7000-8000-000000000004", code: "users:read", name: "查看用户", description: "查看用户列表", is_active: true, catalog_version: "v1", assignable_to_roles: true }])),
   http.get("http://localhost:3000/api/v1/assets", () => ok({ items: [asset], page: 1, page_size: 20, total: 1, total_pages: 1 })),
   http.delete("http://localhost:3000/api/v1/assets/batch", () => ok({ completed_count: 1, target_ids: [asset.id] })),
   http.delete("http://localhost:3000/api/v1/assets/:id", () => ok(true)),

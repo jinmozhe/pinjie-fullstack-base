@@ -5,7 +5,12 @@ from jwt import InvalidTokenError
 
 from app.core.cache_keys import CacheKeys
 from app.core.security import PasswordManager, create_access_token, decode_access_token, new_opaque_token, token_digest
-from app.domains.admin.permissions import PERMISSION_CATALOG, PERMISSION_CODES, PermissionCode
+from app.domains.admin.permissions import (
+    PERMISSION_CATALOG,
+    PERMISSION_CODES,
+    ROLE_ASSIGNABLE_PERMISSION_CODES,
+    PermissionCode,
+)
 
 
 def test_access_token_requires_audience_and_complete_claims() -> None:
@@ -58,3 +63,5 @@ def test_permission_enum_and_catalog_cannot_drift() -> None:
     assert {item.value for item in PermissionCode} == PERMISSION_CODES
     assert {item.code for item in PERMISSION_CATALOG} == PERMISSION_CODES
     assert len(PERMISSION_CODES) == len(PERMISSION_CATALOG)
+    assert PermissionCode.ADMINS_UPDATE in ROLE_ASSIGNABLE_PERMISSION_CODES
+    assert PermissionCode.ADMINS_SUPERUSER_CHANGE not in ROLE_ASSIGNABLE_PERMISSION_CODES

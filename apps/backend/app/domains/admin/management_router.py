@@ -7,6 +7,7 @@ from app.api.dependencies import (
     AdminManagementServiceDependency,
     require_admin_csrf,
     require_permission,
+    require_superuser,
 )
 from app.core.context import current_request_id
 from app.core.privacy import masked_ip
@@ -23,6 +24,7 @@ from .schemas import (
     AdminPage,
     AdminRead,
     AdminRoleAssignIn,
+    AdminSuperuserUpdateIn,
     AdminUpdateIn,
     AdminUserCreateIn,
     AdminUserRead,
@@ -380,6 +382,29 @@ async def update_admin(
         data=admin_read(await service.update_admin(admin_id, payload)),
         request_id=current_request_id(),
         message="管理员更新成功",
+    )
+
+
+@router.patch(
+    "/admins/{admin_id}/superuser",
+    response_model=ResponseModel[AdminRead],
+    dependencies=[
+        Depends(require_admin_csrf),
+        Depends(require_permission(PermissionCode.ADMINS_SUPERUSER_CHANGE)),
+        Depends(require_superuser),
+    ],
+    summary="修改管理员超级管理员身份",
+    description="仅当前超级管理员可以授予或取消其他管理员的超级管理员身份。",
+)
+async def set_admin_superuser(
+    admin_id: uuid.UUID,
+    payload: AdminSuperuserUpdateIn,
+    service: AdminManagementServiceDependency,
+) -> ResponseModel[AdminRead]:
+    return success_response(
+        data=admin_read(await service.set_admin_superuser(admin_id, payload)),
+        request_id=current_request_id(),
+        message="管理员身份更新成功",
     )
 
 

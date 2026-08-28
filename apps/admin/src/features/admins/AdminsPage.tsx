@@ -35,6 +35,7 @@ import { useState } from "react";
 
 import { AdminAvatar } from "@/components/AdminAvatar";
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
+import { StatusToggleTag } from "@/components/StatusToggleTag";
 import { AvatarUploader } from "@/components/Uploader";
 import { canAccess, useCurrentAdmin } from "@/features/auth";
 import { adminApi } from "@/lib/api/admin";
@@ -60,10 +61,12 @@ export function AdminsPage() {
   const editAvatar = Form.useWatch("avatar", editForm);
   const admins = useQuery({ queryKey: ["admins", page], queryFn: () => adminApi.admins(page) });
   const canUpdate = canAccess(current, "admins:update");
+  const canChangeSuperuser = current.is_superuser && canAccess(current, "admins:superuser:change");
   const canReadRoles = canAccess(current, "roles:read");
   const canAssignRoles = canAccess(current, "admins:roles:assign") && canReadRoles;
   const canReadSessions = canAccess(current, "admins:sessions:read");
   const canResetPassword = canAccess(current, "admins:credentials:reset");
+  const canOperateAdmin = (admin: AdminRead) => current.is_superuser || !admin.is_superuser;
   const roles = useQuery({ queryKey: ["roles-options"], queryFn: () => adminApi.roles(1), enabled: canReadRoles });
   const sessions = useQuery({
     queryKey: ["admin-sessions", sessionTarget?.id, sessionPage],
@@ -112,7 +115,7 @@ export function AdminsPage() {
   });
   const superuserMutation = useMutation({
     mutationFn: ({ adminId, isSuperuser }: { adminId: string; isSuperuser: boolean }) =>
-      adminApi.updateAdmin(adminId, { is_superuser: isSuperuser }),
+      adminApi.setAdminSuperuser(adminId, isSuperuser),
     onSuccess: async () => {
       message.success("管理员身份已更新，相关会话已撤销");
       await invalidate();
@@ -167,6 +170,7 @@ export function AdminsPage() {
 
   const moreMenu = (admin: AdminRead): MenuProps => {
     const items: NonNullable<MenuProps["items"]> = [];
+    if (!canOperateAdmin(admin)) return { items };
     if (canResetPassword && admin.id !== current.id) {
       items.push({
         key: "reset-password",
@@ -183,6 +187,7 @@ export function AdminsPage() {
       items.push({
         key: "status",
         danger: admin.is_active,
+        disabled: statusMutation.isPending && statusMutation.variables?.adminId === admin.id,
         icon: admin.is_active ? <StopOutlined /> : <CheckCircleOutlined />,
         label: admin.is_active ? "停用" : "启用",
         onClick: () => statusMutation.mutate({ adminId: admin.id, isActive: !admin.is_active }),
@@ -199,9 +204,9 @@ export function AdminsPage() {
     ) : (
       <Tag>管理员</Tag>
     );
-    if (!canUpdate || admin.id === current.id) {
+    if (!canChangeSuperuser || admin.id === current.id) {
       return (
-        <Tooltip title={admin.id === current.id ? "不能修改自己的超级管理员身份" : "没有修改管理员的权限"}>
+        <Tooltip title={admin.id === current.id ? "不能修改自己的超级管理员身份" : "仅超级管理员可以修改此身份"}>
           <span>{tag}</span>
         </Tooltip>
       );
@@ -251,8 +256,12 @@ export function AdminsPage() {
                   selectedRowKeys,
                   onChange: (keys) => setSelectedRowKeys(keys.map(String)),
                   getCheckboxProps: (admin) => ({
-                    disabled: admin.id === current.id,
-                    title: admin.id === current.id ? "不能批量修改自己的启用状态" : undefined,
+                    disabled: admin.id === current.id || !canOperateAdmin(admin),
+                    title: admin.id === current.id
+                      ? "不能批量修改自己的启用状态"
+                      : !canOperateAdmin(admin)
+                        ? "只有超级管理员可以操作超级管理员"
+                        : undefined,
                   }),
                 }
               : false
@@ -324,7 +333,22 @@ export function AdminsPage() {
               title: "状态",
               dataIndex: "is_active",
               width: 90,
-              render: (value) => <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag>,
+              render: (_, admin) => (
+                <StatusToggleTag
+                  active={admin.is_active}
+                  ariaLabel={`${admin.is_active ? "停用" : "启用"}管理员：${admin.username}`}
+                  interactive={canUpdate && admin.id !== current.id && canOperateAdmin(admin)}
+                  loading={statusMutation.isPending && statusMutation.variables?.adminId === admin.id}
+                  readOnlyReason={
+                    admin.id === current.id
+                      ? "不能修改自己的启用状态"
+                      : !canOperateAdmin(admin)
+                        ? "只有超级管理员可以操作超级管理员"
+                        : "没有修改管理员的权限"
+                  }
+                  onToggle={() => statusMutation.mutate({ adminId: admin.id, isActive: !admin.is_active })}
+                />
+              ),
             },
             {
               title: "更新时间",
@@ -344,18 +368,22 @@ export function AdminsPage() {
                 return (
                   <Space className="table-actions" size={[2, 0]} wrap={false}>
                     {canUpdate && (
-                      <Button type="link" size="small" icon={<EditOutlined />} onClick={() => openEdit(admin)}>
-                        编辑
-                      </Button>
+                      <Tooltip title={!canOperateAdmin(admin) ? "只有超级管理员可以编辑超级管理员" : undefined}>
+                        <span>
+                          <Button type="link" size="small" icon={<EditOutlined />} disabled={!canOperateAdmin(admin)} onClick={() => openEdit(admin)}>
+                            编辑
+                          </Button>
+                        </span>
+                      </Tooltip>
                     )}
                     {canAssignRoles && (
-                      <Tooltip title={admin.id === current.id ? "不能修改自己的角色" : undefined}>
+                      <Tooltip title={admin.id === current.id ? "不能修改自己的角色" : !canOperateAdmin(admin) ? "只有超级管理员可以修改超级管理员角色" : undefined}>
                         <span>
                           <Button
                             type="link"
                             size="small"
                             icon={<TeamOutlined />}
-                            disabled={admin.id === current.id}
+                            disabled={admin.id === current.id || !canOperateAdmin(admin)}
                             onClick={() => {
                               setRoleTarget(admin);
                               roleForm.setFieldsValue({ role_ids: admin.roles.map((role) => role.id) });
@@ -367,16 +395,21 @@ export function AdminsPage() {
                       </Tooltip>
                     )}
                     {canReadSessions && (
-                      <Button
-                        type="link"
-                        size="small"
-                        onClick={() => {
-                          setSessionPage(1);
-                          setSessionTarget(admin);
-                        }}
-                      >
-                        会话
-                      </Button>
+                      <Tooltip title={!canOperateAdmin(admin) ? "只有超级管理员可以查看超级管理员会话" : undefined}>
+                        <span>
+                          <Button
+                            type="link"
+                            size="small"
+                            disabled={!canOperateAdmin(admin)}
+                            onClick={() => {
+                              setSessionPage(1);
+                              setSessionTarget(admin);
+                            }}
+                          >
+                            会话
+                          </Button>
+                        </span>
+                      </Tooltip>
                     )}
                     {menu.items?.length ? (
                       <Tooltip title="更多操作">
@@ -405,7 +438,7 @@ export function AdminsPage() {
           <Form.Item label="显示名称" name="display_name"><Input maxLength={100} /></Form.Item>
           <Form.Item label="初始密码" name="initial_password" rules={[{ required: true }, { min: 6, max: 64, message: "密码必须为 6 至 64 个字符" }]}><Input.Password autoComplete="new-password" maxLength={64} /></Form.Item>
           {canReadRoles && <Form.Item label="角色" name="role_ids"><Select mode="multiple" options={roles.data?.items.map((role) => ({ label: role.name, value: role.id }))} /></Form.Item>}
-          <Form.Item name="is_superuser" valuePropName="checked"><Checkbox>超级管理员</Checkbox></Form.Item>
+          {current.is_superuser && <Form.Item name="is_superuser" valuePropName="checked"><Checkbox>超级管理员</Checkbox></Form.Item>}
         </Form>
       </Modal>
 

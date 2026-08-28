@@ -453,6 +453,14 @@ def require_admin_csrf(
     return current
 
 
+def require_superuser(
+    current: Annotated[CurrentAdmin, Depends(get_current_admin)],
+) -> CurrentAdmin:
+    if not current.admin.is_superuser:
+        raise AppException(status_code=403, code=ErrorCode.PERMISSION_DENIED, message="仅超级管理员可执行此操作")
+    return current
+
+
 def require_permission(code: PermissionCode) -> Callable[[CurrentAdmin], Awaitable[CurrentAdmin]]:
     async def dependency(current: Annotated[CurrentAdmin, Depends(get_current_admin)]) -> CurrentAdmin:
         if code.value not in current.permissions:
@@ -472,6 +480,7 @@ __all__ = [
     "AdminManagementServiceDependency",
     "DatabaseSession",
     "get_current_admin",
+    "require_superuser",
     "get_current_user",
     "get_db_session",
     "get_request_settings",
