@@ -269,6 +269,7 @@ export function RolesPage() {
       <QueryState loading={roles.isLoading} error={roles.isError ? errorMessage(roles.error) : undefined} onRetry={() => void roles.refetch()} />
       {roles.data && (
         <ProTable<RoleRead>
+          className="responsive-data-table"
           rowKey="id"
           dataSource={roles.data.items}
           search={false}
@@ -347,6 +348,7 @@ export function RolesPage() {
               </Button>
             </Space>
           )}
+          scroll={{ x: 760 }}
           pagination={false}
           columns={[
             { title: "角色", dataIndex: "name", render: (_, row) => <div className="table-primary-cell role-primary-cell"><Typography.Text strong>{row.name}</Typography.Text><Badge className="role-code-badge" count={row.code} /></div> },
