@@ -2,17 +2,16 @@
 
 > 文档归属：`docs/architecture/project-structure.md`
 > 适用仓库：`pinjie-fullstack-base`
-> 最后更新：2026-08-22
+> 最后更新：2026-08-29
 
 ---
 
-## 一、当前完整文件结构
+## 一、当前文件结构概览
 
-以下清单以 2026-08-22 当前工作区为准，共 321 个项目文件、68 个含文件目录。目录使用完整相对路径，每行列出该目录直属文件；中间层级包含在路径中。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。Admin 当前结构为 Umi Max 工程，入口是 `src/app.tsx`，配置位于 `config/`，启动包装器位于 `scripts/run-umi.mjs`。
+以下清单用于说明主要目录和稳定入口。`plans/` 下的实施计划不在此逐项复制，完整登记以 `plans/INDEX.md` 为准。`.git`、`.venv`、`node_modules`、缓存、构建产物、真实 `.env`、日志、上传和运行数据不属于项目结构清单。Admin 当前结构为 Umi Max 工程，入口是 `src/app.tsx`，配置位于 `config/`，启动包装器位于 `scripts/run-umi.mjs`。
 
 ```text
-. :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
-.agents :: PROJECT_INDEX.md
+. :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, PROJECT_INDEX.md, README.md, SECURITY.md, turbo.json
 .agents/rules :: .markdownlint.json, 00-repository.md, 10-backend.md, 20-admin.md, 30-web.md
 .github :: CODEOWNERS, pull_request_template.md
 .github/workflows :: ci-backend.yml, ci-e2e.yml, ci-frontend.yml, ci-governance.yml, deploy-production.yml, publish-images.yml, security.yml
@@ -75,7 +74,7 @@ packages/api-client/src/client :: client.gen.ts, index.ts, types.gen.ts, utils.g
 packages/api-client/src/core :: auth.gen.ts, bodySerializer.gen.ts, params.gen.ts, pathSerializer.gen.ts, queryKeySerializer.gen.ts, serverSentEvents.gen.ts, types.gen.ts, utils.gen.ts
 packages/eslint-config :: index.js, package.json
 packages/typescript-config :: base.json, nextjs.json, package.json, vite.json
-plans :: 2026-08-12_产品需求基线建设计划.md, 2026-08-12_全项目索引与计划治理计划.md, 2026-08-12_讨论结论知识沉淀规则计划.md, 2026-08-12_项目基线入库与Wiki初始化计划.md, 2026-08-12_Git提交追溯规则计划.md, 2026-08-12_GitHub Wiki停用与文档单一来源计划.md, 2026-08-12_Markdown格式规范统一计划.md, 2026-08-13_工程治理与安全可靠性基线计划.md, 2026-08-13_阶段B应用运行与测试基础设施计划.md, 2026-08-13_AI助手开发与文档读取指南计划.md, 2026-08-13_Backend工程标准与规则分层计划.md, 2026-08-14_阶段C通用业务核心能力计划.md, 2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md, 2026-08-16_CI跨平台与CodeQL权限修复计划.md, 2026-08-17_初始管理员默认用户名计划.md, 2026-08-17_密码规则与API中文化计划.md, 2026-08-17_Web首页登录态操作按钮计划.md, 2026-08-19_Admin升级AntDesign6计划.md, 2026-08-20_后端文件日志与环境变量配置化计划.md, 2026-08-20_请求日志错误入参捕获与脱敏管道计划.md, 2026-08-20_Admin本地运行与故障排查文档治理计划.md, 2026-08-20_Admin技术栈文档一致性审计计划.md, 2026-08-20_CI失败修复计划.md, 2026-08-20_GitHub CI线上失败修复计划.md, 2026-08-21_母版开发总结与一致性收尾计划.md, 2026-08-21_BrowserE2E就绪探测修复计划.md, 2026-08-21_BrowserE2E人工触发与发布解耦计划.md, 2026-08-21_验收缺口修复与远端治理计划.md, 2026-08-22_Admin框架边界与开发范式治理计划.md, 2026-08-22_CodexWindowsACL长期治理计划.md, 2026-08-22_CodexWindows配置与ACL标准文档计划.md, 2026-08-22_Dependabot中低危依赖治理计划.md, 2026-08-22_GitHubActionsNode24原生运行时升级计划.md, 2026-08-22_immutable-baseline-remediation-plan.md, 2026-08-22_母版不可变基线冻结整改计划.md, README.md
+plans :: INDEX.md, README.md, YYYY-MM-DD_*计划.md
 scripts/ci :: check-module-boundaries.ps1, check-production-compose.ps1, check-text-files.ps1, check-typescript-boundaries.mjs, check-workspace-state.ps1, test-governance-guards.ps1, test-production-compose-guard.ps1, test-typescript-boundary-guard.mjs
 scripts/e2e :: run-e2e.mjs
 scripts/operations :: test-postgres-backup-restore.ps1
@@ -95,21 +94,28 @@ scripts/operations :: test-postgres-backup-restore.ps1
 
 ### 为什么建立 `PROJECT_INDEX.md`
 
-`PROJECT_INDEX.md` 是全项目任务导航和当前事实入口，记录项目身份、Backend、Admin、Web 及跨栈范围的当前目标、全部计划登记、系统状态、权威来源和派生项目入口。
+`PROJECT_INDEX.md` 是全项目任务导航和当前事实入口，只记录项目身份、当前阶段、活动计划和权威入口。历史计划不会进入根索引，避免计划持续增长扩大每次任务的必读上下文。
 
 该文件固定放在仓库根目录，与 `AGENTS.md`、`CHANGELOG.md` 同层，便于人和 AI 直接发现并在标准工作区权限内持续维护。`.agents/` 只承担 Antigravity 规则桥接职责，不保存需要频繁更新的项目索引。
 
 它不保存规则正文，也不替代 `docs/README.md` 或 `plans/README.md`：
 
 - 各级 `AGENTS.md` 保存长期执行规则。
-- `PROJECT_INDEX.md` 保存全项目当前事实和任务路由。
+- `PROJECT_INDEX.md` 保存项目身份、当前阶段、活动计划和权威入口。
 - `docs/PROJECT_REQUIREMENTS.md` 保存目标用户、目标能力、非目标和验收边界。
 - `docs/README.md` 保存 `docs/` 的完整文档清单。
+- `plans/INDEX.md` 保存全部实施计划的唯一永久登记。
 - `plans/README.md` 保存计划格式和生命周期规则。
 - `plans/*.md` 保存全栈实施方案和结果。
 - `CHANGELOG.md` 保存已经交付的变化。
 
-派生仓库继承本索引，并更新项目角色、派生类型、母版标签或提交 SHA、当前阶段和业务范围。完整决策见 `docs/adr/0004-全项目索引与计划生命周期决策.md`。
+派生仓库继承根索引和计划永久登记，并更新项目角色、派生类型、母版标签或提交 SHA、当前阶段和业务范围。完整决策见 `docs/adr/0004-全项目索引与计划生命周期决策.md`。
+
+### 为什么建立 `plans/INDEX.md`
+
+`plans/INDEX.md` 集中保存所有实施计划的路径、状态、结果、影响范围和用途。新建计划或计划状态、结果变化时同步更新该文件；根 `PROJECT_INDEX.md` 只在计划进入或退出活动状态时更新。
+
+这种拆分保留了完整历史追溯，同时把低频历史登记移出每次任务必读的根入口。`plans/README.md` 继续只定义计划创建、格式、状态、完成和保护规则，不保存计划登记正文。
 
 ### 为什么 `PROJECT_REQUIREMENTS.md` 直接放在 `docs/`
 
@@ -121,7 +127,7 @@ scripts/operations :: test-postgres-backup-restore.ps1
 
 `plans/` 属于整个全栈 Monorepo，计划以完整业务能力或工程目标为单位。涉及 Backend、Admin、Web、API Client 或 Database 的同一能力在同一份计划中描述完整链路、实施顺序、契约同步和联合验证。
 
-计划文件直接放在 `plans/` 下，不创建 `active/`、`archive/` 或按应用拆分的子目录。稳定路径能够保证长期引用有效。已经存在的计划文档及其总索引记录永久保留，AI 不得删除、移动、重命名、替换或自动归档；相关文件操作只能由用户人工处理。
+计划文件直接放在 `plans/` 下，不创建 `active/`、`archive/` 或按应用拆分的子目录。稳定路径能够保证长期引用有效。已经存在的计划文档及其在 `plans/INDEX.md` 中的登记永久保留，AI 不得删除、移动、重命名、替换或自动归档；相关文件操作只能由用户人工处理。
 
 ### 为什么 `.env.example` 分四层
 

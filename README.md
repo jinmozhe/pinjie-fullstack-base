@@ -33,9 +33,9 @@ packages/
 
 .agents/                Antigravity 规则桥接
 docs/                   项目知识库（索引见 docs/README.md）
-plans/                  整个 Monorepo 的全栈实施计划
+plans/                  全栈实施计划、计划规则和永久登记
 
-PROJECT_INDEX.md        全项目当前事实、任务导航和计划永久登记
+PROJECT_INDEX.md        项目身份、当前阶段、活动计划和权威入口
 openapi.json            后端导出的 OpenAPI 规范（根目录，前端 SDK 唯一来源）
 compose.yml             本地开发用（仅 Redis 容器）
 compose.prod.yml        生产部署用（PostgreSQL、Redis、三端应用和可选日志消费者）
@@ -45,7 +45,8 @@ SECURITY.md             漏洞报告和安全响应规则
 
 ## 项目索引
 
-- 全项目当前事实、三端开发目标和全部计划登记见 [PROJECT_INDEX.md](PROJECT_INDEX.md)。
+- 项目身份、当前阶段、活动计划和权威入口见 [PROJECT_INDEX.md](PROJECT_INDEX.md)。
+- 全部实施计划的永久登记见 [plans/INDEX.md](plans/INDEX.md)。
 - 母版做什么、服务谁和如何验收见 [docs/PROJECT_REQUIREMENTS.md](docs/PROJECT_REQUIREMENTS.md)。
 - `docs/` 下的完整文档清单见 [docs/README.md](docs/README.md)。
 - 全栈计划格式和生命周期规则见 [plans/README.md](plans/README.md)。
@@ -54,7 +55,7 @@ SECURITY.md             漏洞报告和安全响应规则
 ## 开发规范
 
 - 所有任务先读取 `PROJECT_INDEX.md`，确认当前事实和权威入口
-- 新增功能或模块前，在 `plans/` 创建面向整个 Monorepo 的全栈实施计划
+- 新增功能或模块前，在 `plans/` 创建面向整个 Monorepo 的全栈实施计划，并同步登记到 `plans/INDEX.md`
 - 同一能力涉及 Backend、Admin 和 Web 时，在同一份计划中描述完整链路和联合验证
 - 已经存在的计划文档永久保留；删除、移动和重命名只能由用户人工处理
 - 修改文档后，同步更新 `docs/README.md` 中对应的索引记录
@@ -84,4 +85,4 @@ SECURITY.md             漏洞报告和安全响应规则
 
 业务扩展参考 `docs/blueprints/` 目录下的蓝图文档。
 
-派生仓库应在 `PROJECT_INDEX.md` 中登记派生类型、母版标签或提交 SHA、当前阶段和业务范围，并保留母版已有计划及其索引记录。
+派生仓库应在 `PROJECT_INDEX.md` 中登记派生类型、母版标签或提交 SHA、当前阶段和业务范围，并保留母版已有计划原文及其在 `plans/INDEX.md` 中的登记记录。
