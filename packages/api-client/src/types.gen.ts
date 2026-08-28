@@ -275,6 +275,18 @@ export type AdminRoleAssignIn = {
 };
 
 /**
+ * AdminSuperuserUpdateIn
+ */
+export type AdminSuperuserUpdateIn = {
+    /**
+     * Is Superuser
+     *
+     * 是否授予目标管理员超级管理员身份
+     */
+    is_superuser: boolean;
+};
+
+/**
  * AdminUpdateIn
  */
 export type AdminUpdateIn = {
@@ -290,12 +302,6 @@ export type AdminUpdateIn = {
      * 管理员头像 URL 或站内资源路径
      */
     avatar?: string | null;
-    /**
-     * Is Superuser
-     *
-     * 管理员是否拥有超级管理员身份
-     */
-    is_superuser?: boolean | null;
 };
 
 /**
@@ -1129,6 +1135,12 @@ export type PermissionRead = {
      * 权限目录版本
      */
     catalog_version: string;
+    /**
+     * Assignable To Roles
+     *
+     * 该权限是否允许分配给普通角色
+     */
+    assignable_to_roles: boolean;
 };
 
 /**
@@ -3872,6 +3884,36 @@ export type UpdateAdminApiV1AdminAdminsAdminIdPatchResponses = {
 };
 
 export type UpdateAdminApiV1AdminAdminsAdminIdPatchResponse = UpdateAdminApiV1AdminAdminsAdminIdPatchResponses[keyof UpdateAdminApiV1AdminAdminsAdminIdPatchResponses];
+
+export type SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchData = {
+    body: AdminSuperuserUpdateIn;
+    path: {
+        /**
+         * Admin Id
+         */
+        admin_id: string;
+    };
+    query?: never;
+    url: '/api/v1/admin/admins/{admin_id}/superuser';
+};
+
+export type SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchError = SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchErrors[keyof SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchErrors];
+
+export type SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminRead;
+};
+
+export type SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchResponse = SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchResponses[keyof SetAdminSuperuserApiV1AdminAdminsAdminIdSuperuserPatchResponses];
 
 export type SetAdminStatusApiV1AdminAdminsAdminIdStatusPatchData = {
     body: StatusUpdateIn;

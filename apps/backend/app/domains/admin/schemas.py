@@ -148,13 +148,18 @@ class AdminUpdateIn(BaseModel):
 
     display_name: str | None = Field(default=None, max_length=100)
     avatar: str | None = Field(default=None, max_length=500, description="管理员头像 URL 或站内资源路径")
-    is_superuser: bool | None = None
 
     @model_validator(mode="after")
     def require_explicit_field(self) -> "AdminUpdateIn":
         if not self.model_fields_set:
             raise ValueError("at least one field is required")
         return self
+
+
+class AdminSuperuserUpdateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    is_superuser: bool = Field(description="是否授予目标管理员超级管理员身份")
 
 
 class AdminProfileUpdateIn(BaseModel):
@@ -337,6 +342,7 @@ class PermissionRead(BaseModel):
     description: str | None
     is_active: bool
     catalog_version: str
+    assignable_to_roles: bool = Field(description="该权限是否允许分配给普通角色")
 
 
 class RoleRead(BaseModel):
@@ -487,6 +493,7 @@ __all__ = [
     "AdminProfileUpdateIn",
     "AdminRead",
     "AdminRoleAssignIn",
+    "AdminSuperuserUpdateIn",
     "AdminUpdateIn",
     "AdminUserCreateIn",
     "AdminUserRead",

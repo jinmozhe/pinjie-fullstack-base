@@ -2521,6 +2521,76 @@
         }
       }
     },
+    "/api/v1/admin/admins/{admin_id}/superuser": {
+      "patch": {
+        "tags": [
+          "后台管理"
+        ],
+        "summary": "修改管理员超级管理员身份",
+        "description": "仅当前超级管理员可以授予或取消其他管理员的超级管理员身份。",
+        "operationId": "set_admin_superuser_api_v1_admin_admins__admin_id__superuser_patch",
+        "parameters": [
+          {
+            "name": "admin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Admin Id"
+            }
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminSuperuserUpdateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/admins/{admin_id}/status": {
       "patch": {
         "tags": [
@@ -4142,6 +4212,21 @@
         ],
         "title": "AdminRoleAssignIn"
       },
+      "AdminSuperuserUpdateIn": {
+        "properties": {
+          "is_superuser": {
+            "type": "boolean",
+            "title": "Is Superuser",
+            "description": "是否授予目标管理员超级管理员身份"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "is_superuser"
+        ],
+        "title": "AdminSuperuserUpdateIn"
+      },
       "AdminUpdateIn": {
         "properties": {
           "display_name": {
@@ -4169,18 +4254,6 @@
             ],
             "title": "Avatar",
             "description": "管理员头像 URL 或站内资源路径"
-          },
-          "is_superuser": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Is Superuser",
-            "description": "管理员是否拥有超级管理员身份"
           }
         },
         "additionalProperties": false,
@@ -5327,6 +5400,11 @@
             "type": "string",
             "title": "Catalog Version",
             "description": "权限目录版本"
+          },
+          "assignable_to_roles": {
+            "type": "boolean",
+            "title": "Assignable To Roles",
+            "description": "该权限是否允许分配给普通角色"
           }
         },
         "additionalProperties": false,
@@ -5337,7 +5415,8 @@
           "name",
           "description",
           "is_active",
-          "catalog_version"
+          "catalog_version",
+          "assignable_to_roles"
         ],
         "title": "PermissionRead"
       },

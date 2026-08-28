@@ -36,6 +36,7 @@ from app.db.models import (
 from app.db.transaction import transaction_scope
 from app.domains.admin.schemas import (
     AdminBulkStatusUpdateIn,
+    AdminSuperuserUpdateIn,
     AdminUpdateIn,
     RoleBulkDeleteIn,
     RoleBulkStatusUpdateIn,
@@ -317,7 +318,7 @@ async def test_role_permission_change_revokes_admin_sessions_and_succeeds_audit(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_denied_admin_change_rolls_back_business_fields_and_finishes_audit() -> None:
+async def test_denied_self_superuser_change_preserves_state_and_finishes_audit() -> None:
     settings = _integration_settings()
     resources = create_resources(settings)
     metadata = _request_metadata()
@@ -346,9 +347,9 @@ async def test_denied_admin_change_rolls_back_business_fields_and_finishes_audit
                 actor_id=actor_id,
             )
             with pytest.raises(AppException) as exc_info:
-                await service.update_admin(
+                await service.set_admin_superuser(
                     actor_id,
-                    AdminUpdateIn(display_name="Must Roll Back", is_superuser=False),
+                    AdminSuperuserUpdateIn(is_superuser=False),
                 )
             assert exc_info.value.code == ErrorCode.STATE_CONFLICT
 
@@ -359,7 +360,7 @@ async def test_denied_admin_change_rolls_back_business_fields_and_finishes_audit
             assert stored_admin.display_name == "Original Name"
             assert stored_admin.is_superuser is True
             assert audit is not None
-            assert audit.action == "admins:update"
+            assert audit.action == "admins:superuser:update"
             assert audit.result == "denied"
             assert audit.completed_at is not None
     finally:
@@ -821,7 +822,7 @@ async def test_user_and_role_bulk_lifecycle_operations_are_atomic_and_audited() 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_concurrent_superuser_demotion_preserves_one_active_superuser() -> None:
+async def test_non_superuser_cannot_demote_superusers_concurrently() -> None:
     settings = _integration_settings()
     resources = create_resources(settings)
     actor_id = new_uuid7()
@@ -882,15 +883,18 @@ async def test_concurrent_superuser_demotion_preserves_one_active_superuser() ->
                     actor_id=actor_id,
                 )
                 try:
-                    return await service.update_admin(target_id, AdminUpdateIn(is_superuser=False))
+                    return await service.set_admin_superuser(
+                        target_id,
+                        AdminSuperuserUpdateIn(is_superuser=False),
+                    )
                 except BaseException as exc:
                     return exc
 
         results = await asyncio.gather(*(demote(target_id) for target_id in target_ids))
-        assert sum(isinstance(result, Admin) for result in results) == 1
+        assert sum(isinstance(result, Admin) for result in results) == 0
         failures = [result for result in results if isinstance(result, AppException)]
-        assert len(failures) == 1
-        assert failures[0].code == ErrorCode.LAST_SUPERUSER_PROTECTED
+        assert len(failures) == 2
+        assert all(failure.code == ErrorCode.PERMISSION_DENIED for failure in failures)
 
         async with resources.session_factory() as session:
             active_superusers = int(
@@ -903,7 +907,7 @@ async def test_concurrent_superuser_demotion_preserves_one_active_superuser() ->
                 )
                 or 0
             )
-            assert active_superusers == 1
+            assert active_superusers == 2
     finally:
         async with resources.session_factory() as session, transaction_scope(session):
             await session.execute(delete(AuditEvent).where(AuditEvent.request_id.in_(request_ids)))

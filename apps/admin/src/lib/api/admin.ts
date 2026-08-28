@@ -5,6 +5,7 @@ import type {
   AdminLoginIn,
   AdminProfileUpdateIn,
   AdminRead,
+  AdminSuperuserUpdateIn,
   AdminUserCreateIn,
   AdminUserRead,
   AdminUpdateIn,
@@ -138,6 +139,11 @@ export const adminApi = {
     apiRequest<AdminRead>(
       `/api/v1/admin/admins/${id}`,
       { method: "PATCH", body: jsonBody(input) },
+    ),
+  setAdminSuperuser: (id: string, isSuperuser: boolean) =>
+    apiRequest<AdminRead>(
+      `/api/v1/admin/admins/${id}/superuser`,
+      { method: "PATCH", body: jsonBody({ is_superuser: isSuperuser } satisfies AdminSuperuserUpdateIn) },
     ),
   setAdminStatus: (id: string, isActive: boolean) =>
     apiRequest<AdminRead>(

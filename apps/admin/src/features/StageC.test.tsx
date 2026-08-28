@@ -13,7 +13,14 @@ import { AdminsPage } from "./admins/AdminsPage";
 import { AssetsPage } from "./assets/AssetsPage";
 import { LoginPage } from "./auth/LoginPage";
 import { AdminContext } from "./auth/auth-context";
-import { RolesPage, buildPermissionTree, filterPermissionCodes } from "./roles/RolesPage";
+import {
+  RolesPage,
+  buildPermissionTree,
+  filterPermissionCodes,
+  filterPermissionTree,
+  mergeVisiblePermissionSelection,
+  updatePermissionSelection,
+} from "./roles/RolesPage";
 import { SecurityPage } from "./security/SecurityPage";
 import { UsersPage } from "./users/UsersPage";
 import { server } from "../test/setup";
@@ -123,10 +130,16 @@ describe("stage C admin workspace", () => {
 
   it("executes user status, credential, and session operations without password confirmation", async () => {
     const user = userEvent.setup();
+    let statusPayload: unknown;
+    server.use(http.patch("http://localhost:3000/api/v1/admin/users/:id/status", async ({ request }) => {
+      statusPayload = await request.json();
+      return HttpResponse.json({ code: "OK", message: "操作成功", data: {}, request_id: "test-request" });
+    }));
     renderPage(<UsersPage />);
     expect(await screen.findByText("Browser User")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /停\s*用/ }));
+    await user.click(screen.getByRole("button", { name: "停用用户：browser-user" }));
+    await waitFor(() => expect(statusPayload).toEqual({ is_active: false }));
 
     await user.click(screen.getByRole("button", { name: /重置密码/ }));
     expect(screen.getByLabelText("新密码")).toHaveAttribute("maxlength", "64");
@@ -225,16 +238,23 @@ describe("stage C admin workspace", () => {
 
   it("protects administrator status and session operations", async () => {
     const user = userEvent.setup();
-    server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({
-      code: "OK",
-      message: "操作成功",
-      data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 },
-      request_id: "test-request",
-    })));
+    let statusPayload: unknown;
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({
+        code: "OK",
+        message: "操作成功",
+        data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 },
+        request_id: "test-request",
+      })),
+      http.patch("http://localhost:3000/api/v1/admin/admins/:id/status", async ({ request }) => {
+        statusPayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: { ...otherAdmin, is_active: false }, request_id: "test-request" });
+      }),
+    );
     renderPage(<AdminsPage />);
     expect(await screen.findByText("Other Admin")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "更多操作：other-admin" }));
-    await user.click(await screen.findByRole("menuitem", { name: /停\s*用/ }));
+    await user.click(screen.getByRole("button", { name: "停用管理员：other-admin" }));
+    await waitFor(() => expect(statusPayload).toEqual({ is_active: false }));
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("暂无数据", { selector: "div" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: /撤销全部/ }));
@@ -269,7 +289,7 @@ describe("stage C admin workspace", () => {
     let updatePayload: unknown;
     server.use(
       http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({ code: "OK", message: "操作成功", data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 }, request_id: "test-request" })),
-      http.patch("http://localhost:3000/api/v1/admin/admins/:id", async ({ request }) => {
+      http.patch("http://localhost:3000/api/v1/admin/admins/:id/superuser", async ({ request }) => {
         updatePayload = await request.json();
         return HttpResponse.json({ code: "OK", message: "操作成功", data: { ...otherAdmin, is_superuser: true }, request_id: "test-request" });
       }),
@@ -279,6 +299,62 @@ describe("stage C admin workspace", () => {
     await user.click(await screen.findByRole("button", { name: "设为超级管理员：other-admin" }));
     await waitFor(() => expect(updatePayload).toEqual({ is_superuser: true }));
   }, 60_000);
+
+  it("keeps superuser grants read-only for ordinary administrators with update permission", async () => {
+    const user = userEvent.setup();
+    const ordinaryUpdater: AdminRead = {
+      ...current,
+      id: "01900000-0000-7000-8000-000000000011",
+      username: "ordinary-updater",
+      is_superuser: false,
+      permissions: ["admins:read", "admins:create", "admins:update"],
+    };
+    server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({
+      code: "OK",
+      message: "操作成功",
+      data: { items: [otherAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 },
+      request_id: "test-request",
+    })));
+    renderPage(<AdminsPage />, ordinaryUpdater);
+
+    expect(await screen.findByText("Other Admin")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "设为超级管理员：other-admin" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /新建管理员/ }));
+    expect(screen.queryByRole("checkbox", { name: "超级管理员" })).not.toBeInTheDocument();
+  });
+
+  it("prevents a regular administrator from operating a superuser", async () => {
+    const protectedSuperuser: AdminRead = { ...otherAdmin, is_superuser: true };
+    const ordinaryOperator: AdminRead = {
+      ...restricted,
+      permissions: [
+        "admins:read",
+        "admins:update",
+        "admins:roles:assign",
+        "admins:sessions:read",
+        "admins:sessions:revoke",
+        "admins:credentials:reset",
+        "roles:read",
+      ],
+    };
+    server.use(http.get("http://localhost:3000/api/v1/admin/admins", () => HttpResponse.json({
+      code: "OK",
+      message: "操作成功",
+      data: { items: [protectedSuperuser], page: 1, page_size: 20, total: 1, total_pages: 1 },
+      request_id: "test-request",
+    })));
+
+    renderPage(<AdminsPage />, ordinaryOperator);
+
+    expect(await screen.findByText("Other Admin")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "编辑" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "角色" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "会话" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "停用管理员：other-admin" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "更多操作：other-admin" })).not.toBeInTheDocument();
+    const rowCheckbox = document.querySelector('.ant-table-tbody input[type="checkbox"]');
+    expect(rowCheckbox).toBeDisabled();
+  });
 
   it("resets an administrator password from the more menu", async () => {
     const user = userEvent.setup();
@@ -332,6 +408,7 @@ describe("stage C admin workspace", () => {
 
   it("renders inactive records, empty fields, and active session details", async () => {
     const user = userEvent.setup();
+    let roleStatusPayload: unknown;
     const inactiveUser = {
       id: "01900000-0000-7000-8000-000000000020",
       username: "inactive-user",
@@ -360,13 +437,17 @@ describe("stage C admin workspace", () => {
       http.get("http://localhost:3000/api/v1/admin/admins", () => ok({ items: [inactiveAdmin], page: 1, page_size: 20, total: 1, total_pages: 1 })),
       http.get("http://localhost:3000/api/v1/admin/admins/:id/sessions", () => ok({ items: [activeSession, revokedSession], page: 1, page_size: 20, total: 2, total_pages: 1 })),
       http.get("http://localhost:3000/api/v1/admin/roles", () => ok({ items: [{ id: "01900000-0000-7000-8000-000000000025", code: "auditors", name: "审计员", description: null, is_active: false, permissions: [], created_at: now, updated_at: now }], page: 1, page_size: 100, total: 1, total_pages: 1 })),
-      http.get("http://localhost:3000/api/v1/admin/permissions", () => ok([{ id: "01900000-0000-7000-8000-000000000026", code: "users:read", name: "查看用户", description: null, is_active: false, catalog_version: "v1" }])),
+      http.patch("http://localhost:3000/api/v1/admin/roles/:id", async ({ request }) => {
+        roleStatusPayload = await request.json();
+        return ok({ id: "01900000-0000-7000-8000-000000000025", code: "auditors", name: "审计员", description: null, is_active: true, permissions: [], created_at: now, updated_at: now });
+      }),
+      http.get("http://localhost:3000/api/v1/admin/permissions", () => ok([{ id: "01900000-0000-7000-8000-000000000026", code: "users:read", name: "查看用户", description: null, is_active: false, catalog_version: "v1", assignable_to_roles: true }])),
     );
 
     const users = renderPage(<UsersPage />);
     expect((await screen.findAllByText("inactive-user")).length).toBeGreaterThan(0);
     expect(screen.getByText("停用", { selector: "span" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: /启\s*用/ }));
+    await user.click(screen.getByRole("button", { name: "启用用户：inactive-user" }));
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
     expect(await screen.findByText("旧设备")).toBeInTheDocument();
     expect(screen.getByText("未知设备")).toBeInTheDocument();
@@ -387,12 +468,15 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("审计员")).toBeInTheDocument();
     expect(screen.getByText("停用")).toBeInTheDocument();
     expect(screen.getByText("0")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "启用角色：auditors" }));
+    await waitFor(() => expect(roleStatusPayload).toEqual({ name: "审计员", description: null, is_active: true }));
   }, 60_000);
 
   it("creates an administrator directly", async () => {
     const user = userEvent.setup();
     renderPage(<AdminsPage />);
     expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "停用管理员：stage-admin" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /新建管理员/ }));
     await user.type(screen.getByLabelText("用户名"), "new-operator");
@@ -415,30 +499,57 @@ describe("stage C admin workspace", () => {
 
   it("groups the source-controlled permission catalog without losing unknown permissions", () => {
     const catalog: PermissionRead[] = [
-      { id: "permission-users", code: "users:read", name: "查看用户", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-admins", code: "admins:read", name: "查看管理员", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-roles", code: "roles:update", name: "修改角色", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-system", code: "system:overview:read", name: "查看系统概览", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-assets", code: "assets:delete", name: "删除文件资产", description: null, is_active: false, catalog_version: "v1" },
-      { id: "permission-other", code: "reports:export", name: "导出报表", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-users", code: "users:read", name: "查看用户", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-admins", code: "admins:read", name: "查看管理员", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-superuser", code: "admins:superuser:change", name: "设为超级管理员", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: false },
+      { id: "permission-roles", code: "roles:update", name: "修改角色", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-system", code: "system:overview:read", name: "查看系统概览", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-assets", code: "assets:delete", name: "删除文件资产", description: null, is_active: false, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-other", code: "reports:export", name: "导出报表", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
     ];
 
     const tree = buildPermissionTree(catalog);
     expect(tree.map((node) => node.label)).toEqual(["用户管理", "管理员管理", "角色与权限", "安全与系统", "文件资产", "其他权限"]);
-    expect(tree.find((node) => node.label === "文件资产")?.children?.[0]).toMatchObject({ disabled: true, value: "assets:delete" });
-    expect(tree.find((node) => node.label === "其他权限")?.children?.[0]).toMatchObject({ searchText: expect.stringContaining("reports:export"), value: "reports:export" });
+    expect(tree.find((node) => node.label === "文件资产")?.children?.[0]).toMatchObject({ disabled: true, key: "assets:delete" });
+    expect(tree.find((node) => node.label === "管理员管理")?.children?.find((node) => node.key === "admins:superuser:change")).toMatchObject({ disabled: true });
+    expect(tree.find((node) => node.label === "其他权限")?.children?.[0]).toMatchObject({ key: "reports:export", searchText: expect.stringContaining("reports:export") });
+    const filteredTree = filterPermissionTree(tree, "system:overview");
+    expect(filteredTree).toMatchObject([{ label: "安全与系统", children: [{ key: "system:overview:read" }] }]);
+    expect(filterPermissionTree(tree, "角色与权限").find((node) => node.label === "角色与权限")?.children).toHaveLength(1);
     expect(filterPermissionCodes(["users:read", "__permission_group__:users", "users:read", "missing:read"], catalog)).toEqual(["users:read"]);
+    expect(filterPermissionCodes(["admins:superuser:change"], catalog)).toEqual([]);
+    expect(mergeVisiblePermissionSelection(["system:overview:read"], ["users:read"], filteredTree, catalog)).toEqual([
+      "users:read",
+      "system:overview:read",
+    ]);
+    expect(updatePermissionSelection("all", ["assets:delete"], catalog)).toEqual([
+      "assets:delete",
+      "users:read",
+      "admins:read",
+      "roles:update",
+      "system:overview:read",
+      "reports:export",
+    ]);
+    expect(updatePermissionSelection("invert", ["users:read", "assets:delete"], catalog)).toEqual([
+      "assets:delete",
+      "admins:read",
+      "roles:update",
+      "system:overview:read",
+      "reports:export",
+    ]);
+    expect(updatePermissionSelection("clear", ["users:read", "assets:delete"], catalog)).toEqual(["assets:delete"]);
   });
 
-  it("loads, searches and updates role permissions through the tree select", async () => {
+  it("shows the permission tree directly and supports search and bulk selection", async () => {
     const user = userEvent.setup();
     let assignPayload: unknown;
     const catalog: PermissionRead[] = [
-      { id: "permission-users", code: "users:read", name: "查看用户", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-roles", code: "roles:update", name: "修改角色", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-system", code: "system:overview:read", name: "查看系统概览", description: null, is_active: true, catalog_version: "v1" },
-      { id: "permission-assets", code: "assets:delete", name: "删除文件资产", description: null, is_active: false, catalog_version: "v1" },
-      { id: "permission-other", code: "reports:export", name: "导出报表", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-users", code: "users:read", name: "查看用户", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-superuser", code: "admins:superuser:change", name: "设为超级管理员", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: false },
+      { id: "permission-roles", code: "roles:update", name: "修改角色", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-system", code: "system:overview:read", name: "查看系统概览", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-assets", code: "assets:delete", name: "删除文件资产", description: null, is_active: false, catalog_version: "v1", assignable_to_roles: true },
+      { id: "permission-other", code: "reports:export", name: "导出报表", description: null, is_active: true, catalog_version: "v1", assignable_to_roles: true },
     ];
     server.use(
       http.get("http://localhost:3000/api/v1/admin/permissions", () => HttpResponse.json({ code: "OK", message: "操作成功", data: catalog, request_id: "test-request" })),
@@ -450,22 +561,26 @@ describe("stage C admin workspace", () => {
     renderPage(<RolesPage />);
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /权限/ }));
-    expect(await screen.findByText("查看用户")).toBeInTheDocument();
-    const permissionSelect = screen.getByLabelText("角色权限");
-    await user.click(permissionSelect);
+    expect(await screen.findByRole("tree")).toBeInTheDocument();
+    expect(screen.getByText("查看用户")).toBeInTheDocument();
     expect(await screen.findByText("用户管理")).toBeInTheDocument();
     expect(screen.getByText("角色与权限")).toBeInTheDocument();
     expect(screen.getByText("其他权限")).toBeInTheDocument();
     expect(screen.getByText("删除文件资产").closest('[role="treeitem"]')).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("已选").parentElement).toHaveTextContent("已选 1 / 4");
 
-    await user.type(permissionSelect, "system:overview:read");
+    const permissionSearch = screen.getByLabelText("搜索权限");
+    await user.type(permissionSearch, "system:overview:read");
     expect(await screen.findByText("查看系统概览")).toBeInTheDocument();
-    await user.click(screen.getByText("查看系统概览"));
-    await user.clear(permissionSelect);
-    await user.click(await screen.findByText("导出报表"));
+    expect(screen.queryByText("查看用户")).not.toBeInTheDocument();
+    await user.clear(permissionSearch);
+    await user.click(screen.getByRole("button", { name: /反选/ }));
+    expect(screen.getByText("已选").parentElement).toHaveTextContent("已选 3 / 4");
+    await user.click(screen.getByRole("button", { name: "收起全部权限分组" }));
+    await user.click(screen.getByRole("button", { name: "展开全部权限分组" }));
     await user.click(screen.getByRole("button", { name: /保\s*存/ }));
 
-    await waitFor(() => expect(assignPayload).toEqual({ permission_codes: ["users:read", "system:overview:read", "reports:export"] }));
+    await waitFor(() => expect(assignPayload).toEqual({ permission_codes: ["roles:update", "system:overview:read", "reports:export"] }));
   }, 60_000);
 
   it("selects roles and sends one atomic bulk hard-delete request", async () => {
@@ -810,12 +925,14 @@ describe("stage C admin workspace", () => {
     const admins = renderPage(<AdminsPage />, restricted);
     expect(await screen.findByText("Stage Admin")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /新建管理员|编辑|角色|更多操作|会话/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /启用管理员|停用管理员/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     admins.unmount();
 
     const roles = renderPage(<RolesPage />, restricted);
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /新建角色|编辑|权限|删除/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /启用角色|停用角色/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     roles.unmount();
 

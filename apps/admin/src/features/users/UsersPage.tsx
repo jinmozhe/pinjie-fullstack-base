@@ -16,6 +16,7 @@ import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, 
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
+import { StatusToggleTag } from "@/components/StatusToggleTag";
 import { canAccess, useCurrentAdmin } from "@/features/auth";
 import { adminApi } from "@/lib/api/admin";
 import { errorMessage } from "@/lib/api/http";
@@ -95,6 +96,15 @@ export function UsersPage() {
       setSelectedRowKeys([]);
       await invalidate();
     },
+  });
+  const statusMutation = useMutation({
+    mutationFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
+      adminApi.setUserStatus(userId, isActive),
+    onSuccess: async () => {
+      message.success("账户状态已更新");
+      await invalidate();
+    },
+    onError: (error) => message.error(errorMessage(error)),
   });
   const batchDeleteMutation = useMutation({
     mutationFn: ({ userIds, deletionReason }: { userIds: string[]; deletionReason?: string | null }) =>
@@ -301,9 +311,18 @@ export function UsersPage() {
           columns={[
             { title: "用户", dataIndex: "username", render: (_, row) => <div className="table-primary-cell"><Typography.Text strong>{row.display_name || row.username}</Typography.Text><Typography.Text type="secondary">{row.username}</Typography.Text></div> },
             { title: "邮箱", dataIndex: "email", responsive: ["lg"], render: (value) => value || "-" },
-            { title: "状态", dataIndex: "is_active", width: 110, render: (value, row) => lifecycle === "deleted"
+            { title: "状态", dataIndex: "is_active", width: 110, render: (_value, row) => lifecycle === "deleted"
               ? row.can_restore ? <Tag color="warning">可恢复</Tag> : <Tag>不可恢复</Tag>
-              : <Tag color={value ? "success" : "default"}>{value ? "正常" : "停用"}</Tag> },
+              : (
+                <StatusToggleTag
+                  active={row.is_active}
+                  ariaLabel={`${row.is_active ? "停用" : "启用"}用户：${row.username}`}
+                  interactive={canUpdate}
+                  loading={statusMutation.isPending && statusMutation.variables?.userId === row.id}
+                  readOnlyReason="没有修改用户的权限"
+                  onToggle={() => statusMutation.mutate({ userId: row.id, isActive: !row.is_active })}
+                />
+              ) },
             { title: "创建时间", dataIndex: "created_at", width: 170, responsive: ["xl"], render: (_, row) => formatTime(row.created_at) },
             ...(lifecycle === "deleted" ? [
               { title: "删除时间", dataIndex: "deleted_at", width: 170, render: (_: unknown, row: AdminUserRead) => formatTime(row.deleted_at) },
@@ -326,11 +345,7 @@ export function UsersPage() {
             ) : (
               <Space className="table-actions" size={[4, 0]} wrap={false}>
                 {canUpdate && <Button type="link" size="small" icon={<EditOutlined />} onClick={() => { setEditing(row); editForm.setFieldsValue({ display_name: row.display_name ?? undefined, email: row.email ?? undefined }); }}>编辑</Button>}
-                 {canUpdate && <Button type="link" size="small" icon={<PoweroffOutlined />} danger={row.is_active} onClick={() => {
-                   void adminApi.setUserStatus(row.id, !row.is_active)
-                     .then(async () => { message.success("账户状态已更新"); await invalidate(); })
-                     .catch((error: unknown) => message.error(errorMessage(error)));
-                 }}>{row.is_active ? "停用" : "启用"}</Button>}
+                 {canUpdate && <Button type="link" size="small" icon={<PoweroffOutlined />} danger={row.is_active} loading={statusMutation.isPending && statusMutation.variables?.userId === row.id} disabled={statusMutation.isPending && statusMutation.variables?.userId === row.id} onClick={() => statusMutation.mutate({ userId: row.id, isActive: !row.is_active })}>{row.is_active ? "停用" : "启用"}</Button>}
                 {canAccess(current, "users:sessions:read") && <Button type="link" size="small" icon={<LaptopOutlined />} onClick={() => { setSessionPage(1); setSelected(row); }}>会话</Button>}
                 {canAccess(current, "users:credentials:reset") && <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => { setPasswordTarget(row); passwordForm.resetFields(); }}>重置密码</Button>}
                 {canDelete && <Button type="link" size="small" danger icon={<DeleteOutlined />} loading={batchDeleteMutation.isPending && batchDeleteMutation.variables?.userIds.length === 1 && batchDeleteMutation.variables.userIds[0] === row.id} onClick={() => { setDeleteTargets([row.id]); deleteReasonForm.resetFields(); }}>删除</Button>}

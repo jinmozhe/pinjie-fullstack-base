@@ -7,6 +7,7 @@ class PermissionDefinition:
     code: str
     name: str
     description: str
+    assignable_to_roles: bool = True
 
 
 class PermissionCode(StrEnum):
@@ -21,6 +22,7 @@ class PermissionCode(StrEnum):
     ADMINS_READ = "admins:read"
     ADMINS_CREATE = "admins:create"
     ADMINS_UPDATE = "admins:update"
+    ADMINS_SUPERUSER_CHANGE = "admins:superuser:change"
     ADMINS_CREDENTIALS_RESET = "admins:credentials:reset"
     ADMINS_ROLES_ASSIGN = "admins:roles:assign"
     ADMINS_SESSIONS_READ = "admins:sessions:read"
@@ -50,7 +52,13 @@ PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
     PermissionDefinition("users:sessions:revoke", "撤销用户会话", "撤销用户一个或全部会话"),
     PermissionDefinition("admins:read", "查看管理员", "查看管理员列表和详情"),
     PermissionDefinition("admins:create", "创建管理员", "创建后台管理员"),
-    PermissionDefinition("admins:update", "修改管理员", "修改管理员资料和状态"),
+    PermissionDefinition("admins:update", "修改管理员资料与状态", "修改管理员资料和启用状态"),
+    PermissionDefinition(
+        "admins:superuser:change",
+        "设为超级管理员",
+        "仅超级管理员可授予或取消其他管理员的超级管理员身份",
+        assignable_to_roles=False,
+    ),
     PermissionDefinition("admins:credentials:reset", "重置管理员密码", "重置管理员登录密码"),
     PermissionDefinition("admins:roles:assign", "分配管理员角色", "修改管理员角色集合"),
     PermissionDefinition("admins:sessions:read", "查看管理员会话", "查看管理员会话"),
@@ -70,12 +78,14 @@ PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
 )
 
 PERMISSION_CODES = frozenset(item.code for item in PERMISSION_CATALOG)
-CATALOG_VERSION = "2026-08-27.4"
+ROLE_ASSIGNABLE_PERMISSION_CODES = frozenset(item.code for item in PERMISSION_CATALOG if item.assignable_to_roles)
+CATALOG_VERSION = "2026-08-28.1"
 
 __all__ = [
     "CATALOG_VERSION",
     "PERMISSION_CATALOG",
     "PERMISSION_CODES",
+    "ROLE_ASSIGNABLE_PERMISSION_CODES",
     "PermissionCode",
     "PermissionDefinition",
 ]

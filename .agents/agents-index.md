@@ -53,6 +53,9 @@
 | `plans/2026-08-28_Admin登录页截图对齐与真实交互计划.md` | 已结束 | Admin、Documentation | 已完成 Admin 登录页截图对齐、安全会话说明和忘记密码真实提示交互 |
 | `plans/2026-08-28_Admin-login-screenshot-alignment-plan.md` | 已结束 | Documentation | 已由同主题中文路径计划替代并永久保留 |
 | `plans/2026-08-28_Admin登录页面高质感重新设计计划.md` | 已结束 | Admin、Documentation | 已完成 Admin 登录页面 Ant Design 6 官方标准极简微质感重构升级 |
+| `plans/2026-08-28_超级管理员授予独立端点与权限收紧计划.md` | 已结束 | Backend、Admin、API Client、Documentation | 已完成独立身份端点、系统权限隔离和超级管理员目标级保护 |
+| `plans/2026-08-28_Admin三类列表状态列直接切换计划.md` | 已结束 | Admin、Documentation | 已完成管理员、用户和角色列表状态列直接切换、权限只读保护和行级加载 |
+| `plans/2026-08-28_Admin角色权限Tree直接展示与批量选择计划.md` | 已结束 | Admin、Documentation | 已完成直接展示的权限 Tree、搜索、全选、反选、清空和展开控制 |
 | `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md` | 已结束 | Admin、Documentation | 已完成可搜索、可分组并过滤真实权限码的 Ant Design TreeSelect 角色权限配置 |
 | `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Documentation | 已完成全量 pytest、Vitest、生产构建和四项目浏览器 E2E 回归修复与验证 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | Backend、Web、API Client、Database、Documentation | 已完成用户头像资料闭环，并补齐 Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖；轻量门禁通过，重型验证与真实迁移按授权边界未执行 |
@@ -112,6 +115,9 @@
 | `plans/2026-08-28_Admin登录页截图对齐与真实交互计划.md` | 已结束 | 已完成；Admin 登录页按参考页面完成无卡片居中构图、安全 Cookie 会话说明和忘记密码信息弹窗，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 参考截图重构 Admin 登录页并使会话与忘记密码提示符合项目真实能力 |
 | `plans/2026-08-28_Admin-login-screenshot-alignment-plan.md` | 已结束 | 已替代；由同主题中文路径计划继续实施并完成 | Documentation | 永久保留补丁工具失败期间产生的重复计划记录 |
 | `plans/2026-08-28_Admin登录页面高质感重新设计计划.md` | 已结束 | 已完成；Admin `/login` 页面重构升级为 Ant Design 6 极简微质感规范，Admin typecheck、lint 及 Markdown lint 全量通过 | Admin、Documentation | 将 Admin 登录页面重构升级为 Ant Design 6 官方标准极简微质感体系 |
+| `plans/2026-08-28_超级管理员授予独立端点与权限收紧计划.md` | 已结束 | 已完成；独立身份端点、不可分配系统权限和超级管理员目标保护已落地，普通管理员的资料、状态、角色、密码及会话操作全部受限，轻量门禁通过，本地权限目录零漂移；重型验证按授权边界未执行 | Backend、Admin、API Client、Documentation | 建立仅超级管理员可执行的独立身份授予端点并封闭普通角色提权路径 |
+| `plans/2026-08-28_Admin三类列表状态列直接切换计划.md` | 已结束 | 已完成；三类状态列直切、权限与生命周期只读保护、行级加载和轻量门禁通过；重型验证按授权边界未执行 | Admin、Documentation | 为管理员、用户和角色列表增加状态列直接切换能力 |
+| `plans/2026-08-28_Admin角色权限Tree直接展示与批量选择计划.md` | 已结束 | 已完成；Admin typecheck、lint 与 Markdown lint 通过，重型验证按授权边界未执行 | Admin、Documentation | 将角色权限配置改为直接展示的 Tree，并增加搜索、全选、反选和展开控制 |
 | `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md` | 已结束 | 已完成；Admin typecheck 与 lint 通过，重型验证按授权边界未执行 | Admin、Documentation | 将角色权限配置升级为可搜索、可分组的 Ant Design TreeSelect 树选择 |
 | `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | 已完成；Backend 183 项 pytest、Admin 62 项 Vitest、Web 50 项 Vitest、两端 production build 和四项目 Playwright E2E 均达标 | Backend、Admin、Web、API Client、Database、Documentation | 修复全量 pytest、Vitest、生产构建和浏览器 E2E 暴露的回归并完成提交推送 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | 已完成；用户头像资料、资产引用保护和契约已同步，Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖已补齐；轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Web、API Client、Database、Documentation | 支持用户上传、绑定、移除和持久化头像，并保护在用资产 |
@@ -182,7 +188,7 @@
 | Backend | 认证、RBAC、会话、审计、统一资产及用户和角色原子批量能力已实现；旧版管理员确认端点仅作为弃用契约兼容保留至 2026-09-26，不承担授权；轻量门禁及 183 项 pytest 通过，综合覆盖率 90.13% | `apps/backend/app/`、`apps/backend/scripts/`、`apps/backend/tests/`、`apps/backend/pyproject.toml` |
 | Admin | 官方 Ant Design Pro v6/Umi Max 管理应用保留既有能力；用户、管理员、角色和文件资产普通数据列表均支持受权限控制的批量操作，安全日志继续只读；typecheck、lint、62 项 Vitest、四项不低于 80% 覆盖率、production build 和桌面/移动跨栈 E2E 通过 | `apps/admin/src/`、`apps/admin/scripts/`、`patches/`、`docs/architecture/admin-engineering-standard.md` |
 | Web | 注册登录、SSR 用户中心、会话恢复、资料、密码、退出、注销、受限 BFF、文件上传与静态资源代理、运行时 Metadata 和安全响应头已实现；typecheck、lint、50 项 Vitest、四项不低于 80% 覆盖率、production build、Windows standalone 冷启动与桌面/移动跨栈 E2E 通过 | `apps/web/src/`、`apps/web/Dockerfile` |
-| API Client | 根 OpenAPI 共 52 条路径、60 个操作，357 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
+| API Client | 根 OpenAPI 共 55 条路径、64 个操作，371 个公开 Schema 字段均具有中文说明；根契约和 Client 已重新生成且幂等，并由 Admin/Web 共享消费 | `packages/api-client/src/`、根 `openapi.json` |
 | Database | 身份、分页会话、Refresh Token、RBAC、安全日志与统一资产迁移已实现，本地开发库已到 `20260825_03`；PostgreSQL advisory lock 并发保护、级联删除、资产元数据、`alembic check` 和独立 `_test` 数据库验证通过 | `apps/backend/alembic/`、`apps/backend/app/db/models/`、`apps/backend/scripts/cleanup_security_logs.py` |
 | Deployment | 自动 Backend CI 只运行静态、导入与契约门禁，自动 Frontend CI 只运行 Admin/Web typecheck 和 lint；Browser E2E 保持纯人工触发，生产 Compose 与镜像发布职责不变 | `.github/workflows/ci-backend.yml`、`.github/workflows/ci-frontend.yml`、`.github/workflows/ci-e2e.yml` |
 | Documentation | 产品需求、两端规则、Admin 工程标准、认证授权、资产补偿架构、Changelog、计划和索引已同步列表批量治理与管理端点显式权限规则 | `docs/PROJECT_REQUIREMENTS.md`、`docs/architecture/admin-engineering-standard.md`、`docs/architecture/authentication-authorization.md`、`docs/architecture/file-asset-storage.md` |
