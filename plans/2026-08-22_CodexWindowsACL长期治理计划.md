@@ -97,7 +97,7 @@
 - `docs/operations/ai-assisted-development-workflow.md` 作为 Codex 权限模型、ACL 分类、日常工作流和故障处置的详细操作来源。
 - `docs/operations/local-dev-environment.md` 只保留 Windows 原生 Codex 基线、安全选择和上述详细手册入口，不复制完整步骤。
 - `docs/README.md` 仅更新两份现有运维文档的用途摘要，不新建平行 ACL 手册。
-- `.agents/agents-index.md` 记录计划状态和当前治理事实，不复制运维正文。
+- `PROJECT_INDEX.md` 记录计划状态和当前治理事实，不复制运维正文。
 - 本变更属于单机开发操作治理，不创建 ADR；若未来要求所有派生仓库强制使用某一 Codex 沙箱模式，再单独评估 ADR。
 
 ## 全栈影响矩阵
@@ -114,7 +114,7 @@
 
 ## 实施顺序
 
-1. 创建本计划，同步 `.agents/agents-index.md`，等待用户确认。
+1. 创建本计划，同步 `PROJECT_INDEX.md`，等待用户确认。
 2. 确认后将计划转为“实施中”，复核 Git 差异和用户级 Codex 配置的非敏感字段。
 3. 更新 `docs/operations/ai-assisted-development-workflow.md`、`docs/operations/local-dev-environment.md` 和 `docs/README.md`，先固化分类、安全边界、操作步骤和回滚。
 4. 在精确授权后备份非敏感配置并受控切换 `unelevated`，重启桌面端。
@@ -125,7 +125,7 @@
 ## 影响文件
 
 - `plans/2026-08-22_CodexWindowsACL长期治理计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `docs/operations/ai-assisted-development-workflow.md`
 - `docs/operations/local-dev-environment.md`
 - `docs/README.md`
@@ -169,7 +169,7 @@
 
 ## 实施结果
 
-- 已创建本计划并同步 `.agents/agents-index.md`。
+- 已创建本计划并同步 `PROJECT_INDEX.md`。
 - 用户已确认计划，计划进入实施中。
 - 已更新 `docs/operations/ai-assisted-development-workflow.md`，建立 Windows 原生 Codex、四类失败模型、候选配置、正反向验证、Owner 归一和 Git 收敛的详细操作来源。
 - 已更新 `docs/operations/local-dev-environment.md` 和 `docs/README.md`，保留本地环境基线和详细手册入口；已同步 `CHANGELOG.md`。

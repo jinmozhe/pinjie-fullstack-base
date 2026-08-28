@@ -57,7 +57,7 @@ VS Code Ruff 扩展默认从 Backend 虚拟环境加载 `ruff.exe`。Windows 会
 - `.vscode/settings.json`（由 `.gitignore` 忽略，仅本机生效）
 - `docs/operations/uv使用指南.md`
 - `plans/2026-08-24_VSCodeRuff工作区隔离配置计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 
 ## 风险与回滚
 

@@ -61,7 +61,7 @@
 
 - `apps/admin/src/styles.css`
 - `plans/2026-08-28_Admin登录页背景透明度与Logo比例微调计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 
 ## 11. 风险与回滚

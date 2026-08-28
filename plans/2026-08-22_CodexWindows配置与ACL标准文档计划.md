@@ -121,7 +121,7 @@ sandbox = "elevated"
 - `docs/operations/ai-assisted-development-workflow.md` 第 26 节缩减为概述、任务路由和新文档入口。
 - `docs/operations/local-dev-environment.md` 只保留 Windows 原生 Codex 基线和新文档入口。
 - `docs/README.md` 增加新文档索引，并修正既有文档用途摘要。
-- `.agents/agents-index.md` 将 Codex Windows 权限与 ACL 治理的权威来源指向新文档。
+- `PROJECT_INDEX.md` 将 Codex Windows 权限与 ACL 治理的权威来源指向新文档。
 - `CHANGELOG.md` 记录已交付的标准文档与权威来源收敛，不复制操作正文。
 - 原 ACL 治理计划保留历史实施事实，不修改为当前操作手册。
 
@@ -139,18 +139,18 @@ sandbox = "elevated"
 
 ## 实施顺序
 
-1. 创建本计划并同步 `.agents/agents-index.md`，等待用户确认。
+1. 创建本计划并同步 `PROJECT_INDEX.md`，等待用户确认。
 2. 用户确认后将计划状态改为“实施中”，复核 OpenAI 官方配置、Windows sandbox、审批与权限文档。
 3. 新建独立标准文档，完整写入配置、迁移、验证、诊断、修复和回滚链路。
 4. 缩减 AI 工作流第 26 节和本地环境章节，改为概述与新文档入口。
-5. 同步 `docs/README.md`、`.agents/agents-index.md` 和 `CHANGELOG.md`，建立唯一权威来源和双向导航。
+5. 同步 `docs/README.md`、`PROJECT_INDEX.md` 和 `CHANGELOG.md`，建立唯一权威来源和双向导航。
 6. 复读全部变更，检查链接、模板路径、官方事实与本机验证事实没有混淆。
 7. 运行 Markdown、工作区、模块边界、治理和 Git 差异检查，回写计划结果并结束计划。
 
 ## 影响文件
 
 - `plans/2026-08-22_CodexWindows配置与ACL标准文档计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `docs/operations/codex-windows-config-acl-governance.md`
 - `docs/operations/ai-assisted-development-workflow.md`
 - `docs/operations/local-dev-environment.md`
@@ -175,7 +175,7 @@ sandbox = "elevated"
 - [x] 新文档覆盖单机初始化、同机多项目和跨电脑迁移完整链路。
 - [x] 新文档覆盖正反向验证、故障决策树、最小修复、禁止操作和回滚。
 - [x] 旧详细正文已缩减为入口，未形成两份权威事实。
-- [x] `docs/README.md`、`.agents/agents-index.md` 和 `CHANGELOG.md` 已同步。
+- [x] `docs/README.md`、`PROJECT_INDEX.md` 和 `CHANGELOG.md` 已同步。
 - [x] `pnpm lint:md` 通过。
 - [x] `pnpm check:workspace`、`pnpm check:boundaries` 和 `pnpm check:governance` 通过。
 - [x] `git diff --check` 通过，差异仅包含本计划范围内的文档。
@@ -191,11 +191,11 @@ sandbox = "elevated"
 
 ## 实施结果
 
-- 已创建本计划并同步 `.agents/agents-index.md`。
+- 已创建本计划并同步 `PROJECT_INDEX.md`。
 - 已根据 OpenAI Docs 复核用户级与项目级配置、Windows 沙箱、审批安全和 beta 权限配置边界。
 - 已新增 `docs/operations/codex-windows-config-acl-governance.md`，作为 `config.toml`、`elevated + Custom`、多项目、跨电脑迁移和 ACL 全链路的唯一详细操作来源。
 - 已将 `docs/operations/ai-assisted-development-workflow.md` 第 26 节收敛为任务路由，将 `docs/operations/local-dev-environment.md` 收敛为本地开发摘要和入口。
-- 已同步 `docs/README.md`、`.agents/agents-index.md` 和 `CHANGELOG.md`，旧 ACL 计划继续保留历史 A/B 验证事实。
+- 已同步 `docs/README.md`、`PROJECT_INDEX.md` 和 `CHANGELOG.md`，旧 ACL 计划继续保留历史 A/B 验证事实。
 - 已运行 `pnpm lint:md`、`pnpm check:workspace`、`pnpm check:boundaries`、`pnpm check:governance` 和 `git diff --check`，全部通过。
 
 ## 剩余问题

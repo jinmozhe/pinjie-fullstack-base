@@ -123,7 +123,7 @@ Dockerfile 和生产 Compose 中所有运行时基础镜像固定为 `name:tag@s
 - `apps/web/src/`、`apps/web/next.config.ts`、`apps/web/vitest.config.ts`、`apps/web/Dockerfile`
 - `openapi.json`、`packages/api-client/src/`
 - `pnpm-workspace.yaml`、`pnpm-lock.yaml`、`compose.prod.yml`、`scripts/ci/`
-- `README.md`、`CHANGELOG.md`、`.agents/agents-index.md`
+- `README.md`、`CHANGELOG.md`、`PROJECT_INDEX.md`
 - `docs/architecture/`、`docs/operations/`、`docs/README.md`
 - `plans/2026-08-22_immutable-baseline-remediation-plan.md`
 

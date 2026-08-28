@@ -79,7 +79,7 @@
 - `apps/admin/src/features/auth/LoginPage.tsx`
 - `apps/admin/src/styles.css`
 - `plans/2026-08-28_Admin-login-screenshot-alignment-plan.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 
 ## 11. 风险与回滚

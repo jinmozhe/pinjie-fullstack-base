@@ -74,7 +74,7 @@
 ## 9. 影响文件
 
 1. `AGENTS.md`
-2. `.agents/agents-index.md`
+2. `PROJECT_INDEX.md`
 3. `docs/PROJECT_REQUIREMENTS.md`
 4. `docs/README.md`
 5. `docs/adr/0005-GitHub Wiki停用与文档单一来源决策.md`

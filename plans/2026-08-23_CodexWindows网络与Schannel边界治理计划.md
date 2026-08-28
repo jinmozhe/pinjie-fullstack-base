@@ -52,7 +52,7 @@
 
 ### 3. 治理同步
 
-同步 `docs/README.md`、`.agents/agents-index.md`、`CHANGELOG.md` 和本计划结果，不新增 ADR 或应用级规则。
+同步 `docs/README.md`、`PROJECT_INDEX.md`、`CHANGELOG.md` 和本计划结果，不新增 ADR 或应用级规则。
 
 ## 全栈影响矩阵
 
@@ -77,7 +77,7 @@
 ## 影响文件
 
 - `plans/2026-08-23_CodexWindows网络与Schannel边界治理计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `AGENTS.md`
 - `docs/operations/codex-windows-config-acl-governance.md`
 - `docs/operations/ai-assisted-development-workflow.md`

@@ -204,7 +204,7 @@
 
 1. 更新 Admin `AGENTS.md`，将长期技术栈从 Vite/React Router 改为官方 Pro v6/Umi Max。
 2. 更新 ADR、测试策略、项目结构、本地开发、环境变量、pnpm、容器和 AI 开发流程文档。
-3. 更新 `.agents/agents-index.md` 当前状态和计划状态。
+3. 更新 `PROJECT_INDEX.md` 当前状态和计划状态。
 4. 完成后更新 CHANGELOG，记录 Admin 工程架构迁移和用户可见改进。
 5. 复读差异，清理本次生成的 `.umi`、`dist`、coverage、Playwright 报告和临时产物。
 
@@ -277,7 +277,7 @@
 - `docs/operations/environment-variables-and-backend-local-run.md`
 - `docs/operations/pnpm使用指南.md`
 - `docs/operations/ai-assisted-development-workflow.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 
 ## 12. 风险与回滚

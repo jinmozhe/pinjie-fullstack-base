@@ -16,7 +16,7 @@
 ## 2. 先记住四个结论
 
 1. AI 自动获得的主要内容是工具支持的指令文件。普通 Markdown、源码、配置和契约不会因为存在于仓库中就自动进入上下文。
-2. 本项目要求所有任务先确认根规则和[全项目索引](../../.agents/agents-index.md)，再根据任务范围读取应用规则、活动计划和专题文档。
+2. 本项目要求所有任务先确认根规则和[全项目索引](../../PROJECT_INDEX.md)，再根据任务范围读取应用规则、活动计划和专题文档。
 3. 文档链接只负责导航。AI 看到一个链接，不代表链接目标已被读取，仍需显式打开目标文件。
 4. 无差别读取整个仓库会增加冲突和上下文噪声。本项目采用“固定入口 + 路径路由 + 主题触发 + 影响扩展”的读取方式。
 
@@ -25,7 +25,7 @@
 | 方式 | 含义 | 典型文件 | AI 需要做什么 |
 | --- | --- | --- | --- |
 | 平台自动加载 | AI 工具按照自身指令发现机制把规则加入当前任务上下文 | 根或当前目录链上的 `AGENTS.md`、Antigravity 匹配的 Workspace Rule | 核对实际工作目录和生效范围，不能凭印象假设 |
-| 项目强制主动读取 | 已加载规则明确要求 AI 使用文件工具打开 | `.agents/agents-index.md`、目标应用 `AGENTS.md`、`plans/README.md`、匹配的活动计划 | 在分析或修改前完整读取相关文件 |
+| 项目强制主动读取 | 已加载规则明确要求 AI 使用文件工具打开 | `PROJECT_INDEX.md`、目标应用 `AGENTS.md`、`plans/README.md`、匹配的活动计划 | 在分析或修改前完整读取相关文件 |
 | 按任务触发读取 | 根据任务类型、目标路径、风险和下游影响选择 | PRD、专题架构、安全策略、运维手册、ADR、蓝图、契约 | 先判断主题，再打开该主题的权威来源 |
 | 默认无需读取 | 当前任务与该文件职责没有关系 | 无关业务蓝图、无关应用规则、无关历史计划 | 不读取；影响范围扩大时重新评估 |
 
@@ -76,7 +76,7 @@ Admin 和 Web 同理。无论平台是否已经注入应用规则，AI 都要确
 
 除非用户个人配置把其他文件名加入指令候选列表，否则以下文件不会被 Codex 当作项目指令自动发现：
 
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `SECURITY.md`
 - `docs/PROJECT_REQUIREMENTS.md`
 - `docs/architecture/*.md`
@@ -116,7 +116,7 @@ Codex 与 Antigravity 的加载入口不同，但最终遵守同一组根和应�
 无法证明某个 AI 工具支持 `AGENTS.md` 或 `.agents/rules/` 时，按以下最低协议显式加载：
 
 1. 完整读取根 [AGENTS.md](../../AGENTS.md)。
-2. 完整读取[全项目索引](../../.agents/agents-index.md)。
+2. 完整读取[全项目索引](../../PROJECT_INDEX.md)。
 3. 根据目标路径读取 [Backend 规则](../../apps/backend/AGENTS.md)、[Admin 规则](../../apps/admin/AGENTS.md)或 [Web 规则](../../apps/web/AGENTS.md)。
 4. 实现或治理变更继续读取[计划规范](../../plans/README.md)和匹配的活动计划。
 5. 根据任务主题读取 PRD、架构、安全、运维、ADR、蓝图和契约。
@@ -132,7 +132,7 @@ AI 判断事实前必须先判断问题属于哪一种信息。
 | --- | --- | --- |
 | 项目长期必须遵守什么 | 根和应用级 `AGENTS.md` | 从历史计划推导当前规则 |
 | 项目最终要做什么 | [PROJECT_REQUIREMENTS.md](../PROJECT_REQUIREMENTS.md) | 把目标能力说成已经实现 |
-| 项目现在实现到哪里 | [agents-index.md](../../.agents/agents-index.md)和实际文件 | 用 PRD 或 Changelog 代替当前状态 |
+| 项目现在实现到哪里 | [PROJECT_INDEX.md](../../PROJECT_INDEX.md)和实际文件 | 用 PRD 或 Changelog 代替当前状态 |
 | 当前任务准备或正在做什么 | 匹配的 `plans/*.md` | 新建重复计划或忽略用户确认 |
 | 某项技术为何这样选择 | `docs/adr/*.md` | 在 PRD 中寻找技术论证 |
 | 系统当前如何设计 | `docs/architecture/*.md` | 用操作手册替代架构契约 |
@@ -218,7 +218,7 @@ AI 在读取时必须沿真实依赖方向扩展，不能只读取用户最先�
 flowchart TD
     A["接收用户任务"] --> B["确认工作区、目标路径和任务动作"]
     B --> C["确认根 AGENTS.md 已加载"]
-    C --> D["主动读取 .agents/agents-index.md"]
+    C --> D["主动读取 PROJECT_INDEX.md"]
     D --> E["读取受影响应用 AGENTS.md"]
     E --> F["核对当前状态和匹配活动计划"]
     F --> G["按主题读取 PRD、架构、安全、运维、ADR 或蓝图"]
@@ -252,7 +252,7 @@ flowchart TD
 | AI 如何知道 | 工具原生发现或 `.agents/rules/00-repository.md` 桥接 |
 | 何时复读 | 新任务上下文无法确认、规则发生变化或工具报告指令截断时 |
 
-### 10.2 `.agents/agents-index.md`
+### 10.2 `PROJECT_INDEX.md`
 
 | 项目 | 说明 |
 | --- | --- |
@@ -396,7 +396,7 @@ flowchart TD
 
 ```text
 根 AGENTS.md
--> .agents/agents-index.md
+-> PROJECT_INDEX.md
 -> apps/backend/AGENTS.md
 -> PROJECT_REQUIREMENTS.md（涉及产品能力时）
 -> 对应专题架构文档
@@ -408,7 +408,7 @@ flowchart TD
 
 ```text
 根 AGENTS.md
--> .agents/agents-index.md
+-> PROJECT_INDEX.md
 -> apps/backend/AGENTS.md
 -> plans/README.md 和匹配活动计划
 -> PROJECT_REQUIREMENTS.md（创建计划或改变能力时）
@@ -432,7 +432,7 @@ flowchart TD
 
 ```text
 根 AGENTS.md
--> .agents/agents-index.md
+-> PROJECT_INDEX.md
 -> apps/admin/AGENTS.md
 -> plans/README.md 和活动计划（实现时）
 -> PRD（能力变化时）
@@ -448,7 +448,7 @@ Admin 保留 Ant Design 与 ProComponents。不能因为 Web 使用另一套 UI 
 
 ```text
 根 AGENTS.md
--> .agents/agents-index.md
+-> PROJECT_INDEX.md
 -> apps/web/AGENTS.md
 -> plans/README.md 和活动计划（实现时）
 -> PRD（能力变化时）
@@ -677,7 +677,7 @@ AI 应执行：
 
 1. 当前工作区和当前工作目录是什么？
 2. 哪些 `AGENTS.md` 已经处于活动指令中？
-3. 是否已经主动读取 `.agents/agents-index.md`？
+3. 是否已经主动读取 `PROJECT_INDEX.md`？
 4. 当前项目阶段和匹配的活动计划是什么？
 5. 本任务将读取哪些专题文档，为什么？
 6. 本任务是否需要计划和用户确认？
@@ -753,7 +753,7 @@ codex --cd apps/backend --ask-for-approval never "Show which instruction files a
 - 计划生命周期、文档单一来源或交付流程变化。
 - 常见任务反复出现漏读并形成稳定修复方案。
 
-更新本文时同步 [docs/README.md](../README.md)。只有执行入口、职责或权威来源发生变化时才同步 `.agents/agents-index.md`。工具行为属于时效性事实，修改前重新查阅官方文档并记录核验日期。
+更新本文时同步 [docs/README.md](../README.md)。只有执行入口、职责或权威来源发生变化时才同步 `PROJECT_INDEX.md`。工具行为属于时效性事实，修改前重新查阅官方文档并记录核验日期。
 
 ## 26. Windows 原生 Codex 权限与 ACL 长期治理
 

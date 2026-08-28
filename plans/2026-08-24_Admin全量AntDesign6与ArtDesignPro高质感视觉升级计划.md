@@ -98,7 +98,7 @@
 
 ## 9. 实施顺序
 
-1. 更新本计划和 `.agents/agents-index.md`，记录用户确认并进入实施中。
+1. 更新本计划和 `PROJECT_INDEX.md`，记录用户确认并进入实施中。
 2. 建立 Ant Design 6 官方 Token，调整 ProLayout、品牌区和全局样式。
 3. 将 PageFrame 重构为 PageContainer，建立统一工具区、状态和响应式基础。
 4. 依次升级登录、用户、管理员、角色权限、安全日志和系统状态页面。
@@ -109,7 +109,7 @@
 ## 10. 影响文件
 
 - `plans/2026-08-24_Admin全量AntDesign6与ArtDesignPro高质感视觉升级计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 - `apps/admin/src/app.tsx`
 - `apps/admin/config/defaultSettings.ts`

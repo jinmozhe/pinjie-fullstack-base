@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | 系统设置与站点配置媒体第一阶段本地实施已完成；真实迁移、目标权限同步、重型验证和远端交付未执行；旧版管理员确认端点限时保留至 2026-09-26 |
+| 当前阶段 | 全项目索引已迁移到根目录 `PROJECT_INDEX.md`；系统设置与站点配置媒体第一阶段本地实施已完成；真实迁移、目标权限同步、重型验证和远端交付未执行；旧版管理员确认端点限时保留至 2026-09-26 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -23,7 +23,7 @@
 | `docs/architecture/admin-engineering-standard.md` | 生效 | Admin Umi/Pro 框架边界、Feature、请求、状态、组件选择和依赖准入的工程实施标准 |
 | `apps/web/AGENTS.md` | 生效 | Web 架构、渲染、API、设计、SEO 和验证规则 |
 | `.agents/rules/` | 生效 | Antigravity 按范围加载各级 `AGENTS.md` 的桥接规则 |
-| `.agents/agents-index.md` | 生效 | 本索引，全项目当前事实和任务导航入口 |
+| `PROJECT_INDEX.md` | 生效 | 本索引，全项目当前事实和任务导航入口 |
 | `plans/README.md` | 生效 | 全栈计划创建、状态、模板、完成和永久保护规则 |
 | `docs/PROJECT_REQUIREMENTS.md` | 生效 | 母版目标用户、场景、目标能力、非目标、派生规则和验收基线 |
 | `docs/README.md` | 生效 | `docs/` 下全部项目文档的专项索引 |
@@ -44,6 +44,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-29_全项目索引根目录迁移计划.md` | 已结束 | Documentation、Developer Workflow | 已将唯一全项目索引迁移到根目录并全量更新项目文档引用 |
 | `plans/2026-08-28_系统设置与站点配置媒体计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 已完成单表分组 JSONB、固定设置 Tab、注册 Fail Closed 和独立配置媒体槽位 |
 | `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | Admin、Documentation | 已移除表格容器的重复滚动层并恢复 Ant Design 受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | Admin、Documentation | 已将忘记密码点击弹窗替换为浅灰色悬浮提示 |
@@ -108,6 +109,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-29_全项目索引根目录迁移计划.md` | 已结束 | 已完成；唯一索引已迁移到根目录，84 个关联文档引用已同步，治理门禁和链接检查通过 | Documentation、Developer Workflow | 将唯一全项目索引迁移到根目录并全量更新项目文档引用 |
 | `plans/2026-08-28_系统设置与站点配置媒体计划.md` | 已结束 | 已完成；单表分组 JSONB、固定强类型接口、注册 Fail Closed、配置媒体补偿、Admin 双 Tab 和 Web 品牌消费已落地，轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 建立站点资料、公开注册开关和独立站点 LOGO 配置媒体的完整跨栈实施边界 |
 | `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | 已完成；重复滚动层已移除，Admin typecheck、lint 与 Markdown lint 通过，重型验证按项目策略未执行 | Admin、Documentation | 修复普通表格右侧异常滚动条并保留真实宽表受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | 已完成；浅灰色 Tooltip 已替换点击弹窗，Admin typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低忘记密码入口视觉重量并取消点击弹窗 |
@@ -204,7 +206,7 @@
 | 事项 | 唯一来源 | 维护要求 |
 | --- | --- | --- |
 | 项目长期规则 | 根和三个应用级 `AGENTS.md` | `.agents/rules/` 只做加载桥接，不复制正文 |
-| 全项目当前事实 | `.agents/agents-index.md` | 项目身份、阶段、目录职责、权威来源和计划状态变化时同步 |
+| 全项目当前事实 | `PROJECT_INDEX.md` | 项目身份、阶段、目录职责、权威来源和计划状态变化时同步 |
 | 产品需求基线 | `docs/PROJECT_REQUIREMENTS.md` | 定义母版做什么、为谁服务、明确不做什么和如何验收 |
 | 实施计划 | `plans/*.md` | 面向整个 Monorepo；原文、路径和索引永久保留 |
 | 计划规范 | `plans/README.md` | 只维护规则和模板，不复制当前进度 |
