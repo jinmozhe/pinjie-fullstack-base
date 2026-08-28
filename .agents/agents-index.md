@@ -42,6 +42,7 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | Admin、Documentation | 已移除表格容器的重复滚动层并恢复 Ant Design 受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | Admin、Documentation | 已将忘记密码点击弹窗替换为浅灰色悬浮提示 |
 | `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | Admin、Documentation | 已将输入内容、placeholder 和按钮文字统一收敛至 `14px / 400` |
 | `plans/2026-08-28_Admin忘记密码弹窗安全图标优化计划.md` | 已结束 | Admin、Documentation | 已为忘记密码弹窗增加 Ant Design 双色安全图标 |
@@ -100,6 +101,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | 已完成；重复滚动层已移除，Admin typecheck、lint 与 Markdown lint 通过，重型验证按项目策略未执行 | Admin、Documentation | 修复普通表格右侧异常滚动条并保留真实宽表受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | 已完成；浅灰色 Tooltip 已替换点击弹窗，Admin typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低忘记密码入口视觉重量并取消点击弹窗 |
 | `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | 已完成；输入内容、placeholder 和按钮文字统一为 `14px / 400`，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低登录表单控件的边界、字重和按钮色彩重量 |
 | `plans/2026-08-28_Admin忘记密码弹窗安全图标优化计划.md` | 已结束 | 已完成；双色安全徽章和居中布局已落地，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 增强忘记密码弹窗的安全感和人性化表达 |
