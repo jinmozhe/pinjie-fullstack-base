@@ -67,15 +67,16 @@ POSTGRES_DB=pinjie_fullstack_prod
 - `WEB_ORIGINS` 与 `ADMIN_ORIGINS`
 - `WEB_JWT_SECRET` 与 `ADMIN_JWT_SECRET`
 - `WEB_TOKEN_HMAC_KEY` 与 `ADMIN_TOKEN_HMAC_KEY`
-- `AUTH_COOKIE_SECURE`、`REGISTRATION_MODE`、Token、Session 期限与 `SESSION_RETENTION_DAYS`
+- `AUTH_COOKIE_SECURE`、Token、Session 期限与 `SESSION_RETENTION_DAYS`
 - 请求元数据模式及安全日志保留期
 - Loguru 控制台与本地文件日志开关、路径、轮转大小和保留周期
 - `UPLOAD_STORAGE_DRIVER`、`UPLOAD_LOCAL_ROOT`、`UPLOAD_BASE_URL`
 - `UPLOAD_MAX_FILE_SIZE_MB`、`UPLOAD_ALLOWED_EXTENSIONS`、`UPLOAD_IO_CONCURRENCY`
+- `SETTINGS_MEDIA_ROOT`、`SETTINGS_MEDIA_BASE_URL`
 
 文件日志默认写入 Backend 工作目录下的 `logs/app_{time:YYYY-MM-DD}.log`，使用异步队列、50 MB 轮转、10 天保留和 ZIP 压缩。日志文件不进入 Git；只读容器或只允许标准错误流的部署必须显式设置 `LOG_FILE_ENABLED=false`。
 
-本地文件资产默认写入 Backend 工作目录下的 `uploads/`，公开路径为 `/static/uploads`。全局扩展名白名单不包含 SVG；场景级 MIME、Magic Number 和大小限制仍由 Backend 强制执行，不能只依赖 `.env` 或前端限制。生产 Compose 把完整 `/app/storage` 挂载为命名卷，并覆盖 `UPLOAD_LOCAL_ROOT=/app/storage/uploads`，确保公开文件、私有 staging 和 trash 位于同一文件系统。
+本地文件资产默认写入 Backend 工作目录下的 `uploads/`，公开路径为 `/static/uploads`。系统配置媒体独立写入同级 `settings-media/`，公开路径为 `/static/settings`，不得与上传资产目录互相嵌套。生产 Compose 把完整 `/app/storage` 挂载为命名卷，并分别覆盖 `UPLOAD_LOCAL_ROOT=/app/storage/uploads` 与 `SETTINGS_MEDIA_ROOT=/app/storage/settings-media`，确保两套媒体各自的公开文件、私有 staging、trash 和操作清单位于同一文件系统。
 
 生产 `compose.prod.yml` 当前通过以下配置把该文件注入 Backend 容器，并强制覆盖文件日志开关：
 
@@ -90,7 +91,7 @@ environment:
 
 根 `.env` 决定启动哪个 Backend 镜像，`apps/backend/.env` 决定这个 Backend 容器如何连接数据库、Redis及如何运行。两者不能合并，避免部署版本和应用秘密形成同一职责边界。
 
-`REGISTRATION_MODE=open|closed` 只控制 Web 公开注册。设置为 `closed` 后，Backend 拒绝公开注册，Web 隐藏注册入口并阻止进入注册表单；具备 `users:create` 权限的管理员仍可在 Admin 用户管理中创建账户。新增权限进入目标环境前必须先运行权限目录 `--check`，经独立授权后执行 `--apply` 和角色分配。
+Web 公开注册由数据库 `system_settings` 的 `registration.enabled` 控制，不再读取环境变量。迁移初始值固定为关闭；具备 `settings:registration:update` 权限的管理员可以在 Admin 系统设置中开启。读取失败时 Backend 返回不可用或关闭错误，Web 隐藏注册入口；具备 `users:create` 权限的管理员仍可创建账户。新增设置权限进入目标环境前必须先运行权限目录 `--check`，经独立授权后执行 `--apply` 和角色分配。
 
 ### 3.3 Web `.env.local`
 

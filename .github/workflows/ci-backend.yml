@@ -48,7 +48,6 @@ jobs:
       REDIS_MODE: required
       REDIS_URL: redis://127.0.0.1:6379/15
       TEST_REDIS_URL: redis://127.0.0.1:6379/15
-      REGISTRATION_MODE: open
       WEB_JWT_SECRET: ci-web-jwt-secret-00000000000000001
       ADMIN_JWT_SECRET: ci-admin-jwt-secret-000000000000001
       WEB_TOKEN_HMAC_KEY: ci-web-hmac-key-000000000000000001

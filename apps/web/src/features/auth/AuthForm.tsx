@@ -1,6 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
+import type { SiteProfileRead } from "@pinjie/api-client";
 import { ArrowRight, LockKeyhole, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,13 +9,16 @@ import { useState } from "react";
 
 import { webAuthApi } from "./api";
 import { ApiError, errorMessage } from "@/lib/api/http";
+import { SiteBrand } from "@/features/site";
 
 export function AuthForm({
   mode,
   registrationEnabled = true,
+  siteProfile,
 }: {
   mode: "login" | "register";
   registrationEnabled?: boolean;
+  siteProfile?: SiteProfileRead;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -49,7 +53,7 @@ export function AuthForm({
   return (
     <main className="auth-shell">
       <section className="auth-panel" aria-labelledby="auth-title">
-        <Link className="wordmark" href="/">PINJIE</Link>
+        <SiteBrand profile={siteProfile} />
         <div className="auth-heading">
           <p className="kicker">{mode === "login" ? "ACCOUNT ACCESS" : "CREATE ACCOUNT"}</p>
           <h1 id="auth-title">{mode === "login" ? "欢迎回来" : "创建你的账户"}</h1>

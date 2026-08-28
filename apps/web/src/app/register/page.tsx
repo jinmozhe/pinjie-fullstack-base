@@ -3,19 +3,20 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AuthForm } from "@/features/auth/AuthForm";
-import { fetchRegistrationState } from "@/lib/api/server";
+import { SiteBrand } from "@/features/site";
+import { fetchRegistrationState, fetchSiteProfile } from "@/lib/api/server";
 
 export const metadata: Metadata = { title: "注册", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function RegisterPage() {
-  const registrationState = await fetchRegistrationState();
+  const [registrationState, siteProfile] = await Promise.all([fetchRegistrationState(), fetchSiteProfile()]);
   if (registrationState === "disabled") redirect("/login");
   if (registrationState === "unavailable") {
     return (
       <main className="auth-shell">
         <section className="auth-panel" aria-labelledby="registration-unavailable-title">
-          <Link className="wordmark" href="/">PINJIE</Link>
+          <SiteBrand profile={siteProfile} />
           <div className="auth-heading">
             <p className="kicker">ACCOUNT ACCESS</p>
             <h1 id="registration-unavailable-title">注册暂不可用</h1>
@@ -27,5 +28,5 @@ export default async function RegisterPage() {
       </main>
     );
   }
-  return <AuthForm mode="register" />;
+  return <AuthForm mode="register" siteProfile={siteProfile} />;
 }

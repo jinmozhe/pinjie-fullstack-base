@@ -29,6 +29,7 @@ describe("admin access mapping", () => {
       canAdmins: false,
       canRoles: false,
       canAssets: false,
+      canSettings: false,
       canSystem: false,
       canSecurity: false,
     });
@@ -42,11 +43,12 @@ describe("admin access mapping", () => {
   );
 
   it("maps ordinary read permissions and grants every area to superusers", () => {
-    expect(access(state(["users:read", "admins:read", "roles:read", "assets:read", "system:overview:read"]))).toEqual({
+    expect(access(state(["users:read", "admins:read", "roles:read", "assets:read", "system:overview:read", "settings:site:read"]))).toEqual({
       canUsers: true,
       canAdmins: true,
       canRoles: true,
       canAssets: true,
+      canSettings: true,
       canSystem: true,
       canSecurity: false,
     });
@@ -55,6 +57,7 @@ describe("admin access mapping", () => {
       canAdmins: true,
       canRoles: true,
       canAssets: true,
+      canSettings: true,
       canSystem: true,
       canSecurity: true,
     });

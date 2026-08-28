@@ -41,7 +41,6 @@ jobs:
       REDIS_MODE: required
       REDIS_URL: redis://127.0.0.1:6379/0
       TEST_REDIS_URL: redis://127.0.0.1:6379/0
-      REGISTRATION_MODE: open
       WEB_ORIGINS: '["http://127.0.0.1:3000"]'
       ADMIN_ORIGINS: '["http://127.0.0.1:3001"]'
       WEB_JWT_SECRET: e2e-web-jwt-secret-0000000000000001
@@ -74,6 +73,7 @@ jobs:
         working-directory: apps/backend
         run: |
           uv run alembic upgrade head
+          uv run python -m scripts.set_test_registration --enabled --confirm-database pinjie_e2e_test
           uv run python -m scripts.sync_permissions --apply --confirm-database pinjie_e2e_test
           uv run python -m scripts.create_initial_admin --username "$E2E_ADMIN_USERNAME" --confirm-database pinjie_e2e_test
 

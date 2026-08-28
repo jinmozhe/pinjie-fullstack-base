@@ -3753,13 +3753,365 @@
         }
       }
     },
+    "/api/v1/admin/settings/site": {
+      "get": {
+        "tags": [
+          "系统设置"
+        ],
+        "summary": "获取站点设置",
+        "operationId": "get_site_setting_api_v1_admin_settings_site_get",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminSiteSettingRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "系统设置"
+        ],
+        "summary": "更新站点设置",
+        "operationId": "update_site_setting_api_v1_admin_settings_site_patch",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SiteSettingPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminSiteSettingRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/settings/site/logo": {
+      "put": {
+        "tags": [
+          "系统设置"
+        ],
+        "summary": "更换站点 LOGO",
+        "operationId": "update_site_logo_api_v1_admin_settings_site_logo_put",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_update_site_logo_api_v1_admin_settings_site_logo_put"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminSiteSettingRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "系统设置"
+        ],
+        "summary": "移除站点 LOGO",
+        "operationId": "delete_site_logo_api_v1_admin_settings_site_logo_delete",
+        "parameters": [
+          {
+            "name": "revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "description": "读取站点设置时获得的修订号",
+              "title": "Revision"
+            },
+            "description": "读取站点设置时获得的修订号"
+          },
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminSiteSettingRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/settings/registration": {
+      "get": {
+        "tags": [
+          "系统设置"
+        ],
+        "summary": "获取注册设置",
+        "operationId": "get_registration_setting_api_v1_admin_settings_registration_get",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminRegistrationSettingRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "系统设置"
+        ],
+        "summary": "更新注册设置",
+        "operationId": "update_registration_setting_api_v1_admin_settings_registration_patch",
+        "parameters": [
+          {
+            "name": "pinjie_admin_access",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pinjie Admin Access"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationSettingPatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_AdminRegistrationSettingRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "请求参数校验失败",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/site-profile": {
+      "get": {
+        "tags": [
+          "系统"
+        ],
+        "summary": "获取公共站点资料",
+        "description": "返回 Web 服务端渲染所需的完整强类型站点资料，不暴露内部路径、哈希或修订元数据。",
+        "operationId": "get_site_profile_api_v1_system_site_profile_get",
+        "responses": {
+          "200": {
+            "description": "请求成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseModel_SiteProfileRead_"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/system/capabilities": {
       "get": {
         "tags": [
           "系统"
         ],
         "summary": "获取公共系统能力",
-        "description": "返回允许公开展示的最小功能开关，不暴露内部配置或安全信息。",
+        "description": "返回允许公开展示的最小功能开关；配置不可用时明确失败并保持注册关闭。",
         "operationId": "get_system_capabilities_api_v1_system_capabilities_get",
         "responses": {
           "200": {
@@ -4193,6 +4545,47 @@
         ],
         "title": "AdminRead"
       },
+      "AdminRegistrationSettingRead": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "是否允许 Web 公开注册普通用户"
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Revision",
+            "description": "当前设置修订号"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "最近更新时间"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminSummaryRead"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "最后修改管理员摘要"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "enabled",
+          "revision",
+          "updated_at",
+          "updated_by"
+        ],
+        "title": "AdminRegistrationSettingRead"
+      },
       "AdminRoleAssignIn": {
         "properties": {
           "role_ids": {
@@ -4211,6 +4604,109 @@
           "role_ids"
         ],
         "title": "AdminRoleAssignIn"
+      },
+      "AdminSiteSettingRead": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Web 公共站点名称"
+          },
+          "logo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SiteLogoRead"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "站点 LOGO 公开信息"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Web 默认页面标题"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords",
+            "description": "Web Metadata 关键词"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Web 默认站点描述"
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Revision",
+            "description": "当前设置修订号"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "最近更新时间"
+          },
+          "updated_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AdminSummaryRead"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "最后修改管理员摘要"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "logo",
+          "title",
+          "keywords",
+          "description",
+          "revision",
+          "updated_at",
+          "updated_by"
+        ],
+        "title": "AdminSiteSettingRead"
+      },
+      "AdminSummaryRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "最后修改管理员唯一标识"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name",
+            "description": "最后修改管理员显示名称"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "display_name"
+        ],
+        "title": "AdminSummaryRead"
       },
       "AdminSuperuserUpdateIn": {
         "properties": {
@@ -4719,6 +5215,28 @@
           "target_ids"
         ],
         "title": "BatchActionResult"
+      },
+      "Body_update_site_logo_api_v1_admin_settings_site_logo_put": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "PNG、JPEG 或 WebP 静态 LOGO，最大 2 MB"
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Revision",
+            "description": "读取站点设置时获得的修订号"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "revision"
+        ],
+        "title": "Body_update_site_logo_api_v1_admin_settings_site_logo_put"
       },
       "Body_upload_asset_api_v1_assets_upload_post": {
         "properties": {
@@ -5521,6 +6039,28 @@
         ],
         "title": "RefreshSessionOut"
       },
+      "RegistrationSettingPatchIn": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Revision",
+            "description": "读取设置时获得的修订号"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "是否允许 Web 公开注册普通用户"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "enabled"
+        ],
+        "title": "RegistrationSettingPatchIn"
+      },
       "RequestLogRead": {
         "properties": {
           "id": {
@@ -5746,6 +6286,70 @@
           "request_id"
         ],
         "title": "ResponseModel[AdminRead]"
+      },
+      "ResponseModel_AdminRegistrationSettingRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminRegistrationSettingRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[AdminRegistrationSettingRead]"
+      },
+      "ResponseModel_AdminSiteSettingRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdminSiteSettingRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[AdminSiteSettingRead]"
       },
       "ResponseModel_AdminUserRead_": {
         "properties": {
@@ -6194,6 +6798,38 @@
           "request_id"
         ],
         "title": "ResponseModel[RoleRead]"
+      },
+      "ResponseModel_SiteProfileRead_": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "稳定程序代码"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "面向调用方的中文结果消息"
+          },
+          "data": {
+            "$ref": "#/components/schemas/SiteProfileRead",
+            "description": "响应业务数据"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "用于定位本次请求的唯一标识"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data",
+          "request_id"
+        ],
+        "title": "ResponseModel[SiteProfileRead]"
       },
       "ResponseModel_SystemCapabilitiesRead_": {
         "properties": {
@@ -6842,6 +7478,153 @@
           "revoked_at"
         ],
         "title": "SessionRead"
+      },
+      "SiteLogoRead": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "带修订号缓存参数的站点 LOGO 公开路径"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "description": "站点 LOGO 的真实 MIME 类型"
+          },
+          "file_size": {
+            "type": "integer",
+            "title": "File Size",
+            "description": "站点 LOGO 文件大小，单位为字节"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "url",
+          "mime_type",
+          "file_size"
+        ],
+        "title": "SiteLogoRead"
+      },
+      "SiteProfileRead": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Web 公共站点名称"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url",
+            "description": "站点 LOGO 公开路径，未配置时为空"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Web 默认页面标题"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords",
+            "description": "Web Metadata 关键词"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Web 默认站点描述"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "logo_url",
+          "title",
+          "keywords",
+          "description"
+        ],
+        "title": "SiteProfileRead"
+      },
+      "SiteSettingPatchIn": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Revision",
+            "description": "读取设置时获得的修订号"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "资源名称"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 150,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "keywords": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keywords"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "资源说明文本"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision"
+        ],
+        "title": "SiteSettingPatchIn"
       },
       "StatusUpdateIn": {
         "properties": {
@@ -7527,6 +8310,10 @@
     {
       "name": "系统",
       "description": "面向应用调用方的公共系统状态接口。"
+    },
+    {
+      "name": "系统设置",
+      "description": "受权限保护的站点资料、配置媒体和公开注册设置接口。"
     },
     {
       "name": "健康检查",

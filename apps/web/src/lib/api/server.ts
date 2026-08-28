@@ -1,12 +1,31 @@
 import {
+  getSiteProfileApiV1SystemSiteProfileGet,
   getSystemCapabilitiesApiV1SystemCapabilitiesGet,
   getSystemStatusApiV1SystemStatusGet,
 } from "@pinjie/api-client";
-import type { SystemStatus, UserPrincipalOut } from "@pinjie/api-client";
+import type { SiteProfileRead, SystemStatus, UserPrincipalOut } from "@pinjie/api-client";
 import { createClient } from "@pinjie/api-client/client";
 import { cookies } from "next/headers";
+import { cache } from "react";
+
+import { DEFAULT_SITE_PROFILE } from "@/features/site";
 
 const WEB_COOKIE_NAMES = new Set(["pinjie_web_access", "pinjie_web_refresh", "pinjie_web_csrf"]);
+
+export const fetchSiteProfile = cache(async (): Promise<SiteProfileRead> => {
+  const baseURL = process.env.BACKEND_INTERNAL_URL;
+  if (!baseURL) return DEFAULT_SITE_PROFILE;
+  const serverClient = createClient({ baseURL });
+  try {
+    const result = await getSiteProfileApiV1SystemSiteProfileGet({
+      client: serverClient,
+      throwOnError: true,
+    });
+    return result.data.data;
+  } catch {
+    return DEFAULT_SITE_PROFILE;
+  }
+});
 
 function webCookies(cookieHeader: string): string {
   return cookieHeader

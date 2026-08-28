@@ -22,6 +22,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; }
 :focus-visible { outline: 3px solid #55a895; outline-offset: 3px; }
 .wordmark { color: var(--brand-strong); font-family: Georgia, "Times New Roman", serif; font-size: 20px; font-weight: 700; letter-spacing: 0; text-decoration: none; }
+.site-brand { display: inline-flex; min-width: 0; align-items: center; gap: 9px; }
+.site-brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-brand__logo { width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; }
 .kicker { margin: 0 0 10px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: 0; }
 
 .home-shell { min-height: 100vh; }

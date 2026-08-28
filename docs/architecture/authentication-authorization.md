@@ -56,7 +56,7 @@
 
 普通用户有两种独立创建来源：
 
-- Web 公开注册受 `REGISTRATION_MODE=open|closed` 控制。注册成功后创建 Web Session、Refresh Token 和登录安全事件，并按 Browser Cookie Profile 建立登录态。
+- Web 公开注册受数据库 `system_settings.registration.enabled` 控制。注册事务对配置行取得共享锁，配置缺失、无效或数据库不可用时明确失败并保持关闭；注册成功后创建 Web Session、Refresh Token 和登录安全事件。
 - Admin 创建用户使用 `POST /api/v1/admin/users`，受 `users:create`、管理员会话和 CSRF 保护，不受公开注册开关影响。该流程只创建账户和 `users:create` 审计事件，不创建 Web Session、Refresh Token 或公开注册登录事件。
 
 两种来源复用相同的用户名、邮箱唯一性和密码规则。软删除账户继续占用用户名与邮箱，管理员应恢复原账户，不能用同一标识创建新账户。Admin 创建审计只记录目标、启用状态和可选资料是否存在，不保存初始密码、密码摘要或邮箱明文。
@@ -64,6 +64,8 @@
 登录后的用户资料通过 `GET/PATCH /api/v1/users/me` 读取和更新；头像使用独立的 `PUT /api/v1/users/me/avatar`，只接受当前用户自己上传的 `avatar` 资产 ID，传 `null` 解除绑定。头像更新受 Web 会话、精确 Origin 和 CSRF 保护，不改变凭据版本或会话。
 
 公共端点 `GET /api/v1/system/capabilities` 只返回 `registration_enabled`。Web 在能力关闭时隐藏注册入口并把 `/register` 重定向到登录页；查询失败时按未知且不开放处理，并显示服务不可用状态。Backend 的公开注册端点始终执行权威开关校验，前端隐藏不承担安全控制。
+
+系统设置使用四项独立权限：`settings:site:read`、`settings:site:update`、`settings:registration:read` 和 `settings:registration:update`。Admin 设置写接口同时要求管理员会话、准确权限、CSRF、revision 校验和审计；LOGO 上传与删除归站点更新权限，不复用文件资产权限。
 
 ## 6. CSRF 与来源校验
 

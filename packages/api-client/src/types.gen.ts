@@ -263,6 +263,34 @@ export type AdminRead = {
 };
 
 /**
+ * AdminRegistrationSettingRead
+ */
+export type AdminRegistrationSettingRead = {
+    /**
+     * Enabled
+     *
+     * 是否允许 Web 公开注册普通用户
+     */
+    enabled: boolean;
+    /**
+     * Revision
+     *
+     * 当前设置修订号
+     */
+    revision: number;
+    /**
+     * Updated At
+     *
+     * 最近更新时间
+     */
+    updated_at: string;
+    /**
+     * 最后修改管理员摘要
+     */
+    updated_by: AdminSummaryRead | null;
+};
+
+/**
  * AdminRoleAssignIn
  */
 export type AdminRoleAssignIn = {
@@ -272,6 +300,74 @@ export type AdminRoleAssignIn = {
      * 分配给管理员的角色唯一标识列表
      */
     role_ids: Array<string>;
+};
+
+/**
+ * AdminSiteSettingRead
+ */
+export type AdminSiteSettingRead = {
+    /**
+     * Name
+     *
+     * Web 公共站点名称
+     */
+    name: string;
+    /**
+     * 站点 LOGO 公开信息
+     */
+    logo: SiteLogoRead | null;
+    /**
+     * Title
+     *
+     * Web 默认页面标题
+     */
+    title: string;
+    /**
+     * Keywords
+     *
+     * Web Metadata 关键词
+     */
+    keywords: Array<string>;
+    /**
+     * Description
+     *
+     * Web 默认站点描述
+     */
+    description: string;
+    /**
+     * Revision
+     *
+     * 当前设置修订号
+     */
+    revision: number;
+    /**
+     * Updated At
+     *
+     * 最近更新时间
+     */
+    updated_at: string;
+    /**
+     * 最后修改管理员摘要
+     */
+    updated_by: AdminSummaryRead | null;
+};
+
+/**
+ * AdminSummaryRead
+ */
+export type AdminSummaryRead = {
+    /**
+     * Id
+     *
+     * 最后修改管理员唯一标识
+     */
+    id: string;
+    /**
+     * Display Name
+     *
+     * 最后修改管理员显示名称
+     */
+    display_name: string | null;
 };
 
 /**
@@ -618,6 +714,24 @@ export type BatchActionResult = {
      * 本次批量操作处理的目标唯一标识列表
      */
     target_ids: Array<string>;
+};
+
+/**
+ * Body_update_site_logo_api_v1_admin_settings_site_logo_put
+ */
+export type BodyUpdateSiteLogoApiV1AdminSettingsSiteLogoPut = {
+    /**
+     * File
+     *
+     * PNG、JPEG 或 WebP 静态 LOGO，最大 2 MB
+     */
+    file: Blob | File;
+    /**
+     * Revision
+     *
+     * 读取站点设置时获得的修订号
+     */
+    revision: number;
 };
 
 /**
@@ -1218,6 +1332,24 @@ export type RefreshSessionOut = {
 };
 
 /**
+ * RegistrationSettingPatchIn
+ */
+export type RegistrationSettingPatchIn = {
+    /**
+     * Revision
+     *
+     * 读取设置时获得的修订号
+     */
+    revision: number;
+    /**
+     * Enabled
+     *
+     * 是否允许 Web 公开注册普通用户
+     */
+    enabled: boolean;
+};
+
+/**
  * RequestLogRead
  */
 export type RequestLogRead = {
@@ -1393,6 +1525,62 @@ export type ResponseModelAdminRead = {
      * 响应业务数据
      */
     data: AdminRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminRegistrationSettingRead]
+ */
+export type ResponseModelAdminRegistrationSettingRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: AdminRegistrationSettingRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[AdminSiteSettingRead]
+ */
+export type ResponseModelAdminSiteSettingRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: AdminSiteSettingRead;
     /**
      * Request Id
      *
@@ -1785,6 +1973,34 @@ export type ResponseModelRoleRead = {
      * 响应业务数据
      */
     data: RoleRead;
+    /**
+     * Request Id
+     *
+     * 用于定位本次请求的唯一标识
+     */
+    request_id: string;
+};
+
+/**
+ * ResponseModel[SiteProfileRead]
+ */
+export type ResponseModelSiteProfileRead = {
+    /**
+     * Code
+     *
+     * 稳定程序代码
+     */
+    code: string;
+    /**
+     * Message
+     *
+     * 面向调用方的中文结果消息
+     */
+    message: string;
+    /**
+     * 响应业务数据
+     */
+    data: SiteProfileRead;
     /**
      * Request Id
      *
@@ -2285,6 +2501,98 @@ export type SessionRead = {
      * 会话撤销时间
      */
     revoked_at: string | null;
+};
+
+/**
+ * SiteLogoRead
+ */
+export type SiteLogoRead = {
+    /**
+     * Url
+     *
+     * 带修订号缓存参数的站点 LOGO 公开路径
+     */
+    url: string;
+    /**
+     * Mime Type
+     *
+     * 站点 LOGO 的真实 MIME 类型
+     */
+    mime_type: string;
+    /**
+     * File Size
+     *
+     * 站点 LOGO 文件大小，单位为字节
+     */
+    file_size: number;
+};
+
+/**
+ * SiteProfileRead
+ */
+export type SiteProfileRead = {
+    /**
+     * Name
+     *
+     * Web 公共站点名称
+     */
+    name: string;
+    /**
+     * Logo Url
+     *
+     * 站点 LOGO 公开路径，未配置时为空
+     */
+    logo_url: string | null;
+    /**
+     * Title
+     *
+     * Web 默认页面标题
+     */
+    title: string;
+    /**
+     * Keywords
+     *
+     * Web Metadata 关键词
+     */
+    keywords: Array<string>;
+    /**
+     * Description
+     *
+     * Web 默认站点描述
+     */
+    description: string;
+};
+
+/**
+ * SiteSettingPatchIn
+ */
+export type SiteSettingPatchIn = {
+    /**
+     * Revision
+     *
+     * 读取设置时获得的修订号
+     */
+    revision: number;
+    /**
+     * Name
+     *
+     * 资源名称
+     */
+    name?: string | null;
+    /**
+     * Title
+     */
+    title?: string | null;
+    /**
+     * Keywords
+     */
+    keywords?: Array<string> | null;
+    /**
+     * Description
+     *
+     * 资源说明文本
+     */
+    description?: string | null;
 };
 
 /**
@@ -4454,6 +4762,179 @@ export type GetSystemOverviewApiV1AdminSystemOverviewGetResponses = {
 };
 
 export type GetSystemOverviewApiV1AdminSystemOverviewGetResponse = GetSystemOverviewApiV1AdminSystemOverviewGetResponses[keyof GetSystemOverviewApiV1AdminSystemOverviewGetResponses];
+
+export type GetSiteSettingApiV1AdminSettingsSiteGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/settings/site';
+};
+
+export type GetSiteSettingApiV1AdminSettingsSiteGetErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type GetSiteSettingApiV1AdminSettingsSiteGetError = GetSiteSettingApiV1AdminSettingsSiteGetErrors[keyof GetSiteSettingApiV1AdminSettingsSiteGetErrors];
+
+export type GetSiteSettingApiV1AdminSettingsSiteGetResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminSiteSettingRead;
+};
+
+export type GetSiteSettingApiV1AdminSettingsSiteGetResponse = GetSiteSettingApiV1AdminSettingsSiteGetResponses[keyof GetSiteSettingApiV1AdminSettingsSiteGetResponses];
+
+export type UpdateSiteSettingApiV1AdminSettingsSitePatchData = {
+    body: SiteSettingPatchIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/settings/site';
+};
+
+export type UpdateSiteSettingApiV1AdminSettingsSitePatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateSiteSettingApiV1AdminSettingsSitePatchError = UpdateSiteSettingApiV1AdminSettingsSitePatchErrors[keyof UpdateSiteSettingApiV1AdminSettingsSitePatchErrors];
+
+export type UpdateSiteSettingApiV1AdminSettingsSitePatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminSiteSettingRead;
+};
+
+export type UpdateSiteSettingApiV1AdminSettingsSitePatchResponse = UpdateSiteSettingApiV1AdminSettingsSitePatchResponses[keyof UpdateSiteSettingApiV1AdminSettingsSitePatchResponses];
+
+export type DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Revision
+         *
+         * 读取站点设置时获得的修订号
+         */
+        revision: number;
+    };
+    url: '/api/v1/admin/settings/site/logo';
+};
+
+export type DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteError = DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteErrors[keyof DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteErrors];
+
+export type DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminSiteSettingRead;
+};
+
+export type DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteResponse = DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteResponses[keyof DeleteSiteLogoApiV1AdminSettingsSiteLogoDeleteResponses];
+
+export type UpdateSiteLogoApiV1AdminSettingsSiteLogoPutData = {
+    body: BodyUpdateSiteLogoApiV1AdminSettingsSiteLogoPut;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/settings/site/logo';
+};
+
+export type UpdateSiteLogoApiV1AdminSettingsSiteLogoPutErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateSiteLogoApiV1AdminSettingsSiteLogoPutError = UpdateSiteLogoApiV1AdminSettingsSiteLogoPutErrors[keyof UpdateSiteLogoApiV1AdminSettingsSiteLogoPutErrors];
+
+export type UpdateSiteLogoApiV1AdminSettingsSiteLogoPutResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminSiteSettingRead;
+};
+
+export type UpdateSiteLogoApiV1AdminSettingsSiteLogoPutResponse = UpdateSiteLogoApiV1AdminSettingsSiteLogoPutResponses[keyof UpdateSiteLogoApiV1AdminSettingsSiteLogoPutResponses];
+
+export type GetRegistrationSettingApiV1AdminSettingsRegistrationGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/settings/registration';
+};
+
+export type GetRegistrationSettingApiV1AdminSettingsRegistrationGetErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type GetRegistrationSettingApiV1AdminSettingsRegistrationGetError = GetRegistrationSettingApiV1AdminSettingsRegistrationGetErrors[keyof GetRegistrationSettingApiV1AdminSettingsRegistrationGetErrors];
+
+export type GetRegistrationSettingApiV1AdminSettingsRegistrationGetResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminRegistrationSettingRead;
+};
+
+export type GetRegistrationSettingApiV1AdminSettingsRegistrationGetResponse = GetRegistrationSettingApiV1AdminSettingsRegistrationGetResponses[keyof GetRegistrationSettingApiV1AdminSettingsRegistrationGetResponses];
+
+export type UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchData = {
+    body: RegistrationSettingPatchIn;
+    path?: never;
+    query?: never;
+    url: '/api/v1/admin/settings/registration';
+};
+
+export type UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchErrors = {
+    /**
+     * 请求参数校验失败
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchError = UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchErrors[keyof UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchErrors];
+
+export type UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelAdminRegistrationSettingRead;
+};
+
+export type UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchResponse = UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchResponses[keyof UpdateRegistrationSettingApiV1AdminSettingsRegistrationPatchResponses];
+
+export type GetSiteProfileApiV1SystemSiteProfileGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/system/site-profile';
+};
+
+export type GetSiteProfileApiV1SystemSiteProfileGetResponses = {
+    /**
+     * 请求成功
+     */
+    200: ResponseModelSiteProfileRead;
+};
+
+export type GetSiteProfileApiV1SystemSiteProfileGetResponse = GetSiteProfileApiV1SystemSiteProfileGetResponses[keyof GetSiteProfileApiV1SystemSiteProfileGetResponses];
 
 export type GetSystemCapabilitiesApiV1SystemCapabilitiesGetData = {
     body?: never;

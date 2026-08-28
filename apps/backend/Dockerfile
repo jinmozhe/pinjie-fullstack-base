@@ -27,7 +27,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 RUN groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app --create-home --home-dir /home/app app \
-    && mkdir -p /app/storage/uploads \
+    && mkdir -p /app/storage/uploads /app/storage/settings-media \
     && chown -R app:app /app/storage
 
 COPY --from=builder --chown=app:app /app/.venv /app/.venv

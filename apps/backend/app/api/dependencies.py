@@ -25,7 +25,9 @@ from app.services.accounts import AdminAccountService, UserAccountService
 from app.services.admin_management import AdminManagementService
 from app.services.assets import AssetService, AssetUploader
 from app.services.authentication import AdminAuthService, WebAuthService
+from app.services.settings_media import SettingsMediaStore
 from app.services.storage import StorageProvider
+from app.services.system_settings import SystemSettingsService
 
 
 @dataclass(frozen=True, slots=True)
@@ -429,6 +431,48 @@ def get_admin_management_service(
 AdminManagementServiceDependency = Annotated[AdminManagementService, Depends(get_admin_management_service)]
 
 
+def get_settings_media_store(request: Request) -> SettingsMediaStore:
+    store = getattr(request.app.state, "settings_media_store", None)
+    if store is None:
+        raise AppException(
+            status_code=503,
+            code=ErrorCode.SERVICE_UNAVAILABLE,
+            message="站点媒体服务尚未就绪",
+        )
+    return cast(SettingsMediaStore, store)
+
+
+def get_public_system_settings_service(request: Request, session: DatabaseSession) -> SystemSettingsService:
+    resources = get_resources(request)
+    return SystemSettingsService(
+        session=session,
+        session_factory=resources.session_factory,
+        settings=get_request_settings(request),
+        metadata=request_metadata(request),
+        media=get_settings_media_store(request),
+    )
+
+
+def get_admin_system_settings_service(
+    request: Request,
+    session: DatabaseSession,
+    current: Annotated[CurrentAdmin, Depends(get_current_admin)],
+) -> SystemSettingsService:
+    resources = get_resources(request)
+    return SystemSettingsService(
+        session=session,
+        session_factory=resources.session_factory,
+        settings=get_request_settings(request),
+        metadata=request_metadata(request),
+        actor_id=current.admin.id,
+        media=get_settings_media_store(request),
+    )
+
+
+PublicSystemSettingsServiceDependency = Annotated[SystemSettingsService, Depends(get_public_system_settings_service)]
+AdminSystemSettingsServiceDependency = Annotated[SystemSettingsService, Depends(get_admin_system_settings_service)]
+
+
 def require_web_csrf(
     request: Request,
     current: Annotated[CurrentUser, Depends(get_current_user)],
@@ -478,6 +522,7 @@ __all__ = [
     "AssetUploaderDependency",
     "AdminAuthServiceDependency",
     "AdminManagementServiceDependency",
+    "AdminSystemSettingsServiceDependency",
     "DatabaseSession",
     "get_current_admin",
     "require_superuser",
@@ -485,6 +530,7 @@ __all__ = [
     "get_db_session",
     "get_request_settings",
     "get_resources",
+    "PublicSystemSettingsServiceDependency",
     "require_admin_csrf",
     "require_admin_csrf_pair",
     "require_admin_access_token",

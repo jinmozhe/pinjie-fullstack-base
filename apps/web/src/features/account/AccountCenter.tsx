@@ -1,9 +1,8 @@
 "use client";
 
-import type { AssetRead, SessionRead, UserPrincipalOut } from "@pinjie/api-client";
+import type { AssetRead, SessionRead, SiteProfileRead, UserPrincipalOut } from "@pinjie/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, Check, KeyRound, Laptop, LogOut, ShieldCheck, Trash2, UserRound } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -12,6 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { webAuthApi } from "@/features/auth";
 import { AvatarUploader } from "@/components/uploader/ImageUploader";
 import { errorMessage } from "@/lib/api/http";
+import { SiteBrand } from "@/features/site";
 
 type Section = "profile" | "security" | "sessions" | "danger";
 const sections: Array<{ id: Section; label: string; icon: ReactNode }> = [
@@ -44,7 +44,7 @@ function UserAvatar({ url, name, size = "header" }: { url?: string | null; name:
   );
 }
 
-export function AccountCenter({ initialUser }: { initialUser: UserPrincipalOut }) {
+export function AccountCenter({ initialUser, siteProfile }: { initialUser: UserPrincipalOut; siteProfile?: SiteProfileRead }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const requestController = useRef(new globalThis.AbortController());
@@ -76,7 +76,7 @@ export function AccountCenter({ initialUser }: { initialUser: UserPrincipalOut }
   return (
     <main className="account-shell">
       <header className="account-header">
-        <Link className="wordmark" href="/">PINJIE</Link>
+        <SiteBrand profile={siteProfile} />
         <div className="account-identity"><UserAvatar url={user.data.avatar} name={user.data.display_name || user.data.username} /><div><strong>{user.data.display_name || user.data.username}</strong><span>@{user.data.username}</span></div></div>
         <button className="icon-text-button" type="button" disabled={logout.isPending} onClick={() => logout.mutate()}><LogOut size={17} />退出</button>
       </header>

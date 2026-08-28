@@ -9,7 +9,7 @@
 | 项目角色 | 通用全栈 Monorepo 母版 |
 | 派生类型 | 无 |
 | 母版基线 | 当前仓库 |
-| 当前阶段 | PR #14 契约兼容修复已完成；旧版管理员确认端点限时保留至 2026-09-26，新增权限的目标环境同步、发布和部署仍需独立授权 |
+| 当前阶段 | 系统设置与站点配置媒体第一阶段本地实施已完成；真实迁移、目标权限同步、重型验证和远端交付未执行；旧版管理员确认端点限时保留至 2026-09-26 |
 | 业务范围 | 认证、用户、管理、系统等跨业务通用能力；具体业务进入蓝图或派生仓库 |
 
 ## 执行入口
@@ -37,11 +37,14 @@
 | `docs/adr/0010-浏览器认证会话RBAC与审计决策.md` | 生效 | Browser Cookie Profile、C/B 会话隔离、Refresh 权威、规范化 RBAC 和审计决策 |
 | `docs/adr/0011-Admin采用AntDesignProV6与UmiMax决策.md` | 已完成 | Admin 采用官方 Ant Design Pro v6/Umi Max，保留项目安全、契约和质量边界 |
 | `docs/adr/0012-统一文件资产采用可补偿本地存储决策.md` | 已完成 | 统一文件资产采用本地存储端口、同文件系统原子提交、同主体去重和可恢复删除补偿 |
+| `docs/adr/0013-全局系统设置与配置媒体决策.md` | 已完成 | 全局设置采用单表分组 JSONB、固定强类型接口和独立可补偿配置媒体槽位 |
+| `docs/architecture/system-settings.md` | 生效 | 系统设置数据模型、接口、注册 Fail Closed、媒体恢复和三端消费边界 |
 
 ## 当前开发计划
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-28_系统设置与站点配置媒体计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 已完成单表分组 JSONB、固定设置 Tab、注册 Fail Closed 和独立配置媒体槽位 |
 | `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | Admin、Documentation | 已移除表格容器的重复滚动层并恢复 Ant Design 受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | Admin、Documentation | 已将忘记密码点击弹窗替换为浅灰色悬浮提示 |
 | `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | Admin、Documentation | 已将输入内容、placeholder 和按钮文字统一收敛至 `14px / 400` |
@@ -104,6 +107,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-28_系统设置与站点配置媒体计划.md` | 已结束 | 已完成；单表分组 JSONB、固定强类型接口、注册 Fail Closed、配置媒体补偿、Admin 双 Tab 和 Web 品牌消费已落地，轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Admin、Web、API Client、Database、Deployment、Documentation | 建立站点资料、公开注册开关和独立站点 LOGO 配置媒体的完整跨栈实施边界 |
 | `plans/2026-08-28_Admin表格异常纵向滚动条修复计划.md` | 已结束 | 已完成；重复滚动层已移除，Admin typecheck、lint 与 Markdown lint 通过，重型验证按项目策略未执行 | Admin、Documentation | 修复普通表格右侧异常滚动条并保留真实宽表受控滚动 |
 | `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | 已完成；浅灰色 Tooltip 已替换点击弹窗，Admin typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低忘记密码入口视觉重量并取消点击弹窗 |
 | `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | 已完成；输入内容、placeholder 和按钮文字统一为 `14px / 400`，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低登录表单控件的边界、字重和按钮色彩重量 |

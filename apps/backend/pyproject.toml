@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.116.0",
     "loguru>=0.7.3",
     "orjson>=3.11.0",
+    "pillow>=12.1,<13",
     "pwdlib[argon2]>=0.3,<1",
     "pydantic-settings>=2.10.0",
     "pyjwt>=2.13,<3",

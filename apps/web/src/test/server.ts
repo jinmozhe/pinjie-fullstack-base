@@ -12,6 +12,9 @@ export const handlers = [
   http.get("http://localhost:3000/api/v1/system/capabilities", () =>
     ok({ registration_enabled: true }),
   ),
+  http.get("http://localhost:3000/api/v1/system/site-profile", () =>
+    ok({ name: "品界", logo_url: "/static/settings/site/logo.png?v=2", title: "品界网络科技", keywords: ["品界"], description: "可靠的数字产品与服务" }),
+  ),
   http.post("http://localhost:3000/api/v1/auth/login", () => ok({ principal: user, session_id: session.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),
   http.post("http://localhost:3000/api/v1/auth/register", () => ok({ principal: user, session_id: session.id, access_expires_at: now, idle_expires_at: now, absolute_expires_at: now })),
   http.post("http://localhost:3000/api/v1/auth/logout", () => ok({ completed: true })),

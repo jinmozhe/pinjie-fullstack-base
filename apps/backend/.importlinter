@@ -19,6 +19,7 @@ ignore_imports =
     app.domains.admin.management_router -> app.api.dependencies
     app.domains.users.router -> app.api.dependencies
     app.domains.assets.router -> app.api.dependencies
+    app.domains.settings.router -> app.api.dependencies
 
 [importlinter:contract:core-is-independent]
 name = Core does not import application layers

@@ -25,7 +25,9 @@ from app.core.resources import AppResources, create_resources
 from app.core.response import public_message
 from app.domains.system.router import readiness_response
 from app.domains.system.schemas import LiveStatus, ReadinessStatus
+from app.services.settings_media import SettingsMediaStore
 from app.services.storage import create_storage_provider
+from app.services.system_settings import recover_settings_media
 
 _HTTP_ERROR_MESSAGES = {
     400: "请求内容有误",
@@ -128,6 +130,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.settings = app_settings
         app.state.resources = resources
         try:
+            await recover_settings_media(session_factory=resources.session_factory, settings=app_settings)
+            resources.settings_media_ready = True
             yield
         finally:
             await resources.close()
@@ -143,6 +147,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = app_settings
     app.state.storage_provider = create_storage_provider(app_settings)
+    app.state.settings_media_store = SettingsMediaStore(app_settings.settings_media_root)
     app.middleware("http")(request_context_middleware)
     app.add_middleware(
         CORSMiddleware,
@@ -166,6 +171,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app_settings.upload_base_url,
         StaticFiles(directory=app_settings.upload_local_root, check_dir=False),
         name="uploaded-assets",
+    )
+    app.mount(
+        app_settings.settings_media_base_url,
+        StaticFiles(directory=app_settings.settings_media_root, check_dir=False),
+        name="settings-media",
     )
 
     @app.get("/health/live", response_model=LiveStatus, tags=["健康检查"], summary="检查应用存活状态")

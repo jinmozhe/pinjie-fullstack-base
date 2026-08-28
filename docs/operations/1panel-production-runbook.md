@@ -47,7 +47,7 @@ docker compose --env-file .env -f compose.prod.yml config --quiet
 
 - `BACKEND_IMAGE`、`WEB_IMAGE`、`ADMIN_IMAGE` 均为批准的完整 digest。
 - PostgreSQL 命名卷挂载到 `/var/lib/postgresql`。
-- Backend `backend_uploads` 命名卷挂载到 `/app/storage`，公开根为 `/app/storage/uploads`。
+- Backend `backend_uploads` 命名卷挂载到 `/app/storage`，统一资产根为 `/app/storage/uploads`，配置媒体根为 `/app/storage/settings-media`。
 - Backend 和 request-log-consumer 显式设置 `LOG_FILE_ENABLED=false`。
 - `DATABASE_URL` 使用服务名 `postgres`，`REDIS_URL` 使用服务名 `redis`。
 - `ENVIRONMENT=production`，Cookie、Trusted Host、CORS、代理 CIDR 和四个认证密钥满足生产约束。
@@ -120,7 +120,7 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 
 1Panel 可以调度 PostgreSQL 备份和异地复制，但面板成功状态不能代替隔离恢复演练。详细校验见[数据库备份与恢复手册](database-backup-restore.md)。
 
-统一文件资产启用后，还必须备份 `backend_uploads` 命名卷。数据库与文件卷使用同一备份窗口并共同记录标识；恢复时先停止写入，恢复 PostgreSQL 与文件卷，再抽样核对 `assets.file_key` 对应文件。只恢复数据库或只恢复文件卷会产生悬空元数据或孤儿文件，不能视为完整恢复。
+统一文件资产或系统配置媒体启用后，必须备份完整 `backend_uploads` 命名卷。数据库与文件卷使用同一备份窗口并共同记录标识；恢复时先停止写入，恢复 PostgreSQL 与文件卷，再抽样核对 `assets.file_key`，并校验 `system_settings.site.logo` 的路径、大小、MIME 和哈希。只恢复数据库或只恢复文件卷会产生悬空元数据或孤儿文件，不能视为完整恢复。
 
 应用回滚只能选择已经批准的旧镜像 digest，并先确认旧应用与当前数据库 revision 兼容。数据库回滚或覆盖恢复必须停止或隔离写入、保全当前数据库、确认恢复点与数据损失窗口，并取得专项授权。
 

@@ -47,6 +47,7 @@ async def check_database(engine: AsyncEngine, timeout: float) -> tuple[bool, str
 async def check_readiness(resources: AppResources, settings: Settings) -> ReadinessResult:
     database_ok, database_state = await check_database(resources.engine, settings.dependency_timeout)
     checks = {"database": database_state}
+    checks["settings_media"] = "ok" if resources.settings_media_ready else "unavailable"
     if settings.redis_mode == "required":
         redis_ok = await check_redis(resources.redis, settings.dependency_timeout)
         checks["redis"] = "ok" if redis_ok else "unavailable"

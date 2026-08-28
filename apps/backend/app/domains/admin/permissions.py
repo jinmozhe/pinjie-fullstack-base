@@ -39,6 +39,10 @@ class PermissionCode(StrEnum):
     SYSTEM_REQUEST_LOGS_READ = "system:request-logs:read"
     ASSETS_READ = "assets:read"
     ASSETS_DELETE = "assets:delete"
+    SETTINGS_SITE_READ = "settings:site:read"
+    SETTINGS_SITE_UPDATE = "settings:site:update"
+    SETTINGS_REGISTRATION_READ = "settings:registration:read"
+    SETTINGS_REGISTRATION_UPDATE = "settings:registration:update"
 
 
 PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
@@ -75,11 +79,15 @@ PERMISSION_CATALOG: tuple[PermissionDefinition, ...] = (
     PermissionDefinition("system:request-logs:read", "查看请求日志", "查看启用后的请求元数据"),
     PermissionDefinition("assets:read", "查看文件资产", "查看统一文件与多媒体资产列表"),
     PermissionDefinition("assets:delete", "删除文件资产", "删除文件资产及其存储对象"),
+    PermissionDefinition("settings:site:read", "查看站点设置", "查看 Web 公共站点资料和 LOGO"),
+    PermissionDefinition("settings:site:update", "修改站点设置", "修改 Web 公共站点资料和 LOGO"),
+    PermissionDefinition("settings:registration:read", "查看注册设置", "查看 Web 公开注册开关"),
+    PermissionDefinition("settings:registration:update", "修改注册设置", "修改 Web 公开注册开关"),
 )
 
 PERMISSION_CODES = frozenset(item.code for item in PERMISSION_CATALOG)
 ROLE_ASSIGNABLE_PERMISSION_CODES = frozenset(item.code for item in PERMISSION_CATALOG if item.assignable_to_roles)
-CATALOG_VERSION = "2026-08-28.1"
+CATALOG_VERSION = "2026-08-28.2"
 
 __all__ = [
     "CATALOG_VERSION",
