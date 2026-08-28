@@ -127,7 +127,7 @@ describe("admin runtime lifecycle", () => {
 
     render(rootContainer(ready.childrenRender?.(<span>受保护内容</span>) ?? null));
     expect(screen.getByText("受保护内容")).toBeInTheDocument();
-    expect(ready.title).toBe("PinJie");
+    expect(ready.title).toBe("PinJie Console");
     expect(ready.siderWidth).toBe(256);
     expect(ready.token?.pageContainer?.paddingInlinePageContainerContent).toBe(40);
   });

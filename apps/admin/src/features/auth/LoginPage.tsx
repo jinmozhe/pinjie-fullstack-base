@@ -4,8 +4,8 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Form, Input, Modal } from "antd";
-import { useEffect, useState } from "react";
+import { Alert, Button, Form, Input, Tooltip } from "antd";
+import { useEffect } from "react";
 
 import { adminApi } from "@/lib/api/admin";
 import { errorMessage } from "@/lib/api/http";
@@ -13,9 +13,12 @@ import { navigate } from "@/lib/navigation";
 
 type LoginValues = { username: string; password: string };
 
-export function LoginPage({ authenticated = false }: { authenticated?: boolean }) {
+export function LoginPage({
+  authenticated = false,
+}: {
+  authenticated?: boolean;
+}) {
   const queryClient = useQueryClient();
-  const [recoveryOpen, setRecoveryOpen] = useState(false);
 
   useEffect(() => {
     if (authenticated) navigate("/welcome");
@@ -40,14 +43,14 @@ export function LoginPage({ authenticated = false }: { authenticated?: boolean }
         <div className="login-shell">
           <header className="login-top">
             <div className="login-header">
-              <span className="login-header__logo" aria-hidden="true">
-                <span>PJ</span>
-              </span>
+              <span className="login-header__logo" aria-hidden="true" />
               <h1 className="login-header__title" id="login-title">
-                品捷管理系统
+                Pinjie Console&nbsp;&nbsp;
               </h1>
             </div>
-            <p className="login-desc">品捷全栈企业级统一管理控制台</p>
+            <p className="login-desc">
+              统一身份、精细权限、全链路审计的管理中枢
+            </p>
           </header>
 
           <div className="login-main">
@@ -100,9 +103,15 @@ export function LoginPage({ authenticated = false }: { authenticated?: boolean }
                   <SafetyCertificateOutlined />
                   安全会话自动保持
                 </span>
-                <Button className="login-forgot-link" type="link" onClick={() => setRecoveryOpen(true)}>
-                  忘记密码？
-                </Button>
+                <Tooltip
+                  placement="top"
+                  title="请联系超级管理员为您重置密码"
+                  trigger={["hover", "focus"]}
+                >
+                  <span className="login-forgot-hint" tabIndex={0}>
+                    忘记密码？
+                  </span>
+                </Tooltip>
               </div>
               <Button
                 block
@@ -119,23 +128,8 @@ export function LoginPage({ authenticated = false }: { authenticated?: boolean }
         </div>
       </section>
       <footer className="login-footer">
-        <div className="login-footer__copyright">品捷管理系统 © 2026</div>
+        <div className="login-footer__copyright">品界网络科技 © 2026</div>
       </footer>
-      <Modal
-        centered
-        footer={
-          <Button type="primary" onClick={() => setRecoveryOpen(false)}>
-            我知道了
-          </Button>
-        }
-        open={recoveryOpen}
-        title="忘记密码"
-        onCancel={() => setRecoveryOpen(false)}
-      >
-        <p className="login-recovery-copy">
-          请联系系统管理员为你重置密码。为保护管理端安全，登录页不会收集邮箱、手机号码或新密码。
-        </p>
-      </Modal>
     </main>
   );
 }
