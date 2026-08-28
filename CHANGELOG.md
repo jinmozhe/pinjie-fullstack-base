@@ -99,6 +99,7 @@
 
 ### Changed
 
+- 将根目录 `PROJECT_INDEX.md` 精简为项目身份、当前阶段、活动计划和权威入口；新增 `plans/INDEX.md` 作为全部实施计划的唯一永久登记，`plans/README.md` 继续只维护计划规则和生命周期。
 - 全项目索引迁移到根目录 `PROJECT_INDEX.md` 并作为唯一当前事实与任务导航入口；项目规则、README、PRD、ADR、架构、运维和全部既有计划中的旧名称与路径已同步更新，`.agents/` 继续只保留 Antigravity 规则桥接文件。
 - Admin 登录表单输入框改用 Ant Design Filled 变体，默认使用透明边框和半透明白色填充，hover 与 focus 逐级增强背景和焦点反馈；输入内容、占位文字和登录按钮文字继续使用 `14px / 400`，登录按钮保持浅蓝底与深蓝字。
 - Admin 登录页“忘记密码？”改为浅灰色说明入口，取消点击弹窗；鼠标悬停或键盘聚焦时通过 Ant Design Tooltip 提示“请联系超级管理员为您重置密码”。
