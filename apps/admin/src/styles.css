@@ -148,6 +148,57 @@ textarea {
   white-space: nowrap;
 }
 
+.responsive-data-table {
+  min-width: 0;
+}
+
+.responsive-data-table .ant-table-content {
+  max-width: 100%;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: #c8ced8 transparent;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.responsive-data-table .ant-table-content::-webkit-scrollbar {
+  height: 6px;
+}
+
+.responsive-data-table .ant-table-content::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: #c8ced8;
+}
+
+.responsive-table-toolbar,
+.table-toolbar-desktop-filters {
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.table-toolbar-mobile-lifecycle,
+.table-toolbar-mobile-filter {
+  display: none;
+}
+
+.mobile-filter-stack {
+  display: grid;
+  gap: 20px;
+}
+
+.mobile-filter-field {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-filter-field .ant-select {
+  width: 100%;
+}
+
 .admins-table .ant-table-measure-row {
   visibility: hidden;
 }
@@ -618,6 +669,48 @@ body .ant-tag.ant-tag-success {
   }
   .workspace-panel > .ant-card-body {
     padding: 16px;
+  }
+  .responsive-data-table .ant-pro-table-list-toolbar-container {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .responsive-data-table .ant-pro-table-list-toolbar-left,
+  .responsive-data-table .ant-pro-table-list-toolbar-right {
+    width: 100%;
+    min-width: 0;
+  }
+  .responsive-data-table .ant-pro-table-list-toolbar-right {
+    margin-inline-start: 0;
+  }
+  .responsive-data-table .ant-pro-table-list-toolbar-right > div:has(> .responsive-table-toolbar) {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+  .responsive-table-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .table-toolbar-search {
+    order: -1;
+    width: 100% !important;
+  }
+  .table-toolbar-desktop-lifecycle,
+  .table-toolbar-desktop-filters {
+    display: none;
+  }
+  .table-toolbar-mobile-lifecycle {
+    display: flex;
+    min-width: 132px;
+    flex: 1 1 148px;
+  }
+  .table-toolbar-mobile-filter {
+    display: inline-flex;
+    flex: 1 1 auto;
+  }
+  .table-toolbar-create,
+  .table-toolbar-reset {
+    flex: 0 0 auto;
   }
 }
 

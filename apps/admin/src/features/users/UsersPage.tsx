@@ -12,7 +12,7 @@ import {
 } from "@ant-design/icons";
 import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, Segmented, Space, Tag, Typography, message } from "antd";
+import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, Segmented, Select, Space, Tag, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -159,6 +159,11 @@ export function UsersPage() {
     setSearch("");
     setSearchDraft("");
   };
+  const changeLifecycle = (value: UserLifecycle) => {
+    setLifecycle(value);
+    setPage(1);
+    setSelectedRowKeys([]);
+  };
   const beginBulkStatusChange = (isActive: boolean) => {
     const userIds = [...selectedRowKeys];
     void batchStatusMutation
@@ -179,6 +184,7 @@ export function UsersPage() {
       <QueryState loading={users.isLoading} error={users.isError ? errorMessage(users.error) : undefined} onRetry={() => void users.refetch()} />
       {users.data && (
         <ProTable<AdminUserRead>
+          className="responsive-data-table"
           rowKey="id"
           headerTitle="用户列表"
           dataSource={users.data.items}
@@ -254,50 +260,61 @@ export function UsersPage() {
               <Button type="link" size="small" onClick={onCleanSelected}>取消选择</Button>
             </Space>
           )}
-          toolBarRender={() => [
-            ...(canCreate ? [
-              <Button
-                key="create"
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  createMutation.reset();
-                  createForm.resetFields();
-                  createForm.setFieldsValue({ is_active: true });
-                  setCreating(true);
-                }}
-              >
-                新建用户
-              </Button>,
-            ] : []),
-            <Segmented<UserLifecycle>
-              key="lifecycle"
-              aria-label="用户生命周期"
-              options={[
-                { label: "全部", value: "all" },
-                { label: "启用", value: "active" },
-                { label: "停用", value: "inactive" },
-                { label: "回收站", value: "deleted" },
-              ]}
-              value={lifecycle}
-              onChange={(value) => {
-                setLifecycle(value);
-                setPage(1);
-                setSelectedRowKeys([]);
-              }}
-            />,
-            <Input.Search
-              key="search"
-              allowClear
-              aria-label="搜索用户"
-              placeholder="用户名、显示名称或邮箱"
-              style={{ width: 240 }}
-              value={searchDraft}
-              onChange={(event) => setSearchDraft(event.target.value)}
-              onSearch={submitSearch}
-            />,
-            <Button key="reset" onClick={resetSearch}>重置</Button>,
-          ]}
+          toolBarRender={() => [(
+            <div className="responsive-table-toolbar users-table-toolbar" key="user-toolbar">
+              {canCreate && (
+                <Button
+                  className="table-toolbar-create"
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    createMutation.reset();
+                    createForm.resetFields();
+                    createForm.setFieldsValue({ is_active: true });
+                    setCreating(true);
+                  }}
+                >
+                  新建用户
+                </Button>
+              )}
+              <Segmented<UserLifecycle>
+                className="table-toolbar-desktop-lifecycle"
+                aria-label="用户生命周期"
+                options={[
+                  { label: "全部", value: "all" },
+                  { label: "启用", value: "active" },
+                  { label: "停用", value: "inactive" },
+                  { label: "回收站", value: "deleted" },
+                ]}
+                value={lifecycle}
+                onChange={changeLifecycle}
+              />
+              <Select<UserLifecycle>
+                className="table-toolbar-mobile-lifecycle"
+                aria-label="用户生命周期（移动端）"
+                options={[
+                  { label: "全部用户", value: "all" },
+                  { label: "启用用户", value: "active" },
+                  { label: "停用用户", value: "inactive" },
+                  { label: "用户回收站", value: "deleted" },
+                ]}
+                value={lifecycle}
+                onChange={changeLifecycle}
+              />
+              <Input.Search
+                className="table-toolbar-search"
+                allowClear
+                aria-label="搜索用户"
+                placeholder="用户名、显示名称或邮箱"
+                style={{ width: 240 }}
+                value={searchDraft}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                onSearch={submitSearch}
+              />
+              <Button className="table-toolbar-reset" onClick={resetSearch}>重置</Button>
+            </div>
+          )]}
+          scroll={{ x: lifecycle === "deleted" ? 1180 : 900 }}
           pagination={{
             current: page,
             pageSize: 20,

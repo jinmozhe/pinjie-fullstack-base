@@ -4,11 +4,12 @@ import {
   DeleteOutlined,
   EyeOutlined,
   FileOutlined,
+  FilterOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
 import { ProTable } from "@ant-design/pro-components";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Image, Input, Select, Space, Tag, Tooltip, Typography, message } from "antd";
+import { Button, Drawer, Image, Input, Select, Space, Tag, Tooltip, Typography, message } from "antd";
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
@@ -55,7 +56,9 @@ export function AssetsPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [previewAsset, setPreviewAsset] = useState<AssetRead | null>(null);
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
   const canDelete = canAccess(current, "assets:delete");
+  const activeFilterCount = Number(Boolean(scene)) + Number(Boolean(uploaderType));
   const assets = useQuery({
     queryKey: ["assets", page, search, scene, uploaderType],
     queryFn: () => adminApi.assets({ page, search: search || undefined, scene, uploaderType }),
@@ -129,6 +132,7 @@ export function AssetsPage() {
       />
       {assets.data && (
         <ProTable<AssetRead>
+          className="responsive-data-table"
           rowKey="id"
           headerTitle="资产列表"
           dataSource={assets.data.items}
@@ -167,45 +171,55 @@ export function AssetsPage() {
               <Button type="link" size="small" onClick={onCleanSelected}>取消选择</Button>
             </Space>
           )}
-          toolBarRender={() => [
-            <Input.Search
-              key="search"
-              allowClear
-              aria-label="搜索文件名"
-              placeholder="搜索文件名"
-              style={{ width: 220 }}
-              value={searchDraft}
-              onChange={(event) => setSearchDraft(event.target.value)}
-              onSearch={submitSearch}
-            />,
-            <Select<UploadScene>
-              key="scene"
-              allowClear
-              aria-label="筛选使用场景"
-              placeholder="使用场景"
-              style={{ width: 140 }}
-              value={scene}
-              options={Object.entries(sceneLabels).map(([value, label]) => ({ value: value as UploadScene, label }))}
-              onChange={(value) => {
-                clearSelectionAndResetPage();
-                setScene(value);
-              }}
-            />,
-            <Select<UploaderType>
-              key="uploader"
-              allowClear
-              aria-label="筛选上传主体"
-              placeholder="上传主体"
-              style={{ width: 130 }}
-              value={uploaderType}
-              options={Object.entries(uploaderLabels).map(([value, label]) => ({ value: value as UploaderType, label }))}
-              onChange={(value) => {
-                clearSelectionAndResetPage();
-                setUploaderType(value);
-              }}
-            />,
-            <Button key="reset" icon={<ReloadOutlined />} onClick={resetFilters}>重置</Button>,
-          ]}
+          toolBarRender={() => [(
+            <div className="responsive-table-toolbar assets-table-toolbar" key="asset-toolbar">
+              <Input.Search
+                className="table-toolbar-search"
+                allowClear
+                aria-label="搜索文件名"
+                placeholder="搜索文件名"
+                style={{ width: 220 }}
+                value={searchDraft}
+                onChange={(event) => setSearchDraft(event.target.value)}
+                onSearch={submitSearch}
+              />
+              <div className="table-toolbar-desktop-filters">
+                <Select<UploadScene>
+                  allowClear
+                  aria-label="筛选使用场景"
+                  placeholder="使用场景"
+                  style={{ width: 140 }}
+                  value={scene}
+                  options={Object.entries(sceneLabels).map(([value, label]) => ({ value: value as UploadScene, label }))}
+                  onChange={(value) => {
+                    clearSelectionAndResetPage();
+                    setScene(value);
+                  }}
+                />
+                <Select<UploaderType>
+                  allowClear
+                  aria-label="筛选上传主体"
+                  placeholder="上传主体"
+                  style={{ width: 130 }}
+                  value={uploaderType}
+                  options={Object.entries(uploaderLabels).map(([value, label]) => ({ value: value as UploaderType, label }))}
+                  onChange={(value) => {
+                    clearSelectionAndResetPage();
+                    setUploaderType(value);
+                  }}
+                />
+              </div>
+              <Button
+                className="table-toolbar-mobile-filter"
+                icon={<FilterOutlined />}
+                onClick={() => setFilterDrawerOpen(true)}
+              >
+                {activeFilterCount > 0 ? `筛选 (${activeFilterCount})` : "筛选"}
+              </Button>
+              <Button className="table-toolbar-reset" icon={<ReloadOutlined />} onClick={resetFilters}>重置</Button>
+            </div>
+          )]}
+          scroll={{ x: 940 }}
           pagination={{
             current: page,
             pageSize: assets.data.page_size,
@@ -314,6 +328,48 @@ export function AssetsPage() {
           ]}
         />
       )}
+      <Drawer
+        className="asset-filter-drawer"
+        destroyOnHidden
+        extra={<Button type="primary" onClick={() => setFilterDrawerOpen(false)}>完成</Button>}
+        height={360}
+        open={filterDrawerOpen}
+        placement="bottom"
+        title="筛选文件资产"
+        onClose={() => setFilterDrawerOpen(false)}
+      >
+        <div className="mobile-filter-stack">
+          <div className="mobile-filter-field">
+            <Typography.Text strong>使用场景</Typography.Text>
+            <Select<UploadScene>
+              allowClear
+              aria-label="移动端筛选使用场景"
+              placeholder="全部使用场景"
+              value={scene}
+              options={Object.entries(sceneLabels).map(([value, label]) => ({ value: value as UploadScene, label }))}
+              onChange={(value) => {
+                clearSelectionAndResetPage();
+                setScene(value);
+              }}
+            />
+          </div>
+          <div className="mobile-filter-field">
+            <Typography.Text strong>上传主体</Typography.Text>
+            <Select<UploaderType>
+              allowClear
+              aria-label="移动端筛选上传主体"
+              placeholder="全部上传主体"
+              value={uploaderType}
+              options={Object.entries(uploaderLabels).map(([value, label]) => ({ value: value as UploaderType, label }))}
+              onChange={(value) => {
+                clearSelectionAndResetPage();
+                setUploaderType(value);
+              }}
+            />
+          </div>
+          <Button block icon={<ReloadOutlined />} onClick={resetFilters}>清空筛选</Button>
+        </div>
+      </Drawer>
       {previewAsset && (
         <Image
           alt={previewAsset.original_name}
