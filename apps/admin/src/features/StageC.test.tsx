@@ -1,4 +1,4 @@
-import type { AdminRead } from "@pinjie/api-client";
+import type { AdminRead, PermissionRead } from "@pinjie/api-client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -13,7 +13,7 @@ import { AdminsPage } from "./admins/AdminsPage";
 import { AssetsPage } from "./assets/AssetsPage";
 import { LoginPage } from "./auth/LoginPage";
 import { AdminContext } from "./auth/auth-context";
-import { RolesPage } from "./roles/RolesPage";
+import { RolesPage, buildPermissionTree, filterPermissionCodes } from "./roles/RolesPage";
 import { SecurityPage } from "./security/SecurityPage";
 import { UsersPage } from "./users/UsersPage";
 import { server } from "../test/setup";
@@ -413,15 +413,59 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByText("密码必须为 6 至 64 个字符")).toBeInTheDocument();
   });
 
-  it("loads roles and the source-controlled permission catalog", async () => {
+  it("groups the source-controlled permission catalog without losing unknown permissions", () => {
+    const catalog: PermissionRead[] = [
+      { id: "permission-users", code: "users:read", name: "查看用户", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-admins", code: "admins:read", name: "查看管理员", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-roles", code: "roles:update", name: "修改角色", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-system", code: "system:overview:read", name: "查看系统概览", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-assets", code: "assets:delete", name: "删除文件资产", description: null, is_active: false, catalog_version: "v1" },
+      { id: "permission-other", code: "reports:export", name: "导出报表", description: null, is_active: true, catalog_version: "v1" },
+    ];
+
+    const tree = buildPermissionTree(catalog);
+    expect(tree.map((node) => node.label)).toEqual(["用户管理", "管理员管理", "角色与权限", "安全与系统", "文件资产", "其他权限"]);
+    expect(tree.find((node) => node.label === "文件资产")?.children?.[0]).toMatchObject({ disabled: true, value: "assets:delete" });
+    expect(tree.find((node) => node.label === "其他权限")?.children?.[0]).toMatchObject({ searchText: expect.stringContaining("reports:export"), value: "reports:export" });
+    expect(filterPermissionCodes(["users:read", "__permission_group__:users", "users:read", "missing:read"], catalog)).toEqual(["users:read"]);
+  });
+
+  it("loads, searches and updates role permissions through the tree select", async () => {
     const user = userEvent.setup();
+    let assignPayload: unknown;
+    const catalog: PermissionRead[] = [
+      { id: "permission-users", code: "users:read", name: "查看用户", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-roles", code: "roles:update", name: "修改角色", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-system", code: "system:overview:read", name: "查看系统概览", description: null, is_active: true, catalog_version: "v1" },
+      { id: "permission-assets", code: "assets:delete", name: "删除文件资产", description: null, is_active: false, catalog_version: "v1" },
+      { id: "permission-other", code: "reports:export", name: "导出报表", description: null, is_active: true, catalog_version: "v1" },
+    ];
+    server.use(
+      http.get("http://localhost:3000/api/v1/admin/permissions", () => HttpResponse.json({ code: "OK", message: "操作成功", data: catalog, request_id: "test-request" })),
+      http.put("http://localhost:3000/api/v1/admin/roles/:id/permissions", async ({ request }) => {
+        assignPayload = await request.json();
+        return HttpResponse.json({ code: "OK", message: "操作成功", data: {}, request_id: "test-request" });
+      }),
+    );
     renderPage(<RolesPage />);
     expect(await screen.findByText("运营人员")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /权限/ }));
     expect(await screen.findByText("查看用户")).toBeInTheDocument();
+    const permissionSelect = screen.getByLabelText("角色权限");
+    await user.click(permissionSelect);
+    expect(await screen.findByText("用户管理")).toBeInTheDocument();
+    expect(screen.getByText("角色与权限")).toBeInTheDocument();
+    expect(screen.getByText("其他权限")).toBeInTheDocument();
+    expect(screen.getByText("删除文件资产").closest('[role="treeitem"]')).toHaveAttribute("aria-disabled", "true");
+
+    await user.type(permissionSelect, "system:overview:read");
+    expect(await screen.findByText("查看系统概览")).toBeInTheDocument();
+    await user.click(screen.getByText("查看系统概览"));
+    await user.clear(permissionSelect);
+    await user.click(await screen.findByText("导出报表"));
     await user.click(screen.getByRole("button", { name: /保\s*存/ }));
-    await user.click(screen.getByRole("button", { name: /删除/ }));
-    await confirmWarning(user, "删除未使用角色");
+
+    await waitFor(() => expect(assignPayload).toEqual({ permission_codes: ["users:read", "system:overview:read", "reports:export"] }));
   }, 60_000);
 
   it("selects roles and sends one atomic bulk hard-delete request", async () => {
