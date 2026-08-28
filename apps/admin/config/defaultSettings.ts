@@ -8,7 +8,7 @@ const defaultSettings: LayoutSettings = {
   fixedHeader: true,
   fixSiderbar: true,
   splitMenus: false,
-  title: "PinJie",
+  title: "PinJie Console",
 };
 
 export default defaultSettings;

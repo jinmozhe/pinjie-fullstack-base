@@ -42,8 +42,16 @@
 
 | 路径 | 状态 | 影响范围 | 用途 |
 | --- | --- | --- | --- |
+| `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | Admin、Documentation | 已将忘记密码点击弹窗替换为浅灰色悬浮提示 |
+| `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | Admin、Documentation | 已将输入内容、placeholder 和按钮文字统一收敛至 `14px / 400` |
+| `plans/2026-08-28_Admin忘记密码弹窗安全图标优化计划.md` | 已结束 | Admin、Documentation | 已为忘记密码弹窗增加 Ant Design 双色安全图标 |
+| `plans/2026-08-28_Admin登录页能力文案优化计划.md` | 已结束 | Admin、Documentation | 已将登录页抽象描述替换为统一身份、精细权限与审计能力摘要 |
+| `plans/2026-08-28_Admin登录页背景透明度与Logo比例微调计划.md` | 已结束 | Admin、Documentation | 已降低登录页背景透明度并将 Logo 从 `36px` 放大至 `54px` |
+| `plans/2026-08-28_Admin登录页多色背景层次优化计划.md` | 已结束 | Admin、Documentation | 已将登录页背景升级为固定的蓝、青、品牌红三色宽幅渐变 |
+| `plans/2026-08-28_Admin登录页品牌Logo统一计划.md` | 已结束 | Admin、Documentation | 已将登录页品牌 Logo 优化为 `36px` 扁平深红单色 SVG Mask |
 | `plans/2026-08-28_Admin登录页截图对齐与真实交互计划.md` | 已结束 | Admin、Documentation | 已完成 Admin 登录页截图对齐、安全会话说明和忘记密码真实提示交互 |
 | `plans/2026-08-28_Admin-login-screenshot-alignment-plan.md` | 已结束 | Documentation | 已由同主题中文路径计划替代并永久保留 |
+| `plans/2026-08-28_Admin登录页面高质感重新设计计划.md` | 已结束 | Admin、Documentation | 已完成 Admin 登录页面 Ant Design 6 官方标准极简微质感重构升级 |
 | `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md` | 已结束 | Admin、Documentation | 已完成可搜索、可分组并过滤真实权限码的 Ant Design TreeSelect 角色权限配置 |
 | `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | Backend、Admin、Web、API Client、Database、Documentation | 已完成全量 pytest、Vitest、生产构建和四项目浏览器 E2E 回归修复与验证 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | Backend、Web、API Client、Database、Documentation | 已完成用户头像资料闭环，并补齐 Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖；轻量门禁通过，重型验证与真实迁移按授权边界未执行 |
@@ -92,8 +100,16 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-28_Admin忘记密码悬浮提示替代弹窗计划.md` | 已结束 | 已完成；浅灰色 Tooltip 已替换点击弹窗，Admin typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低忘记密码入口视觉重量并取消点击弹窗 |
+| `plans/2026-08-28_Admin登录表单轻量控件视觉优化计划.md` | 已结束 | 已完成；输入内容、placeholder 和按钮文字统一为 `14px / 400`，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低登录表单控件的边界、字重和按钮色彩重量 |
+| `plans/2026-08-28_Admin忘记密码弹窗安全图标优化计划.md` | 已结束 | 已完成；双色安全徽章和居中布局已落地，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 增强忘记密码弹窗的安全感和人性化表达 |
+| `plans/2026-08-28_Admin登录页能力文案优化计划.md` | 已结束 | 已完成；20 字能力描述已替换，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 用具体项目能力替换抽象登录页描述 |
+| `plans/2026-08-28_Admin登录页背景透明度与Logo比例微调计划.md` | 已结束 | 已完成；背景透明度降低约三分之一，Logo 放大至 `54px`，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 降低背景色彩重量并放大登录页品牌标志 |
+| `plans/2026-08-28_Admin登录页多色背景层次优化计划.md` | 已结束 | 已完成；静态蓝青红宽幅渐变已落地，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 增强 Admin 登录页背景的静态色彩层次 |
+| `plans/2026-08-28_Admin登录页品牌Logo统一计划.md` | 已结束 | 已完成；登录页使用 `36px`、`#D32029` 单色 SVG Mask，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 统一 Admin 登录页与浏览器图标的品牌标识 |
 | `plans/2026-08-28_Admin登录页截图对齐与真实交互计划.md` | 已结束 | 已完成；Admin 登录页按参考页面完成无卡片居中构图、安全 Cookie 会话说明和忘记密码信息弹窗，typecheck、lint 与 Markdown lint 通过，浏览器验证按用户要求未执行 | Admin、Documentation | 参考截图重构 Admin 登录页并使会话与忘记密码提示符合项目真实能力 |
 | `plans/2026-08-28_Admin-login-screenshot-alignment-plan.md` | 已结束 | 已替代；由同主题中文路径计划继续实施并完成 | Documentation | 永久保留补丁工具失败期间产生的重复计划记录 |
+| `plans/2026-08-28_Admin登录页面高质感重新设计计划.md` | 已结束 | 已完成；Admin `/login` 页面重构升级为 Ant Design 6 极简微质感规范，Admin typecheck、lint 及 Markdown lint 全量通过 | Admin、Documentation | 将 Admin 登录页面重构升级为 Ant Design 6 官方标准极简微质感体系 |
 | `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md` | 已结束 | 已完成；Admin typecheck 与 lint 通过，重型验证按授权边界未执行 | Admin、Documentation | 将角色权限配置升级为可搜索、可分组的 Ant Design TreeSelect 树选择 |
 | `plans/2026-08-28_全量测试构建与E2E回归修复计划.md` | 已结束 | 已完成；Backend 183 项 pytest、Admin 62 项 Vitest、Web 50 项 Vitest、两端 production build 和四项目 Playwright E2E 均达标 | Backend、Admin、Web、API Client、Database、Documentation | 修复全量 pytest、Vitest、生产构建和浏览器 E2E 暴露的回归并完成提交推送 |
 | `plans/2026-08-27_Web用户头像上传与资料同步计划.md` | 已结束 | 已完成；用户头像资料、资产引用保护和契约已同步，Web BFF 头像 PUT 白名单及全部 13 个浏览器代理接口回归覆盖已补齐；轻量门禁通过，重型验证与真实迁移按授权边界未执行 | Backend、Web、API Client、Database、Documentation | 支持用户上传、绑定、移除和持久化头像，并保护在用资产 |

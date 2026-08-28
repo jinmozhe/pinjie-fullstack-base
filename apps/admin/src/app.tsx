@@ -1,8 +1,20 @@
 import type { AdminRead } from "@pinjie/api-client";
 import { LogoutOutlined, SettingOutlined } from "@ant-design/icons";
 import { history, Link } from "@umijs/max";
-import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
-import { Button, ConfigProvider, Dropdown, Result, Typography, message, theme } from "antd";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useMutation,
+} from "@tanstack/react-query";
+import {
+  Button,
+  ConfigProvider,
+  Dropdown,
+  Result,
+  Typography,
+  message,
+  theme,
+} from "antd";
 import zhCN from "antd/locale/zh_CN";
 import type { ReactNode } from "react";
 
@@ -15,7 +27,10 @@ import logoSvg from "./assets/logo.svg";
 import "./styles.css";
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: false, staleTime: 15_000 }, mutations: { retry: false } },
+  defaultOptions: {
+    queries: { retry: false, staleTime: 15_000 },
+    mutations: { retry: false },
+  },
 });
 
 export type AdminInitialState = {
@@ -32,7 +47,9 @@ export async function getInitialState(): Promise<AdminInitialState> {
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       const { pathname, search, hash } = history.location;
-      history.replace(`/login?redirect=${encodeURIComponent(pathname + search + hash)}`);
+      history.replace(
+        `/login?redirect=${encodeURIComponent(pathname + search + hash)}`,
+      );
       return { settings };
     }
     return { settings, bootstrapError: errorMessage(error) };
@@ -53,13 +70,29 @@ function AccountMenu({ admin }: { admin: AdminRead }) {
     <Dropdown
       menu={{
         items: [
-          { key: "settings", icon: <SettingOutlined />, label: "个人设置", onClick: () => history.push("/account/settings") },
+          {
+            key: "settings",
+            icon: <SettingOutlined />,
+            label: "个人设置",
+            onClick: () => history.push("/account/settings"),
+          },
           { type: "divider" },
-          { key: "logout", icon: <LogoutOutlined />, label: "退出登录", danger: true, disabled: logout.isPending, onClick: () => logout.mutate() },
+          {
+            key: "logout",
+            icon: <LogoutOutlined />,
+            label: "退出登录",
+            danger: true,
+            disabled: logout.isPending,
+            onClick: () => logout.mutate(),
+          },
         ],
       }}
     >
-      <Button type="text" className="account-trigger" aria-label={`账户菜单：${admin.display_name || admin.username}`}>
+      <Button
+        type="text"
+        className="account-trigger"
+        aria-label={`账户菜单：${admin.display_name || admin.username}`}
+      >
         <AdminAvatar admin={admin} />
         <span>{admin.display_name || admin.username}</span>
       </Button>
@@ -67,31 +100,67 @@ function AccountMenu({ admin }: { admin: AdminRead }) {
   );
 }
 
-function AdminLayoutFrame({ initialState, children }: { initialState: AdminInitialState; children: ReactNode }) {
+function AdminLayoutFrame({
+  initialState,
+  children,
+}: {
+  initialState: AdminInitialState;
+  children: ReactNode;
+}) {
   if (initialState.bootstrapError) {
-    return <main className="bootstrap-state"><Result status="warning" title="管理服务暂不可用" subTitle={initialState.bootstrapError} extra={<Button type="primary" onClick={() => window.location.reload()}>重试</Button>} /></main>;
+    return (
+      <main className="bootstrap-state">
+        <Result
+          status="warning"
+          title="管理服务暂不可用"
+          subTitle={initialState.bootstrapError}
+          extra={
+            <Button type="primary" onClick={() => window.location.reload()}>
+              重试
+            </Button>
+          }
+        />
+      </main>
+    );
   }
-  if (!initialState.currentAdmin) return <main className="bootstrap-state"><Typography.Text>正在初始化管理工作区</Typography.Text></main>;
-  return <AdminContext.Provider value={initialState.currentAdmin}>{children}</AdminContext.Provider>;
+  if (!initialState.currentAdmin)
+    return (
+      <main className="bootstrap-state">
+        <Typography.Text>正在初始化管理工作区</Typography.Text>
+      </main>
+    );
+  return (
+    <AdminContext.Provider value={initialState.currentAdmin}>
+      {children}
+    </AdminContext.Provider>
+  );
 }
 
 export const layout = ({ initialState }: { initialState?: unknown }) => {
   const state = initialState as AdminInitialState | undefined;
   return {
-    title: "PinJie",
+    title: "PinJie Console",
     logo: logoSvg,
-    menuItemRender: (item: { path?: string }, dom: ReactNode) => (item.path ? <Link to={item.path}>{dom}</Link> : dom),
+    menuItemRender: (item: { path?: string }, dom: ReactNode) =>
+      item.path ? <Link to={item.path}>{dom}</Link> : dom,
     avatarProps: state?.currentAdmin
       ? {
           title: state.currentAdmin.display_name || state.currentAdmin.username,
           size: "small",
-          render: () => (state.currentAdmin ? <AccountMenu admin={state.currentAdmin} /> : null),
+          render: () =>
+            state.currentAdmin ? (
+              <AccountMenu admin={state.currentAdmin} />
+            ) : null,
         }
       : undefined,
     actionsRender: () => [],
-    footerRender: () => <footer className="admin-footer">Pinjie Console · 企业级通用管理后台</footer>,
+    footerRender: () => (
+      <footer className="admin-footer">Pinjie Console · 品界网络科技</footer>
+    ),
     childrenRender: (children: ReactNode) => (
-      <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>{children}</AdminLayoutFrame>
+      <AdminLayoutFrame initialState={state ?? { settings: defaultSettings }}>
+        {children}
+      </AdminLayoutFrame>
     ),
     ...state?.settings,
     siderWidth: 256,
@@ -151,15 +220,22 @@ export function rootContainer(container: ReactNode) {
           colorSuccessText: "#237804",
           colorTextDescription: "#667085",
           colorTextSecondary: "#667085",
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
         },
         components: {
           Card: { headerBg: "#ffffff", colorBgContainer: "#ffffff" },
-          Table: { headerBg: "#fafafa", headerColor: "#1d2939", rowHoverBg: "#f8fafc" },
+          Table: {
+            headerBg: "#fafafa",
+            headerColor: "#1d2939",
+            rowHoverBg: "#f8fafc",
+          },
         },
       }}
     >
-      <QueryClientProvider client={queryClient}>{container}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        {container}
+      </QueryClientProvider>
     </ConfigProvider>
   );
 }
