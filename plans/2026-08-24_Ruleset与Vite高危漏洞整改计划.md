@@ -123,7 +123,7 @@ Admin 当前没有启用 Umi Vite bundler，production build 使用 Umi 默认 W
 - `SECURITY.md`
 - `docs/operations/github-actions-workflows.md`
 - `docs/operations/admin-local-development-and-validation-troubleshooting.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 - `plans/2026-08-24_Ruleset与Vite高危漏洞整改计划.md`
 

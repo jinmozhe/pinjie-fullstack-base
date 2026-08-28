@@ -79,7 +79,7 @@ Admin 角色权限弹窗当前使用平铺的 `Checkbox.Group`。权限数量增
 - `apps/admin/src/features/StageC.test.tsx`
 - `apps/admin/src/styles.css`
 - `plans/2026-08-28_Admin角色权限TreeSelect树选择计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 
 ## 风险与回滚

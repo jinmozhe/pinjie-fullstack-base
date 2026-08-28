@@ -91,7 +91,7 @@ GitHub 开放告警数变为 0 只表示 4 条已修复、3 条已显式接受�
 
 - `SECURITY.md`：补充 Medium/Low 传递依赖的限时风险接受要求和本次处置边界。
 - `docs/operations/github-actions-workflows.md`：记录告警处置事实与单维护者内部治理模型。
-- `.agents/agents-index.md`：维护计划状态和当前 Deployment/Documentation 事实。
+- `PROJECT_INDEX.md`：维护计划状态和当前 Deployment/Documentation 事实。
 - `docs/architecture/project-structure.md`：新增计划后重新统计项目文件和目录数量。
 - `CHANGELOG.md`：计划完成后记录依赖修复与风险接受，不记录普通 Commit SHA。
 
@@ -125,7 +125,7 @@ GitHub 开放告警数变为 0 只表示 4 条已修复、3 条已显式接受�
 - `SECURITY.md`
 - `docs/operations/github-actions-workflows.md`
 - `docs/architecture/project-structure.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 - `plans/2026-08-22_Dependabot中低危依赖治理计划.md`
 

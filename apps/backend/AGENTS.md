@@ -9,7 +9,7 @@
 
 ## 任务读取路由
 
-- 任何 Backend 任务先读取根 `AGENTS.md`、`.agents/agents-index.md` 和本文件。
+- 任何 Backend 任务先读取根 `AGENTS.md`、`PROJECT_INDEX.md` 和本文件。
 - 详细技术设计、实施计划、代码实现和代码评审必须完整读取 [Backend 工程实施标准](../../docs/architecture/backend-engineering-standard.md)。同一任务首次进入上述阶段时完整读取一次；标准变化、任务跨越较长周期或上下文无法确认时重新读取。
 - 涉及跨领域依赖、数据所有权、查询模型或共享包时读取 [模块与依赖边界](../../docs/architecture/module-boundaries.md)。
 - 涉及 API 错误、异常、外部调用、重试或故障隔离时读取 [错误与失败模型](../../docs/architecture/error-model.md)。

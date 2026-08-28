@@ -79,7 +79,7 @@
 - `apps/admin/src/features/welcome/WelcomePage.tsx`
 - `apps/admin/src/features/welcome/WelcomePage.test.tsx`
 - `apps/admin/src/features/StageC.test.tsx`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 
 ## 风险与回滚

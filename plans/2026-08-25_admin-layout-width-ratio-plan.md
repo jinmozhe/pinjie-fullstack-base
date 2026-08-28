@@ -59,7 +59,7 @@
 
 ## 实施顺序
 
-1. 创建计划并同步 `.agents/agents-index.md`。
+1. 创建计划并同步 `PROJECT_INDEX.md`。
 2. 调整 ProLayout 侧栏宽度和 PageContainer 内容宽度。
 3. 补充布局配置测试，运行 Admin 全量质量命令。
 4. 在桌面与移动端视口核对布局比例、横向溢出和关键页面可见性。
@@ -68,7 +68,7 @@
 ## 影响文件
 
 - `plans/2026-08-25_admin-layout-width-ratio-plan.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `apps/admin/src/app.tsx`
 - `apps/admin/src/styles.css`
 - `apps/admin/src/app.test.tsx`

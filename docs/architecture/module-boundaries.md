@@ -96,7 +96,7 @@ Route / Page
 
 - 在全栈计划中列出消费者迁移步骤、删除日期和验证命令。
 - 消费者完成迁移并通过质量门禁后才能从 `packages/` 删除代码。
-- 同步更新 `pnpm-workspace.yaml`、根 `package.json`、`docs/README.md` 和 `.agents/agents-index.md` 中的相关引用。
+- 同步更新 `pnpm-workspace.yaml`、根 `package.json`、`docs/README.md` 和 `PROJECT_INDEX.md` 中的相关引用。
 - 退出操作只能由用户明确授权后执行，不得由 AI 自主触发。
 
 ## 7. 自动门禁

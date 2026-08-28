@@ -58,7 +58,7 @@
 
 ### 3. 治理同步
 
-同步 `docs/README.md`、`.agents/agents-index.md`、`CHANGELOG.md` 和本计划实施结果。权威文档路径不变，索引用途增加 GitHub CLI Keyring 边界。
+同步 `docs/README.md`、`PROJECT_INDEX.md`、`CHANGELOG.md` 和本计划实施结果。权威文档路径不变，索引用途增加 GitHub CLI Keyring 边界。
 
 ## 全栈影响矩阵
 
@@ -83,7 +83,7 @@
 ## 影响文件
 
 - `plans/2026-08-24_CodexWindowsGhKeyring宿主执行治理计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `AGENTS.md`
 - `docs/operations/codex-windows-config-acl-governance.md`
 - `docs/README.md`
@@ -119,7 +119,7 @@
 - 根 `AGENTS.md` 已增加长期规则：认证型 `gh` 跳过沙箱认证探测，直接以准确单条命令申请宿主用户 PowerShell 执行。
 - 根规则继续要求 `gh auth login/logout` 和所有远端写操作独立授权，并禁止宽泛 `gh`、`gh api` 自动放行及明文 Token 绕过。
 - Codex Windows 权威运维文档已增加本机对照事实、GitHub CLI Keyring 分类、`require_escalated` 执行步骤、职责分层、窄范围 `.rules` 示例、禁止项和升级复核条件。
-- `docs/README.md`、`.agents/agents-index.md` 和 `CHANGELOG.md` 已同步新的文档用途、计划状态和已交付事实。
+- `docs/README.md`、`PROJECT_INDEX.md` 和 `CHANGELOG.md` 已同步新的文档用途、计划状态和已交付事实。
 - 宿主上下文中的 `gh auth status` 与 `gh api user --jq .login` 验证通过，当前账户为 `jinmozhe`，凭据存储为 Windows Keyring。
 - `pnpm lint:md`、`pnpm check:workspace`、宿主 `pnpm check:boundaries`、宿主 `pnpm check:governance`、项目文本卫生脚本和 `git diff --check` 均通过。边界与治理门禁首次在沙箱中因既有 `apps/backend/.pytest_cache` 读取 ACL 被阻断，未删除或修改该缓存，改用准确宿主命令复验通过。
 - 文本卫生脚本的唯一告警来自既有 `.env.example` 公开占位值 `replace_with_a_strong_production_password`，人工复核确认不包含真实凭据。

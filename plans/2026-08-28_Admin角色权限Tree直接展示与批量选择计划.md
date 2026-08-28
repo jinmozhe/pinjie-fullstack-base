@@ -81,7 +81,7 @@ Ant Design Tree 支持 `checkable`、受控 `checkedKeys`、父子关联、禁�
 - `apps/admin/src/features/StageC.test.tsx`
 - `apps/admin/src/styles.css`
 - `plans/2026-08-28_Admin角色权限Tree直接展示与批量选择计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `docs/architecture/authentication-authorization.md`
 - `CHANGELOG.md`
 

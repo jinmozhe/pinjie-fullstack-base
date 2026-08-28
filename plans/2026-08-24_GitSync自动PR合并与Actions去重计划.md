@@ -111,7 +111,7 @@ on:
 - `AGENTS.md`
 - `docs/operations/ai-assisted-development-workflow.md`
 - `docs/operations/github-actions-workflows.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 - `plans/2026-08-24_GitSync自动PR合并与Actions去重计划.md`
 - `C:/Users/soman/.codex/skills/git-sync/SKILL.md`

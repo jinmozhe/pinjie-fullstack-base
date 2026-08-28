@@ -12,7 +12,7 @@
 
 ```text
 . :: .dockerignore, .editorconfig, .env.example, .gitattributes, .gitignore, .markdownlint.json, AGENTS.md, CHANGELOG.md, compose.prod.yml, compose.yml, openapi.json, package.json, playwright.config.ts, pnpm-lock.yaml, pnpm-workspace.yaml, README.md, SECURITY.md, turbo.json
-.agents :: agents-index.md
+.agents :: PROJECT_INDEX.md
 .agents/rules :: .markdownlint.json, 00-repository.md, 10-backend.md, 20-admin.md, 30-web.md
 .github :: CODEOWNERS, pull_request_template.md
 .github/workflows :: ci-backend.yml, ci-e2e.yml, ci-frontend.yml, ci-governance.yml, deploy-production.yml, publish-images.yml, security.yml
@@ -93,14 +93,16 @@ scripts/operations :: test-postgres-backup-restore.ps1
 
 本仓库不创建项目级 `GEMINI.md` 或 `.agents/AGENTS.md`，防止出现多份规则正文。完整决策见 `docs/adr/0002-Codex与Antigravity指令兼容决策.md`。
 
-### 为什么建立 `.agents/agents-index.md`
+### 为什么建立 `PROJECT_INDEX.md`
 
-`.agents/agents-index.md` 是全项目任务导航和当前事实入口，记录项目身份、Backend、Admin、Web 及跨栈范围的当前目标、全部计划登记、系统状态、权威来源和派生项目入口。
+`PROJECT_INDEX.md` 是全项目任务导航和当前事实入口，记录项目身份、Backend、Admin、Web 及跨栈范围的当前目标、全部计划登记、系统状态、权威来源和派生项目入口。
+
+该文件固定放在仓库根目录，与 `AGENTS.md`、`CHANGELOG.md` 同层，便于人和 AI 直接发现并在标准工作区权限内持续维护。`.agents/` 只承担 Antigravity 规则桥接职责，不保存需要频繁更新的项目索引。
 
 它不保存规则正文，也不替代 `docs/README.md` 或 `plans/README.md`：
 
 - 各级 `AGENTS.md` 保存长期执行规则。
-- `.agents/agents-index.md` 保存全项目当前事实和任务路由。
+- `PROJECT_INDEX.md` 保存全项目当前事实和任务路由。
 - `docs/PROJECT_REQUIREMENTS.md` 保存目标用户、目标能力、非目标和验收边界。
 - `docs/README.md` 保存 `docs/` 的完整文档清单。
 - `plans/README.md` 保存计划格式和生命周期规则。

@@ -102,7 +102,7 @@ Docker 运行方式，以下十个固定提交直接声明 `node20`：
 - `.github/workflows/deploy-production.yml`
 - `docs/operations/github-actions-workflows.md`
 - `docs/architecture/project-structure.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 - `plans/2026-08-22_GitHubActionsNode24原生运行时升级计划.md`
 

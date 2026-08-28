@@ -67,7 +67,7 @@ GitHub 当前实际存在 `main` 和 3 条 Dependabot 分支，对应开放的 P
 
 1. 用户确认本计划后，将计划状态更新为“实施中”并记录确认。
 2. 删除 `.github/dependabot.yml`。
-3. 更新 `docs/architecture/project-structure.md`、`CHANGELOG.md`、本计划和 `.agents/agents-index.md`。
+3. 更新 `docs/architecture/project-structure.md`、`CHANGELOG.md`、本计划和 `PROJECT_INDEX.md`。
 4. 运行 Markdown、工作区治理和模块边界检查，复读差异。
 5. 暂存并提交本次配置与文档变更，将 `main` 推送到 GitHub。
 6. 关闭 Pull Request #2、#5、#6，并删除对应远程分支。
@@ -82,7 +82,7 @@ GitHub 当前实际存在 `main` 和 3 条 Dependabot 分支，对应开放的 P
 - 修改：`docs/architecture/project-structure.md`
 - 修改：`CHANGELOG.md`
 - 新增并持续更新：`plans/2026-08-15_Dependabot自动分支停用与Git分支收敛计划.md`
-- 修改：`.agents/agents-index.md`
+- 修改：`PROJECT_INDEX.md`
 
 ## 风险与回滚
 

@@ -70,7 +70,7 @@
 - `apps/admin/src/features/auth/LoginPage.tsx`
 - `apps/admin/src/styles.css`
 - `plans/2026-08-28_Admin登录输入框Filled半透明视觉计划.md`
-- `.agents/agents-index.md`
+- `PROJECT_INDEX.md`
 - `CHANGELOG.md`
 
 ## 风险与回滚
