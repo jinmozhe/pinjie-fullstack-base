@@ -65,7 +65,7 @@
 
 ### Fixed
 
-- 修复 Backend 生产镜像固定在含有可修复 High 漏洞的旧 Python 3.14.7 slim-trixie 摘要而被 GHCR 发布门禁拦截的问题；builder 与 runtime 同步更新到官方 Linux amd64 固定摘要，继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和同 SHA 完整验证要求。
+- 修复 Backend 生产镜像被基础系统与运行时工具中的可修复 High 漏洞阻断发布的问题：builder 与 runtime 同步更新到官方 Python 3.14.7 slim-trixie Linux amd64 固定摘要，runtime 精确安装修复后的 OpenSSL 包并移除应用运行不需要的全局 pip 及其 vendored 代码；继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和同 SHA 完整验证要求。
 - 修复首次远端完整验证中测试 Origin 配置错配的问题：Runner 同时允许真实 E2E 使用的 `127.0.0.1` 与 Backend 既有 API 测试使用的 `localhost`，避免 pytest 请求在业务断言前被 CSRF Origin 校验拒绝。
 - 修复 Backend uv 工具版本和锁文件元数据可能漂移的问题：项目通过 `required-version` 固定 uv `0.11.32`，Backend、完整验证和 Security 工作流显式安装同一版本，并用该版本重建和验证 `uv.lock`；同时补齐根 README 遗漏的 Backend、Admin 和 Web 实际能力目录。
 - 修复 Admin 系统设置页站点 LOGO 预览随原图比例变化的问题，预览区域固定为正方形并保持图片完整适配；同时补齐站点资料、LOGO、注册策略、revision 冲突、权限与失败重试组件测试。
