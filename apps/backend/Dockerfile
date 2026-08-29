@@ -1,6 +1,6 @@
 FROM ghcr.io/astral-sh/uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c AS uv
 
-FROM python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4 AS builder
+FROM python:3.14.7-slim-trixie@sha256:5b945726c4d7ffe6595dc7498ad17fd0397e373c5181c24819a7028e8b1276dc AS builder
 
 WORKDIR /app
 COPY --from=uv /uv /uvx /bin/
@@ -17,7 +17,7 @@ COPY apps/backend/app ./app
 COPY apps/backend/scripts ./scripts
 RUN uv sync --frozen --no-dev --no-install-project
 
-FROM python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4 AS runtime
+FROM python:3.14.7-slim-trixie@sha256:5b945726c4d7ffe6595dc7498ad17fd0397e373c5181c24819a7028e8b1276dc AS runtime
 
 WORKDIR /app
 ENV PATH="/app/.venv/bin:$PATH" \
