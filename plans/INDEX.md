@@ -17,7 +17,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-30_Backend基础镜像漏洞阻断修复与v0.1.1发布计划.md` | 实施中 | 不适用 | Backend、Admin、Web、Deployment、Documentation | 修复三端生产运行镜像漏洞阻断并完成 v0.1.1 不可变发布与三镜像 GHCR 发布 |
+| `plans/2026-08-30_Backend基础镜像漏洞阻断修复与v0.1.1发布计划.md` | 已结束 | 已完成；三端候选镜像 Trivy 阻断已修复，完整验证、三镜像 GHCR 不可变发布、v0.1.1 Tag 和 Release 均成功，生产部署未触发 | Backend、Admin、Web、Deployment、Documentation | 修复三端生产运行镜像漏洞阻断并完成 v0.1.1 不可变发布与三镜像 GHCR 发布 |
 | `plans/2026-08-30_依赖复现与发布验证闭环整改计划.md` | 已结束 | 已完成；uv 工具链、完整验证 Artifact、镜像发布同 SHA 门禁和 Origin 修复已落地，同 SHA 轻量 Push 工作流、完整远端验证与 Artifact 核验全部通过 | Backend、Admin、Web、Deployment、Documentation | 固定 uv 依赖复现工具链并建立同 Commit SHA 的完整验证证据与镜像发布门禁 |
 | `plans/2026-08-29_全栈失败门禁修复计划.md` | 已结束 | 已完成；Admin、Backend、Web、API Client、数据库迁移和四项目 Playwright 失败均已修复，授权的重型验证与治理门禁全部通过 | Backend、Admin、Web、API Client、Database、Documentation | 修复全栈重型验证和数据库一致性失败，恢复质量门禁后继续 Git 交付闭环 |
 | `plans/2026-08-29_会话设备名称识别计划.md` | 已结束 | 已完成；Web 与 Admin 新会话已统一生成浏览器与操作系统展示名称，旧会话显式回填工具、测试源码、依赖锁定和项目文档已同步，全部轻量门禁通过 | Backend、Documentation | 从已清理 User-Agent 生成会话浏览器与操作系统展示名称，并提供旧会话显式回填边界 |
