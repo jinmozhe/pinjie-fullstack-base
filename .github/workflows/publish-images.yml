@@ -72,6 +72,70 @@ jobs:
             fi
           done
 
+      - name: Require successful full validation evidence
+        id: full-validation
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EXPECTED_SHA: ${{ steps.input.outputs.commit_sha }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          artifact_name="full-validation-$EXPECTED_SHA"
+          response="$(curl --fail-with-body --silent --show-error \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts?name=$artifact_name&per_page=100")"
+          mapfile -t candidates < <(jq -r \
+            '.artifacts[] | select(.expired == false and .workflow_run.id != null) | [.id, .workflow_run.id] | @tsv' \
+            <<< "$response")
+          if [[ "${#candidates[@]}" -eq 0 ]]; then
+            echo "No unexpired full validation artifact exists for $EXPECTED_SHA."
+            exit 1
+          fi
+
+          evidence_root="$(mktemp -d)"
+          for candidate in "${candidates[@]}"; do
+            IFS=$'\t' read -r artifact_id run_id <<< "$candidate"
+            run_response="$(curl --fail-with-body --silent --show-error \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$run_id")"
+            if ! jq -e \
+              --arg default_branch "$DEFAULT_BRANCH" \
+              '.event == "workflow_dispatch" and .conclusion == "success" and .head_branch == $default_branch and .path == ".github/workflows/ci-e2e.yml"' \
+              <<< "$run_response" >/dev/null; then
+              continue
+            fi
+
+            candidate_dir="$evidence_root/$artifact_id"
+            mkdir -p "$candidate_dir"
+            curl --fail-with-body --silent --show-error --location \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/artifacts/$artifact_id/zip" \
+              --output "$candidate_dir/evidence.zip"
+            unzip -q "$candidate_dir/evidence.zip" -d "$candidate_dir/content"
+            evidence="$candidate_dir/content/full-validation.env"
+            if [[ ! -f "$evidence" ]]; then
+              continue
+            fi
+
+            if pwsh -NoLogo -NoProfile -File ./scripts/ci/check-full-validation-evidence.ps1 \
+              -ManifestPath "$evidence" \
+              -ExpectedCommitSha "$EXPECTED_SHA" \
+              -ExpectedRunId "$run_id"; then
+              echo "validation_run_id=$run_id" >> "$GITHUB_OUTPUT"
+              echo "Full validation run: $run_id" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          done
+
+          echo "No trustworthy full validation evidence matches $EXPECTED_SHA."
+          exit 1
+
       - name: Require complete application state
         id: state
         shell: pwsh

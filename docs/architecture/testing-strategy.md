@@ -13,7 +13,7 @@
 1. **默认自动门禁**：Admin 与 Web 只运行 typecheck 和 lint；Backend 只运行 Ruff、格式、Mypy、导入边界、编译、应用导入和 OpenAPI 契约检查。公开 API 变化继续执行契约导出、API Client 生成、漂移与 Breaking Change 检查。
 2. **统一触发边界**：日常开发、普通提交、`$git-sync`、Push 和 Pull Request 均使用默认轻量门禁。`$git-sync` 只扩展 Git 交付动作，不自动扩展测试范围。
 3. **重型验证授权**：Admin/Web production build、任何 Vitest、任何 pytest、Playwright、浏览器自动化和测试数据库验证，只有用户在当前任务中明确点名后才能执行。授权只覆盖被点名的应用、命令和范围，不延续到后续任务。
-4. **线上边界**：GitHub Actions 的 Push、Pull Request 和定时任务不得执行重型验证，也不得通过 Workflow 调用链间接触发。Browser E2E 只保留人工 `workflow_dispatch`。
+4. **线上边界**：GitHub Actions 的 Push、Pull Request 和定时任务不得执行重型验证，也不得通过 Workflow 调用链间接触发。完整验证只保留人工 `workflow_dispatch`，并要求输入默认分支历史中的完整 Commit SHA。
 5. **结果表达**：默认交付只说明轻量门禁结果。未获授权的重型验证记录为“按项目策略未执行”，不能表述为通过、待 GitSync 执行、完整跨栈验收完成或生产可用。
 
 ### 2.2 测试层级
@@ -93,7 +93,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
-- Playwright 不由日常开发、`$git-sync`、Push、Pull Request 或定时任务自动运行。需要本地标准 Chromium E2E 时由用户明确授权；需要干净 Ubuntu 环境时由用户人工触发 GitHub Browser E2E。Firefox 与 WebKit 也只在用户明确要求或派生项目验收计划明确授权时执行，所有浏览器结果均不参与镜像发布门禁。
+- Playwright 不由日常开发、`$git-sync`、Push、Pull Request 或定时任务自动运行。需要本地标准 Chromium E2E 时由用户明确授权；需要干净 Ubuntu 环境时由用户人工触发 GitHub 完整验证。Firefox 与 WebKit 也只在用户明确要求或派生项目验收计划明确授权时执行。单独的本地浏览器结果不能满足镜像发布门禁；GitHub 完整验证只有在 pytest、Vitest、production build 和 Chromium Playwright 全部成功并生成同 SHA Artifact 后，才形成发布可核验的重型验证证据。
 - CI 失败保留首个失败重试的 Trace、必要截图和 HTML Report。重试只用于采集诊断信息，初次失败仍按不稳定测试处理，禁止依靠重试把套件标记为健康。
 - 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
 
@@ -130,6 +130,8 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 ## 9. 完成条件
 
 一项实现通过默认轻量门禁、完成计划内文档同步并如实记录未执行项后，可以提交和完成 Git 交付。只有用户明确授权对应重型验证且实际通过时，才能宣称测试、构建或完整跨栈验收通过。Backend pytest 保持 90% 覆盖率阈值，Admin 与 Web 的 Vitest 保持语句、分支、函数和行覆盖率 80% 阈值；这些阈值只在对应测试获授权并实际运行时生效。
+
+镜像发布属于更严格的跨系统交付边界。候选 Commit SHA 除四个自动轻量 Push 工作流外，还必须存在由默认分支人工触发、成功完成且未过期的完整验证 Artifact；Artifact 中的 Commit SHA、Workflow Run 和验证集合必须与发布输入一致。本地测试结果、人工填写的布尔值和普通文本说明不能替代该证据。
 
 前端覆盖率必须纳入承担 Cookie、CSRF、Refresh、权限启动和 BFF 转发的高风险入口。当前 Admin 统计 `src/features/**`、`src/lib/api/**`、`src/access.ts` 与 `src/app.tsx`；Web 统计 `src/features/**`、`src/lib/api/**` 与 BFF Route Handler。不得通过只统计页面组件排除传输和认证生命周期代码来满足 80% 门禁。
 

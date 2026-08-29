@@ -79,9 +79,9 @@ SECURITY.md             漏洞报告和安全响应规则
 
 | 应用 | 母版包含 | 派生仓库扩展 |
 | --- | --- | --- |
-| `backend/domains/` | auth、users、admin、system | products、orders、payment 等 |
-| `web/features/` | auth、account、system | products、cart、checkout 等 |
-| `admin/features/` | auth、users、admins、roles、security、system | products、orders、promotions 等 |
+| `backend/domains/` | auth、users、admin、assets、settings、system | products、orders、payment 等 |
+| `web/features/` | auth、account、site、system、user | products、cart、checkout 等 |
+| `admin/features/` | auth、users、admins、roles、assets、security、settings、system、account、welcome | products、orders、promotions 等 |
 
 业务扩展参考 `docs/blueprints/` 目录下的蓝图文档。
 

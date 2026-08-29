@@ -18,7 +18,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 ## 3. 发布前检查
 
 1. 确认目标 Commit SHA 为完整 40 位十六进制值且存在于受保护分支。
-2. 确认适用 CI 全部通过，没有关键 `skipped`、过期豁免或未解释告警。
+2. 确认适用轻量 CI 全部通过，并为同一 Commit SHA 人工完成完整验证，生成仍在保留期内的 GitHub Artifact；没有关键 `skipped`、过期豁免或未解释告警。
 3. 确认 OpenAPI、生成客户端、迁移和文档不存在未提交漂移。
 4. 确认安全扫描、依赖审查和容器扫描满足当前门禁。
 5. 确认数据库迁移的前向、回滚或恢复策略已经评审。
@@ -33,12 +33,13 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 使用独立的 `Publish Images` 工作流，输入完整 Commit SHA。工作流必须：
 
 1. 检出指定提交并再次核对 `git rev-parse HEAD`。
-2. 确认指定提交属于仓库默认分支，且同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四个 Push 工作流全部成功；Browser E2E 为人工按需复核，不参与镜像发布门禁。
-3. 以最小权限登录 GHCR；`sha-<完整提交>` 已存在且指向同一 digest 时允许验证通过，指向不同 digest 时立即失败，禁止覆盖。
-4. 构建 Backend、Web 和 Admin 独立镜像，先按内容 digest 推送候选内容，不提前创建发布标签。
-5. 生成 SBOM 与构建来源证明，并对候选 digest 执行漏洞扫描，达到阻断等级时失败。
-6. 三个矩阵任务分别上传经过验证的 digest 证据，最终 Job 收齐三份证据后才创建 `sha-<完整提交>` 标签。
-7. 在 Workflow Summary 输出三个 digest，不写入项目文档或工作区。
+2. 确认指定提交属于仓库默认分支，且同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四个 Push 工作流全部成功。
+3. 通过 GitHub Actions API 找到由默认分支人工触发且成功完成的完整验证 Run，下载未过期的 `full-validation-<完整提交>` Artifact，并核对 Commit SHA、Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段。
+4. 以最小权限登录 GHCR；`sha-<完整提交>` 已存在且指向同一 digest 时允许验证通过，指向不同 digest 时立即失败，禁止覆盖。
+5. 构建 Backend、Web 和 Admin 独立镜像，先按内容 digest 推送候选内容，不提前创建发布标签。
+6. 生成 SBOM 与构建来源证明，并对候选 digest 执行漏洞扫描，达到阻断等级时失败。
+7. 三个矩阵任务分别上传经过验证的 digest 证据，最终 Job 收齐三份证据后才创建 `sha-<完整提交>` 标签。
+8. 在 Workflow Summary 输出完整验证 Run 和三个 digest，不写入项目文档或工作区。
 
 不得覆盖同一不可变标识下的内容。最终 Job 创建标签前先核对全部现有目标，只允许不存在或已经指向同一 digest；中断后可以使用同一 Workflow Run 的证据幂等重试。GHCR 不提供跨三个镜像仓库的事务，创建标签期间仍存在短暂的部分可见窗口，部署工作流必须等整个发布工作流成功后才能使用这些标签。镜像保留策略必须保护正在生产和可回滚的 digest。
 

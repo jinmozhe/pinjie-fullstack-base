@@ -1,14 +1,25 @@
-name: CI - Browser E2E
+name: CI - Full Validation
+
+run-name: Full validation ${{ inputs.commit_sha }}
 
 on:
   workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Full 40-character commit SHA to validate
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: full-validation-${{ inputs.commit_sha }}
+  cancel-in-progress: false
+
 jobs:
-  browser-e2e:
-    name: Playwright browser E2E
+  full-validation:
+    name: Tests, builds, and browser E2E
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -52,14 +63,46 @@ jobs:
       E2E_ADMIN_PASSWORD: stage-c-admin-password-2026
       E2E_BACKEND_URL: http://127.0.0.1:8000
     steps:
-      - name: Checkout repository
+      - name: Validate immutable input
+        id: input
+        shell: bash
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          WORKFLOW_BRANCH: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "commit_sha must be a full lowercase 40-character SHA."
+            exit 1
+          fi
+          if [[ "$WORKFLOW_BRANCH" != "$DEFAULT_BRANCH" ]]; then
+            echo "Full validation must be dispatched from the default branch."
+            exit 1
+          fi
+          echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout requested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.input.outputs.commit_sha }}
+
+      - name: Require commit from default branch
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          EXPECTED_SHA: ${{ steps.input.outputs.commit_sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin "$DEFAULT_BRANCH"
+          git merge-base --is-ancestor "$EXPECTED_SHA" "origin/$DEFAULT_BRANCH"
 
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           enable-cache: true
           python-version: "3.14"
+          version: "0.11.32"
 
       - name: Sync Backend dependencies
         working-directory: apps/backend
@@ -69,10 +112,17 @@ jobs:
         working-directory: apps/backend
         run: uv run python -c "import sys; assert sys.version_info[:2] == (3, 14); print(sys.version)"
 
+      - name: Migrate isolated test database
+        working-directory: apps/backend
+        run: uv run alembic upgrade head
+
+      - name: Run Backend pytest
+        working-directory: apps/backend
+        run: uv run pytest
+
       - name: Prepare Stage C database and administrator
         working-directory: apps/backend
         run: |
-          uv run alembic upgrade head
           uv run python -m scripts.set_test_registration --enabled --confirm-database pinjie_e2e_test
           uv run python -m scripts.sync_permissions --apply --confirm-database pinjie_e2e_test
           uv run python -m scripts.create_initial_admin --username "$E2E_ADMIN_USERNAME" --confirm-database pinjie_e2e_test
@@ -106,6 +156,12 @@ jobs:
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run Admin Vitest
+        run: pnpm --filter @pinjie/admin test
+
+      - name: Run Web Vitest
+        run: pnpm --filter @pinjie/web test
+
       - name: Build frontend applications
         run: pnpm --filter @pinjie/admin build && pnpm --filter @pinjie/web build
 
@@ -114,3 +170,30 @@ jobs:
 
       - name: Run browser E2E
         run: pnpm test:e2e
+
+      - name: Write full validation evidence
+        shell: bash
+        env:
+          COMMIT_SHA: ${{ steps.input.outputs.commit_sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/full-validation-evidence"
+          {
+            printf 'schema=pinjie-full-validation-v1\n'
+            printf 'commit_sha=%s\n' "$COMMIT_SHA"
+            printf 'workflow_run_id=%s\n' "$GITHUB_RUN_ID"
+            printf 'workflow_run_attempt=%s\n' "$GITHUB_RUN_ATTEMPT"
+            printf 'backend=pytest\n'
+            printf 'admin=vitest,production-build\n'
+            printf 'web=vitest,production-build\n'
+            printf 'browser=playwright-chromium\n'
+            printf 'database=postgresql-18.4-alpine\n'
+            printf 'cache=redis-8.10.0-alpine\n'
+          } > "$RUNNER_TEMP/full-validation-evidence/full-validation.env"
+
+      - name: Upload full validation evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: full-validation-${{ steps.input.outputs.commit_sha }}
+          path: ${{ runner.temp }}/full-validation-evidence/full-validation.env
+          if-no-files-found: error
+          retention-days: 30
