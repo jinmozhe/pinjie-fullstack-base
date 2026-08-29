@@ -50,3 +50,50 @@ async def client(client_transport: ASGITransport) -> AsyncIterator[AsyncClient]:
 @pytest.fixture
 def fake_resources() -> MagicMock:
     return MagicMock(engine=MagicMock(), session_factory=MagicMock(), redis=MagicMock(), password_manager=MagicMock())
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def assert_test_database_migration_is_current() -> AsyncIterator[None]:
+    """在整个测试会话启动前验证测试数据库迁移版本与当前代码一致。
+
+    版本不匹配时立即失败，避免集成测试因表结构缺失产生难以排查的错误。
+    未配置 TEST_DATABASE_URL 时静默跳过，不影响仅运行单元测试的场景。
+    """
+    database_url = os.getenv("TEST_DATABASE_URL")
+    if not database_url:
+        yield
+        return
+
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    from app.core.health import alembic_heads, check_database
+
+    engine = create_async_engine(database_url, pool_pre_ping=True)
+    try:
+        ready, state = await check_database(engine, timeout=5)
+        if not ready:
+            if state == "migration_revision_mismatch":
+                expected = alembic_heads()
+                pytest.fail(
+                    f"\n"
+                    f"测试数据库迁移版本与当前代码不一致。\n"
+                    f"  代码 head : {expected}\n"
+                    f"  数据库状态: {state}\n"
+                    f"\n"
+                    f"请在 apps/backend 目录下运行以下命令升级测试数据库：\n"
+                    f"\n"
+                    f'  $env:DATABASE_URL = "{database_url}"\n'
+                    f"  uv run alembic upgrade head\n"
+                )
+            else:
+                pytest.fail(
+                    f"\n"
+                    f"无法连接测试数据库（状态: {state}）。\n"
+                    f"  TEST_DATABASE_URL: {database_url}\n"
+                    f"\n"
+                    f"请确认 PostgreSQL 服务已启动且测试数据库存在。\n"
+                )
+    finally:
+        await engine.dispose()
+
+    yield
