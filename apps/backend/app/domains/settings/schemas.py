@@ -92,10 +92,10 @@ class SiteSettingPatchIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     revision: int = Field(gt=0, description="读取设置时获得的修订号")
-    name: TrimmedSiteName | None = None
-    title: TrimmedSiteTitle | None = None
-    keywords: list[str] | None = Field(default=None, max_length=20)
-    description: TrimmedDescription | None = None
+    name: TrimmedSiteName | None = Field(default=None, description="Web 公共站点名称")
+    title: TrimmedSiteTitle | None = Field(default=None, description="Web 默认页面标题")
+    keywords: list[str] | None = Field(default=None, max_length=20, description="Web Metadata 关键词")
+    description: TrimmedDescription | None = Field(default=None, description="Web 默认站点描述")
 
     @field_validator("keywords")
     @classmethod

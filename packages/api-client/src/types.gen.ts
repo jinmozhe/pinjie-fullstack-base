@@ -2576,21 +2576,25 @@ export type SiteSettingPatchIn = {
     /**
      * Name
      *
-     * 资源名称
+     * Web 公共站点名称
      */
     name?: string | null;
     /**
      * Title
+     *
+     * Web 默认页面标题
      */
     title?: string | null;
     /**
      * Keywords
+     *
+     * Web Metadata 关键词
      */
     keywords?: Array<string> | null;
     /**
      * Description
      *
-     * 资源说明文本
+     * Web 默认站点描述
      */
     description?: string | null;
 };

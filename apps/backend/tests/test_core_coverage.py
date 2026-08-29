@@ -321,14 +321,14 @@ async def test_database_and_readiness_failure_states() -> None:
     )
     assert await check_database(_Engine(_Connection(delay=0.02)), 0.001) == (False, "timeout")  # type: ignore[arg-type]
 
-    resources = SimpleNamespace(engine=object(), redis=object())
+    resources = SimpleNamespace(engine=object(), redis=object(), settings_media_ready=True)
     with (
         patch("app.core.health.check_database", new=AsyncMock(return_value=(True, "ok"))),
         patch("app.core.health.check_redis", new=AsyncMock(return_value=False)),
     ):
         result = await check_readiness(resources, _settings())  # type: ignore[arg-type]
     assert not result.ready
-    assert result.checks == {"database": "ok", "redis": "unavailable"}
+    assert result.checks == {"database": "ok", "settings_media": "ok", "redis": "unavailable"}
 
     with patch("app.core.health.check_database", new=AsyncMock(return_value=(True, "ok"))):
         result = await check_readiness(resources, _settings(REDIS_MODE="disabled"))  # type: ignore[arg-type]
