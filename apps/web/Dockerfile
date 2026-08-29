@@ -18,7 +18,10 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
     PORT=3000
 
-RUN addgroup --system --gid 10001 app \
+RUN apk upgrade --no-cache libcrypto3 libssl3 \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx \
+    && addgroup --system --gid 10001 app \
     && adduser --system --uid 10001 --ingroup app app
 COPY --from=build --chown=app:app /workspace/apps/web/.next/standalone ./
 COPY --from=build --chown=app:app /workspace/apps/web/.next/static ./apps/web/.next/static
