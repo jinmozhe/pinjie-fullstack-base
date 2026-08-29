@@ -276,7 +276,14 @@ uv run python -m scripts.cleanup_security_logs --confirm-database pinjie_fullsta
 # 经审批后应用保留期清理
 uv run python -m scripts.cleanup_security_logs --apply --confirm-database pinjie_fullstack_dev
 
+# 预览旧会话设备名称回填，不写数据库
+uv run python -m scripts.backfill_session_device_names --confirm-database pinjie_fullstack_dev
+
+# 核对数量并取得数据库写入授权后应用回填
+uv run python -m scripts.backfill_session_device_names --apply --confirm-database pinjie_fullstack_dev
 ```
+
+会话设备名称回填只处理 `device_name IS NULL` 且存在 User-Agent 摘要的记录，不覆盖已有名称，也不输出完整 User-Agent 或主体标识。无法解析的记录保持为空并继续由客户端显示为“未知设备”。
 
 用户软删除记录长期保留且可恢复，不再配置回收站保留期或运行匿名化脚本。Admin 新增 `users:restore` 权限后，目标环境必须先运行权限目录 `--check`，经授权后执行 `scripts.sync_permissions --apply`；应用启动不会自动修改权限表。数据库结构还必须通过 Alembic 升级到 `20260827_02` 后才能使用统一软删除字段和恢复端点。
 

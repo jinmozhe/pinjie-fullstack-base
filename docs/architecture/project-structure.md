@@ -36,7 +36,7 @@ apps/backend/alembic :: env.py, script.py.mako
 apps/backend/alembic/versions :: 20260815_01_stage_c_identity.py, 20260820_01_request_logs_add_body.py, README.md
 apps/backend/app :: __init__.py, api_router.py, main.py
 apps/backend/app/api :: __init__.py, dependencies.py
-apps/backend/app/core :: __init__.py, cache_keys.py, config.py, context.py, cookies.py, csrf.py, error_codes.py, exceptions.py, health.py, identifiers.py, logging.py, middleware.py, openapi.py, pagination.py, password_policy.py, payload_sanitizer.py, privacy.py, rate_limit.py, redis.py, request_metadata.py, resources.py, response.py, security.py
+apps/backend/app/core :: __init__.py, cache_keys.py, client_identity.py, config.py, context.py, cookies.py, csrf.py, error_codes.py, exceptions.py, health.py, identifiers.py, logging.py, middleware.py, openapi.py, pagination.py, password_policy.py, payload_sanitizer.py, privacy.py, rate_limit.py, redis.py, request_metadata.py, resources.py, response.py, security.py
 apps/backend/app/db :: __init__.py, session.py, transaction.py
 apps/backend/app/db/models :: __init__.py, base.py, identity.py
 apps/backend/app/db/repositories :: __init__.py, identity.py
@@ -46,8 +46,8 @@ apps/backend/app/domains/auth :: __init__.py, router.py, schemas.py
 apps/backend/app/domains/system :: __init__.py, router.py, schemas.py
 apps/backend/app/domains/users :: __init__.py, router.py, schemas.py
 apps/backend/app/services :: __init__.py, accounts.py, admin_management.py, authentication.py, security_events.py
-apps/backend/scripts :: __init__.py, _database_target.py, cleanup_security_logs.py, consume_request_logs.py, create_initial_admin.py, export_openapi.py, sync_permissions.py, verify_local_database_recovery.py
-apps/backend/tests :: __init__.py, conftest.py, test_api.py, test_config.py, test_core_coverage.py, test_database_recovery_script.py, test_identifiers.py, test_openapi_export.py, test_openapi_localization.py, test_password_policy.py, test_payload_sanitizer.py, test_postgres_integration.py, test_stage_b_coverage.py, test_stage_c_auth_api.py, test_stage_c_cookies.py, test_stage_c_integrations.py, test_stage_c_request_metadata.py, test_stage_c_security.py, test_transaction.py
+apps/backend/scripts :: __init__.py, _database_target.py, backfill_session_device_names.py, cleanup_security_logs.py, consume_request_logs.py, create_initial_admin.py, export_openapi.py, sync_permissions.py, verify_local_database_recovery.py
+apps/backend/tests :: __init__.py, conftest.py, test_api.py, test_client_identity.py, test_config.py, test_core_coverage.py, test_database_recovery_script.py, test_identifiers.py, test_openapi_export.py, test_openapi_localization.py, test_password_policy.py, test_payload_sanitizer.py, test_postgres_integration.py, test_stage_b_coverage.py, test_stage_c_auth_api.py, test_stage_c_cookies.py, test_stage_c_integrations.py, test_stage_c_request_metadata.py, test_stage_c_security.py, test_transaction.py
 apps/web :: .env.example, AGENTS.md, Dockerfile, eslint.config.mjs, next.config.ts, package.json, README.md, tsconfig.json, vitest.config.ts
 apps/web/scripts :: prepare-standalone.mjs
 apps/web/src/app :: error.tsx, globals.css, icon.tsx, layout.tsx, loading.tsx, not-found.tsx, page.tsx, providers.tsx
