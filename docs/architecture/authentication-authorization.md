@@ -47,6 +47,7 @@
 - 用户和管理员在注册、修改、重置及初始创建时，新密码统一要求 6 至 64 个字符。登录和修改本人密码时的当前密码最多接受 64 个字符；现存超过 64 个字符的密码需要先通过受控重置改为符合当前策略的密码。
 - PostgreSQL 是 Session 和 Refresh Token 的权威来源。Refresh 原值只进入 `HttpOnly` Cookie，数据库保存 HMAC-SHA256 摘要。
 - Refresh 闲置期限默认 7 天，Session 绝对期限默认 30 天。刷新通过行锁单次消费并旋转，已消费 Token 重放会撤销整个 Session Family。
+- Web 与 Admin 初次登录创建 Session 时，使用锁定版本的 `ua-parser` 从已清理 User-Agent 生成“浏览器 · 操作系统”展示名称，并同时保留原始摘要。该名称不包含浏览器或系统小版本，不参与认证、授权或可信设备判断；空值和无法识别的输入继续显示为未知设备，Refresh 不重命名既有 Session。
 - Session 列表统一使用 `items`、`total`、`page` 和 `page_size` 分页契约。超过绝对期限或撤销时间 30 天的 Session 由显式保留工具清理，关联 Refresh Token 通过外键级联删除。
 - 用户或管理员修改自己的密码时递增 `credential_version`、保留并轮换当前 Session Cookie、撤销其他 Session。主体状态、管理员角色、超级管理员标记或管理员重置凭据变化时撤销受影响会话。
 

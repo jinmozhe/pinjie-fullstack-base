@@ -145,6 +145,15 @@ docker compose --env-file .env -f compose.prod.yml run --rm backend python -m sc
 docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.cleanup_security_logs --apply --confirm-database pinjie_fullstack_prod
 ```
 
+升级到会话设备名称识别版本后，可以先预览旧会话回填数量；核对目标数据库并取得写入授权后再增加 `--apply`：
+
+```powershell
+docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.backfill_session_device_names --confirm-database pinjie_fullstack_prod
+docker compose --env-file .env -f compose.prod.yml run --rm backend python -m scripts.backfill_session_device_names --apply --confirm-database pinjie_fullstack_prod
+```
+
+回填只更新空设备名称且能够解析 User-Agent 的记录，重复执行保持幂等。无法解析的记录继续保留为空。
+
 用户回收站没有到期清理或匿名化步骤，软删除记录长期保留并可由具备 `users:restore` 权限的管理员恢复。
 
 ## 7. 停止与回滚边界

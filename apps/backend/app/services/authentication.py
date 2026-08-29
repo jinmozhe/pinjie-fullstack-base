@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.cache_keys import CacheKeys, cache_keys
+from app.core.client_identity import session_device_name
 from app.core.config import Settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppException
@@ -321,7 +322,7 @@ class WebAuthService(_AuthBase):
             csrf_digest=token_digest(csrf_token, self.hmac_key),
             ip_address=self.metadata.ip_address,
             user_agent_summary=self.metadata.user_agent_summary,
-            device_name=None,
+            device_name=session_device_name(self.metadata.user_agent_summary),
             last_seen_at=now,
             idle_expires_at=idle,
             absolute_expires_at=absolute,
@@ -583,7 +584,7 @@ class AdminAuthService(_AuthBase):
             csrf_digest=token_digest(csrf_token, self.hmac_key),
             ip_address=self.metadata.ip_address,
             user_agent_summary=self.metadata.user_agent_summary,
-            device_name=None,
+            device_name=session_device_name(self.metadata.user_agent_summary),
             last_seen_at=now,
             idle_expires_at=idle,
             absolute_expires_at=absolute,
