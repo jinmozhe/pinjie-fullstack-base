@@ -194,7 +194,7 @@ uv add --dev pytest-cov
 uv remove httpx
 ```
 
-项目在 `[tool.uv]` 中设置 `exclude-newer = "7 days"`。生成或更新锁文件时，uv 默认不选择发布时间不足七天的版本，为社区发现撤包、恶意发布和严重回归保留观察窗口。已有锁文件首次纳入该策略时必须重新解析，窗口内版本会回退到满足约束的最近版本；后续 `uv sync --locked` 不会自行改变锁定结果。紧急安全更新需要先评审，再在专项变更中明确调整冷却边界。
+项目在 `[tool.uv]` 中同时设置 `exclude-newer = "7 days"` 和 `required-version = "==0.11.32"`。生成或更新锁文件时，uv 默认不选择发布时间不足七天的版本，为社区发现撤包、恶意发布和严重回归保留观察窗口；运行版本不符合精确约束时 uv 会直接退出。已有锁文件首次纳入相对冷却策略或升级 uv 时必须重新解析，窗口内版本会回退到满足约束的最近版本；后续 `uv sync --locked` 不会自行改变锁定结果。升级 uv 或紧急安全更新需要先评审，在专项变更中同步 `pyproject.toml`、三个使用 uv 的 GitHub Actions 工作流和 `uv.lock`。
 
 对比 pip 的方式：
 
@@ -249,6 +249,10 @@ uv python list
 # .github/workflows/ci-backend.yml
 - name: Install uv
   uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+  with:
+    enable-cache: true
+    python-version: "3.14"
+    version: "0.11.32"
 
 - name: Install CPython 3.14
   run: uv python install 3.14
@@ -270,7 +274,7 @@ uv python list
   working-directory: apps/backend
 ```
 
-CI 必须显式使用标准 CPython 3.14，并在 `uv sync --locked` 前校验解释器版本。默认 CI 只运行项目规定的轻量门禁，不运行 pytest；pytest 只有用户在当前任务中明确授权后才执行。生产运行时由固定 digest 的 Backend 镜像提供，1Panel 宿主机 Python 不参与版本选择。
+CI 必须显式安装 `pyproject.toml` 要求的 uv `0.11.32` 和标准 CPython 3.14，并在 `uv sync --locked` 后校验解释器版本。默认 CI 只运行项目规定的轻量门禁，不运行 pytest；人工完整验证工作流只有在用户明确授权并输入目标 Commit SHA 后才执行 pytest。生产运行时由固定 digest 的 Backend 镜像提供，1Panel 宿主机 Python 不参与版本选择。
 
 ---
 

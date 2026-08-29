@@ -13,7 +13,7 @@
 | CI - Governance | [ci-governance.yml](../../.github/workflows/ci-governance.yml) |
 | CI - Backend | [ci-backend.yml](../../.github/workflows/ci-backend.yml) |
 | CI - Frontend | [ci-frontend.yml](../../.github/workflows/ci-frontend.yml) |
-| CI - Browser E2E | [ci-e2e.yml](../../.github/workflows/ci-e2e.yml) |
+| CI - Full Validation | [ci-e2e.yml](../../.github/workflows/ci-e2e.yml) |
 | Security | [security.yml](../../.github/workflows/security.yml) |
 | Publish Images | [publish-images.yml](../../.github/workflows/publish-images.yml) |
 | Deploy Production | [deploy-production.yml](../../.github/workflows/deploy-production.yml) |
@@ -27,19 +27,19 @@ flowchart TD
     C --> D["rebase 自动合并"]
     D --> E["main Push"]
     E --> G["同一 Commit SHA 的 4 个 Push 工作流"]
-    G --> H["人工授权 Publish Images"]
+    G --> F["人工授权 CI - Full Validation"]
+    F --> N["同一 SHA 的完整验证 Artifact"]
+    N --> H["人工授权 Publish Images"]
     H --> I["构建、扫描并发布 3 张 GHCR 镜像"]
     I --> K["人工授权 Deploy Production"]
     K --> L["固定 3 个镜像 digest 部署生产环境"]
-    M["人工按需触发"] --> F["CI - Browser E2E"]
-    F --> N["独立复核结果，不参与镜像发布门禁"]
 ```
 
 流程坚持四项边界：
 
 1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发轻量静态、契约、治理与安全检查，不运行应用测试或前端生产构建，不发布镜像，不接触生产服务器。
-2. Browser E2E 只允许人工按需触发，不随 Push 或 Pull Request 自动运行，也不参与镜像发布门禁。
-3. 镜像发布必须人工触发，并且只接受已经通过四个自动 Push 工作流的完整 Commit SHA；这些成功记录只代表轻量门禁和安全检查通过。
+2. 完整验证只允许人工按需触发，不随 Push、Pull Request 或定时任务自动运行；它对输入 Commit SHA 执行 pytest、Vitest、production build 和 Chromium Playwright，并在全部成功后生成 30 天保留的 Artifact。
+3. 镜像发布必须人工触发，并且只接受同时通过四个自动 Push 工作流和人工完整验证证据校验的完整 Commit SHA。
 4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
 
 ## 3. 触发条件总表
@@ -49,14 +49,14 @@ flowchart TD
 | CI - Governance | 仅 `main` | 仅目标为 `main` | 否 | 否 |
 | CI - Backend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
 | CI - Frontend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
-| CI - Browser E2E | 否 | 否 | 否 | 是 |
+| CI - Full Validation | 否 | 否 | 否 | 是 |
 | Security | 仅 `main` | 仅目标为 `main` | 每周一次 | 否 |
 | Publish Images | 否 | 否 | 否 | 是 |
 | Deploy Production | 否 | 否 | 否 | 是 |
 
 四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行轻量门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤，也不自动运行 Backend pytest、前端 Vitest、前端 production build 或 Playwright。
 
-`CI - Browser E2E` 只支持从 GitHub Actions 页面人工触发。是否运行由操作人员按改动风险决定，它的结果不影响 `Publish Images`。
+`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA。普通开发和 Git 交付不自动运行它；需要发布镜像时，同一 SHA 的成功完整验证 Artifact 是 `Publish Images` 的前置证据。
 
 `Security` 的定时表达式是 `23 3 * * 1`，即每周一 `03:23 UTC`。在中国标准时间下对应每周一 `11:23`。
 
@@ -118,10 +118,10 @@ GitHub 收到目标为 `main` 的 Pull Request 更新或 `main` 新提交后，�
 - 该 Commit SHA 的整体检查状态会出现失败。
 - GitHub 可能按个人通知设置发送 Actions 失败邮件。
 - 其他已经开始的工作流通常继续运行。
-- `Publish Images` 会拒绝使用该 Commit SHA，因为它要求四个自动 Push 工作流都有成功记录。
+- `Publish Images` 会拒绝使用该 Commit SHA，因为它要求四个自动 Push 工作流和同 SHA 完整验证 Artifact 都有成功证据。
 - 不会自动回退本地代码，也不会自动修改远程分支。
 
-人工运行的 Browser E2E 失败只表示该次跨栈复核未通过，不改变 Commit SHA 的镜像发布资格。
+人工完整验证失败或 Artifact 缺失、过期时，该 Commit SHA 不能进入镜像发布。修复代码后应对新的 Commit SHA 重新运行；仅因 Artifact 过期时，可以在默认分支上对同一 SHA 重新人工触发完整验证。
 
 ## 5. CI - Governance
 
@@ -236,13 +236,13 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 
 ### 7.5 结果含义
 
-成功只表示两个前端应用通过各自的 ESLint 和 TypeScript 类型检查，不表示 Vitest、production build 或浏览器流程通过。只有用户明确授权时才在本地运行对应重型命令，线上 Browser E2E 由用户人工触发。
+成功只表示两个前端应用通过各自的 ESLint 和 TypeScript 类型检查，不表示 Vitest、production build 或浏览器流程通过。只有用户明确授权时才在本地运行对应重型命令，线上完整验证也由用户人工触发。
 
-## 8. CI - Browser E2E
+## 8. CI - Full Validation
 
 ### 8.1 作用和使用场景
 
-Browser E2E 只支持 `workflow_dispatch` 人工触发。它在 Ubuntu Runner 中启动真实 Backend、PostgreSQL 和 Redis，构建两个前端，再用 Chromium 执行完整用户流程。
+完整验证只支持 `workflow_dispatch` 人工触发。操作人员必须从默认分支启动工作流并输入待验证的完整 Commit SHA；工作流会确认 SHA 属于默认分支历史，然后在 Ubuntu Runner 中执行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium 跨栈 E2E。
 
 受控启动器等待 Web 服务返回 2xx，并且只在 Admin `/umi.js` 返回 JavaScript Content-Type 后放行 Playwright，避免 Umi 首次编译期间的 2xx HTML 回退页被误判为应用就绪。
 
@@ -254,23 +254,24 @@ Browser E2E 只支持 `workflow_dispatch` 人工触发。它在 Ubuntu Runner �
 - 页面路由、表单、权限导航和浏览器运行错误。
 - 多个应用分别构建成功，但组合运行失败。
 
-本地 `pnpm test:e2e` 和线上 Browser E2E 都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的复核结果。该结果不参与 Pull Request、Push 或镜像发布门禁。
+本地重型命令和线上完整验证都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异，或准备镜像发布证据时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的结果。它不参与 Pull Request 或 Push 门禁，也不会自动触发镜像发布；成功 Artifact 只作为后续独立授权的 `Publish Images` 输入证据。
 
 ### 8.2 执行步骤
 
-1. 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器。
-2. 使用 uv 和 CPython 3.14 安装 Backend 锁定依赖。
-3. 执行 Alembic 迁移、权限同步和初始管理员创建。
-4. 在 Runner 后台启动 Uvicorn，并轮询 `/health/live`。
-5. 安装固定 pnpm 和 Node.js 版本。
-6. 安装根锁文件依赖。
-7. 构建 Admin 和 Web。
-8. 安装 Chromium 及其系统依赖。
-9. 运行 `pnpm test:e2e`。
+1. 校验输入 SHA 格式、工作流分支、检出结果和默认分支祖先关系。
+2. 启动 PostgreSQL 18.4 和 Redis 8.10.0 服务容器。
+3. 使用固定 uv `0.11.32` 和标准 CPython 3.14 安装 Backend 锁定依赖。
+4. 升级隔离测试数据库并运行包含 90% 覆盖率门禁的 Backend pytest。
+5. 准备权限、注册设置和初始管理员，在 Runner 后台启动 Uvicorn，并轮询 `/health/live`。
+6. 安装固定 pnpm 11.17.0、Node.js 24 和根锁文件依赖。
+7. 运行 Admin 与 Web Vitest 及各自 80% 覆盖率门禁。
+8. 执行 Admin 与 Web production build。
+9. 安装 Chromium 及其系统依赖并运行 `pnpm test:e2e`。
+10. 写入 Commit SHA、Workflow Run ID 和验证集合，上传 `full-validation-<完整 SHA>` Artifact，保留 30 天。
 
 ### 8.3 资源特征
 
-该工作流会下载浏览器、启动数据库和 Redis，并构建两个前端，耗时和资源占用较高，因此只能在用户明确授权后人工触发。
+该工作流会下载浏览器、启动数据库和 Redis，并运行三端重型测试与两个前端构建，耗时和资源占用较高，因此只能在用户明确授权后人工触发。任一步失败都不会上传成功证据；Artifact 过期后必须重新运行完整验证，不能通过修改输入或文本说明绕过。
 
 ## 9. Security
 
@@ -365,7 +366,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 
 ### 11.1 作用和使用场景
 
-`Publish Images` 把一个已经通过四个自动门禁的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变 GHCR 镜像。
+`Publish Images` 把一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变 GHCR 镜像。
 
 典型使用场景：
 
@@ -387,10 +388,13 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
    - `CI - Backend`
    - `CI - Frontend`
    - `Security`
-5. Backend、Web 和 Admin 状态必须全部为 `ready`。
-6. 模块边界必须再次通过。
+5. GitHub Actions 必须存在名称为 `full-validation-<完整 SHA>` 且未过期的 Artifact。
+6. Artifact 所属 Run 必须由默认分支通过 `workflow_dispatch` 启动，工作流路径为 `.github/workflows/ci-e2e.yml`，结论为成功。
+7. Artifact 内容中的 Commit SHA、Workflow Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 字段必须全部匹配。
+8. Backend、Web 和 Admin 状态必须全部为 `ready`。
+9. 模块边界必须再次通过。
 
-任何一项缺少时，工作流在构建镜像前停止。四个 Push Run 不包含 Backend pytest、前端 Vitest、前端 production build 或 Playwright；发布矩阵中的 Docker build 只负责生成制品。
+任何一项缺少时，工作流在构建镜像前停止。四个 Push Run 继续只代表轻量门禁和安全检查，重型验证由同 SHA Artifact 证明；发布矩阵中的 Docker build 只负责生成制品，不能替代验证证据。
 
 ### 11.3 Publish matrix
 
@@ -531,6 +535,8 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 ```text
 选择 main 上的完整 Commit SHA
 -> 确认该 SHA 的 4 个 Push 工作流全部成功
+-> 取得重型验证授权并人工触发 CI - Full Validation
+-> 确认同一 SHA 的完整验证 Run 和 Artifact 成功
 -> 取得镜像发布授权
 -> 人工触发 Publish Images
 -> 等待 validate、3 个 publish 矩阵和 finalize 全部成功
@@ -571,9 +577,9 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 | Governance 失败 | 第一条失败的治理步骤 | 文本编码、Markdown、结构或边界问题 |
 | Backend quality 失败 | PostgreSQL、Redis 或具体质量步骤 | 锁文件、类型、迁移、测试、覆盖率、契约漂移 |
 | Frontend quality 失败 | Web 或 Admin Job | lint、类型、测试、构建、生成 Client 漂移 |
-| Browser E2E 失败 | Backend 启动日志或 Playwright 输出 | 服务启动、迁移、浏览器流程或跨栈契约问题 |
+| Full Validation 失败 | 第一条失败的 pytest、Vitest、build、Backend 启动或 Playwright 步骤 | 迁移、测试、覆盖率、构建、服务启动、浏览器流程或跨栈契约问题 |
 | Security 失败 | 具体扫描 Job | 密钥、依赖漏洞、源码风险或扫描器运行错误 |
-| Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、四个 Push Run 或应用状态不满足 |
+| Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、四个 Push Run、完整验证 Artifact 或应用状态不满足 |
 | Publish matrix 失败 | 对应应用矩阵 | 镜像构建、容器漏洞、证明或 GHCR 权限问题 |
 | Publish finalize 失败 | Publish verified immutable tags | digest 证据缺失或不可变标签冲突 |
 | Deploy 验证失败 | Validate 或 Verify 步骤 | 输入格式、环境开关、路径、标签与 digest 不一致 |
@@ -593,13 +599,14 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 
 - 仓库治理和模块边界检查。
 - Backend 和 Frontend 质量检查。
+- 同一 Commit SHA 的 pytest、Vitest、production build 和 Chromium Playwright 完整验证 Artifact。
 - 密钥、依赖漏洞和源码静态安全检查。
 - 镜像漏洞扫描、SBOM 和构建来源证明。
 - 固定 Commit SHA 和镜像 digest 的生产追溯。
 
 具体工具未来可以通过已确认计划替换，但不能直接删除能力或静默跳过。任何门禁调整都应同步工作流配置、安全策略、本文、发布手册和相关计划。
 
-真实浏览器跨栈 E2E 继续作为本地测试和 GitHub 人工复核能力保留，由操作人员根据改动风险决定是否执行，不属于自动或镜像发布门禁。
+本地重型验证继续按风险和用户授权执行，不形成镜像发布证据。GitHub 完整验证保持人工触发，不进入自动 CI；需要发布镜像时，其同 SHA 成功 Artifact 属于发布门禁，但不会自动授权或触发发布。
 
 ## 16. 操作检查清单
 
@@ -628,6 +635,7 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 - [ ] 已取得独立镜像发布授权。
 - [ ] 使用完整 40 位 Commit SHA。
 - [ ] 四个 Push 工作流都有同一 SHA 的成功记录。
+- [ ] 已人工完成同一 SHA 的完整验证，Artifact 未过期且 Run 成功。
 - [ ] 三个应用状态均为 `ready`。
 
 ### 部署生产前

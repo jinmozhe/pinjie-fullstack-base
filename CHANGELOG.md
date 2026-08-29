@@ -6,6 +6,7 @@
 
 ### Added
 
+- 建立同 Commit SHA 的完整验证与镜像发布证据门禁：人工 `CI - Full Validation` 在默认分支上校验目标 SHA，依次运行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright，全部成功后上传 30 天保留的不可变 Artifact；`Publish Images` 通过 GitHub Actions API 核验成功 Run、Artifact 有效期、Commit SHA、Run ID 和完整验证集合，缺失或不一致时在镜像构建前失败关闭。
 - 建立文档权威边界与索引一致性自动门禁：根项目索引只维护身份、阶段、活动计划和权威入口，详细实现状态回归实际源码、配置、迁移、生成契约和专题架构文档；`docs/` 明确为专题项目文档唯一发布来源；治理检查自动拒绝已废弃索引路径、规则正文或桥接漂移、指令容量不足、计划登记或活动状态不一致、非法计划枚举和专题文档漏登记，并通过 9 类负向夹具验证。
 - 增加全局系统设置与站点配置媒体能力：Backend 使用单一 `system_settings` 表按 `site`、`registration` 固定分组保存强类型 JSONB，提供 revision 并发保护、配置级权限、审计和注册 Fail Closed；Admin 新增 `/settings` 的站点与注册两个固定 Tab，支持独立 LOGO 上传、只读权限和冲突草稿保留；Web 通过完整 SiteProfile 统一首页、登录、注册、用户中心品牌与 Metadata，并以带 revision 的同源代理缓存固定配置媒体。站点 LOGO 使用独立可补偿目录，不进入文件资产表。
 - 将超级管理员身份授予从 `admins:update` 拆分为独立的 `PATCH /api/v1/admin/admins/{admin_id}/superuser` 和系统权限 `admins:superuser:change`：普通角色无法分配该权限，Dependency 与 Service 双重校验操作者真实超级管理员状态，管理员资料更新不再接受 `is_superuser`，创建管理员入口同样阻止普通管理员直接创建超级管理员；资料、状态、角色、密码和会话操作增加超级管理员目标保护，批量状态目标包含超级管理员时也要求超级管理员身份，Admin 身份操作、行级入口和角色权限 Tree 已同步新边界。
@@ -64,6 +65,7 @@
 
 ### Fixed
 
+- 修复 Backend uv 工具版本和锁文件元数据可能漂移的问题：项目通过 `required-version` 固定 uv `0.11.32`，Backend、完整验证和 Security 工作流显式安装同一版本，并用该版本重建和验证 `uv.lock`；同时补齐根 README 遗漏的 Backend、Admin 和 Web 实际能力目录。
 - 修复 Admin 系统设置页站点 LOGO 预览随原图比例变化的问题，预览区域固定为正方形并保持图片完整适配；同时补齐站点资料、LOGO、注册策略、revision 冲突、权限与失败重试组件测试。
 - 修复全栈重型门禁暴露的契约与可访问性问题：Web BFF 放行公开 SiteProfile 同源读取，Admin 响应式数据表隐藏包含可聚焦全选框的 Ant Design 测量行，Playwright 按当前站点资料断言品牌标题；以前向迁移修复用户软删除字段注释漂移，并同步 OpenAPI 与 API Client 中文说明。
 - 修复 Web 与 Admin 会话始终显示“未知设备”的问题：Backend 使用锁定版本的 `ua-parser` 从已清理 User-Agent 生成“浏览器 · 操作系统”展示名称，新登录会话直接保存标准化结果；同时提供默认 dry-run、显式 `--apply` 且不输出敏感原文的旧会话回填工具。

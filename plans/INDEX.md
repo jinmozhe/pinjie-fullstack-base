@@ -17,6 +17,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-08-30_依赖复现与发布验证闭环整改计划.md` | 已结束 | 已完成；uv 工具链已统一锁定，README 能力清单、人工完整验证 Artifact、镜像发布同 SHA 校验和证据正反例门禁已落地，轻量与治理检查通过 | Backend、Admin、Web、Deployment、Documentation | 固定 uv 依赖复现工具链并建立同 Commit SHA 的完整验证证据与镜像发布门禁 |
 | `plans/2026-08-29_全栈失败门禁修复计划.md` | 已结束 | 已完成；Admin、Backend、Web、API Client、数据库迁移和四项目 Playwright 失败均已修复，授权的重型验证与治理门禁全部通过 | Backend、Admin、Web、API Client、Database、Documentation | 修复全栈重型验证和数据库一致性失败，恢复质量门禁后继续 Git 交付闭环 |
 | `plans/2026-08-29_会话设备名称识别计划.md` | 已结束 | 已完成；Web 与 Admin 新会话已统一生成浏览器与操作系统展示名称，旧会话显式回填工具、测试源码、依赖锁定和项目文档已同步，全部轻量门禁通过 | Backend、Documentation | 从已清理 User-Agent 生成会话浏览器与操作系统展示名称，并提供旧会话显式回填边界 |
 | `plans/2026-08-29_文档权威边界与索引一致性门禁整改计划.md` | 已结束 | 已完成；权威来源、索引术语、专题文档载体和计划结果已收敛，自动一致性门禁与 9 类负向夹具通过 | Documentation、Developer Workflow | 收敛权威来源、索引术语和文档载体边界，并建立自动一致性门禁 |
