@@ -10,6 +10,7 @@ const SESSION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 
 function isAllowedRoute(method: string, path: string[]): boolean {
   const route = path.join("/");
+  if (method === "GET" && route === "system/site-profile") return true;
   if (method === "POST" && /^(auth\/(register|login|refresh|logout)|users\/me\/(password|sessions\/revoke-others))$/.test(route)) return true;
   if (method === "POST" && route === "assets/upload") return true;
   if (["GET", "PATCH", "DELETE"].includes(method) && route === "users/me") return true;

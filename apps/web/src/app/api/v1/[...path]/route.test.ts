@@ -8,6 +8,7 @@ const sessionId = "01900000-0000-7000-8000-000000000003";
 type BrowserApiRoute = { method: keyof typeof proxyHandlers; path: readonly string[]; query?: string };
 
 const browserApiRoutes: readonly BrowserApiRoute[] = [
+  { method: "GET", path: ["system", "site-profile"] },
   { method: "POST", path: ["auth", "register"] },
   { method: "POST", path: ["auth", "login"] },
   { method: "POST", path: ["auth", "refresh"] },

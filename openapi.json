@@ -7575,7 +7575,7 @@
               }
             ],
             "title": "Name",
-            "description": "资源名称"
+            "description": "Web 公共站点名称"
           },
           "title": {
             "anyOf": [
@@ -7588,7 +7588,8 @@
                 "type": "null"
               }
             ],
-            "title": "Title"
+            "title": "Title",
+            "description": "Web 默认页面标题"
           },
           "keywords": {
             "anyOf": [
@@ -7603,7 +7604,8 @@
                 "type": "null"
               }
             ],
-            "title": "Keywords"
+            "title": "Keywords",
+            "description": "Web Metadata 关键词"
           },
           "description": {
             "anyOf": [
@@ -7616,7 +7618,7 @@
               }
             ],
             "title": "Description",
-            "description": "资源说明文本"
+            "description": "Web 默认站点描述"
           }
         },
         "additionalProperties": false,

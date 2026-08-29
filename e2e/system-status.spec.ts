@@ -10,7 +10,10 @@ test.describe("system status foundation", () => {
       if (message.type() === "error") consoleErrors.push(message.text());
     });
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "通用账户与管理基础" })).toBeVisible();
+    const siteProfileResponse = await page.request.get("/api/v1/system/site-profile");
+    expect(siteProfileResponse.ok()).toBe(true);
+    const siteName = (await siteProfileResponse.json()).data.name as string;
+    await expect(page.getByRole("heading", { name: siteName, exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "系统运行状态" })).toBeVisible();
     await expect(page.getByRole("link", { name: "登录" })).toBeVisible();
     await expect(page.getByRole("link", { name: "创建账户" })).toBeVisible();
@@ -34,7 +37,7 @@ test.describe("system status foundation", () => {
       if (message.type() === "error") consoleErrors.push(message.text());
     });
     await page.goto("/login");
-    await expect(page.getByRole("heading", { name: "管理控制台" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pinjie Console" })).toBeVisible();
     await expect(page.getByLabel("用户名")).toBeVisible();
     await expectNoClientTokenPersistence(page);
     await expectPageQuality(page);

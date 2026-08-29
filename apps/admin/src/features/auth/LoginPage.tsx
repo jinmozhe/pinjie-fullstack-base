@@ -67,11 +67,7 @@ export function LoginPage({
               onFinish={(values) => login.mutate(values)}
               requiredMark={false}
             >
-              <Form.Item
-                aria-label="用户名"
-                name="username"
-                rules={[{ required: true, message: "请输入用户名" }]}
-              >
+              <Form.Item name="username" rules={[{ required: true, message: "请输入用户名" }]}>
                 <Input
                   allowClear
                   aria-label="用户名"
@@ -83,7 +79,6 @@ export function LoginPage({
                 />
               </Form.Item>
               <Form.Item
-                aria-label="密码"
                 name="password"
                 rules={[
                   { required: true, message: "请输入密码" },

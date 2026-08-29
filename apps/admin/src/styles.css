@@ -199,7 +199,8 @@ textarea {
   width: 100%;
 }
 
-.admins-table .ant-table-measure-row {
+.admins-table .ant-table-measure-row,
+.responsive-data-table .ant-table-measure-row {
   visibility: hidden;
 }
 

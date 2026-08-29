@@ -172,7 +172,8 @@ describe("stage C admin workspace", () => {
     await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
     expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /批量删除/ }));
-    const dialog = screen.getByRole("dialog", { name: "填写删除原因（可选）" });
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("填写删除原因（可选）")).toBeInTheDocument();
     expect(within(dialog).getByLabelText("删除原因")).toBeInTheDocument();
     await user.click(within(dialog).getByRole("button", { name: "移入回收站" }));
 
@@ -346,10 +347,11 @@ describe("stage C admin workspace", () => {
 
     renderPage(<AdminsPage />, ordinaryOperator);
 
-    expect(await screen.findByText("Other Admin")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "编辑" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "角色" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "会话" })).toBeDisabled();
+    const protectedRow = (await screen.findByText("Other Admin")).closest("tr");
+    if (!protectedRow) throw new Error("超级管理员所在表格行未渲染");
+    expect(within(protectedRow).getByRole("button", { name: /编\s*辑/ })).toBeDisabled();
+    expect(within(protectedRow).getByRole("button", { name: /角\s*色/ })).toBeDisabled();
+    expect(within(protectedRow).getByRole("button", { name: /会\s*话/ })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "停用管理员：other-admin" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "更多操作：other-admin" })).not.toBeInTheDocument();
     const rowCheckbox = document.querySelector('.ant-table-tbody input[type="checkbox"]');
@@ -456,7 +458,7 @@ describe("stage C admin workspace", () => {
 
     const admins = renderPage(<AdminsPage />);
     expect((await screen.findAllByText("inactive-admin")).length).toBeGreaterThan(0);
-    expect(screen.getByText("审计员")).toBeInTheDocument();
+    expect(screen.getAllByText("审计员").length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: "更多操作：inactive-admin" }));
     await user.click(await screen.findByRole("menuitem", { name: /启\s*用/ }));
     await user.click(screen.getByRole("button", { name: /会\s*话/ }));
@@ -564,10 +566,10 @@ describe("stage C admin workspace", () => {
     expect(await screen.findByRole("tree")).toBeInTheDocument();
     expect(screen.getByText("查看用户")).toBeInTheDocument();
     expect(await screen.findByText("用户管理")).toBeInTheDocument();
-    expect(screen.getByText("角色与权限")).toBeInTheDocument();
+    expect(screen.getAllByText("角色与权限").length).toBeGreaterThan(0);
     expect(screen.getByText("其他权限")).toBeInTheDocument();
     expect(screen.getByText("删除文件资产").closest('[role="treeitem"]')).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByText("已选").parentElement).toHaveTextContent("已选 1 / 4");
+    expect(screen.getByText((_, element) => element?.textContent?.replaceAll(" ", "") === "已选1/4")).toBeInTheDocument();
 
     const permissionSearch = screen.getByLabelText("搜索权限");
     await user.type(permissionSearch, "system:overview:read");
@@ -575,7 +577,7 @@ describe("stage C admin workspace", () => {
     expect(screen.queryByText("查看用户")).not.toBeInTheDocument();
     await user.clear(permissionSearch);
     await user.click(screen.getByRole("button", { name: /反选/ }));
-    expect(screen.getByText("已选").parentElement).toHaveTextContent("已选 3 / 4");
+    expect(screen.getByText((_, element) => element?.textContent?.replaceAll(" ", "") === "已选3/4")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "收起全部权限分组" }));
     await user.click(screen.getByRole("button", { name: "展开全部权限分组" }));
     await user.click(screen.getByRole("button", { name: /保\s*存/ }));

@@ -109,6 +109,7 @@ def test_openapi_descriptions_are_chinese_and_identifiers_stay_stable() -> None:
         "后台管理",
         "文件资产",
         "系统",
+        "系统设置",
         "健康检查",
     }
     login_operation = schema["paths"]["/api/v1/auth/login"]["post"]

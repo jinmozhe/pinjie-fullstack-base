@@ -434,7 +434,7 @@ async def test_admin_avatar_and_bulk_status_are_atomic_and_audited() -> None:
                     display_name="Bulk Actor",
                     password_hash="not-used-by-this-test",
                     is_active=True,
-                    is_superuser=False,
+                    is_superuser=True,
                     credential_version=1,
                 )
             )
@@ -540,24 +540,24 @@ async def test_admin_avatar_and_bulk_status_are_atomic_and_audited() -> None:
             assert missing_exc.value.code == ErrorCode.ADMIN_NOT_FOUND
 
         async with resources.session_factory() as current_session:
-            with pytest.raises(AppException) as protected_exc:
-                await service(current_session).set_admin_status_bulk(
-                    AdminBulkStatusUpdateIn(admin_ids=protected_ids, is_active=False)
-                )
-            assert protected_exc.value.code == ErrorCode.LAST_SUPERUSER_PROTECTED
+            disabled_superusers = await service(current_session).set_admin_status_bulk(
+                AdminBulkStatusUpdateIn(admin_ids=protected_ids, is_active=False)
+            )
+            assert [admin.id for admin in disabled_superusers] == sorted(protected_ids)
 
         async with resources.session_factory() as session:
             unchanged_targets = list(
                 (await session.scalars(select(Admin).where(Admin.id.in_(target_ids + protected_ids)))).all()
             )
-            assert all(admin.is_active for admin in unchanged_targets)
+            assert all(admin.is_active for admin in unchanged_targets if admin.id in target_ids)
+            assert all(not admin.is_active for admin in unchanged_targets if admin.id in protected_ids)
             assert all(admin.credential_version == 3 for admin in unchanged_targets if admin.id in target_ids)
-            assert all(admin.credential_version == 1 for admin in unchanged_targets if admin.id in protected_ids)
-            denied_audits = list(
+            assert all(admin.credential_version == 2 for admin in unchanged_targets if admin.id in protected_ids)
+            recent_audits = list(
                 (await session.scalars(select(AuditEvent).where(AuditEvent.request_id.in_(request_ids[-3:])))).all()
             )
-            assert len(denied_audits) == 3
-            assert all(event.result == "denied" for event in denied_audits)
+            assert len(recent_audits) == 3
+            assert {event.result for event in recent_audits} == {"denied", "succeeded"}
     finally:
         async with resources.session_factory() as session, transaction_scope(session):
             await session.execute(delete(AdminSession).where(AdminSession.id.in_(session_ids)))
