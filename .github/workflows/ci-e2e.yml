@@ -52,8 +52,8 @@ jobs:
       REDIS_MODE: required
       REDIS_URL: redis://127.0.0.1:6379/0
       TEST_REDIS_URL: redis://127.0.0.1:6379/0
-      WEB_ORIGINS: '["http://127.0.0.1:3000"]'
-      ADMIN_ORIGINS: '["http://127.0.0.1:3001"]'
+      WEB_ORIGINS: '["http://127.0.0.1:3000","http://localhost:3000"]'
+      ADMIN_ORIGINS: '["http://127.0.0.1:3001","http://localhost:3001"]'
       WEB_JWT_SECRET: e2e-web-jwt-secret-0000000000000001
       ADMIN_JWT_SECRET: e2e-admin-jwt-secret-00000000000001
       WEB_TOKEN_HMAC_KEY: e2e-web-hmac-key-00000000000000001

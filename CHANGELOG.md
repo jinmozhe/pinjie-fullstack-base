@@ -65,6 +65,7 @@
 
 ### Fixed
 
+- 修复首次远端完整验证中测试 Origin 配置错配的问题：Runner 同时允许真实 E2E 使用的 `127.0.0.1` 与 Backend 既有 API 测试使用的 `localhost`，避免 pytest 请求在业务断言前被 CSRF Origin 校验拒绝。
 - 修复 Backend uv 工具版本和锁文件元数据可能漂移的问题：项目通过 `required-version` 固定 uv `0.11.32`，Backend、完整验证和 Security 工作流显式安装同一版本，并用该版本重建和验证 `uv.lock`；同时补齐根 README 遗漏的 Backend、Admin 和 Web 实际能力目录。
 - 修复 Admin 系统设置页站点 LOGO 预览随原图比例变化的问题，预览区域固定为正方形并保持图片完整适配；同时补齐站点资料、LOGO、注册策略、revision 冲突、权限与失败重试组件测试。
 - 修复全栈重型门禁暴露的契约与可访问性问题：Web BFF 放行公开 SiteProfile 同源读取，Admin 响应式数据表隐藏包含可聚焦全选框的 Ant Design 测量行，Playwright 按当前站点资料断言品牌标题；以前向迁移修复用户软删除字段注释漂移，并同步 OpenAPI 与 API Client 中文说明。
