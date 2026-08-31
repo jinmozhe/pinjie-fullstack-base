@@ -6,8 +6,8 @@ main:
         cpus: 4
       lock:
         key: pinjie-fullstack-base-tcr-main
-        expires: 2h
-        timeout: 2h
+        expires: 7200
+        timeout: 7200
         wait: true
         cancel-in-progress: false
       services:
