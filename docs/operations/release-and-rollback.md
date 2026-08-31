@@ -32,16 +32,17 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 
 使用独立的 `Publish Images` 工作流，输入完整 Commit SHA。工作流必须：
 
-1. 检出指定提交并再次核对 `git rev-parse HEAD`。
+1. 确认工作流从仓库默认分支启动，检出指定提交并再次核对 `git rev-parse HEAD`。
 2. 确认指定提交属于仓库默认分支，且同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四个 Push 工作流全部成功。
 3. 通过 GitHub Actions API 找到由默认分支人工触发且成功完成的完整验证 Run，下载未过期的 `full-validation-<完整提交>` Artifact，并核对 Commit SHA、Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段。
-4. 以最小权限登录 GHCR；`sha-<完整提交>` 已存在且指向同一 digest 时允许验证通过，指向不同 digest 时立即失败，禁止覆盖。
-5. 构建 Backend、Web 和 Admin 独立镜像，先按内容 digest 推送候选内容，不提前创建发布标签。
-6. 生成 SBOM 与构建来源证明，并对候选 digest 执行漏洞扫描，达到阻断等级时失败。
-7. 三个矩阵任务分别上传经过验证的 digest 证据，最终 Job 收齐三份证据后才创建 `sha-<完整提交>` 标签。
-8. 在 Workflow Summary 输出完整验证 Run 和三个 digest，不写入项目文档或工作区。
+4. 以最小权限登录 GHCR 和受 `image-publishing` Environment 保护的 TCR；`sha-<完整提交>` 已存在且指向同一 digest 时允许验证通过，指向不同 digest 时立即失败，禁止覆盖。
+5. 构建 Backend、Web 和 Admin 独立镜像，同一次 BuildKit 构建先按内容 digest 向两个 Registry 推送候选内容，不提前创建发布标签。
+6. 分别查询 GHCR 与 TCR 候选 digest，任一缺失或不一致时停止。
+7. 生成 SBOM 与构建来源证明，并对 GHCR 候选 digest 执行漏洞扫描，达到阻断等级时失败。
+8. 三个矩阵任务分别上传经过验证的 digest 证据，最终 Job 收齐三份证据后才在两个 Registry 创建 `sha-<完整提交>` 标签。
+9. 在 Workflow Summary 输出完整验证 Run 和两个 Registry 的完整 digest 引用，不写入项目文档或工作区。
 
-不得覆盖同一不可变标识下的内容。最终 Job 创建标签前先核对全部现有目标，只允许不存在或已经指向同一 digest；中断后可以使用同一 Workflow Run 的证据幂等重试。GHCR 不提供跨三个镜像仓库的事务，创建标签期间仍存在短暂的部分可见窗口，部署工作流必须等整个发布工作流成功后才能使用这些标签。镜像保留策略必须保护正在生产和可回滚的 digest。
+不得覆盖同一不可变标识下的内容。最终 Job 创建标签前先核对全部现有目标，只允许不存在或已经指向同一 digest；中断后可以使用同一 Workflow Run 的证据幂等重试。两个 Registry 不提供跨仓库事务，创建标签期间仍存在短暂的部分可见窗口，部署工作流必须等整个发布工作流成功后才能使用这些标签。当前生产部署仍使用 GHCR，TCR 只完成发布兼容性接线；生产来源切换要等地域和只读身份确认。镜像保留策略必须保护正在生产和可回滚的 digest。
 
 候选镜像因基础镜像中的可修复 High 或 Critical 漏洞失败时，先核对固定基础镜像摘要和上游修复版本。需要更新摘要时必须形成新提交，重新取得轻量 Push 工作流和同 SHA 完整验证证据，再重新发布；禁止移动既有 Tag、覆盖既有不可变标签、跳过扫描或把失败候选 digest 用于部署。
 
