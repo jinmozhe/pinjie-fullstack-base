@@ -6,6 +6,7 @@
 
 ### Added
 
+- 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run 与同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。
 - 为三端镜像发布增加 GHCR 与腾讯云 TCR 个人版双仓输出：同一次 BuildKit 构建按相同内容 digest 推送两个 Registry，发布矩阵在扫描前分别核验候选 digest，最终阶段同时执行 SHA 标签冲突检查、创建和写后复核；TCR 凭证仅来自受保护的 `image-publishing` Environment，现有生产部署继续使用 GHCR，待地域和独立只读身份确认后再切换运行镜像源。
 - 建立同 Commit SHA 的完整验证与镜像发布证据门禁：人工 `CI - Full Validation` 在默认分支上校验目标 SHA，依次运行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright，全部成功后上传 30 天保留的不可变 Artifact；`Publish Images` 通过 GitHub Actions API 核验成功 Run、Artifact 有效期、Commit SHA、Run ID 和完整验证集合，缺失或不一致时在镜像构建前失败关闭。
 - 建立文档权威边界与索引一致性自动门禁：根项目索引只维护身份、阶段、活动计划和权威入口，详细实现状态回归实际源码、配置、迁移、生成契约和专题架构文档；`docs/` 明确为专题项目文档唯一发布来源；治理检查自动拒绝已废弃索引路径、规则正文或桥接漂移、指令容量不足、计划登记或活动状态不一致、非法计划枚举和专题文档漏登记，并通过 9 类负向夹具验证。

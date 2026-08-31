@@ -34,7 +34,37 @@ Backend、Web 和 Admin 应分别以非 root 用户运行。具体 UID 属于镜
 
 阶段 B 收尾已在 Linux x86_64 容器模式成功构建并运行三张镜像。Backend、Web 和 Admin 分别以 `app`、`app` 和 `nginx` 非 Root 用户运行，内置健康检查均达到 `healthy`；该结果不代替发布时的 SBOM、来源证明、目标镜像扫描和生产部署验证。
 
-## 4. 生产 Compose 配置
+## 4. CNB 构建与 TCR 发布
+
+正式镜像由 CNB 根目录 `.cnb.yml` 构建，GitHub Runner 只负责把通过门禁的固定 Commit SHA 交接到 CNB `main`。CNB 使用 4 核 Linux AMD64 社区节点和固定 digest 的构建、Trivy、附件插件镜像，三个应用继续共用仓库根构建上下文。
+
+CNB 密钥仓库文件地址固定为：
+
+```text
+https://cnb.cool/pjwl/pinjie-fullstack-base-secrets/-/blob/main/tcr-publish.yml
+```
+
+该文件由用户在 CNB Web 界面创建，不进入代码仓库，结构如下：
+
+```yaml
+TCR_REGISTRY: "ccr.ccs.tencentyun.com"
+TCR_NAMESPACE: "pinjie-fullstack-base"
+TCR_PUBLISH_USERNAME: "<TCR 发布用户名>"
+TCR_PUBLISH_PASSWORD: "<TCR 固定密码>"
+
+allow_slugs:
+  - "pjwl/pinjie-fullstack-base"
+allow_events:
+  - "push"
+allow_branches:
+  - "main"
+```
+
+每张镜像按以下顺序处理：Buildx 从 TCR `buildcache-main` 读取缓存，生成最大级别 provenance 和 SBOM attestation，以 `push-by-digest` 推送候选内容，查询 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。三张镜像全部通过后才创建 `sha-<完整 Commit SHA>` 标签，并保存结构化发布清单和原始证据附件。
+
+`buildcache-main` 是可变构建缓存，不能作为部署来源。生产只使用发布清单中的完整 `ccr.ccs.tencentyun.com/pinjie-fullstack-base/<镜像>@sha256:<digest>` 引用。
+
+## 5. 生产 Compose 配置
 
 生产目录至少需要：
 
@@ -87,13 +117,15 @@ SETTINGS_MEDIA_BASE_URL=/static/settings
 
 真实密码、域名和应用镜像 digest 不得写入仓库。仓库中的基础镜像 digest 来自官方 registry manifest，并由生产配置正反例门禁检查所有 Dockerfile `FROM`、PostgreSQL、Redis 和应用镜像变量。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
 
+当前生产部署工作流仍校验 GHCR。切换到 TCR 属于后续独立生产变更，届时三个应用变量改用 CNB 发布清单中的 TCR 完整 digest，并同步部署工作流的 Registry 登录、SHA 标签核对和只读凭证；本次 CNB 构建实现不修改生产配置。
+
 PostgreSQL 18 的命名卷挂载到 `/var/lib/postgresql`。已有 PostgreSQL 17 及以下数据卷不能通过直接改挂载路径完成升级，必须先验证备份，再按独立迁移方案恢复到 PostgreSQL 18 新卷。
 
 Backend 的 `backend_uploads` 命名卷挂载到 `/app/storage`，Compose 固定 `UPLOAD_LOCAL_ROOT=/app/storage/uploads` 与 `SETTINGS_MEDIA_ROOT=/app/storage/settings-media`。镜像内的 UID `10001` 必须能写入该卷；统一资产与配置媒体使用独立目录和私有补偿区，静态路由只暴露各自公开根。生产备份必须同时覆盖 PostgreSQL 和完整 `backend_uploads` 卷，并记录同一备份窗口。
 
 系统设置迁移会以关闭状态创建公开注册配置。部署完成后由具备权限的管理员在 `/settings` 明确开启；生产环境不通过环境变量自动继承旧状态。配置媒体本地驱动只适用于单实例，或所有 Backend 实例共享同一可靠文件系统并具备写入协调的部署。
 
-## 5. 迁移、权限与初始管理员
+## 6. 迁移、权限与初始管理员
 
 应用启动不自动修改数据库。首次部署或包含迁移的版本先执行：
 
@@ -111,7 +143,7 @@ docker compose --env-file .env -f compose.prod.yml run --rm backend python -m sc
 
 命令中的数据库名必须与 `DATABASE_URL` 完全一致。脚本不提供默认密码；已有账号默认拒绝，重置还需显式提供 `--reset-existing --confirm-reset`，并会撤销既有会话。
 
-## 6. 启动与验证
+## 7. 启动与验证
 
 ```powershell
 docker compose --env-file .env -f compose.prod.yml config --quiet
@@ -156,7 +188,7 @@ docker compose --env-file .env -f compose.prod.yml run --rm backend python -m sc
 
 用户回收站没有到期清理或匿名化步骤，软删除记录长期保留并可由具备 `users:restore` 权限的管理员恢复。
 
-## 7. 停止与回滚边界
+## 8. 停止与回滚边界
 
 验证用途的本地容器可执行 `docker compose down`。生产环境只使用发布与部署工作流提供的固定 digest，禁止使用 `latest`、分支标签或临时重建旧版本。数据库迁移和恢复需要单独的备份、评审与授权。
 

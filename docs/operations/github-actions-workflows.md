@@ -15,7 +15,7 @@
 | CI - Frontend | [ci-frontend.yml](../../.github/workflows/ci-frontend.yml) |
 | CI - Full Validation | [ci-e2e.yml](../../.github/workflows/ci-e2e.yml) |
 | Security | [security.yml](../../.github/workflows/security.yml) |
-| Publish Images | [publish-images.yml](../../.github/workflows/publish-images.yml) |
+| Handoff Source to CNB | [publish-images.yml](../../.github/workflows/publish-images.yml) |
 | Deploy Production | [deploy-production.yml](../../.github/workflows/deploy-production.yml) |
 
 ## 2. 总体流程
@@ -29,9 +29,10 @@ flowchart TD
     E --> G["同一 Commit SHA 的 4 个 Push 工作流"]
     G --> F["人工授权 CI - Full Validation"]
     F --> N["同一 SHA 的完整验证 Artifact"]
-    N --> H["人工授权 Publish Images"]
-    H --> I["构建、扫描并发布 3 张 GHCR 镜像"]
-    I --> K["人工授权 Deploy Production"]
+    N --> H["人工授权 Handoff Source to CNB"]
+    H --> I["固定 SHA 快进交接到 CNB main"]
+    I --> J["CNB 构建、扫描并发布 3 张 TCR 镜像"]
+    J --> K["人工授权 Deploy Production"]
     K --> L["固定 3 个镜像 digest 部署生产环境"]
 ```
 
@@ -39,7 +40,7 @@ flowchart TD
 
 1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发轻量静态、契约、治理与安全检查，不运行应用测试或前端生产构建，不发布镜像，不接触生产服务器。
 2. 完整验证只允许人工按需触发，不随 Push、Pull Request 或定时任务自动运行；它对输入 Commit SHA 执行 pytest、Vitest、production build 和 Chromium Playwright，并在全部成功后生成 30 天保留的 Artifact。
-3. 镜像发布必须人工触发，并且只接受同时通过四个自动 Push 工作流和人工完整验证证据校验的完整 Commit SHA。
+3. 源码交接必须人工触发，并且只接受同时通过四个自动 Push 工作流和人工完整验证证据校验的完整 Commit SHA；CNB 只在受控 `main` Push 后构建并发布镜像。
 4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
 
 ## 3. 触发条件总表
@@ -51,12 +52,12 @@ flowchart TD
 | CI - Frontend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
 | CI - Full Validation | 否 | 否 | 否 | 是 |
 | Security | 仅 `main` | 仅目标为 `main` | 每周一次 | 否 |
-| Publish Images | 否 | 否 | 否 | 是 |
+| Handoff Source to CNB | 否 | 否 | 否 | 是 |
 | Deploy Production | 否 | 否 | 否 | 是 |
 
 四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行轻量门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤，也不自动运行 Backend pytest、前端 Vitest、前端 production build 或 Playwright。
 
-`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA。普通开发和 Git 交付不自动运行它；需要发布镜像时，同一 SHA 的成功完整验证 Artifact 是 `Publish Images` 的前置证据。
+`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA。普通开发和 Git 交付不自动运行它；需要发布镜像时，同一 SHA 的成功完整验证 Artifact 是 `Handoff Source to CNB` 的前置证据。
 
 `Security` 的定时表达式是 `23 3 * * 1`，即每周一 `03:23 UTC`。在中国标准时间下对应每周一 `11:23`。
 
@@ -118,7 +119,7 @@ GitHub 收到目标为 `main` 的 Pull Request 更新或 `main` 新提交后，�
 - 该 Commit SHA 的整体检查状态会出现失败。
 - GitHub 可能按个人通知设置发送 Actions 失败邮件。
 - 其他已经开始的工作流通常继续运行。
-- `Publish Images` 会拒绝使用该 Commit SHA，因为它要求四个自动 Push 工作流和同 SHA 完整验证 Artifact 都有成功证据。
+- `Handoff Source to CNB` 会拒绝使用该 Commit SHA，因为它要求四个自动 Push 工作流和同 SHA 完整验证 Artifact 都有成功证据。
 - 不会自动回退本地代码，也不会自动修改远程分支。
 
 人工完整验证失败或 Artifact 缺失、过期时，该 Commit SHA 不能进入镜像发布。修复代码后应对新的 Commit SHA 重新运行；仅因 Artifact 过期时，可以在默认分支上对同一 SHA 重新人工触发完整验证。
@@ -256,7 +257,7 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 - 页面路由、表单、权限导航和浏览器运行错误。
 - 多个应用分别构建成功，但组合运行失败。
 
-本地重型命令和线上完整验证都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异，或准备镜像发布证据时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的结果。它不参与 Pull Request 或 Push 门禁，也不会自动触发镜像发布；成功 Artifact 只作为后续独立授权的 `Publish Images` 输入证据。
+本地重型命令和线上完整验证都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异，或准备镜像发布证据时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的结果。它不参与 Pull Request 或 Push 门禁，也不会自动触发镜像发布；成功 Artifact 只作为后续独立授权的 `Handoff Source to CNB` 输入证据。
 
 ### 8.2 执行步骤
 
@@ -364,19 +365,19 @@ Pull Request 会运行同样的四个自动工作流，并额外启用两项差�
 
 Pull Request 检查用于合并前评审。`main` push 检查用于验证已经进入默认分支的精确 Commit SHA。镜像发布要求的是同一 Commit SHA 的成功 `push` Run，PR Run 不能替代。
 
-## 11. Publish Images
+## 11. Handoff Source to CNB 与 CNB 发布
 
 ### 11.1 作用和使用场景
 
-`Publish Images` 把一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变镜像，并将同一次 BuildKit 构建的相同内容同时发布到 GHCR 与腾讯云 TCR 个人版。GHCR 继续承载漏洞扫描、SBOM 和构建来源证明，TCR 只承担腾讯云侧分发。
+`Handoff Source to CNB` 校验一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA，然后把该提交以非强制、只能快进的方式交接到 CNB `main`。GitHub Runner 不构建或上传生产镜像层；CNB 接收 Push 后通过根目录 `.cnb.yml` 构建 Backend、Web 和 Admin 三张镜像，完成扫描和证据生成后只发布到腾讯云 TCR 个人版。
 
 典型使用场景：
 
 - 准备正式部署某个已经审核的 `main` 提交。
-- 为派生项目或测试环境生成可追溯镜像。
-- 为后续回滚保留经过扫描和证明的镜像版本。
+- 在腾讯侧生成可追溯生产镜像，减少跨境镜像层上传。
+- 为后续部署和回滚保留经过扫描和证明的 TCR digest。
 
-该工作流只支持 `workflow_dispatch` 人工触发。执行前必须取得独立的镜像发布授权，并输入完整 40 位小写 Commit SHA。
+GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取得独立的源码交接和镜像发布授权，并输入完整 40 位小写 Commit SHA。GitHub Run 成功只证明源码交接完成；镜像发布结果以随后触发的 CNB Pipeline 为准。
 
 ### 11.2 Validate immutable input
 
@@ -397,49 +398,56 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 9. Backend、Web 和 Admin 状态必须全部为 `ready`。
 10. 模块边界必须再次通过。
 
-任何一项缺少时，工作流在构建镜像前停止。四个 Push Run 继续只代表轻量门禁和安全检查，重型验证由同 SHA Artifact 证明；发布矩阵中的 Docker build 只负责生成制品，不能替代验证证据。
+任何一项缺少时，工作流在向 CNB 写入前停止。四个 Push Run 继续只代表轻量门禁和安全检查，重型验证由同 SHA Artifact 证明；CNB 中的 Docker build 只负责生成制品，不能替代验证证据。
 
-### 11.3 Publish matrix
+### 11.3 GitHub 源码交接
 
-验证通过后，矩阵并行处理三个应用：
+验证通过后，`handoff` Job 绑定 `cnb-source-handoff` Environment，并执行：
 
-| 矩阵项 | Dockerfile | GHCR 与 TCR 镜像名 |
+1. 再次检出和核对批准的 Commit SHA。
+2. 校验 CNB 仓库 URL 固定为 `https://cnb.cool/pjwl/pinjie-fullstack-base`，目标分支固定为 `main`，HTTPS 用户名固定为 `cnb`，Token 非空。
+3. 使用临时 `GIT_ASKPASS` 读取 Token，不把凭证写入远程 URL、Git 配置或日志。
+4. 查询 CNB `main`。仓库为空时允许首次创建；已有分支时要求远端 SHA 是目标 SHA 的祖先。
+5. 执行普通 Git Push，禁止强制推送；写后再次查询 CNB `main` 并要求等于批准 SHA。
+
+### 11.4 CNB 构建与候选发布
+
+CNB `.cnb.yml` 只声明 `main.push`，使用 4 核 Linux AMD64 社区构建节点、固定 digest 的构建环境和 TCR 发布锁。CNB 密钥仓库文件仅允许 `pjwl/pinjie-fullstack-base` 的 `main` Push 引用，并提供 TCR Registry 登录所需参数。
+
+CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
+
+| 应用 | Dockerfile | TCR 镜像名 |
 | --- | --- | --- |
 | Backend | `apps/backend/Dockerfile` | `pinjie-fullstack-backend` |
 | Web | `apps/web/Dockerfile` | `pinjie-fullstack-web` |
 | Admin | `apps/admin/Dockerfile` | `pinjie-fullstack-admin` |
 
-每个矩阵任务执行：
+每个应用执行：
 
-1. 检出目标提交并再次核对 SHA。
-2. 设置 Docker Buildx。
-3. 使用当前 GitHub Actor 和 `GITHUB_TOKEN` 登录 GHCR，并使用 `image-publishing` Environment Secret 登录 TCR。
-4. 校验 `TCR_REGISTRY`、`TCR_NAMESPACE`、发布用户名和密码均已配置，Registry 与命名空间必须匹配当前批准值。
-5. 使用一个 image exporter 和两个 Registry 名称完成一次构建，按同一内容 digest 向 GHCR 与 TCR 推送无发布标签的候选镜像。
-6. 分别按输出 digest 查询 GHCR 与 TCR，任一候选不存在或 digest 不一致时停止。
-7. 生成最大级别构建来源证明和 SBOM。
-8. 使用 Trivy 扫描 GHCR 中已经推送的精确镜像 digest；相同 digest 证明 TCR 候选具有相同运行内容。
-9. 高危或严重且已有修复的漏洞使发布失败。
-10. 为 GHCR 镜像写入并推送 GitHub build provenance attestation。
-11. 上传经过验证的 digest 证据 Artifact，保留 7 天。
+1. 以仓库根目录为上下文，使用现有 Dockerfile 构建 `linux/amd64` 镜像。
+2. 启用 `SOURCE_DATE_EPOCH`、最大级别 BuildKit provenance 和 SBOM attestation。
+3. 从 `buildcache-main` 读取并写回 Registry 缓存；缓存标签明确属于可变构建缓存，不可用于部署。
+4. 使用 `push-by-digest` 向 TCR 推送无发布标签候选内容，并保存 Buildx metadata 和 digest。
+5. 按候选 digest 查询 TCR OCI index，要求包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
+6. 使用固定 digest 的 Trivy 扫描候选镜像；High、Critical 且已有修复的漏洞使发布失败。
+7. 为每个候选生成 CycloneDX JSON SBOM。
 
-### 11.4 Finalize
+### 11.5 Finalize 与发布证据
 
-三个矩阵任务全部成功后，最终 Job：
+三个候选全部成功后，CNB Pipeline：
 
-1. 下载三份经过验证的 digest 证据。
-2. 登录 GHCR 与 TCR，并再次校验 TCR Environment 配置。
-3. 同时检查两个 Registry 的 `sha-<完整 Commit SHA>` 目标标签是否存在冲突。
-4. 标签不存在时，分别从各 Registry 的精确候选 digest 创建不可变 SHA 标签。
-5. 标签已经指向同一 digest 时允许验证通过。
-6. 任一标签指向不同 digest 时立即失败，禁止覆盖。
-7. 标签写入后重新查询并核对 digest，在 Workflow Summary 输出两个 Registry 的六个最终镜像引用。
+1. 在创建任何标签前检查三个 TCR 仓库的 `sha-<完整 Commit SHA>` 目标是否冲突。
+2. 标签不存在时从精确候选 digest 创建，已经指向同一 digest 时允许幂等通过，指向不同 digest 时失败。
+3. 标签写入后重新查询并核对 digest。
+4. 生成并严格校验 `pinjie-cnb-tcr-release-v1` JSON 清单，字段包含 Commit SHA、CNB Build ID、Build URL、时间和三个完整 TCR digest 引用。
+5. 将发布清单、三份 Trivy JSON、三份 CycloneDX SBOM 和三份 Buildx metadata 保存为 CNB 构建附件。
+6. Pipeline 结束时删除临时 Docker 登录配置。
 
-工作流不会创建 `latest` 标签。GHCR、TCR 及三个镜像仓库之间没有跨 Registry 事务，最终标签创建期间可能短暂部分可见；只有整个 `Publish Images` Run 成功后，才能进入部署授权。当前 `Deploy Production` 仍使用 GHCR，TCR 生产拉取要等 CVM 地域和独立只读身份确认后再实施。
+Pipeline 不创建 `latest` 或分支标签。三个 TCR 仓库之间没有跨仓库事务，最终标签创建期间可能短暂部分可见；只有整个 CNB Pipeline 和发布清单校验成功后，才能进入部署授权。生产仍按完整 digest 部署，不读取缓存标签或以 SHA 标签代替 digest。
 
-### 11.5 权限
+### 11.6 权限
 
-验证 Job 只读取 Actions 和仓库内容。构建 Job 按需获得 `packages: write`、`attestations: write` 和 `id-token: write`。`publish` 与 `finalize` Job 绑定 `image-publishing` Environment，该 Environment 的 Deployment branches 必须只允许默认分支；TCR 固定密码只通过 `TCR_PUBLISH_PASSWORD` Secret 注入登录 Action，不写入日志、Artifact 或工作区。权限只在需要的 Job 内提升。
+GitHub 验证 Job 只读取 Actions 和仓库内容。`handoff` Job 仅获得仓库读取权限并绑定 `cnb-source-handoff` Environment，该 Environment 只允许默认分支；CNB Token 只具备目标私有仓库 `repo-code:rw`。CNB 的 TCR 用户名和固定密码只从受限密钥仓库导入，密钥文件限制目标仓库、`main` 分支和 Push 事件。GitHub 不保存 TCR 发布密码，CNB 不保存 GitHub Token，生产服务器后续只保存独立只读 TCR 凭证。
 
 ## 12. Deploy Production
 
@@ -544,9 +552,10 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 -> 取得重型验证授权并人工触发 CI - Full Validation
 -> 确认同一 SHA 的完整验证 Run 和 Artifact 成功
 -> 取得镜像发布授权
--> 人工触发 Publish Images
--> 等待 validate、3 个 publish 矩阵和 finalize 全部成功
--> 保存 Workflow Summary 中的三个 digest
+-> 人工触发 Handoff Source to CNB
+-> 等待 GitHub validate 和 handoff 成功
+-> 等待同一 SHA 的 CNB Pipeline 构建、扫描、Finalize 和证据附件全部成功
+-> 保存 CNB 发布清单中的三个 TCR digest
 ```
 
 ### 13.4 生产部署
@@ -586,8 +595,10 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 | Full Validation 失败 | 第一条失败的 pytest、Vitest、build、Backend 启动或 Playwright 步骤 | 迁移、测试、覆盖率、构建、服务启动、浏览器流程或跨栈契约问题 |
 | Security 失败 | 具体扫描 Job | 密钥、依赖漏洞、源码风险或扫描器运行错误 |
 | Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、四个 Push Run、完整验证 Artifact 或应用状态不满足 |
-| Publish matrix 失败 | 对应应用矩阵 | 镜像构建、容器漏洞、证明或 GHCR 权限问题 |
-| Publish finalize 失败 | Publish verified immutable tags | digest 证据缺失或不可变标签冲突 |
+| GitHub handoff 失败 | Fast-forward CNB main | CNB Environment 配置、Token 权限、网络、远端漂移或非快进更新 |
+| CNB 构建或扫描失败 | CNB 对应 Stage | Dockerfile、TCR 凭证、Registry 缓存、容器漏洞、SBOM 或 provenance 问题 |
+| CNB finalize 失败 | Publish immutable SHA tags | digest 证据缺失、TCR 标签冲突或写后复核失败 |
+| CNB evidence 失败 | Generate and validate release evidence | Build ID、Commit SHA、镜像引用、扫描、SBOM 或 provenance 字段错配 |
 | Deploy 验证失败 | Validate 或 Verify 步骤 | 输入格式、环境开关、路径、标签与 digest 不一致 |
 | 远程部署失败 | Deploy approved digests | SSH、Compose 哈希、环境文件、拉取、健康或镜像核对失败 |
 
@@ -647,7 +658,7 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 ### 部署生产前
 
 - [ ] 已取得独立生产部署授权。
-- [ ] 三个 digest 来自同一次成功的 Publish Images Run。
+- [ ] 三个 digest 来自同一次成功的 CNB Pipeline 发布清单。
 - [ ] `production` Environment 审批和变量已经核验。
 - [ ] 数据库迁移、备份、恢复和回滚边界已经确认。
 - [ ] 部署后验证、观察窗口和停止条件已经安排。
