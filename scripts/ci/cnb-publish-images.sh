@@ -13,6 +13,16 @@ require_env() {
   fi
 }
 
+fail_validation() {
+  echo "CNB release context validation failed: $1"
+  exit 1
+}
+
+require_command() {
+  local name="$1"
+  command -v "$name" >/dev/null || fail_validation "required command $name is unavailable."
+}
+
 validate_context() {
   local name
   for name in \
@@ -33,19 +43,25 @@ validate_context() {
     require_env "$name"
   done
 
-  [[ "$CNB_COMMIT" =~ ^[0-9a-f]{40}$ ]]
-  [[ "$CNB_REPO_SLUG" == "$EXPECTED_CNB_REPOSITORY" ]]
-  [[ "$CNB_BRANCH" == "$EXPECTED_CNB_BRANCH" ]]
-  [[ "$TCR_REGISTRY" == "$EXPECTED_REGISTRY" ]]
-  [[ "$TCR_NAMESPACE" == "$EXPECTED_NAMESPACE" ]]
-  [[ "$(git rev-parse HEAD)" == "$CNB_COMMIT" ]]
+  require_command bash
+  require_command docker
+  require_command git
+  require_command jq
 
-  command -v bash >/dev/null
-  command -v docker >/dev/null
-  command -v git >/dev/null
-  command -v jq >/dev/null
-  command -v node >/dev/null
-  docker buildx version
+  [[ "$CNB_COMMIT" =~ ^[0-9a-f]{40}$ ]] ||
+    fail_validation "CNB_COMMIT must be a full lowercase Git SHA."
+  [[ "$CNB_REPO_SLUG" == "$EXPECTED_CNB_REPOSITORY" ]] ||
+    fail_validation "repository does not match the approved CNB repository."
+  [[ "$CNB_BRANCH" == "$EXPECTED_CNB_BRANCH" ]] ||
+    fail_validation "branch does not match the approved CNB release branch."
+  [[ "$TCR_REGISTRY" == "$EXPECTED_REGISTRY" ]] ||
+    fail_validation "TCR registry does not match the approved registry."
+  [[ "$TCR_NAMESPACE" == "$EXPECTED_NAMESPACE" ]] ||
+    fail_validation "TCR namespace does not match the approved namespace."
+  [[ "$(git rev-parse HEAD)" == "$CNB_COMMIT" ]] ||
+    fail_validation "checked-out Git SHA does not match CNB_COMMIT."
+
+  docker buildx version || fail_validation "Docker Buildx is unavailable."
 
   mkdir -p "$DOCKER_CONFIG" "$EVIDENCE_ROOT"
 }
