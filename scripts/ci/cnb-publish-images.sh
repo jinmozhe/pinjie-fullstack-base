@@ -23,6 +23,12 @@ require_command() {
   command -v "$name" >/dev/null || fail_validation "required command $name is unavailable."
 }
 
+builder_name() {
+  local build_id="${CNB_BUILD_ID:-unknown}"
+  build_id="${build_id//[^a-zA-Z0-9_.-]/-}"
+  printf 'pinjie-%s' "$build_id"
+}
+
 validate_context() {
   local name
   for name in \
@@ -73,6 +79,21 @@ login_tcr() {
       --password-stdin >/dev/null
 }
 
+prepare_builder() {
+  local builder
+  builder="$(builder_name)"
+
+  if docker buildx inspect "$builder" >/dev/null 2>&1; then
+    fail_validation "Buildx builder already exists for the current CNB build."
+  fi
+
+  docker buildx create \
+    --name "$builder" \
+    --driver docker-container \
+    --use >/dev/null
+  docker buildx inspect "$builder" --bootstrap
+}
+
 image_specs() {
   cat <<'EOF'
 backend|apps/backend/Dockerfile|pinjie-fullstack-backend
@@ -93,6 +114,7 @@ build_candidates() {
 
   validate_context
   login_tcr
+  prepare_builder
   export BUILDX_METADATA_PROVENANCE=max
   export BUILDX_METADATA_WARNINGS=1
   export SOURCE_DATE_EPOCH
@@ -180,7 +202,14 @@ finalize_tags() {
 }
 
 cleanup_credentials() {
-  [[ "${DOCKER_CONFIG:-}" == ".cnb/docker-config" ]]
+  local builder
+
+  [[ "${DOCKER_CONFIG:-}" == ".cnb/docker-config" ]] ||
+    fail_validation "refusing to clean an unexpected Docker configuration path."
+  builder="$(builder_name)"
+  if docker buildx inspect "$builder" >/dev/null 2>&1; then
+    docker buildx rm "$builder"
+  fi
   if [[ -d "$DOCKER_CONFIG" ]]; then
     rm -rf -- "$DOCKER_CONFIG"
   fi
