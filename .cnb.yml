@@ -1,0 +1,68 @@
+main:
+  push:
+    - name: Build and publish TCR images
+      runner:
+        tags: cnb:arch:amd64
+        cpus: 4
+      lock:
+        key: pinjie-fullstack-base-tcr-main
+        expires: 2h
+        timeout: 2h
+        wait: true
+        cancel-in-progress: false
+      services:
+        - docker
+      imports:
+        - https://cnb.cool/pjwl/pinjie-fullstack-base-secrets/-/blob/main/tcr-publish.yml
+      docker:
+        image: cnbcool/default-build-env@sha256:9622b58f682d7302292010af04048f59f7d9737d90fb070400c80f898f7b0983
+        volumes:
+          - /root/.cache/trivy:copy-on-write
+      env:
+        EXPECTED_CNB_REPOSITORY: pjwl/pinjie-fullstack-base
+        EXPECTED_CNB_BRANCH: main
+        EVIDENCE_ROOT: .cnb/evidence
+        DOCKER_CONFIG: .cnb/docker-config
+      stages:
+        - name: Validate immutable release context
+          script: bash ./scripts/ci/cnb-publish-images.sh validate
+
+        - name: Build and push content-addressed candidates
+          script: bash ./scripts/ci/cnb-publish-images.sh build
+          timeout: 2h
+
+        - name: Scan candidates and generate SBOM
+          image: aquasec/trivy@sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969
+          script: sh ./scripts/ci/cnb-scan-images.sh
+          timeout: 1h
+
+        - name: Publish immutable SHA tags
+          script: bash ./scripts/ci/cnb-publish-images.sh finalize
+          timeout: 30m
+
+        - name: Generate and validate release evidence
+          image: node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43
+          script: |
+            node ./scripts/ci/create-cnb-release-evidence.mjs
+            node ./scripts/ci/check-cnb-release-evidence.mjs \
+              --manifest "$EVIDENCE_ROOT/release-manifest.json" \
+              --expected-commit "$CNB_COMMIT" \
+              --expected-build-id "$CNB_BUILD_ID"
+
+        - name: Save release evidence
+          image: cnbcool/attachments@sha256:3000e40e6495209ef056c374234f83505525257f799eaf51c9dcf8a8235efdb0
+          settings:
+            attachments:
+              - .cnb/evidence/release-manifest.json
+              - .cnb/evidence/backend-trivy.json
+              - .cnb/evidence/backend-sbom.cdx.json
+              - .cnb/evidence/backend-metadata.json
+              - .cnb/evidence/web-trivy.json
+              - .cnb/evidence/web-sbom.cdx.json
+              - .cnb/evidence/web-metadata.json
+              - .cnb/evidence/admin-trivy.json
+              - .cnb/evidence/admin-sbom.cdx.json
+              - .cnb/evidence/admin-metadata.json
+      endStages:
+        - name: Remove temporary registry credentials
+          script: bash ./scripts/ci/cnb-publish-images.sh cleanup

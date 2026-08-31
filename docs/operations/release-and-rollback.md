@@ -30,19 +30,20 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 
 ## 4. 镜像发布
 
-使用独立的 `Publish Images` 工作流，输入完整 Commit SHA。工作流必须：
+镜像发布分为 GitHub 源码交接和 CNB 构建发布两段，两段继续使用同一完整 Commit SHA：
 
-1. 确认工作流从仓库默认分支启动，检出指定提交并再次核对 `git rev-parse HEAD`。
-2. 确认指定提交属于仓库默认分支，且同一 Commit SHA 的 Governance、Backend、Frontend 和 Security 四个 Push 工作流全部成功。
-3. 通过 GitHub Actions API 找到由默认分支人工触发且成功完成的完整验证 Run，下载未过期的 `full-validation-<完整提交>` Artifact，并核对 Commit SHA、Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段。
-4. 以最小权限登录 GHCR 和受 `image-publishing` Environment 保护的 TCR；`sha-<完整提交>` 已存在且指向同一 digest 时允许验证通过，指向不同 digest 时立即失败，禁止覆盖。
-5. 构建 Backend、Web 和 Admin 独立镜像，同一次 BuildKit 构建先按内容 digest 向两个 Registry 推送候选内容，不提前创建发布标签。
-6. 分别查询 GHCR 与 TCR 候选 digest，任一缺失或不一致时停止。
-7. 生成 SBOM 与构建来源证明，并对 GHCR 候选 digest 执行漏洞扫描，达到阻断等级时失败。
-8. 三个矩阵任务分别上传经过验证的 digest 证据，最终 Job 收齐三份证据后才在两个 Registry 创建 `sha-<完整提交>` 标签。
-9. 在 Workflow Summary 输出完整验证 Run 和两个 Registry 的完整 digest 引用，不写入项目文档或工作区。
+1. 人工触发 GitHub `Handoff Source to CNB`，输入完整 40 位 Commit SHA。
+2. GitHub 确认工作流从默认分支启动，检出指定提交并核对 `git rev-parse HEAD`。
+3. GitHub 确认指定提交属于默认分支历史，且同一 SHA 的 Governance、Backend、Frontend 和 Security 四个 Push Run 全部成功。
+4. GitHub 下载未过期的 `full-validation-<完整提交>` Artifact，核对 Full Validation Run、Commit SHA、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段。
+5. GitHub 使用受 `cnb-source-handoff` Environment 保护的最小权限 Token，把批准提交以非强制、只能快进的方式更新到 CNB `main`；CNB 已有提交不是目标 SHA 的祖先时停止。
+6. CNB `main` Push 自动触发 `.cnb.yml`，再次核对仓库、分支、工作区 `HEAD` 和 `CNB_COMMIT` 完全一致。
+7. CNB 使用固定 digest 的构建环境和 Trivy，按现有三个 Dockerfile 构建镜像，通过 TCR Registry 缓存加速二次构建，并以无标签候选 digest 推送到 TCR。
+8. CNB 对三个候选 digest 执行 High、Critical 且已有修复的漏洞阻断，生成 CycloneDX JSON SBOM，验证 BuildKit 最大级别 provenance 和 TCR attestation manifest。
+9. 三张镜像全部通过后，CNB 先检查三个 `sha-<完整提交>` 标签；标签指向不同 digest 时立即失败，全部无冲突后才创建标签并执行写后复核。
+10. CNB 生成 `pinjie-cnb-tcr-release-v1` 结构化清单，保存 Build ID、Build URL、完整 Commit SHA、三个 TCR digest、扫描、SBOM 和 provenance 状态，并连同原始证据作为构建附件保留。
 
-不得覆盖同一不可变标识下的内容。最终 Job 创建标签前先核对全部现有目标，只允许不存在或已经指向同一 digest；中断后可以使用同一 Workflow Run 的证据幂等重试。两个 Registry 不提供跨仓库事务，创建标签期间仍存在短暂的部分可见窗口，部署工作流必须等整个发布工作流成功后才能使用这些标签。当前生产部署仍使用 GHCR，TCR 只完成发布兼容性接线；生产来源切换要等地域和只读身份确认。镜像保留策略必须保护正在生产和可回滚的 digest。
+GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为镜像发布成功。只有整个 CNB Pipeline 成功且发布清单通过结构化校验，三个 digest 才能进入部署授权。TCR 三个仓库之间没有事务，标签创建期间仍可能短暂部分可见；任一 CNB 阶段失败时部署停止。生产始终使用完整 digest，不依赖 SHA 标签不可变假设。
 
 候选镜像因基础镜像中的可修复 High 或 Critical 漏洞失败时，先核对固定基础镜像摘要和上游修复版本。需要更新摘要时必须形成新提交，重新取得轻量 Push 工作流和同 SHA 完整验证证据，再重新发布；禁止移动既有 Tag、覆盖既有不可变标签、跳过扫描或把失败候选 digest 用于部署。
 
@@ -55,7 +56,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 1. GitHub `production` Environment 必须配置所需评审者和受限分支。
 2. 在该 Environment 中设置 `PRODUCTION_DEPLOYMENT_ENABLED=true`、绝对路径 `DEPLOY_PATH` 和部署所需 SSH Secret。
 3. 确认部署目录的 `apps/backend/.env` 已配置生产运行变量且未进入仓库，根 `.env` 保存 Compose 镜像引用和 PostgreSQL 初始化变量。
-4. 工作流必须从 GHCR 解析 `sha-<commit>` 标签，并确认三个 manifest digest 与输入完全一致。
+4. 当前部署工作流仍从 GHCR 解析 `sha-<commit>` 标签，并确认三个 manifest digest 与输入完全一致。迁移到 TCR 时必须在独立生产部署授权下改为核对 CNB 发布清单和三个 TCR digest，当前 CNB 发布实现不会自动触发部署。
 5. 确认当前数据库 Revision、目标 Revision 和备份恢复点。
 6. 确认服务器 `compose.prod.yml` 与目标 Commit 中的文件哈希一致。
 7. 验证 `compose.prod.yml` 解析结果只包含固定 digest。

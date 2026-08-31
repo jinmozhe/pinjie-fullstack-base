@@ -1,10 +1,10 @@
-name: Publish Images
+name: Handoff Source to CNB
 
 on:
   workflow_dispatch:
     inputs:
       commit_sha:
-        description: Full 40-character commit SHA to publish
+        description: Full 40-character commit SHA to hand off to CNB
         required: true
         type: string
 
@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-images-${{ inputs.commit_sha }}
+  group: cnb-source-handoff-${{ inputs.commit_sha }}
   cancel-in-progress: false
 
 jobs:
@@ -162,247 +162,80 @@ jobs:
         shell: pwsh
         run: ./scripts/ci/check-module-boundaries.ps1
 
-  publish:
-    name: Publish ${{ matrix.name }}
+  handoff:
+    name: Fast-forward CNB main
     needs: validate
     runs-on: ubuntu-latest
-    environment: image-publishing
+    environment: cnb-source-handoff
     permissions:
-      attestations: write
       contents: read
-      id-token: write
-      packages: write
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - name: backend
-            dockerfile: apps/backend/Dockerfile
-            image: pinjie-fullstack-backend
-          - name: web
-            dockerfile: apps/web/Dockerfile
-            image: pinjie-fullstack-web
-          - name: admin
-            dockerfile: apps/admin/Dockerfile
-            image: pinjie-fullstack-admin
     steps:
       - name: Checkout requested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           ref: ${{ needs.validate.outputs.commit_sha }}
 
-      - name: Verify checked out commit
+      - name: Validate CNB handoff configuration
         shell: bash
         env:
+          CNB_PUSH_TOKEN: ${{ secrets.CNB_PUSH_TOKEN }}
+          CNB_PUSH_USERNAME: ${{ vars.CNB_PUSH_USERNAME }}
+          CNB_RELEASE_BRANCH: ${{ vars.CNB_RELEASE_BRANCH }}
+          CNB_REPOSITORY_URL: ${{ vars.CNB_REPOSITORY_URL }}
+        run: |
+          set -euo pipefail
+          test "$CNB_REPOSITORY_URL" = "https://cnb.cool/pjwl/pinjie-fullstack-base"
+          test "$CNB_RELEASE_BRANCH" = "main"
+          test "$CNB_PUSH_USERNAME" = "cnb"
+          test -n "$CNB_PUSH_TOKEN"
+
+      - name: Push approved commit to CNB
+        shell: bash
+        env:
+          CNB_PUSH_TOKEN: ${{ secrets.CNB_PUSH_TOKEN }}
+          CNB_PUSH_USERNAME: ${{ vars.CNB_PUSH_USERNAME }}
+          CNB_RELEASE_BRANCH: ${{ vars.CNB_RELEASE_BRANCH }}
+          CNB_REPOSITORY_URL: ${{ vars.CNB_REPOSITORY_URL }}
           EXPECTED_SHA: ${{ needs.validate.outputs.commit_sha }}
-        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
-
-      - name: Require Dockerfile
-        shell: bash
-        run: test -f "${{ matrix.dockerfile }}"
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-
-      - name: Validate TCR publishing configuration
-        shell: bash
-        env:
-          TCR_NAMESPACE: ${{ vars.TCR_NAMESPACE }}
-          TCR_PASSWORD: ${{ secrets.TCR_PUBLISH_PASSWORD }}
-          TCR_REGISTRY: ${{ vars.TCR_REGISTRY }}
-          TCR_USERNAME: ${{ secrets.TCR_PUBLISH_USERNAME }}
         run: |
           set -euo pipefail
-          test "$TCR_REGISTRY" = "ccr.ccs.tencentyun.com"
-          test "$TCR_NAMESPACE" = "pinjie-fullstack-base"
-          test -n "$TCR_USERNAME"
-          test -n "$TCR_PASSWORD"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
-      - name: Log in to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to TCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ${{ vars.TCR_REGISTRY }}
-          username: ${{ secrets.TCR_PUBLISH_USERNAME }}
-          password: ${{ secrets.TCR_PUBLISH_PASSWORD }}
-
-      - name: Build and push content-addressed candidate
-        id: build
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
-        with:
-          context: .
-          file: ${{ matrix.dockerfile }}
-          outputs: >-
-            type=image,"name=ghcr.io/${{ github.repository_owner }}/${{ matrix.image }},${{ vars.TCR_REGISTRY }}/${{ vars.TCR_NAMESPACE }}/${{ matrix.image }}",push-by-digest=true,name-canonical=true,push=true
-          provenance: mode=max
-          sbom: true
-
-      - name: Verify dual-registry candidate digest
-        shell: bash
-        env:
-          GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
-          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
-          TCR_IMAGE: ${{ vars.TCR_REGISTRY }}/${{ vars.TCR_NAMESPACE }}/${{ matrix.image }}
-        run: |
-          set -euo pipefail
-          [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
-          for image in "$GHCR_IMAGE" "$TCR_IMAGE"; do
-            actual="$(docker buildx imagetools inspect "$image@$IMAGE_DIGEST" | awk '$1 == "Digest:" { print $2; exit }')"
-            if [[ "$actual" != "$IMAGE_DIGEST" ]]; then
-              echo "Candidate digest mismatch for $image: expected $IMAGE_DIGEST, got ${actual:-missing}."
-              exit 1
-            fi
-          done
-
-      - name: Scan published image
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
-          format: table
-          exit-code: "1"
-          ignore-unfixed: true
-          severity: CRITICAL,HIGH
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
-        with:
-          subject-name: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
-          subject-digest: ${{ steps.build.outputs.digest }}
-          push-to-registry: true
-
-      - name: Write verified digest evidence
-        shell: bash
-        env:
-          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
-          IMAGE_KEY: ${{ matrix.name }}
-        run: |
-          mkdir -p "$RUNNER_TEMP/verified-digests"
-          printf '%s\n' "$IMAGE_DIGEST" > "$RUNNER_TEMP/verified-digests/$IMAGE_KEY.txt"
-
-      - name: Upload verified digest evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: verified-digest-${{ matrix.name }}
-          path: ${{ runner.temp }}/verified-digests/${{ matrix.name }}.txt
-          if-no-files-found: error
-          retention-days: 7
-
-  finalize:
-    name: Publish verified immutable tags
-    needs:
-      - validate
-      - publish
-    runs-on: ubuntu-latest
-    environment: image-publishing
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Download verified digest evidence
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          pattern: verified-digest-*
-          path: verified-digests
-          merge-multiple: true
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
-
-      - name: Validate TCR publishing configuration
-        shell: bash
-        env:
-          TCR_NAMESPACE: ${{ vars.TCR_NAMESPACE }}
-          TCR_PASSWORD: ${{ secrets.TCR_PUBLISH_PASSWORD }}
-          TCR_REGISTRY: ${{ vars.TCR_REGISTRY }}
-          TCR_USERNAME: ${{ secrets.TCR_PUBLISH_USERNAME }}
-        run: |
-          set -euo pipefail
-          test "$TCR_REGISTRY" = "ccr.ccs.tencentyun.com"
-          test "$TCR_NAMESPACE" = "pinjie-fullstack-base"
-          test -n "$TCR_USERNAME"
-          test -n "$TCR_PASSWORD"
-
-      - name: Log in to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Log in to TCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
-        with:
-          registry: ${{ vars.TCR_REGISTRY }}
-          username: ${{ secrets.TCR_PUBLISH_USERNAME }}
-          password: ${{ secrets.TCR_PUBLISH_PASSWORD }}
-
-      - name: Validate all tag targets
-        shell: bash
-        env:
-          COMMIT_SHA: ${{ needs.validate.outputs.commit_sha }}
-          IMAGE_OWNER: ${{ github.repository_owner }}
-          TCR_NAMESPACE: ${{ vars.TCR_NAMESPACE }}
-          TCR_REGISTRY: ${{ vars.TCR_REGISTRY }}
-        run: |
-          set -euo pipefail
-          check_target() {
-            local key="$1"
-            local image="$2"
-            local digest
-            local actual
-            local target
-            digest="$(tr -d '\r\n' < "verified-digests/$key.txt")"
-            [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
-            for target in \
-              "ghcr.io/$IMAGE_OWNER/$image:sha-$COMMIT_SHA" \
-              "$TCR_REGISTRY/$TCR_NAMESPACE/$image:sha-$COMMIT_SHA"; do
-              actual="$(docker buildx imagetools inspect "$target" 2>/dev/null | awk '$1 == "Digest:" { print $2; exit }' || true)"
-              if [[ -n "$actual" && "$actual" != "$digest" ]]; then
-                echo "Immutable tag $target already points to $actual, expected $digest."
-                exit 1
-              fi
-            done
+          askpass="$(mktemp)"
+          cleanup() {
+            rm -f "$askpass"
           }
-          check_target backend pinjie-fullstack-backend
-          check_target web pinjie-fullstack-web
-          check_target admin pinjie-fullstack-admin
+          trap cleanup EXIT
+          cat > "$askpass" <<'EOF'
+          #!/usr/bin/env bash
+          case "$1" in
+            *Username*) printf '%s\n' "$CNB_PUSH_USERNAME" ;;
+            *Password*) printf '%s\n' "$CNB_PUSH_TOKEN" ;;
+            *) exit 1 ;;
+          esac
+          EOF
+          chmod 700 "$askpass"
 
-      - name: Publish verified immutable tags
-        shell: bash
-        env:
-          COMMIT_SHA: ${{ needs.validate.outputs.commit_sha }}
-          IMAGE_OWNER: ${{ github.repository_owner }}
-          TCR_NAMESPACE: ${{ vars.TCR_NAMESPACE }}
-          TCR_REGISTRY: ${{ vars.TCR_REGISTRY }}
-        run: |
-          set -euo pipefail
-          publish_tag() {
-            local key="$1"
-            local image="$2"
-            local digest
-            local source
-            local target
-            local actual
-            digest="$(tr -d '\r\n' < "verified-digests/$key.txt")"
-            for source in \
-              "ghcr.io/$IMAGE_OWNER/$image@$digest" \
-              "$TCR_REGISTRY/$TCR_NAMESPACE/$image@$digest"; do
-              target="${source%@*}:sha-$COMMIT_SHA"
-              actual="$(docker buildx imagetools inspect "$target" 2>/dev/null | awk '$1 == "Digest:" { print $2; exit }' || true)"
-              if [[ -z "$actual" ]]; then
-                docker buildx imagetools create --tag "$target" "$source"
-                actual="$(docker buildx imagetools inspect "$target" | awk '$1 == "Digest:" { print $2; exit }')"
-              fi
-              test "$actual" = "$digest"
-              echo "$key=${source%@*}@$digest" >> "$GITHUB_STEP_SUMMARY"
-            done
-          }
-          publish_tag backend pinjie-fullstack-backend
-          publish_tag web pinjie-fullstack-web
-          publish_tag admin pinjie-fullstack-admin
+          git remote add cnb "$CNB_REPOSITORY_URL"
+          remote_sha="$(GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0 \
+            git ls-remote --heads cnb "refs/heads/$CNB_RELEASE_BRANCH" | awk '{print $1}')"
+          if [[ -n "$remote_sha" ]]; then
+            [[ "$remote_sha" =~ ^[0-9a-f]{40}$ ]]
+            GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0 \
+              git fetch --no-tags cnb "refs/heads/$CNB_RELEASE_BRANCH:refs/remotes/cnb/$CNB_RELEASE_BRANCH"
+            git merge-base --is-ancestor "$remote_sha" "$EXPECTED_SHA"
+          fi
+
+          GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0 \
+            git push cnb "$EXPECTED_SHA:refs/heads/$CNB_RELEASE_BRANCH"
+          actual_sha="$(GIT_ASKPASS="$askpass" GIT_TERMINAL_PROMPT=0 \
+            git ls-remote --heads cnb "refs/heads/$CNB_RELEASE_BRANCH" | awk '{print $1}')"
+          test "$actual_sha" = "$EXPECTED_SHA"
+
+          {
+            echo "Approved commit: $EXPECTED_SHA"
+            echo "CNB repository: $CNB_REPOSITORY_URL"
+            echo "CNB branch: $CNB_RELEASE_BRANCH"
+            echo "CNB build logs: $CNB_REPOSITORY_URL/-/build/logs"
+          } >> "$GITHUB_STEP_SUMMARY"
