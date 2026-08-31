@@ -368,7 +368,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 
 ### 11.1 作用和使用场景
 
-`Publish Images` 把一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变 GHCR 镜像。
+`Publish Images` 把一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA 构建为 Backend、Web 和 Admin 三张不可变镜像，并将同一次 BuildKit 构建的相同内容同时发布到 GHCR 与腾讯云 TCR 个人版。GHCR 继续承载漏洞扫描、SBOM 和构建来源证明，TCR 只承担腾讯云侧分发。
 
 典型使用场景：
 
@@ -383,18 +383,19 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 发布前验证包括：
 
 1. Commit SHA 必须匹配 40 位小写十六进制格式。
-2. 检出的 `HEAD` 必须与输入 SHA 完全一致。
-3. 目标提交必须属于仓库默认分支历史。
-4. 同一 SHA 必须存在以下四个成功、已完成的 Push Run：
+2. 工作流必须从仓库默认分支启动。
+3. 检出的 `HEAD` 必须与输入 SHA 完全一致。
+4. 目标提交必须属于仓库默认分支历史。
+5. 同一 SHA 必须存在以下四个成功、已完成的 Push Run：
    - `CI - Governance`
    - `CI - Backend`
    - `CI - Frontend`
    - `Security`
-5. GitHub Actions 必须存在名称为 `full-validation-<完整 SHA>` 且未过期的 Artifact。
-6. Artifact 所属 Run 必须由默认分支通过 `workflow_dispatch` 启动，工作流路径为 `.github/workflows/ci-e2e.yml`，结论为成功。
-7. Artifact 内容中的 Commit SHA、Workflow Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 字段必须全部匹配。
-8. Backend、Web 和 Admin 状态必须全部为 `ready`。
-9. 模块边界必须再次通过。
+6. GitHub Actions 必须存在名称为 `full-validation-<完整 SHA>` 且未过期的 Artifact。
+7. Artifact 所属 Run 必须由默认分支通过 `workflow_dispatch` 启动，工作流路径为 `.github/workflows/ci-e2e.yml`，结论为成功。
+8. Artifact 内容中的 Commit SHA、Workflow Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 字段必须全部匹配。
+9. Backend、Web 和 Admin 状态必须全部为 `ready`。
+10. 模块边界必须再次通过。
 
 任何一项缺少时，工作流在构建镜像前停止。四个 Push Run 继续只代表轻量门禁和安全检查，重型验证由同 SHA Artifact 证明；发布矩阵中的 Docker build 只负责生成制品，不能替代验证证据。
 
@@ -402,7 +403,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 
 验证通过后，矩阵并行处理三个应用：
 
-| 矩阵项 | Dockerfile | GHCR 镜像名 |
+| 矩阵项 | Dockerfile | GHCR 与 TCR 镜像名 |
 | --- | --- | --- |
 | Backend | `apps/backend/Dockerfile` | `pinjie-fullstack-backend` |
 | Web | `apps/web/Dockerfile` | `pinjie-fullstack-web` |
@@ -412,30 +413,33 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 
 1. 检出目标提交并再次核对 SHA。
 2. 设置 Docker Buildx。
-3. 使用当前 GitHub Actor 和 `GITHUB_TOKEN` 登录 GHCR。
-4. 构建并按内容 digest 推送候选镜像。
-5. 生成最大级别构建来源证明和 SBOM。
-6. 使用 Trivy 扫描已经推送的精确镜像 digest。
-7. 高危或严重且已有修复的漏洞使发布失败。
-8. 为镜像写入并推送 GitHub build provenance attestation。
-9. 上传经过验证的 digest 证据 Artifact，保留 7 天。
+3. 使用当前 GitHub Actor 和 `GITHUB_TOKEN` 登录 GHCR，并使用 `image-publishing` Environment Secret 登录 TCR。
+4. 校验 `TCR_REGISTRY`、`TCR_NAMESPACE`、发布用户名和密码均已配置，Registry 与命名空间必须匹配当前批准值。
+5. 使用一个 image exporter 和两个 Registry 名称完成一次构建，按同一内容 digest 向 GHCR 与 TCR 推送无发布标签的候选镜像。
+6. 分别按输出 digest 查询 GHCR 与 TCR，任一候选不存在或 digest 不一致时停止。
+7. 生成最大级别构建来源证明和 SBOM。
+8. 使用 Trivy 扫描 GHCR 中已经推送的精确镜像 digest；相同 digest 证明 TCR 候选具有相同运行内容。
+9. 高危或严重且已有修复的漏洞使发布失败。
+10. 为 GHCR 镜像写入并推送 GitHub build provenance attestation。
+11. 上传经过验证的 digest 证据 Artifact，保留 7 天。
 
 ### 11.4 Finalize
 
 三个矩阵任务全部成功后，最终 Job：
 
 1. 下载三份经过验证的 digest 证据。
-2. 检查 `sha-<完整 Commit SHA>` 目标标签是否存在冲突。
-3. 标签不存在时，从精确 digest 创建不可变 SHA 标签。
-4. 标签已经指向同一 digest 时允许验证通过。
-5. 标签指向不同 digest 时立即失败，禁止覆盖。
-6. 在 Workflow Summary 输出三个最终镜像引用。
+2. 登录 GHCR 与 TCR，并再次校验 TCR Environment 配置。
+3. 同时检查两个 Registry 的 `sha-<完整 Commit SHA>` 目标标签是否存在冲突。
+4. 标签不存在时，分别从各 Registry 的精确候选 digest 创建不可变 SHA 标签。
+5. 标签已经指向同一 digest 时允许验证通过。
+6. 任一标签指向不同 digest 时立即失败，禁止覆盖。
+7. 标签写入后重新查询并核对 digest，在 Workflow Summary 输出两个 Registry 的六个最终镜像引用。
 
-工作流不会创建 `latest` 标签。GHCR 的三个镜像仓库之间没有事务，最终标签创建期间可能短暂部分可见；只有整个 `Publish Images` Run 成功后，才能进入部署授权。
+工作流不会创建 `latest` 标签。GHCR、TCR 及三个镜像仓库之间没有跨 Registry 事务，最终标签创建期间可能短暂部分可见；只有整个 `Publish Images` Run 成功后，才能进入部署授权。当前 `Deploy Production` 仍使用 GHCR，TCR 生产拉取要等 CVM 地域和独立只读身份确认后再实施。
 
 ### 11.5 权限
 
-验证 Job 只读取 Actions 和仓库内容。构建 Job 按需获得 `packages: write`、`attestations: write` 和 `id-token: write`。权限只在需要的 Job 内提升。
+验证 Job 只读取 Actions 和仓库内容。构建 Job 按需获得 `packages: write`、`attestations: write` 和 `id-token: write`。`publish` 与 `finalize` Job 绑定 `image-publishing` Environment，该 Environment 的 Deployment branches 必须只允许默认分支；TCR 固定密码只通过 `TCR_PUBLISH_PASSWORD` Secret 注入登录 Action，不写入日志、Artifact 或工作区。权限只在需要的 Job 内提升。
 
 ## 12. Deploy Production
 

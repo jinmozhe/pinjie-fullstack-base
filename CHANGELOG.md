@@ -6,6 +6,7 @@
 
 ### Added
 
+- 为三端镜像发布增加 GHCR 与腾讯云 TCR 个人版双仓输出：同一次 BuildKit 构建按相同内容 digest 推送两个 Registry，发布矩阵在扫描前分别核验候选 digest，最终阶段同时执行 SHA 标签冲突检查、创建和写后复核；TCR 凭证仅来自受保护的 `image-publishing` Environment，现有生产部署继续使用 GHCR，待地域和独立只读身份确认后再切换运行镜像源。
 - 建立同 Commit SHA 的完整验证与镜像发布证据门禁：人工 `CI - Full Validation` 在默认分支上校验目标 SHA，依次运行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright，全部成功后上传 30 天保留的不可变 Artifact；`Publish Images` 通过 GitHub Actions API 核验成功 Run、Artifact 有效期、Commit SHA、Run ID 和完整验证集合，缺失或不一致时在镜像构建前失败关闭。
 - 建立文档权威边界与索引一致性自动门禁：根项目索引只维护身份、阶段、活动计划和权威入口，详细实现状态回归实际源码、配置、迁移、生成契约和专题架构文档；`docs/` 明确为专题项目文档唯一发布来源；治理检查自动拒绝已废弃索引路径、规则正文或桥接漂移、指令容量不足、计划登记或活动状态不一致、非法计划枚举和专题文档漏登记，并通过 9 类负向夹具验证。
 - 增加全局系统设置与站点配置媒体能力：Backend 使用单一 `system_settings` 表按 `site`、`registration` 固定分组保存强类型 JSONB，提供 revision 并发保护、配置级权限、审计和注册 Fail Closed；Admin 新增 `/settings` 的站点与注册两个固定 Tab，支持独立 LOGO 上传、只读权限和冲突草稿保留；Web 通过完整 SiteProfile 统一首页、登录、注册、用户中心品牌与 Metadata，并以带 revision 的同源代理缓存固定配置媒体。站点 LOGO 使用独立可补偿目录，不进入文件资产表。
