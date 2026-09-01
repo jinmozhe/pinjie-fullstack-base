@@ -17,7 +17,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-08-31_TCR个人版双仓镜像发布与腾讯云内网部署计划.md` | 实施中 | 不适用 | Deployment、Documentation | 两个不同 Commit 的 CNB 三镜像构建扫描、TCR 单仓不可变发布和结构化证据已成功，正在验证固定构建时间戳后的 Registry 缓存；生产部署继续锁定 |
+| `plans/2026-08-31_TCR个人版双仓镜像发布与腾讯云内网部署计划.md` | 已结束 | 已完成；GitHub 固定 SHA 验证与交接、CNB 三镜像构建扫描、TCR 不可变发布、结构化证据和跨 Commit Registry 缓存复用均通过真实验证，生产部署未触发 | Deployment、Documentation | 建立 GitHub 验证、CNB 构建和 TCR 单仓发布链路，并验证固定构建时间戳后的跨 Commit Registry 缓存 |
 | `plans/2026-08-30_Backend基础镜像漏洞阻断修复与v0.1.1发布计划.md` | 已结束 | 已完成；三端候选镜像 Trivy 阻断已修复，完整验证、三镜像 GHCR 不可变发布、v0.1.1 Tag 和 Release 均成功，生产部署未触发 | Backend、Admin、Web、Deployment、Documentation | 修复三端生产运行镜像漏洞阻断并完成 v0.1.1 不可变发布与三镜像 GHCR 发布 |
 | `plans/2026-08-30_依赖复现与发布验证闭环整改计划.md` | 已结束 | 已完成；uv 工具链、完整验证 Artifact、镜像发布同 SHA 门禁和 Origin 修复已落地，同 SHA 轻量 Push 工作流、完整远端验证与 Artifact 核验全部通过 | Backend、Admin、Web、Deployment、Documentation | 固定 uv 依赖复现工具链并建立同 Commit SHA 的完整验证证据与镜像发布门禁 |
 | `plans/2026-08-29_全栈失败门禁修复计划.md` | 已结束 | 已完成；Admin、Backend、Web、API Client、数据库迁移和四项目 Playwright 失败均已修复，授权的重型验证与治理门禁全部通过 | Backend、Admin、Web、API Client、Database、Documentation | 修复全栈重型验证和数据库一致性失败，恢复质量门禁后继续 Git 交付闭环 |
