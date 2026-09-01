@@ -425,7 +425,7 @@ CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
 每个应用执行：
 
 1. 以仓库根目录为上下文，使用现有 Dockerfile 构建 `linux/amd64` 镜像。
-2. 启用 `SOURCE_DATE_EPOCH`、最大级别 BuildKit provenance 和 SBOM attestation。
+2. 固定 `SOURCE_DATE_EPOCH=0`，避免不同 Commit 时间戳使未变化的 COPY 层失去跨 Run 缓存；Git Commit 继续由最大级别 BuildKit provenance 和发布清单追溯，同时生成 SBOM attestation。
 3. 从 `buildcache-main` 读取并写回 Registry 缓存；缓存标签明确属于可变构建缓存，不可用于部署。
 4. 使用 CNB 默认 Buildx `docker` 驱动向 TCR 推送 `candidate-<CNB Build ID>` 唯一候选标签；构建前要求该标签不存在，避免覆盖其他运行的候选内容。
 5. 从 Buildx metadata 读取输出 digest，依次核对候选标签 digest 和按 digest 查询的 TCR OCI index；index 必须包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
