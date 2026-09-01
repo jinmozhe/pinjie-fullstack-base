@@ -68,6 +68,7 @@
 
 ### Fixed
 
+- 修复 CNB 跨 Commit Registry 缓存失配：`SOURCE_DATE_EPOCH` 从每个 Git Commit 的提交时间改为固定 Unix epoch `0`，避免未变化的 COPY 和依赖层因文件元数据时间不同而重新构建；完整 Commit SHA 继续由 BuildKit provenance 和结构化发布清单追溯。
 - 修复 Web 与 Admin 生产运行镜像被基础层可修复漏洞阻断发布的问题：Web runtime 升级 Alpine OpenSSL 并移除 standalone 服务不需要的全局 npm，Admin runtime 只升级 Trivy 命中的 c-ares、curl、OpenSSL、libexpat、libxml2 和 nghttp2 包；保留 Node/Nginx 运行方式、非 Root 用户、健康检查、Trivy High/Critical Fail Closed、SBOM 和构建来源证明。
 - 修复 Backend 生产镜像被基础系统与运行时工具中的可修复 High 漏洞阻断发布的问题：builder 与 runtime 同步更新到官方 Python 3.14.7 slim-trixie Linux amd64 固定摘要，runtime 精确安装修复后的 OpenSSL 包并移除应用运行不需要的全局 pip 及其 vendored 代码；继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和同 SHA 完整验证要求。
 - 修复首次远端完整验证中测试 Origin 配置错配的问题：Runner 同时允许真实 E2E 使用的 `127.0.0.1` 与 Backend 既有 API 测试使用的 `localhost`，避免 pytest 请求在业务断言前被 CSRF Origin 校验拒绝。

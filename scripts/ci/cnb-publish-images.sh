@@ -104,8 +104,8 @@ build_candidates() {
   login_tcr
   export BUILDX_METADATA_PROVENANCE=max
   export BUILDX_METADATA_WARNINGS=1
-  export SOURCE_DATE_EPOCH
-  SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$CNB_COMMIT")"
+  # Keep copied-file timestamps stable so registry cache survives new commits.
+  export SOURCE_DATE_EPOCH=0
   candidate_tag_value="$(candidate_tag)"
 
   while IFS='|' read -r image_key dockerfile image_name; do
