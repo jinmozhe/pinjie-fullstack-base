@@ -7,7 +7,7 @@
 ### Added
 
 - 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run 与同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。
-- 完成 Commit `cd0abfb9bc3565c0c165415600b776e9da6f1391` 的首次 CNB 到 TCR 真实发布验证：三张 Run 唯一候选镜像及其 SBOM、provenance 和 TCR digest 复核通过，Trivy High/Critical 门禁通过，最终 SHA 标签和 `pinjie-cnb-tcr-release-v1` 清单写后校验成功；完整发布耗时 14 分 04 秒，生产部署未触发。
+- 完成连续不同 Commit 的 CNB 到 TCR 真实发布验证：三张 Run 唯一候选镜像及其 SBOM、provenance 和 TCR digest 复核通过，Trivy High/Critical 门禁通过，最终 SHA 标签、`pinjie-cnb-tcr-release-v1` 清单和十份附件均写后校验成功；固定 epoch 缓存复验将完整发布从 14 分 19 秒降至 1 分 29 秒，生产部署未触发。
 - 为三端镜像发布增加 GHCR 与腾讯云 TCR 个人版双仓输出：同一次 BuildKit 构建按相同内容 digest 推送两个 Registry，发布矩阵在扫描前分别核验候选 digest，最终阶段同时执行 SHA 标签冲突检查、创建和写后复核；TCR 凭证仅来自受保护的 `image-publishing` Environment，现有生产部署继续使用 GHCR，待地域和独立只读身份确认后再切换运行镜像源。
 - 建立同 Commit SHA 的完整验证与镜像发布证据门禁：人工 `CI - Full Validation` 在默认分支上校验目标 SHA，依次运行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright，全部成功后上传 30 天保留的不可变 Artifact；`Publish Images` 通过 GitHub Actions API 核验成功 Run、Artifact 有效期、Commit SHA、Run ID 和完整验证集合，缺失或不一致时在镜像构建前失败关闭。
 - 建立文档权威边界与索引一致性自动门禁：根项目索引只维护身份、阶段、活动计划和权威入口，详细实现状态回归实际源码、配置、迁移、生成契约和专题架构文档；`docs/` 明确为专题项目文档唯一发布来源；治理检查自动拒绝已废弃索引路径、规则正文或桥接漂移、指令容量不足、计划登记或活动状态不一致、非法计划枚举和专题文档漏登记，并通过 9 类负向夹具验证。
@@ -68,7 +68,7 @@
 
 ### Fixed
 
-- 修复 CNB 跨 Commit Registry 缓存失配：`SOURCE_DATE_EPOCH` 从每个 Git Commit 的提交时间改为固定 Unix epoch `0`，避免未变化的 COPY 和依赖层因文件元数据时间不同而重新构建；完整 Commit SHA 继续由 BuildKit provenance 和结构化发布清单追溯。
+- 修复 CNB 跨 Commit Registry 缓存失配：`SOURCE_DATE_EPOCH` 从每个 Git Commit 的提交时间改为固定 Unix epoch `0`，避免未变化的 COPY 和依赖层因文件元数据时间不同而重新构建；复验确认 Backend `uv sync`、Web/Admin `pnpm install`、应用复制和 production build 层全部命中，候选构建和缓存写回从 13.2 分钟降至 57.4 秒，完整 Commit SHA 继续由 BuildKit provenance 和结构化发布清单追溯。
 - 修复 Web 与 Admin 生产运行镜像被基础层可修复漏洞阻断发布的问题：Web runtime 升级 Alpine OpenSSL 并移除 standalone 服务不需要的全局 npm，Admin runtime 只升级 Trivy 命中的 c-ares、curl、OpenSSL、libexpat、libxml2 和 nghttp2 包；保留 Node/Nginx 运行方式、非 Root 用户、健康检查、Trivy High/Critical Fail Closed、SBOM 和构建来源证明。
 - 修复 Backend 生产镜像被基础系统与运行时工具中的可修复 High 漏洞阻断发布的问题：builder 与 runtime 同步更新到官方 Python 3.14.7 slim-trixie Linux amd64 固定摘要，runtime 精确安装修复后的 OpenSSL 包并移除应用运行不需要的全局 pip 及其 vendored 代码；继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和同 SHA 完整验证要求。
 - 修复首次远端完整验证中测试 Origin 配置错配的问题：Runner 同时允许真实 E2E 使用的 `127.0.0.1` 与 Backend 既有 API 测试使用的 `localhost`，避免 pytest 请求在业务断言前被 CSRF Origin 校验拒绝。
