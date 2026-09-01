@@ -23,10 +23,8 @@ require_command() {
   command -v "$name" >/dev/null || fail_validation "required command $name is unavailable."
 }
 
-builder_name() {
-  local build_id="${CNB_BUILD_ID:-unknown}"
-  build_id="${build_id//[^a-zA-Z0-9_.-]/-}"
-  printf 'pinjie-%s' "$build_id"
+candidate_tag() {
+  printf 'candidate-%s' "$CNB_BUILD_ID"
 }
 
 validate_context() {
@@ -56,6 +54,8 @@ validate_context() {
 
   [[ "$CNB_COMMIT" =~ ^[0-9a-f]{40}$ ]] ||
     fail_validation "CNB_COMMIT must be a full lowercase Git SHA."
+  [[ "$CNB_BUILD_ID" =~ ^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,99}$ ]] ||
+    fail_validation "CNB_BUILD_ID cannot be represented as a unique Docker tag."
   [[ "$CNB_REPO_SLUG" == "$EXPECTED_CNB_REPOSITORY" ]] ||
     fail_validation "repository does not match the approved CNB repository."
   [[ "$CNB_BRANCH" == "$EXPECTED_CNB_BRANCH" ]] ||
@@ -79,21 +79,6 @@ login_tcr() {
       --password-stdin >/dev/null
 }
 
-prepare_builder() {
-  local builder
-  builder="$(builder_name)"
-
-  if docker buildx inspect "$builder" >/dev/null 2>&1; then
-    fail_validation "Buildx builder already exists for the current CNB build."
-  fi
-
-  docker buildx create \
-    --name "$builder" \
-    --driver docker-container \
-    --use >/dev/null
-  docker buildx inspect "$builder" --bootstrap
-}
-
 image_specs() {
   cat <<'EOF'
 backend|apps/backend/Dockerfile|pinjie-fullstack-backend
@@ -104,6 +89,8 @@ EOF
 
 build_candidates() {
   local cache_ref
+  local candidate_ref
+  local candidate_tag_value
   local digest
   local dockerfile
   local image_key
@@ -111,18 +98,29 @@ build_candidates() {
   local image_ref
   local index_file
   local metadata_file
+  local actual
 
   validate_context
   login_tcr
-  prepare_builder
   export BUILDX_METADATA_PROVENANCE=max
   export BUILDX_METADATA_WARNINGS=1
   export SOURCE_DATE_EPOCH
   SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$CNB_COMMIT")"
+  candidate_tag_value="$(candidate_tag)"
+
+  while IFS='|' read -r image_key dockerfile image_name; do
+    image_ref="$TCR_REGISTRY/$TCR_NAMESPACE/$image_name"
+    candidate_ref="$image_ref:$candidate_tag_value"
+    if docker buildx imagetools inspect "$candidate_ref" >/dev/null 2>&1; then
+      echo "Unique candidate tag $candidate_ref already exists."
+      exit 1
+    fi
+  done < <(image_specs)
 
   while IFS='|' read -r image_key dockerfile image_name; do
     [[ -f "$dockerfile" ]]
     image_ref="$TCR_REGISTRY/$TCR_NAMESPACE/$image_name"
+    candidate_ref="$image_ref:$candidate_tag_value"
     cache_ref="$image_ref:buildcache-main"
     metadata_file="$EVIDENCE_ROOT/$image_key-metadata.json"
     index_file="$EVIDENCE_ROOT/$image_key-index.json"
@@ -134,12 +132,15 @@ build_candidates() {
       --sbom=true \
       --cache-from "type=registry,ref=$cache_ref" \
       --cache-to "type=registry,ref=$cache_ref,mode=max" \
-      --output "type=image,name=$image_ref,push-by-digest=true,name-canonical=true,push=true" \
+      --output "type=image,name=$candidate_ref,push=true,name-canonical=true" \
       --metadata-file "$metadata_file" \
       .
 
     digest="$(jq -er '."containerimage.digest"' "$metadata_file")"
     [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+    actual="$(docker buildx imagetools inspect "$candidate_ref" |
+      awk '$1 == "Digest:" { print $2; exit }')"
+    [[ "$actual" == "$digest" ]]
     jq -e \
       '(."buildx.build.provenance".buildType | type == "string" and length > 0)' \
       "$metadata_file" >/dev/null
@@ -202,14 +203,8 @@ finalize_tags() {
 }
 
 cleanup_credentials() {
-  local builder
-
   [[ "${DOCKER_CONFIG:-}" == ".cnb/docker-config" ]] ||
     fail_validation "refusing to clean an unexpected Docker configuration path."
-  builder="$(builder_name)"
-  if docker buildx inspect "$builder" >/dev/null 2>&1; then
-    docker buildx rm "$builder"
-  fi
   if [[ -d "$DOCKER_CONFIG" ]]; then
     rm -rf -- "$DOCKER_CONFIG"
   fi
