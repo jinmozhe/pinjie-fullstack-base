@@ -427,8 +427,8 @@ CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
 1. 以仓库根目录为上下文，使用现有 Dockerfile 构建 `linux/amd64` 镜像。
 2. 启用 `SOURCE_DATE_EPOCH`、最大级别 BuildKit provenance 和 SBOM attestation。
 3. 从 `buildcache-main` 读取并写回 Registry 缓存；缓存标签明确属于可变构建缓存，不可用于部署。
-4. 使用 `push-by-digest` 向 TCR 推送无发布标签候选内容，并保存 Buildx metadata 和 digest。
-5. 按候选 digest 查询 TCR OCI index，要求包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
+4. 使用 CNB 默认 Buildx `docker` 驱动向 TCR 推送 `candidate-<CNB Build ID>` 唯一候选标签；构建前要求该标签不存在，避免覆盖其他运行的候选内容。
+5. 从 Buildx metadata 读取输出 digest，依次核对候选标签 digest 和按 digest 查询的 TCR OCI index；index 必须包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
 6. 使用固定 digest 的 Trivy 扫描候选镜像；High、Critical 且已有修复的漏洞使发布失败。
 7. 为每个候选生成 CycloneDX JSON SBOM。
 
@@ -443,7 +443,7 @@ CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
 5. 将发布清单、三份 Trivy JSON、三份 CycloneDX SBOM 和三份 Buildx metadata 保存为 CNB 构建附件。
 6. Pipeline 结束时删除临时 Docker 登录配置。
 
-Pipeline 不创建 `latest` 或分支标签。三个 TCR 仓库之间没有跨仓库事务，最终标签创建期间可能短暂部分可见；只有整个 CNB Pipeline 和发布清单校验成功后，才能进入部署授权。生产仍按完整 digest 部署，不读取缓存标签或以 SHA 标签代替 digest。
+Pipeline 不创建 `latest` 或分支标签。`candidate-<CNB Build ID>` 标签是唯一、可追溯的运行候选，不属于发布标签且禁止部署。三个 TCR 仓库之间没有跨仓库事务，最终标签创建期间可能短暂部分可见；只有整个 CNB Pipeline 和发布清单校验成功后，才能进入部署授权。生产仍按完整 digest 部署，不读取缓存标签、候选标签或以 SHA 标签代替 digest。
 
 ### 11.6 权限
 

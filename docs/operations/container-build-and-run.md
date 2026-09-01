@@ -60,9 +60,9 @@ allow_branches:
   - "main"
 ```
 
-每张镜像按以下顺序处理：Buildx 从 TCR `buildcache-main` 读取缓存，生成最大级别 provenance 和 SBOM attestation，以 `push-by-digest` 推送候选内容，查询 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。三张镜像全部通过后才创建 `sha-<完整 Commit SHA>` 标签，并保存结构化发布清单和原始证据附件。
+每张镜像按以下顺序处理：CNB 默认 Buildx `docker` 驱动从 TCR `buildcache-main` 读取缓存，生成最大级别 provenance 和 SBOM attestation，以 `candidate-<CNB Build ID>` 唯一候选标签推送内容，从 metadata 读取 digest 并核对候选标签和 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。三张镜像全部通过后才创建 `sha-<完整 Commit SHA>` 标签，并保存结构化发布清单和原始证据附件。
 
-`buildcache-main` 是可变构建缓存，不能作为部署来源。生产只使用发布清单中的完整 `ccr.ccs.tencentyun.com/pinjie-fullstack-base/<镜像>@sha256:<digest>` 引用。
+`buildcache-main` 是可变构建缓存，`candidate-<CNB Build ID>` 是单次运行候选，两者都不能作为部署来源。生产只使用发布清单中的完整 `ccr.ccs.tencentyun.com/pinjie-fullstack-base/<镜像>@sha256:<digest>` 引用。
 
 ## 5. 生产 Compose 配置
 

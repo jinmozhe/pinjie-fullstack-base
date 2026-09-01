@@ -27,7 +27,7 @@ main:
         - name: Validate immutable release context
           script: bash ./scripts/ci/cnb-publish-images.sh validate
 
-        - name: Build and push content-addressed candidates
+        - name: Build and push run-unique candidates
           script: bash ./scripts/ci/cnb-publish-images.sh build
           timeout: 2h
 
