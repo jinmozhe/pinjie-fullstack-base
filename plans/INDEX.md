@@ -18,6 +18,7 @@
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
 | `plans/2026-09-02_共享PostgreSQL与Redis生产编排改造计划.md` | 已结束 | 已完成；生产应用编排已切换为 1Panel 共享 PostgreSQL 与 Redis，外部网络、服务隔离、配置门禁、部署保护和运维边界已同步，生产迁移未执行 | Backend、Database、Deployment、Documentation | 将生产应用编排切换为 1Panel 共享 PostgreSQL 与 Redis，并建立网络、隔离、门禁、迁移和回滚边界 |
+| `plans/2026-09-01_CAM子账号与TCR个人版最小权限操作手册计划.md` | 已结束 | 已完成；独立 CAM 与 TCR 个人版操作手册、完整控制台与密码管理权限、三仓只读 JSON、账号创建、服务器登录、权限验收、轮换和排障步骤已交付 | Deployment、Documentation | 建立 TCR 个人版发布与生产拉取账号职责分离、三仓最小权限和完整 CAM 操作手册 |
 | `plans/2026-08-31_TCR个人版双仓镜像发布与腾讯云内网部署计划.md` | 已结束 | 已完成；GitHub 固定 SHA 验证与交接、CNB 三镜像构建扫描、TCR 不可变发布、结构化证据和跨 Commit Registry 缓存复用均通过真实验证，生产部署未触发 | Deployment、Documentation | 建立 GitHub 验证、CNB 构建和 TCR 单仓发布链路，并验证固定构建时间戳后的跨 Commit Registry 缓存 |
 | `plans/2026-08-30_Backend基础镜像漏洞阻断修复与v0.1.1发布计划.md` | 已结束 | 已完成；三端候选镜像 Trivy 阻断已修复，完整验证、三镜像 GHCR 不可变发布、v0.1.1 Tag 和 Release 均成功，生产部署未触发 | Backend、Admin、Web、Deployment、Documentation | 修复三端生产运行镜像漏洞阻断并完成 v0.1.1 不可变发布与三镜像 GHCR 发布 |
 | `plans/2026-08-30_依赖复现与发布验证闭环整改计划.md` | 已结束 | 已完成；uv 工具链、完整验证 Artifact、镜像发布同 SHA 门禁和 Origin 修复已落地，同 SHA 轻量 Push 工作流、完整远端验证与 Artifact 核验全部通过 | Backend、Admin、Web、Deployment、Documentation | 固定 uv 依赖复现工具链并建立同 Commit SHA 的完整验证证据与镜像发布门禁 |

@@ -7,6 +7,7 @@
 ### Added
 
 - 将生产 Compose 改为复用 1Panel 管理的共享 PostgreSQL 18.4 与 Redis 8.10.0：应用侧移除项目内数据库、缓存服务和数据卷，Backend 与可选日志消费者通过外部 `1panel-network` 访问共享实例，Web 与 Admin 保持网络隔离；同步根环境变量职责、生产配置门禁、部署工作流保护、独立数据库与角色、Redis ACL 与 Key 前缀、备份恢复和迁移回滚边界，生产数据迁移仍需独立授权。
+- 增加腾讯云 TCR 个人版 CAM 最小权限操作手册：区分 CNB `tcr-publisher` 与生产服务器 `tcr-puller`，提供三个指定私有仓库的只读 JSON、个人版凭证初始化、服务器 Docker 登录、正反向权限验收、轮换、禁用、泄露响应和常见错误处理，并明确企业版服务级账号不适用于当前个人版链路。
 - 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run 与同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。
 - 完成连续不同 Commit 的 CNB 到 TCR 真实发布验证：三张 Run 唯一候选镜像及其 SBOM、provenance 和 TCR digest 复核通过，Trivy High/Critical 门禁通过，最终 SHA 标签、`pinjie-cnb-tcr-release-v1` 清单和十份附件均写后校验成功；固定 epoch 缓存复验将完整发布从 14 分 19 秒降至 1 分 29 秒，生产部署未触发。
 - 为三端镜像发布增加 GHCR 与腾讯云 TCR 个人版双仓输出：同一次 BuildKit 构建按相同内容 digest 推送两个 Registry，发布矩阵在扫描前分别核验候选 digest，最终阶段同时执行 SHA 标签冲突检查、创建和写后复核；TCR 凭证仅来自受保护的 `image-publishing` Environment，现有生产部署继续使用 GHCR，待地域和独立只读身份确认后再切换运行镜像源。
