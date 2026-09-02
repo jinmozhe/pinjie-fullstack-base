@@ -64,6 +64,8 @@ allow_branches:
 
 `buildcache-main` 是可变构建缓存，`candidate-<CNB Build ID>` 是单次运行候选，两者都不能作为部署来源。生产只使用发布清单中的完整 `ccr.ccs.tencentyun.com/pinjie-fullstack-base/<镜像>@sha256:<digest>` 引用。
 
+CNB 发布身份和生产服务器拉取身份必须分离。`tcr-publisher` 只保存在 CNB 密钥仓库；生产服务器使用只允许拉取指定三个仓库的 `tcr-puller`。完整 CAM JSON、账号创建、凭证初始化、服务器登录和轮换步骤见[腾讯云 CAM 子账号与 TCR 个人版最小权限操作手册](tencent-tcr-personal-cam-accounts.md)。
+
 ## 5. 生产 Compose 配置
 
 生产目录至少需要：
