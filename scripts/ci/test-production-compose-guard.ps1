@@ -50,26 +50,28 @@ function Invoke-Guard {
 
 $validCompose = @'
 services:
-  postgres:
-    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
-    volumes:
-      - postgres_data:/var/lib/postgresql
-  redis:
-    image: redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
   backend:
     image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
     environment:
       LOG_FILE_ENABLED: "false"
+    networks:
+      - default
+      - infrastructure
   request-log-consumer:
     image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
     environment:
       LOG_FILE_ENABLED: "false"
+    networks:
+      - default
+      - infrastructure
   web:
     image: ${WEB_IMAGE:?WEB_IMAGE must be a complete immutable image digest}
   admin:
     image: ${ADMIN_IMAGE:?ADMIN_IMAGE must be a complete immutable image digest}
-volumes:
-  postgres_data:
+networks:
+  infrastructure:
+    name: 1panel-network
+    external: true
 '@
 
 try {
@@ -83,30 +85,45 @@ try {
         throw "Expected the valid production Compose fixture to pass. Output: $($validResult.Output)"
     }
 
-    Write-Compose -Content $validCompose.Replace("/var/lib/postgresql", "/var/lib/postgresql/data")
+    Write-Compose -Content $validCompose.Replace("    external: true", "    external: false")
     if ((Invoke-Guard).ExitCode -eq 0) {
-        throw "Expected the PostgreSQL 17 volume path to fail."
+        throw "Expected a non-external infrastructure network to fail."
+    }
+
+    Write-Compose -Content $validCompose.Replace("      - infrastructure", "")
+    if ((Invoke-Guard).ExitCode -eq 0) {
+        throw "Expected missing infrastructure service memberships to fail."
+    }
+
+    Write-Compose -Content $validCompose.Replace(
+        "  backend:",
+        "  backend:`n    depends_on:`n      postgresql:`n        condition: service_healthy"
+    )
+    if ((Invoke-Guard).ExitCode -eq 0) {
+        throw "Expected a shared infrastructure Compose dependency to fail."
+    }
+
+    Write-Compose -Content $validCompose.Replace(
+        "  web:",
+        "  web:`n    networks:`n      - default`n      - infrastructure"
+    )
+    if ((Invoke-Guard).ExitCode -eq 0) {
+        throw "Expected a frontend infrastructure network membership to fail."
+    }
+
+    Write-Compose -Content $validCompose.Replace("services:", "services:`n  postgres:`n    image: postgres:18.4-alpine")
+    if ((Invoke-Guard).ExitCode -eq 0) {
+        throw "Expected a local PostgreSQL service to fail."
+    }
+
+    Write-Compose -Content ($validCompose + "`nvolumes:`n  redis_data:`n")
+    if ((Invoke-Guard).ExitCode -eq 0) {
+        throw "Expected a local Redis volume to fail."
     }
 
     Write-Compose -Content $validCompose.Replace('      LOG_FILE_ENABLED: "false"', "")
     if ((Invoke-Guard).ExitCode -eq 0) {
         throw "Expected missing production file-log overrides to fail."
-    }
-
-    Write-Compose -Content $validCompose.Replace(
-        "postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
-        "postgres:18.4-alpine"
-    )
-    if ((Invoke-Guard).ExitCode -eq 0) {
-        throw "Expected a mutable infrastructure image tag to fail."
-    }
-
-    Write-Compose -Content $validCompose.Replace(
-        "redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241",
-        "redis:8.10.0-alpine@sha256:978f0e"
-    )
-    if ((Invoke-Guard).ExitCode -eq 0) {
-        throw "Expected a short infrastructure image digest to fail."
     }
 
     Write-Compose -Content $validCompose.Replace(
@@ -134,7 +151,7 @@ try {
         throw "Expected a mutable Dockerfile base image to fail."
     }
 
-    Write-Host "Production image guard fixtures passed: valid and all Dockerfile, Compose, volume, and logging negatives."
+    Write-Host "Production deployment guard fixtures passed: valid and all Dockerfile, Compose, network, isolation, and logging negatives."
 } finally {
     if (Test-Path -LiteralPath $fixtureRoot -PathType Container) {
         Remove-Item -LiteralPath $fixtureRoot -Recurse -Force

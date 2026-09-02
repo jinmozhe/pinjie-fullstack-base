@@ -28,7 +28,7 @@ C:\path\to\pinjie-fullstack-base\apps\backend
 
 | 层级 | 模板 | 本地真实文件 | 读取者 | 主要职责 |
 | --- | --- | --- | --- | --- |
-| 部署层 | 根 `.env.example` | 根 `.env` | Docker Compose、生产部署脚本 | 选择三端不可变镜像 digest 并初始化 PostgreSQL 容器 |
+| 部署层 | 根 `.env.example` | 根 `.env` | Docker Compose、生产部署脚本 | 选择三端 TCR 不可变镜像 digest 并设置 Web 公开 Origin |
 | Backend | `apps/backend/.env.example` | `apps/backend/.env` | Backend 配置系统、Backend 容器与运维脚本 | 数据库、Redis、认证 Secret、Cookie、安全边界和日志保留 |
 | Web | `apps/web/.env.example` | `apps/web/.env.local` | Next.js 开发、构建及服务端运行过程 | 服务端 Backend 地址和浏览器公开 API 地址 |
 | Admin | `apps/admin/.env.example` | `apps/admin/.env.local` | Umi Max 开发与构建过程 | 浏览器公开 API 地址 |
@@ -37,19 +37,16 @@ C:\path\to\pinjie-fullstack-base\apps\backend
 
 ### 3.1 根目录 `.env`
 
-根 `.env` 是部署控制文件，不是某个应用容器的通用运行配置。当前保存三张镜像的完整不可变引用和 PostgreSQL 初始化变量：
+根 `.env` 是部署控制文件，不是某个应用容器的通用运行配置。当前保存三张 TCR 镜像的完整不可变引用和 Web 公开 Origin：
 
 ```dotenv
-BACKEND_IMAGE=ghcr.io/example/backend@sha256:<64位十六进制摘要>
-WEB_IMAGE=ghcr.io/example/web@sha256:<64位十六进制摘要>
-ADMIN_IMAGE=ghcr.io/example/admin@sha256:<64位十六进制摘要>
+BACKEND_IMAGE=ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-backend@sha256:<64位十六进制摘要>
+WEB_IMAGE=ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-web@sha256:<64位十六进制摘要>
+ADMIN_IMAGE=ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-admin@sha256:<64位十六进制摘要>
 WEB_PUBLIC_ORIGIN=https://www.example.com
-POSTGRES_USER=pinjie_fullstack
-POSTGRES_PASSWORD=<生产密钥>
-POSTGRES_DB=pinjie_fullstack_prod
 ```
 
-`compose.prod.yml` 使用这些变量决定本次部署启动哪三个镜像并初始化 PostgreSQL。根 `.env` 中的值不会自动进入应用容器；只有 Compose 通过 `environment` 或 `env_file` 明确声明的变量才会进入容器。
+`compose.prod.yml` 使用这些变量决定本次部署启动哪三个镜像及 Web 对外 Origin。根 `.env` 中的值不会自动进入应用容器；只有 Compose 通过 `environment` 或 `env_file` 明确声明的变量才会进入容器。PostgreSQL 和 Redis 连接串只保存在 `apps/backend/.env`。
 
 本地 `compose.yml` 只启动 Redis，并不引用上述镜像变量，因此普通本地开发不需要创建根 `.env`。
 
@@ -325,7 +322,7 @@ C:\path\to\pinjie-fullstack-base\apps\backend\.venv\Scripts\python.exe
 
 | 文件 | 作用 |
 | --- | --- |
-| 根 `.env` | 保存本次部署的三个不可变镜像引用和 PostgreSQL 初始化变量 |
+| 根 `.env` | 保存本次部署的三个 TCR 不可变镜像引用和 Web 公开 Origin |
 | `.deployment-version` | 保存完整 Commit SHA 与 Compose 文件哈希 |
 | `apps/backend/.env` | 保存 Backend 生产运行配置和秘密 |
 

@@ -1,34 +1,8 @@
 # 生产部署使用。
+# PostgreSQL 和 Redis 由 1Panel 作为服务器级共享服务管理。
 # 应用容器只绑定本机环回地址，由 1Panel OpenResty 提供反向代理。
-# 启动命令：docker compose -f compose.prod.yml up -d
+# 启动命令：docker compose --env-file .env -f compose.prod.yml up -d --wait
 services:
-  postgres:
-    image: postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
-      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
-    volumes:
-      - postgres_data:/var/lib/postgresql
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-
-  redis:
-    image: redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
-    command: ["redis-server", "--appendonly", "yes"]
-    volumes:
-      - redis_data:/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 6
-
   backend:
     image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
     ports:
@@ -41,11 +15,9 @@ services:
       SETTINGS_MEDIA_ROOT: /app/storage/settings-media
     volumes:
       - backend_uploads:/app/storage
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    networks:
+      - default
+      - infrastructure
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
@@ -60,11 +32,9 @@ services:
       - apps/backend/.env
     environment:
       LOG_FILE_ENABLED: "false"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    networks:
+      - default
+      - infrastructure
     restart: unless-stopped
     profiles: ["request-logs"]
 
@@ -101,5 +71,8 @@ services:
 
 volumes:
   backend_uploads:
-  postgres_data:
-  redis_data:
+
+networks:
+  infrastructure:
+    name: 1panel-network
+    external: true

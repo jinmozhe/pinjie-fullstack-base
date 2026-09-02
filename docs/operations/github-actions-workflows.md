@@ -455,6 +455,8 @@ GitHub 验证 Job 只读取 Actions 和仓库内容。`handoff` Job 仅获得仓
 
 `Deploy Production` 将已经发布并验证的三个镜像 digest 部署到生产服务器。它不重新构建源码，也不自动选择最新镜像。
 
+当前工作流仍登录 GHCR、核验 GHCR `sha-<commit>` 标签并部署 GHCR digest，与人工使用 CNB 发布清单和 TCR digest 的现行生产路径不一致。完成独立的 TCR 自动部署改造和授权前，GitHub `production` Environment 的 `PRODUCTION_DEPLOYMENT_ENABLED` 必须保持 `false`，禁止触发该工作流执行生产部署。
+
 典型使用场景：
 
 - 将一组已经发布的 Backend、Web 和 Admin 镜像上线。
@@ -483,7 +485,7 @@ GitHub 验证 Job 只读取 Actions 和仓库内容。`handoff` Job 仅获得仓
 
 1. 检出输入 Commit SHA，并要求它属于默认分支历史。
 2. 计算目标提交中 `compose.prod.yml` 的 SHA-256。
-3. 要求 `PRODUCTION_DEPLOYMENT_ENABLED` 为 `true`。
+3. 要求 `PRODUCTION_DEPLOYMENT_ENABLED` 为 `true`；该值只能在完成独立部署授权且工作流镜像源与目标生产路径一致后启用。
 4. 要求 `DEPLOY_PATH` 是非空绝对路径。
 5. 验证三个 digest 的格式。
 6. 登录 GHCR。
@@ -502,11 +504,11 @@ GitHub 验证 Job 只读取 Actions 和仓库内容。`handoff` Job 仅获得仓
 3. 确认 `apps/backend/.env` 和根 `.env` 存在。
 4. 计算服务器 `compose.prod.yml` 哈希，并与目标提交哈希比较。
 5. 以权限 `077` 创建临时镜像变量文件。
-6. 从现有根 `.env` 保留 PostgreSQL 初始化变量。
+6. 从现有根 `.env` 保留 `WEB_PUBLIC_ORIGIN`。
 7. 写入三张固定 digest 镜像引用。
 8. 使用 `docker compose config --quiet` 验证配置。
 9. 拉取三个固定 digest。
-10. 执行 `docker compose up -d --remove-orphans --wait --wait-timeout 120`。
+10. 执行 `docker compose up -d --wait --wait-timeout 120`；旧基础设施回滚容器不得由日常部署自动清理。
 11. 查询 Compose 服务状态。
 12. 逐个读取运行容器的镜像引用，并与批准输入比较。
 13. 全部一致后，用临时文件替换根 `.env`。

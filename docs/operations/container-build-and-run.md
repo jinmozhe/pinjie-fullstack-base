@@ -10,7 +10,7 @@
 - Backend 使用标准 CPython 3.14，当前构建与运行阶段固定官方 `python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`，工具来源固定 `uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c`，镜像内只安装 `uv.lock` 的运行依赖。
 - Web 与 Admin 构建阶段及 Web 运行阶段固定 `node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43`，Admin 运行阶段固定 `nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de`。
 - 根目录是三个 Dockerfile 的构建上下文，不能把应用子目录单独作为上下文。
-- 生产 PostgreSQL 固定为 `postgres:18.4-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15`，Redis 固定为 `redis:8.10.0-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241`。
+- 生产 PostgreSQL 18.4 与 Redis 8.10.0 由 1Panel 作为服务器级共享服务管理，不进入应用镜像构建或项目 Compose。
 
 ## 3. 本地构建
 
@@ -75,25 +75,22 @@ allow_branches:
 └── apps/backend/.env
 ```
 
-根 `.env` 只写三个完整镜像 digest 和 PostgreSQL 服务初始化变量：
+根 `.env` 只写三个 TCR 完整镜像 digest 和 Web 公开 Origin：
 
 ```dotenv
-BACKEND_IMAGE=ghcr.io/example/pinjie-fullstack-backend@sha256:<64位十六进制摘要>
-WEB_IMAGE=ghcr.io/example/pinjie-fullstack-web@sha256:<64位十六进制摘要>
-ADMIN_IMAGE=ghcr.io/example/pinjie-fullstack-admin@sha256:<64位十六进制摘要>
+BACKEND_IMAGE=ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-backend@sha256:<64位十六进制摘要>
+WEB_IMAGE=ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-web@sha256:<64位十六进制摘要>
+ADMIN_IMAGE=ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-admin@sha256:<64位十六进制摘要>
 WEB_PUBLIC_ORIGIN=https://www.example.com
-POSTGRES_USER=pinjie_fullstack
-POSTGRES_PASSWORD=<生产密钥>
-POSTGRES_DB=pinjie_fullstack_prod
 ```
 
 `apps/backend/.env` 至少配置：
 
 ```dotenv
 ENVIRONMENT=production
-DATABASE_URL=postgresql+asyncpg://pinjie_fullstack:<生产密钥>@postgres:5432/pinjie_fullstack_prod
+DATABASE_URL=postgresql+asyncpg://pinjie_fullstack_app:<URL编码后的生产密钥>@postgresql:5432/pinjie_fullstack_prod
 REDIS_MODE=required
-REDIS_URL=redis://redis:6379/0
+REDIS_URL=redis://pinjie_fullstack:<URL编码后的生产密钥>@redis:6379/0
 RELEASE_VERSION=<完整Commit SHA或发布版本>
 TRUSTED_HOSTS=["api.example.com","admin.example.com","www.example.com"]
 WEB_ORIGINS=["https://www.example.com"]
@@ -115,11 +112,11 @@ SETTINGS_MEDIA_ROOT=/app/storage/settings-media
 SETTINGS_MEDIA_BASE_URL=/static/settings
 ```
 
-真实密码、域名和应用镜像 digest 不得写入仓库。仓库中的基础镜像 digest 来自官方 registry manifest，并由生产配置正反例门禁检查所有 Dockerfile `FROM`、PostgreSQL、Redis 和应用镜像变量。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发，Compose 服务之间使用内部服务名通信。
+真实密码、域名和应用镜像 digest 不得写入仓库。生产配置正反例门禁检查所有 Dockerfile `FROM`、应用镜像变量、外部 `1panel-network`、服务网络隔离和日志策略。生产 Compose 会对 Backend 和请求日志消费者强制覆盖 `LOG_FILE_ENABLED=false`，默认只写标准错误流。需要文件日志时必须同时提供明确的可写持久挂载、非 Root 权限、轮转和容量告警。1Panel OpenResty 负责公网 TLS 和域名转发。
 
-当前生产部署工作流仍校验 GHCR。切换到 TCR 属于后续独立生产变更，届时三个应用变量改用 CNB 发布清单中的 TCR 完整 digest，并同步部署工作流的 Registry 登录、SHA 标签核对和只读凭证；本次 CNB 构建实现不修改生产配置。
+当前人工生产部署使用 CNB 发布清单中的 TCR 完整 digest。GitHub `Deploy Production` 工作流仍校验并部署 GHCR，必须保持 `PRODUCTION_DEPLOYMENT_ENABLED=false`；将该工作流改造为 TCR 端到端自动部署需要独立计划和授权。
 
-PostgreSQL 18 的命名卷挂载到 `/var/lib/postgresql`。已有 PostgreSQL 17 及以下数据卷不能通过直接改挂载路径完成升级，必须先验证备份，再按独立迁移方案恢复到 PostgreSQL 18 新卷。
+PostgreSQL 与 Redis 由 1Panel 作为服务器级共享服务管理，不属于项目 Compose。Backend 和请求日志消费者同时加入项目默认网络与外部 `1panel-network`，通过 `postgresql:5432` 和 `redis:6379` 连接；Web 与 Admin 只在项目默认网络，不能直接访问数据服务。每个项目必须使用独立 PostgreSQL 数据库与角色、Redis ACL 用户与 Key 前缀。
 
 Backend 的 `backend_uploads` 命名卷挂载到 `/app/storage`，Compose 固定 `UPLOAD_LOCAL_ROOT=/app/storage/uploads` 与 `SETTINGS_MEDIA_ROOT=/app/storage/settings-media`。镜像内的 UID `10001` 必须能写入该卷；统一资产与配置媒体使用独立目录和私有补偿区，静态路由只暴露各自公开根。生产备份必须同时覆盖 PostgreSQL 和完整 `backend_uploads` 卷，并记录同一备份窗口。
 
@@ -190,6 +187,6 @@ docker compose --env-file .env -f compose.prod.yml run --rm backend python -m sc
 
 ## 8. 停止与回滚边界
 
-验证用途的本地容器可执行 `docker compose down`。生产环境只使用发布与部署工作流提供的固定 digest，禁止使用 `latest`、分支标签或临时重建旧版本。数据库迁移和恢复需要单独的备份、评审与授权。
+验证用途的本地容器可执行 `docker compose down`。生产环境只使用发布与部署工作流提供的固定 digest，禁止使用 `latest`、分支标签或临时重建旧版本。项目 Compose 不拥有共享 PostgreSQL 和 Redis，禁止从项目目录停止、删除或重建它们。数据库迁移和恢复需要单独的备份、评审与授权，旧项目专属基础设施在观察期后按独立授权清理。
 
 1Panel 的完整目录、配置、迁移、OpenResty、日志、备份和回滚步骤见[1Panel 单机生产运行手册](1panel-production-runbook.md)。
