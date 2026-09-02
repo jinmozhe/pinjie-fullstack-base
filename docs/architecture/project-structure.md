@@ -133,12 +133,12 @@ scripts/operations :: test-postgres-backup-restore.ps1
 
 | 层级 | 文件位置 | 存放内容 | 使用者 |
 | --- | --- | --- | --- |
-| 部署层 | 根目录 `.env.example` | 三端完整 digest 引用和 PostgreSQL 初始化变量 | `compose.prod.yml`、生产部署工作流 |
+| 部署层 | 根目录 `.env.example` | 三端 TCR 完整 digest 引用和 Web 公开 Origin | `compose.prod.yml`、生产部署工作流 |
 | 后端层 | `apps/backend/.env.example` | 数据库、Redis、运行环境和 Web/Admin Origin | uvicorn 进程 |
 | Web 层 | `apps/web/.env.example` | `BACKEND_INTERNAL_URL`、`WEB_PUBLIC_ORIGIN` | Next.js 服务端运行时 |
 | Admin 层 | `apps/admin/.env.example` | 可选 `VITE_API_URL`，默认同域 `/api/v1` | Umi Max 开发代理或生产 Nginx |
 
-各层只声明自己负责的变量。生产 Compose 从根 `.env` 读取镜像引用和 PostgreSQL 初始化变量，从 `apps/backend/.env` 向 Backend 容器注入运行配置；Web 使用 `BACKEND_INTERNAL_URL`，Admin 使用同域代理。根模板不保存 GitHub Environment 变量和 Secret，`DEPLOY_PATH`、部署开关与 SSH 凭据只在受保护的 `production` Environment 中配置。详细操作见[环境变量分层与 Backend 本地运行手册](../operations/environment-variables-and-backend-local-run.md)。分层原因：
+各层只声明自己负责的变量。生产 Compose 从根 `.env` 读取镜像引用和 Web 公开 Origin，从 `apps/backend/.env` 向 Backend 容器注入共享 PostgreSQL、Redis 连接及运行配置；Web 使用 `BACKEND_INTERNAL_URL`，Admin 使用同域代理。根模板不保存 GitHub Environment 变量和 Secret，`DEPLOY_PATH`、部署开关与 SSH 凭据只在受保护的 `production` Environment 中配置。详细操作见[环境变量分层与 Backend 本地运行手册](../operations/environment-variables-and-backend-local-run.md)。分层原因：
 
 - 后端和前端的环境变量格式不同（Python `os.environ` vs Next.js `NEXT_PUBLIC_` 前缀 vs Umi 可公开环境变量）
 - 开发者进入某个应用目录工作时，能直接看到该应用需要哪些变量，不需要翻根目录的大文件

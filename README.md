@@ -38,7 +38,7 @@ plans/                  全栈实施计划、计划规则和永久登记
 PROJECT_INDEX.md        项目身份、当前阶段、活动计划和权威入口
 openapi.json            后端导出的 OpenAPI 规范（根目录，前端 SDK 唯一来源）
 compose.yml             本地开发用（仅 Redis 容器）
-compose.prod.yml        生产部署用（PostgreSQL、Redis、三端应用和可选日志消费者）
+compose.prod.yml        生产部署用（三端应用、可选日志消费者和 1Panel 共享基础设施网络）
 CHANGELOG.md            已交付能力和版本变化
 SECURITY.md             漏洞报告和安全响应规则
 ```

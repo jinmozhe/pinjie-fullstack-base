@@ -33,6 +33,7 @@
 | [0011-Admin采用AntDesignProV6与UmiMax决策.md](adr/0011-Admin采用AntDesignProV6与UmiMax决策.md) | Admin 全面采用官方 Ant Design Pro v6/Umi Max，保留项目安全、契约和质量边界 |
 | [0012-统一文件资产采用可补偿本地存储决策.md](adr/0012-统一文件资产采用可补偿本地存储决策.md) | 统一文件资产采用存储端口、同文件系统原子提交、同主体去重和可恢复删除补偿 |
 | [0013-全局系统设置与配置媒体决策.md](adr/0013-全局系统设置与配置媒体决策.md) | 全局设置采用单表分组 JSONB、固定强类型接口和独立可补偿配置媒体槽位 |
+| [0014-共享PostgreSQL与Redis生产基础设施决策.md](adr/0014-共享PostgreSQL与Redis生产基础设施决策.md) | 生产共享 1Panel PostgreSQL 与 Redis，并按项目隔离数据库、角色、ACL、Key 和恢复范围 |
 
 ---
 

@@ -54,8 +54,8 @@ GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为�
 部署前：
 
 1. GitHub `production` Environment 必须配置所需评审者和受限分支。
-2. 在该 Environment 中设置 `PRODUCTION_DEPLOYMENT_ENABLED=true`、绝对路径 `DEPLOY_PATH` 和部署所需 SSH Secret。
-3. 确认部署目录的 `apps/backend/.env` 已配置生产运行变量且未进入仓库，根 `.env` 保存 Compose 镜像引用和 PostgreSQL 初始化变量。
+2. 当前人工 TCR 部署阶段必须保持 `PRODUCTION_DEPLOYMENT_ENABLED=false`。只有独立授权执行 GitHub 自动部署，且工作流镜像源与目标生产路径一致后，才设置 `PRODUCTION_DEPLOYMENT_ENABLED=true`、绝对路径 `DEPLOY_PATH` 和部署所需 SSH Secret。
+3. 确认部署目录的 `apps/backend/.env` 已配置共享 PostgreSQL、Redis 连接及其他生产运行变量且未进入仓库，根 `.env` 只保存 Compose 镜像引用和 Web 公开 Origin。
 4. 当前部署工作流仍从 GHCR 解析 `sha-<commit>` 标签，并确认三个 manifest digest 与输入完全一致。迁移到 TCR 时必须在独立生产部署授权下改为核对 CNB 发布清单和三个 TCR digest，当前 CNB 发布实现不会自动触发部署。
 5. 确认当前数据库 Revision、目标 Revision 和备份恢复点。
 6. 确认服务器 `compose.prod.yml` 与目标 Commit 中的文件哈希一致。

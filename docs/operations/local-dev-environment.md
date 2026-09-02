@@ -34,22 +34,22 @@ Anaconda 或 Miniconda 不属于本项目的前置依赖。日常后端命令统
 │   ├── api.yourdomain.com   → 127.0.0.1:8000
 │   ├── admin.yourdomain.com → 127.0.0.1:3001
 │   └── www.yourdomain.com   → 127.0.0.1:3000
-├── PostgreSQL：`postgres:18.4-alpine` 容器，独立数据卷和用户
-├── Redis：`redis:8.10.0-alpine` 容器，独立 AOF 数据卷
-└── Compose：postgres、redis、backend、web、admin 容器
+├── 共享 PostgreSQL 18.4：每项目独立数据库、角色和密码
+├── 共享 Redis 8.10.0：每项目独立 ACL 用户、密码和 Key 前缀
+└── 项目 Compose：backend、web、admin 和可选日志消费者
 ```
 
 | 维度 | 本地开发 | 生产环境 |
 | --- | --- | --- |
 | 应用运行方式 | Windows 本机进程 | Docker 应用容器 |
-| PostgreSQL | 本机安装，`localhost:5432` | Docker Compose `postgres:18.4-alpine` |
-| Redis | Docker Desktop，`localhost:6379` | Docker Compose `redis:8.10.0-alpine` |
+| PostgreSQL | 本机安装，`localhost:5432` | 1Panel 共享 PostgreSQL 18.4，通过外部网络访问 |
+| Redis | Docker Desktop，`localhost:6379` | 1Panel 共享 Redis 8.10.0，通过外部网络访问 |
 | HTTP 入口 | 直接访问 localhost | OpenResty 域名反向代理 |
 | TLS | 不启用 | 1Panel 自动管理证书 |
 | 环境变量 | 应用目录内本地文件 | 1Panel 或 Compose 注入 |
 | 数据用途 | 开发和自动化测试 | 真实业务数据 |
 
-生产 Compose 内 PostgreSQL 使用服务名 `postgres`，Redis 使用服务名 `redis`；容器内连接地址不能使用 `localhost`。
+生产 Backend 和可选日志消费者同时接入项目默认网络与外部 `1panel-network`，通过 `postgresql:5432` 和 `redis:6379` 访问共享服务；容器内连接地址不能使用 `localhost`。共享实例的项目隔离和生产迁移步骤见 [1Panel 单机生产运行手册](1panel-production-runbook.md)。
 
 ## 三、方案对比
 

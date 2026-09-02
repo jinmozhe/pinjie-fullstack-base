@@ -12,7 +12,8 @@
 - 1Panel OpenResty 独占公网 80/443，应用端口只绑定 `127.0.0.1`。
 - Backend、Web、Admin 镜像已经过对应 Commit SHA 的质量门禁、SBOM 和安全扫描。
 - 三张应用镜像使用完整 `@sha256:` digest，禁止使用 `latest`、分支标签或缺失版本回退。
-- PostgreSQL 固定 `postgres:18.4-alpine`，Redis 固定 `redis:8.10.0-alpine`。
+- 1Panel 已管理 PostgreSQL 18.4 与 Redis 8.10.0 共享实例，并把二者接入外部网络 `1panel-network`；宿主机端口只允许绑定环回地址。
+- 共享 PostgreSQL 为每个项目配置独立数据库、登录角色和密码；共享 Redis 为每个项目配置独立 ACL 用户、密码与 Key 前缀。
 - 部署目录、真实 `.env`、备份和数据库凭据仅允许受控运维账号访问。
 
 生产目录至少包含：
@@ -46,17 +47,30 @@ docker compose --env-file .env -f compose.prod.yml config --quiet
 检查项：
 
 - `BACKEND_IMAGE`、`WEB_IMAGE`、`ADMIN_IMAGE` 均为批准的完整 digest。
-- PostgreSQL 命名卷挂载到 `/var/lib/postgresql`。
 - Backend `backend_uploads` 命名卷挂载到 `/app/storage`，统一资产根为 `/app/storage/uploads`，配置媒体根为 `/app/storage/settings-media`。
 - Backend 和 request-log-consumer 显式设置 `LOG_FILE_ENABLED=false`。
-- `DATABASE_URL` 使用服务名 `postgres`，`REDIS_URL` 使用服务名 `redis`。
+- Backend 和 request-log-consumer 同时接入项目默认网络与外部 `1panel-network`；Web 和 Admin 不接入基础设施网络。
+- `DATABASE_URL` 使用共享服务名 `postgresql`、项目数据库和项目角色，`REDIS_URL` 使用共享服务名 `redis` 和项目 ACL 用户。
 - `ENVIRONMENT=production`，Cookie、Trusted Host、CORS、代理 CIDR 和四个认证密钥满足生产约束。
 
-PostgreSQL 17 及以下的现有卷通常使用 `/var/lib/postgresql/data`。已有实例升级到 PostgreSQL 18 前必须单独制定卷迁移和恢复方案，验证备份后创建新卷并恢复，禁止直接把旧卷改挂到新路径后启动。
+项目 Compose 不创建、停止或重建 PostgreSQL 和 Redis。共享实例的镜像版本、数据目录、持久化、容量、健康检查和备份由 1Panel 基础设施层管理；项目日常部署禁止使用 `--remove-orphans` 清理旧基础设施容器。
 
 ## 4. 备份与迁移
 
-发布前记录当前完整 Commit SHA、三张运行镜像 digest、Alembic revision 和备份标识。数据库结构变化时，先完成可恢复备份，再执行一次性迁移：
+发布前记录当前完整 Commit SHA、三张运行镜像 digest、Alembic revision 和备份标识。目标 PostgreSQL 数据库必须由项目角色拥有，该角色禁止拥有超级用户、创建数据库和创建角色权限，并设置与实例容量相符的连接上限。Redis ACL 用户只能访问当前 `PROJECT_NAME` 与 `ENVIRONMENT` 生成的 Key 前缀，禁止管理、全局清理和全局枚举命令。
+
+从项目专属 PostgreSQL 与 Redis 迁移到共享实例时，按以下顺序操作：
+
+1. 核对源、目标数据库身份，确认目标为空或已取得覆盖恢复专项授权。
+2. 分别验证共享实例备份和源项目数据库一致性备份，记录文件大小与 SHA-256。
+3. 创建项目 PostgreSQL 角色，将目标数据库所有权和恢复对象归属设置为该角色。
+4. 创建并持久化 Redis ACL 用户，使用第二个终端验证新用户能够访问项目 Key 且管理命令被拒绝。
+5. 停止 Backend、Web、Admin 和请求日志消费者，冻结写入后制作最终数据库备份。
+6. 恢复到共享 PostgreSQL，核对 Alembic revision、表清单、权限目录、管理员和不泄露数据的业务摘要。
+7. 更新 `apps/backend/.env` 中的两个连接串，启动应用并执行完整健康与登录检查。
+8. 在观察期内保留旧 PostgreSQL、Redis 容器和数据。删除旧容器、卷、备份或数据库需要独立授权。
+
+数据库结构变化时，先完成可恢复备份，再执行一次性迁移：
 
 ```bash
 docker compose --env-file .env -f compose.prod.yml pull
@@ -84,7 +98,7 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 
 逐项确认：
 
-- PostgreSQL 和 Redis 为 `healthy`。
+- 1Panel 中的共享 PostgreSQL 和 Redis 状态正常，使用项目凭据执行的连接检查成功。
 - Backend `/health/live` 返回存活，`/health/ready` 返回就绪。
 - Web 首页可访问，Admin `/healthz` 返回 `ok`。
 - 运行容器使用批准的完整镜像 digest，进程用户为非 Root。
@@ -118,7 +132,7 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 
 ## 8. 备份、恢复与回滚
 
-1Panel 可以调度 PostgreSQL 备份和异地复制，但面板成功状态不能代替隔离恢复演练。详细校验见[数据库备份与恢复手册](database-backup-restore.md)。
+1Panel 可以调度共享 PostgreSQL 备份和异地复制，但面板成功状态不能代替隔离恢复演练。备份、恢复和演练必须明确目标项目数据库，禁止影响同一实例中的其他项目。详细校验见[数据库备份与恢复手册](database-backup-restore.md)。
 
 统一文件资产或系统配置媒体启用后，必须备份完整 `backend_uploads` 命名卷。数据库与文件卷使用同一备份窗口并共同记录标识；恢复时先停止写入，恢复 PostgreSQL 与文件卷，再抽样核对 `assets.file_key`，并校验 `system_settings.site.logo` 的路径、大小、MIME 和哈希。只恢复数据库或只恢复文件卷会产生悬空元数据或孤儿文件，不能视为完整恢复。
 
@@ -128,4 +142,4 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 
 ## 9. 停止边界
 
-生产环境禁止把 `docker compose down -v` 作为日常停止命令。卷删除、数据库清理和备份删除都属于独立破坏性操作。仅停止应用时应先确认影响窗口，再使用明确服务名执行受控停止；恢复服务后重新运行健康检查。
+生产环境禁止把 `docker compose down -v` 作为日常停止命令。项目 Compose 不拥有共享 PostgreSQL 和 Redis，禁止从项目目录对其执行停止、删除、重建或清理。卷删除、数据库清理和备份删除都属于独立破坏性操作。仅停止应用时应先确认影响窗口，再使用明确服务名执行受控停止；恢复服务后重新运行健康检查。
