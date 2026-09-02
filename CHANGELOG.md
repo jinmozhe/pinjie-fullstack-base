@@ -70,6 +70,7 @@
 
 ### Fixed
 
+- 修复 Admin Alpine 运行镜像只升级手工包清单导致新可修复漏洞遗漏的问题，构建时升级当前仓库中的全部已安装包；CNB Trivy 阻断现在输出精简漏洞表格，并在失败阶段保存原始扫描、digest、metadata 和摘要附件，同时继续保持 High、Critical 门禁 Fail Closed。
 - 修复 CNB 跨 Commit Registry 缓存失配：`SOURCE_DATE_EPOCH` 从每个 Git Commit 的提交时间改为固定 Unix epoch `0`，避免未变化的 COPY 和依赖层因文件元数据时间不同而重新构建；复验确认 Backend `uv sync`、Web/Admin `pnpm install`、应用复制和 production build 层全部命中，候选构建和缓存写回从 13.2 分钟降至 57.4 秒，完整 Commit SHA 继续由 BuildKit provenance 和结构化发布清单追溯。
 - 修复 Web 与 Admin 生产运行镜像被基础层可修复漏洞阻断发布的问题：Web runtime 升级 Alpine OpenSSL 并移除 standalone 服务不需要的全局 npm，Admin runtime 只升级 Trivy 命中的 c-ares、curl、OpenSSL、libexpat、libxml2 和 nghttp2 包；保留 Node/Nginx 运行方式、非 Root 用户、健康检查、Trivy High/Critical Fail Closed、SBOM 和构建来源证明。
 - 修复 Backend 生产镜像被基础系统与运行时工具中的可修复 High 漏洞阻断发布的问题：builder 与 runtime 同步更新到官方 Python 3.14.7 slim-trixie Linux amd64 固定摘要，runtime 精确安装修复后的 OpenSSL 包并移除应用运行不需要的全局 pip 及其 vendored 代码；继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和同 SHA 完整验证要求。

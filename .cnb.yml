@@ -63,6 +63,21 @@ main:
               - .cnb/evidence/admin-trivy.json
               - .cnb/evidence/admin-sbom.cdx.json
               - .cnb/evidence/admin-metadata.json
+      failStages:
+        - name: Prepare failure evidence
+          script: |
+            mkdir -p "$EVIDENCE_ROOT"
+            if [ ! -s "$EVIDENCE_ROOT/scan-failure-summary.txt" ]; then
+              printf 'CNB release failed before a blocking vulnerability summary was generated.\n' \
+                > "$EVIDENCE_ROOT/scan-failure-summary.txt"
+            fi
+            tar -czf .cnb/cnb-failure-evidence.tar.gz -C "$EVIDENCE_ROOT" .
+
+        - name: Save failure evidence
+          image: cnbcool/attachments@sha256:3000e40e6495209ef056c374234f83505525257f799eaf51c9dcf8a8235efdb0
+          settings:
+            attachments:
+              - .cnb/cnb-failure-evidence.tar.gz
       endStages:
         - name: Remove temporary registry credentials
           script: bash ./scripts/ci/cnb-publish-images.sh cleanup

@@ -8,7 +8,7 @@
 
 - 构建主机使用 Linux x86_64 或 Docker Desktop Linux 容器模式。
 - Backend 使用标准 CPython 3.14，当前构建与运行阶段固定官方 `python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`，工具来源固定 `uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c`，镜像内只安装 `uv.lock` 的运行依赖。
-- Web 与 Admin 构建阶段及 Web 运行阶段固定 `node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43`，Admin 运行阶段固定 `nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de`。
+- Web 与 Admin 构建阶段及 Web 运行阶段固定 `node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43`，Admin 运行阶段固定 `nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de`，并在构建时升级当前 Alpine 仓库能够修复的全部已安装包。
 - 根目录是三个 Dockerfile 的构建上下文，不能把应用子目录单独作为上下文。
 - 生产 PostgreSQL 18.4 与 Redis 8.10.0 由 1Panel 作为服务器级共享服务管理，不进入应用镜像构建或项目 Compose。
 
@@ -60,7 +60,7 @@ allow_branches:
   - "main"
 ```
 
-每张镜像按以下顺序处理：CNB 默认 Buildx `docker` 驱动从 TCR `buildcache-main` 读取缓存，以固定 `SOURCE_DATE_EPOCH=0` 保持未变化文件层的跨 Commit 缓存稳定，生成最大级别 provenance 和 SBOM attestation，以 `candidate-<CNB Build ID>` 唯一候选标签推送内容，从 metadata 读取 digest 并核对候选标签和 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。Git Commit 继续由 provenance 和发布清单追溯。三张镜像全部通过后才创建 `sha-<完整 Commit SHA>` 标签，并保存结构化发布清单和原始证据附件。
+每张镜像按以下顺序处理：CNB 默认 Buildx `docker` 驱动从 TCR `buildcache-main` 读取缓存，以固定 `SOURCE_DATE_EPOCH=0` 保持未变化文件层的跨 Commit 缓存稳定，生成最大级别 provenance 和 SBOM attestation，以 `candidate-<CNB Build ID>` 唯一候选标签推送内容，从 metadata 读取 digest 并核对候选标签和 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。Git Commit 继续由 provenance 和发布清单追溯。三张镜像全部通过后才创建 `sha-<完整 Commit SHA>` 标签，并保存结构化发布清单和原始证据附件。扫描失败时，CNB 日志会输出镜像引用、包名、CVE、已安装版本和修复版本，并将当前原始 JSON、digest、metadata 与精简摘要打包为失败附件；失败候选仍禁止部署。
 
 `buildcache-main` 是可变构建缓存，`candidate-<CNB Build ID>` 是单次运行候选，两者都不能作为部署来源。生产只使用发布清单中的完整 `ccr.ccs.tencentyun.com/pinjie-fullstack-base/<镜像>@sha256:<digest>` 引用。
 

@@ -14,7 +14,7 @@ RUN pnpm --filter @pinjie/admin build
 FROM nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de AS runtime
 COPY apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /workspace/apps/admin/dist /usr/share/nginx/html
-RUN apk upgrade --no-cache c-ares curl libcurl libcrypto3 libssl3 libexpat libxml2 nghttp2-libs \
+RUN apk upgrade --no-cache \
     && sed -i 's#^pid .*;#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
     && chown -R nginx:nginx /var/cache/nginx /var/log/nginx /usr/share/nginx/html
 USER nginx
