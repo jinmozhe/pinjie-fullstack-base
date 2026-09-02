@@ -429,7 +429,7 @@ CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
 3. 从 `buildcache-main` 读取并写回 Registry 缓存；缓存标签明确属于可变构建缓存，不可用于部署。
 4. 使用 CNB 默认 Buildx `docker` 驱动向 TCR 推送 `candidate-<CNB Build ID>` 唯一候选标签；构建前要求该标签不存在，避免覆盖其他运行的候选内容。
 5. 从 Buildx metadata 读取输出 digest，依次核对候选标签 digest 和按 digest 查询的 TCR OCI index；index 必须包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
-6. 使用固定 digest 的 Trivy 扫描候选镜像；High、Critical 且已有修复的漏洞使发布失败。
+6. 使用固定 digest 的 Trivy 扫描候选镜像；High、Critical 且已有修复的漏洞使发布失败。失败时在日志输出镜像引用、包名、CVE、已安装版本和修复版本，并保存包含原始 JSON、digest、metadata 和精简摘要的失败附件。
 7. 为每个候选生成 CycloneDX JSON SBOM。
 
 ### 11.5 Finalize 与发布证据
