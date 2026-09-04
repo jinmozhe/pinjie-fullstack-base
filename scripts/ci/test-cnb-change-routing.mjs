@@ -29,10 +29,22 @@ function routeMatches(route, file) {
   if (route.endsWith("/**")) {
     return file.startsWith(route.slice(0, -2));
   }
-  const pattern = route
-    .replaceAll(".", "\\.")
-    .replaceAll("*", "[^/]*");
-  return new RegExp(`^${pattern}$`, "u").test(file);
+  if (route === "scripts/ci/cnb-*.sh") {
+    const basename = file.slice("scripts/ci/".length);
+    return file.startsWith("scripts/ci/cnb-") && basename.endsWith(".sh") && !basename.includes("/");
+  }
+  if (route === "scripts/ci/*cnb*evidence*.mjs") {
+    const basename = file.slice("scripts/ci/".length);
+    const cnbIndex = basename.indexOf("cnb");
+    return (
+      file.startsWith("scripts/ci/") &&
+      basename.endsWith(".mjs") &&
+      !basename.includes("/") &&
+      cnbIndex >= 0 &&
+      basename.indexOf("evidence", cnbIndex + 3) >= 0
+    );
+  }
+  return route === file;
 }
 
 function selectedPipelines(file) {
@@ -89,6 +101,7 @@ const routingFixtures = {
   ".cnb.yml": ["admin-image", "backend-image", "web-image"],
   "scripts/ci/cnb-publish-images.sh": ["admin-image", "backend-image", "web-image"],
   "scripts/ci/create-cnb-release-evidence.mjs": ["admin-image", "backend-image", "web-image"],
+  "scripts/ci/nested/cnb-publish-images.sh": [],
   "compose.prod.yml": [],
   "docs/operations/container-build-and-run.md": [],
   "plans/2026-09-04_fixture.md": [],
