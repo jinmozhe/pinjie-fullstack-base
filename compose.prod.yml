@@ -4,7 +4,7 @@
 # 启动命令：docker compose --env-file .env -f compose.prod.yml up -d --wait
 services:
   backend:
-    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
+    image: ${BACKEND_IMAGE}
     ports:
       - "127.0.0.1:8000:8000"
     env_file:
@@ -20,13 +20,19 @@ services:
       - infrastructure
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)",
+        ]
       interval: 10s
       timeout: 3s
       retries: 6
 
   request-log-consumer:
-    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
+    image: ${BACKEND_IMAGE}
     command: ["python", "-m", "scripts.consume_request_logs"]
     env_file:
       - apps/backend/.env
@@ -39,7 +45,7 @@ services:
     profiles: ["request-logs"]
 
   web:
-    image: ${WEB_IMAGE:?WEB_IMAGE must be a complete immutable image digest}
+    image: ${WEB_IMAGE}
     ports:
       - "127.0.0.1:3000:3000"
     environment:
@@ -50,13 +56,19 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))",
+        ]
       interval: 10s
       timeout: 3s
       retries: 6
 
   admin:
-    image: ${ADMIN_IMAGE:?ADMIN_IMAGE must be a complete immutable image digest}
+    image: ${ADMIN_IMAGE}
     ports:
       - "127.0.0.1:3001:3001"
     depends_on:
@@ -64,7 +76,8 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:3001/healthz"]
+      test:
+        ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:3001/healthz"]
       interval: 10s
       timeout: 3s
       retries: 6

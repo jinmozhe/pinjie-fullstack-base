@@ -54,9 +54,9 @@ function Confirm-RequiredImageVariable {
 
     $serviceBlock = Get-ServiceBlock -Name $Name
     $reference = Get-ServiceImage -Name $Name -ServiceBlock $serviceBlock
-    $expectedReference = '${' + $VariableName + ':?' + $VariableName + ' must be a complete immutable image digest}'
+    $expectedReference = '${' + $VariableName + '}'
     if ($reference -ne $expectedReference) {
-        $violations.Add("Service '$Name' must require the '$VariableName' immutable image variable.")
+        $violations.Add("Service '$Name' must use the '$VariableName' immutable image variable.")
     }
 
     $configuredReference = [Environment]::GetEnvironmentVariable($VariableName)
