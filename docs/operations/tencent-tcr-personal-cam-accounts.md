@@ -399,7 +399,12 @@ Docker 默认配置文件通常只对凭据做 Base64 编码，不等同于加�
 
 ### 10.3 按固定 digest 拉取三张镜像
 
-从 CNB 成功运行生成的 `pinjie-cnb-tcr-release-v1` 发布清单中取得三个完整 digest，不使用 `latest`、`candidate-*`、`buildcache-main` 或只写 SHA 标签。
+新发布从 Backend、Web 和 Admin 各自成功 CNB Build 生成的
+`pinjie-cnb-tcr-image-v1` 单镜像证据中取得完整 digest。三个应用来自同一
+Commit 时，必须等待预期触发的 Pipeline 全部成功，并核对三份证据中的
+`source.commit_sha` 一致。历史发布的 `pinjie-cnb-tcr-release-v1` 三镜像清单
+只用于读取已有附件和回滚基线。两种证据都必须使用完整 digest，不使用
+`latest`、`candidate-*`、`buildcache-main` 或只写 SHA 标签。
 
 ```bash
 docker pull ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-backend@sha256:<backend-digest>
@@ -407,7 +412,7 @@ docker pull ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-web@sh
 docker pull ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-admin@sha256:<admin-digest>
 ```
 
-每条命令必须显示拉取成功，最终 digest 必须与发布清单一致。
+每条命令必须显示拉取成功，最终 digest 必须与对应发布证据一致。
 
 ## 11. 权限验收
 

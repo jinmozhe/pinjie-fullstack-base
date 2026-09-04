@@ -6,6 +6,7 @@
 
 ### Added
 
+- 将 CNB 三镜像统一发布拆为 `backend-image`、`web-image` 和 `admin-image` 三条按真实 Docker 输入触发的独立 Pipeline：每端使用独立锁、Registry 缓存、扫描、SBOM、provenance、OCI 来源标签和 `pinjie-cnb-tcr-image-v1` 证据；`SOURCE_DATE_EPOCH` 使用 Git committer time，并增加仅在 `main` 可见的受控三端全量构建入口，生产继续通过 1Panel 按完整 digest 人工更新。
 - 将生产 Compose 改为复用 1Panel 管理的共享 PostgreSQL 18.4 与 Redis 8.10.0：应用侧移除项目内数据库、缓存服务和数据卷，Backend 与可选日志消费者通过外部 `1panel-network` 访问共享实例，Web 与 Admin 保持网络隔离；同步根环境变量职责、生产配置门禁、部署工作流保护、独立数据库与角色、Redis ACL 与 Key 前缀、备份恢复和迁移回滚边界，生产数据迁移仍需独立授权。
 - 增加腾讯云 TCR 个人版 CAM 最小权限操作手册：区分 CNB `tcr-publisher` 与生产服务器 `tcr-puller`，提供三个指定私有仓库的只读 JSON、个人版凭证初始化、服务器 Docker 登录、正反向权限验收、轮换、禁用、泄露响应和常见错误处理，并明确企业版服务级账号不适用于当前个人版链路。
 - 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run 与同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。

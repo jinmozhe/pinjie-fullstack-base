@@ -31,9 +31,10 @@ flowchart TD
     F --> N["同一 SHA 的完整验证 Artifact"]
     N --> H["人工授权 Handoff Source to CNB"]
     H --> I["固定 SHA 快进交接到 CNB main"]
-    I --> J["CNB 构建、扫描并发布 3 张 TCR 镜像"]
-    J --> K["人工授权 Deploy Production"]
-    K --> L["固定 3 个镜像 digest 部署生产环境"]
+    I --> J["CNB 按路径构建、扫描并发布受影响端"]
+    J --> M["每端独立发布证据和 TCR digest"]
+    M --> K["人工授权生产部署"]
+    K --> L["1Panel 按固定 digest 更新目标端"]
 ```
 
 流程坚持四项边界：
@@ -369,7 +370,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 
 ### 11.1 作用和使用场景
 
-`Handoff Source to CNB` 校验一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA，然后把该提交以非强制、只能快进的方式交接到 CNB `main`。GitHub Runner 不构建或上传生产镜像层；CNB 接收 Push 后通过根目录 `.cnb.yml` 构建 Backend、Web 和 Admin 三张镜像，完成扫描和证据生成后只发布到腾讯云 TCR 个人版。
+`Handoff Source to CNB` 校验一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA，然后把该提交以非强制、只能快进的方式交接到 CNB `main`。GitHub Runner 不构建或上传生产镜像层；CNB 接收 Push 后通过根目录 `.cnb.yml` 按真实构建输入选择 Backend、Web 和 Admin Pipeline，完成单镜像扫描和证据生成后只发布到腾讯云 TCR 个人版。
 
 典型使用场景：
 
@@ -412,9 +413,9 @@ GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取�
 
 ### 11.4 CNB 构建与候选发布
 
-CNB `.cnb.yml` 只声明 `main.push`，使用 4 核 Linux AMD64 社区构建节点、固定 digest 的构建环境和 TCR 发布锁。CNB 密钥仓库文件仅允许 `pjwl/pinjie-fullstack-base` 的 `main` Push 引用，并提供 TCR Registry 登录所需参数。
+CNB `.cnb.yml` 声明三个具名 `main.push` Pipeline，并提供受控的 `main.web_trigger_full_release` 人工全量入口。每条 Pipeline 使用 4 核 Linux AMD64 社区构建节点、固定 digest 的构建环境、独立 Docker 配置目录和按应用划分的 TCR 发布锁。CNB 密钥仓库文件只允许 `pjwl/pinjie-fullstack-base` 的 `main` Push 与 `web_trigger_full_release` 引用，并提供 TCR Registry 登录所需参数。
 
-CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
+三条 Pipeline 可以并行运行，每条只处理一个固定应用，并使用该应用自己的 TCR Registry 缓存：
 
 | 应用 | Dockerfile | TCR 镜像名 |
 | --- | --- | --- |
@@ -424,28 +425,39 @@ CNB 顺序构建三个应用，共用 BuildKit 和 TCR Registry 缓存：
 
 每个应用执行：
 
-1. 以仓库根目录为上下文，使用现有 Dockerfile 构建 `linux/amd64` 镜像。
-2. 固定 `SOURCE_DATE_EPOCH=0`，避免不同 Commit 时间戳使未变化的 COPY 层失去跨 Run 缓存；Git Commit 继续由最大级别 BuildKit provenance 和发布清单追溯，同时生成 SBOM attestation。
+1. 以仓库根目录为上下文，使用固定 `IMAGE_KEY` 映射的 Dockerfile 构建 `linux/amd64` 镜像，拒绝未知应用键和任意路径输入。
+2. 从 `CNB_COMMIT` 读取 Git committer time，设置 `SOURCE_DATE_EPOCH`，并写入 OCI `revision`、`created` 与 `source` 标签；同一 Commit 重建保持相同创建时间。该时间会随 Commit 变化，跨 Commit 的部分 COPY 层可能重新构建。
 3. 从 `buildcache-main` 读取并写回 Registry 缓存；缓存标签明确属于可变构建缓存，不可用于部署。
 4. 使用 CNB 默认 Buildx `docker` 驱动向 TCR 推送 `candidate-<CNB Build ID>` 唯一候选标签；构建前要求该标签不存在，避免覆盖其他运行的候选内容。
 5. 从 Buildx metadata 读取输出 digest，依次核对候选标签 digest 和按 digest 查询的 TCR OCI index；index 必须包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
 6. 使用固定 digest 的 Trivy 扫描候选镜像；High、Critical 且已有修复的漏洞使发布失败。失败时在日志输出镜像引用、包名、CVE、已安装版本和修复版本，并保存包含原始 JSON、digest、metadata 和精简摘要的失败附件。
 7. 为每个候选生成 CycloneDX JSON SBOM。
 
-### 11.5 Finalize 与发布证据
+### 11.5 Finalize 与单镜像发布证据
 
-三个候选全部成功后，CNB Pipeline：
+每条 Pipeline 在自己的候选镜像通过后独立执行：
 
-1. 在创建任何标签前检查三个 TCR 仓库的 `sha-<完整 Commit SHA>` 目标是否冲突。
+1. 检查对应 TCR 仓库的 `sha-<完整 Commit SHA>` 目标是否冲突。
 2. 标签不存在时从精确候选 digest 创建，已经指向同一 digest 时允许幂等通过，指向不同 digest 时失败。
 3. 标签写入后重新查询并核对 digest。
-4. 生成并严格校验 `pinjie-cnb-tcr-release-v1` JSON 清单，字段包含 Commit SHA、CNB Build ID、Build URL、时间和三个完整 TCR digest 引用。
-5. 将发布清单、三份 Trivy JSON、三份 CycloneDX SBOM 和三份 Buildx metadata 保存为 CNB 构建附件。
-6. Pipeline 结束时删除临时 Docker 登录配置。
+4. 生成并严格校验 `pinjie-cnb-tcr-image-v1` JSON 清单，字段包含应用键、Commit SHA、Git Commit 时间、CNB Pipeline、Build ID、Build URL、完整 TCR digest、扫描、SBOM、provenance 和 OCI 标签。
+5. 将该端发布清单、Trivy JSON、CycloneDX SBOM、Buildx metadata、OCI index 和镜像配置打包为当前 Pipeline 附件；失败附件也只包含当前应用的证据。
+6. Pipeline 结束时删除该应用的临时 Docker 登录配置。
 
-Pipeline 不创建 `latest` 或分支标签。`candidate-<CNB Build ID>` 标签是唯一、可追溯的运行候选，不属于发布标签且禁止部署。三个 TCR 仓库之间没有跨仓库事务，最终标签创建期间可能短暂部分可见；只有整个 CNB Pipeline 和发布清单校验成功后，才能进入部署授权。生产仍按完整 digest 部署，不读取缓存标签、候选标签或以 SHA 标签代替 digest。
+Pipeline 不创建 `latest` 或分支标签。`candidate-<CNB Build ID>` 标签是唯一、可追溯的运行候选，禁止部署。只影响一个应用时，该端完整 Pipeline 和单镜像清单通过后即可进入该端部署授权。同一 Commit 影响多个应用时，操作人员必须等待预期 Pipeline 全部成功，并核对各清单的 Commit SHA 完全一致；任一端失败、缺失或被错误跳过都阻止该 Commit 部署。生产仍按完整 digest 部署，不读取缓存标签、候选标签或以 SHA 标签代替 digest。
 
-### 11.6 权限
+### 11.6 路径选择与人工全量入口
+
+- `apps/backend/**` 只触发 Backend。
+- `apps/web/**` 触发 Web，其中 `apps/web/package.json` 同时触发 Admin。
+- `apps/admin/**` 触发 Admin，其中 `apps/admin/package.json` 同时触发 Web。
+- 根依赖文件、`packages/**` 和 `patches/**` 同时触发 Web 与 Admin。
+- `.dockerignore`、`.cnb.yml` 和 CNB 发布与证据脚本触发三端。
+- `compose.prod.yml`、`docs/**` 和 `plans/**` 不触发镜像构建。
+
+CNB 对变更文件的统计上限是 300 个，新分支 Push 也无法比较上一 Commit。首次运行、超过上限、Git 历史无法比较或影响范围存疑时，在 CNB `main` 分支详情页使用“三端全量镜像构建”按钮。按钮触发 `web_trigger_full_release`，不接受用户输入的分支、Commit 或镜像名。
+
+### 11.7 权限
 
 GitHub 验证 Job 只读取 Actions 和仓库内容。`handoff` Job 仅获得仓库读取权限并绑定 `cnb-source-handoff` Environment，该 Environment 只允许默认分支；CNB Token 只具备目标私有仓库 `repo-code:rw`。CNB 的 TCR 用户名和固定密码只从受限密钥仓库导入，密钥文件限制目标仓库、`main` 分支和 Push 事件。GitHub 不保存 TCR 发布密码，CNB 不保存 GitHub Token，生产服务器后续只保存独立只读 TCR 凭证。
 
@@ -556,19 +568,20 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 -> 取得镜像发布授权
 -> 人工触发 Handoff Source to CNB
 -> 等待 GitHub validate 和 handoff 成功
--> 等待同一 SHA 的 CNB Pipeline 构建、扫描、Finalize 和证据附件全部成功
--> 保存 CNB 发布清单中的三个 TCR digest
+-> 根据路径契约确认预期受影响端
+-> 等待预期 CNB Pipeline 各自完成构建、扫描、Finalize 和证据附件
+-> 核对多端证据使用同一 SHA，并保存每个目标端的 TCR digest
 ```
 
 ### 13.4 生产部署
 
 ```text
 取得生产部署授权
--> 准备 Commit SHA 和三个 digest
--> 核对 production Environment 审批和变量
--> 人工触发 Deploy Production
--> 完成 Environment 审批
--> 等待远程部署和镜像核对
+-> 准备目标端 Commit SHA、digest、CNB Build ID 和证据附件
+-> 在服务器根 .env 中只更新目标端完整 digest
+-> 运行 Compose 配置检查
+-> 通过 1Panel 更新编排，或用 Compose 只重建目标服务
+-> 核对运行镜像、健康状态和三端版本记录
 -> 执行部署后健康、业务、日志和数据验证
 -> 记录生产追溯信息
 ```
@@ -660,7 +673,8 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 ### 部署生产前
 
 - [ ] 已取得独立生产部署授权。
-- [ ] 三个 digest 来自同一次成功的 CNB Pipeline 发布清单。
-- [ ] `production` Environment 审批和变量已经核验。
+- [ ] 每个目标端 digest 来自该端成功的 `pinjie-cnb-tcr-image-v1` 证据。
+- [ ] 同一 Commit 影响多端时，全部预期 Pipeline 已成功且证据 SHA 一致。
+- [ ] 1Panel 编排环境变量、Compose 配置和共享基础设施网络已经核验。
 - [ ] 数据库迁移、备份、恢复和回滚边界已经确认。
 - [ ] 部署后验证、观察窗口和停止条件已经安排。
