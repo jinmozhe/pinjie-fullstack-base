@@ -54,6 +54,8 @@ docker compose --env-file .env -f compose.prod.yml config --quiet
 - `DATABASE_URL` 使用共享服务名 `postgresql`、项目数据库和项目角色，`REDIS_URL` 使用共享服务名 `redis` 和项目 ACL 用户。
 - `ENVIRONMENT=production`，Cookie、Trusted Host、CORS、代理 CIDR 和四个认证密钥满足生产约束。
 
+CNB 每个应用会生成独立的 `pinjie-cnb-tcr-image-v1` 附件。部署单端更新时，只把根 `.env` 中该端镜像变量替换为附件中的完整 digest，保留另外两端的现有 digest。1Panel 点击“更新编排”可能重算全部服务配置；需要严格只重建目标端时，在同一 Compose 目录执行 `docker compose --env-file .env -f compose.prod.yml up -d --no-deps --wait <backend|web|admin>`。更新后记录三个运行端各自的 Commit、digest、CNB Build ID、证据附件和部署时间。
+
 项目 Compose 不创建、停止或重建 PostgreSQL 和 Redis。共享实例的镜像版本、数据目录、持久化、容量、健康检查和备份由 1Panel 基础设施层管理；项目日常部署禁止使用 `--remove-orphans` 清理旧基础设施容器。
 
 ## 4. 备份与迁移

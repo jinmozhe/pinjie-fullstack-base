@@ -9,9 +9,9 @@
 | 流程 | 输入 | 输出 | 是否接触生产 |
 | --- | --- | --- | --- |
 | CI | Pull Request 或提交 | 质量与安全验证结果 | 否 |
-| 镜像发布 | 完整 40 位 Commit SHA | 三个应用的镜像 digest、SBOM 和构建证明 | 否 |
-| 生产部署 | 已验证的三个镜像 digest | GitHub Environment 部署记录 | 是 |
-| 回滚 | 上一个已验证版本的三个 digest | 恢复后的部署记录 | 是 |
+| 镜像发布 | 完整 40 位 Commit SHA 和路径影响集合 | 受影响应用各自的 digest、SBOM 和构建证明 | 否 |
+| 生产部署 | 目标端已验证的镜像 digest | 1Panel 部署与版本记录 | 是 |
+| 回滚 | 目标端上一个已验证 digest | 恢复后的部署记录 | 是 |
 
 CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产部署。
 
@@ -23,7 +23,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 4. 确认安全扫描、依赖审查和容器扫描满足当前门禁。
 5. 确认数据库迁移的前向、回滚或恢复策略已经评审。
 6. 确认生产配置、Secret 名称和权限没有在日志中暴露。
-7. 确认回滚版本的三个镜像 digest 和数据库兼容范围。
+7. 确认每个待部署端的当前 digest、目标 digest、回滚 digest 和数据库兼容范围。
 8. 确认维护窗口、负责人、观察时长和停止条件。
 
 任一关键证据缺失时停止，不使用 `latest`、重新构建旧版本或跳过检查替代。
@@ -37,13 +37,15 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 3. GitHub 确认指定提交属于默认分支历史，且同一 SHA 的 Governance、Backend、Frontend 和 Security 四个 Push Run 全部成功。
 4. GitHub 下载未过期的 `full-validation-<完整提交>` Artifact，核对 Full Validation Run、Commit SHA、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段。
 5. GitHub 使用受 `cnb-source-handoff` Environment 保护的最小权限 Token，把批准提交以非强制、只能快进的方式更新到 CNB `main`；CNB 已有提交不是目标 SHA 的祖先时停止。
-6. CNB `main` Push 自动触发 `.cnb.yml`，再次核对仓库、分支、工作区 `HEAD` 和 `CNB_COMMIT` 完全一致。
-7. CNB 使用固定 digest 的构建环境和 Trivy，按现有三个 Dockerfile 构建镜像，通过 TCR Registry 缓存加速二次构建，并以 `candidate-<CNB Build ID>` 唯一候选标签推送到 TCR。
-8. CNB 对三个候选 digest 执行 High、Critical 且已有修复的漏洞阻断，生成 CycloneDX JSON SBOM，验证 BuildKit 最大级别 provenance 和 TCR attestation manifest。
-9. 三张镜像全部通过后，CNB 先检查三个 `sha-<完整提交>` 标签；标签指向不同 digest 时立即失败，全部无冲突后才创建标签并执行写后复核。
-10. CNB 生成 `pinjie-cnb-tcr-release-v1` 结构化清单，保存 Build ID、Build URL、完整 Commit SHA、三个 TCR digest、扫描、SBOM 和 provenance 状态，并连同原始证据作为构建附件保留。
+6. CNB `main` Push 自动触发 `.cnb.yml`，再次核对仓库、分支、工作区 `HEAD` 和 `CNB_COMMIT` 完全一致，并按 Docker 构建输入选择受影响的应用 Pipeline。
+7. 每条受影响 Pipeline 使用固定 digest 的构建环境和 Trivy，只构建一个固定应用，通过该仓库的 TCR Registry 缓存加速二次构建，并以 `candidate-<CNB Build ID>` 唯一候选标签推送到 TCR。
+8. 每条 Pipeline 对自己的候选 digest 执行 High、Critical 且已有修复的漏洞阻断，生成 CycloneDX JSON SBOM，验证 BuildKit 最大级别 provenance、TCR attestation manifest 和 OCI 来源标签。
+9. 单端候选通过后检查该仓库的 `sha-<完整提交>` 标签；标签指向不同 digest 时立即失败，无冲突时创建标签并执行写后复核。
+10. 每条 Pipeline 生成 `pinjie-cnb-tcr-image-v1` 单镜像清单，保存应用键、Build ID、Build URL、Git Commit 时间、完整 Commit SHA、TCR digest、扫描、SBOM、provenance 和 OCI 标签，并连同该端原始证据作为构建附件保留。
 
-GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为镜像发布成功。`candidate-<CNB Build ID>` 标签只用于本次构建、扫描和证据核对，禁止部署。只有整个 CNB Pipeline 成功且发布清单通过结构化校验，三个 digest 才能进入部署授权。TCR 三个仓库之间没有事务，标签创建期间仍可能短暂部分可见；任一 CNB 阶段失败时部署停止。生产始终使用完整 digest，不依赖候选标签或 SHA 标签不可变假设。
+GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为镜像发布成功。`candidate-<CNB Build ID>` 标签只用于本次构建、扫描和证据核对，禁止部署。单端变化时，该端 Pipeline 与清单通过即可进入该端部署授权。多端变化时必须等待预期 Pipeline 全部成功并核对相同 Commit SHA；任一预期端失败、缺失或错误跳过时部署停止。生产始终使用完整 digest，不依赖候选标签或 SHA 标签不可变假设。
+
+首次运行、变更文件超过 CNB 的 300 文件统计上限、Git 对比不可用或影响范围存疑时，在 CNB `main` 分支详情页人工触发“三端全量镜像构建”。该操作属于独立镜像发布授权，不能由源码交接成功自动替代。
 
 候选镜像因基础镜像中的可修复 High 或 Critical 漏洞失败时，先核对固定基础镜像摘要和上游修复版本。需要更新摘要时必须形成新提交，重新取得轻量 Push 工作流和同 SHA 完整验证证据，再重新发布；禁止移动既有 Tag、覆盖既有不可变标签、跳过扫描或把失败候选 digest 用于部署。
 

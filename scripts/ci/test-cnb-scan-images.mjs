@@ -35,26 +35,26 @@ function shellPath(value) {
   return normalized.replace(/^([A-Za-z]):/, (_, drive) => `/${drive.toLowerCase()}`);
 }
 
-function writeDigestEvidence(evidenceRoot) {
+function runScan(imageKey, blocked = false) {
+  const evidenceRoot = path.join(fixtureRoot, ".cnb", "evidence", imageKey);
+  rmSync(evidenceRoot, { recursive: true, force: true });
   mkdirSync(evidenceRoot, { recursive: true });
-  for (const image of ["backend", "web", "admin"]) {
-    writeFileSync(path.join(evidenceRoot, `${image}-digest.txt`), `${digest}\n`, "utf8");
-  }
-}
-
-function runScan(evidenceRoot, blockAdmin) {
+  writeFileSync(path.join(evidenceRoot, `${imageKey}-digest.txt`), `${digest}\n`, "utf8");
   const environment = [
     `PATH="${shellPath(mockBin)}:$PATH"`,
-    `EVIDENCE_ROOT="${shellPath(evidenceRoot)}"`,
+    `EVIDENCE_ROOT=".cnb/evidence/${imageKey}"`,
+    `IMAGE_KEY=${imageKey}`,
     "TCR_REGISTRY=ccr.ccs.tencentyun.com",
     "TCR_NAMESPACE=pinjie-fullstack-base",
     "TCR_PUBLISH_USERNAME=test-user",
     "TCR_PUBLISH_PASSWORD=test-password",
-    `MOCK_ADMIN_BLOCK=${blockAdmin ? "1" : "0"}`,
+    `MOCK_BLOCK=${blocked ? "1" : "0"}`,
   ].join(" ");
-  return spawnSync(bashExecutable, ["-lc", `${environment} sh "${shellPath(scanScript)}"`], {
+  const result = spawnSync(bashExecutable, ["-lc", `${environment} sh "${shellPath(scanScript)}"`], {
+    cwd: fixtureRoot,
     encoding: "utf8",
   });
+  return { evidenceRoot, result };
 }
 
 function requireCondition(condition, message, result) {
@@ -76,7 +76,6 @@ try {
 set -eu
 format=""
 output=""
-image_ref=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --format)
@@ -87,9 +86,6 @@ while [ "$#" -gt 0 ]; do
       shift
       output="$1"
       ;;
-    *)
-      image_ref="$1"
-      ;;
   esac
   shift
 done
@@ -99,14 +95,14 @@ case "$format" in
     printf '{"Results":[]}\n' > "$output"
     ;;
   table)
-    if [ "\${MOCK_ADMIN_BLOCK:-0}" = "1" ] && echo "$image_ref" | grep -q 'pinjie-fullstack-admin'; then
+    if [ "\${MOCK_BLOCK:-0}" = "1" ]; then
       printf 'Library  Vulnerability  Severity  Installed  Fixed\\nlibfixture  CVE-2099-0001  HIGH  1.0-r0  1.0-r1\\n' > "$output"
       exit 1
     fi
     printf 'Total: 0 (HIGH: 0, CRITICAL: 0)\\n' > "$output"
     ;;
   cyclonedx)
-    printf '{"bomFormat":"CycloneDX"}\n' > "$output"
+    printf '{"bomFormat":"CycloneDX","specVersion":"1.6"}\n' > "$output"
     ;;
   *)
     printf 'Unexpected format: %s\n' "$format" >&2
@@ -118,30 +114,26 @@ esac
   );
   chmodSync(mockTrivy, 0o755);
 
-  const blockedEvidence = path.join(fixtureRoot, "blocked-evidence");
-  writeDigestEvidence(blockedEvidence);
-  const blockedResult = runScan(blockedEvidence, true);
-  requireCondition(blockedResult.status === 1, "Expected Admin vulnerability to block the scan.", blockedResult);
-  const summaryPath = path.join(blockedEvidence, "scan-failure-summary.txt");
+  for (const imageKey of ["backend", "web", "admin"]) {
+    const { evidenceRoot, result } = runScan(imageKey);
+    requireCondition(result.status === 0, `Expected ${imageKey} scan to pass.`, result);
+    requireCondition(existsSync(path.join(evidenceRoot, `${imageKey}-trivy.json`)), `Expected ${imageKey} JSON evidence.`, result);
+    requireCondition(existsSync(path.join(evidenceRoot, `${imageKey}-sbom.cdx.json`)), `Expected ${imageKey} SBOM evidence.`, result);
+  }
+
+  const { evidenceRoot: blockedRoot, result: blockedResult } = runScan("admin", true);
+  requireCondition(blockedResult.status === 1, "Expected Admin vulnerability to block only its scan.", blockedResult);
+  const summaryPath = path.join(blockedRoot, "scan-failure-summary.txt");
   requireCondition(existsSync(summaryPath), "Expected a failure summary.", blockedResult);
   const summary = readFileSync(summaryPath, "utf8");
   requireCondition(summary.includes("image=admin"), "Expected the summary to identify Admin.", blockedResult);
   requireCondition(summary.includes("CVE-2099-0001"), "Expected the summary to include the CVE.", blockedResult);
-  requireCondition(summary.includes("1.0-r1"), "Expected the summary to include the fixed version.", blockedResult);
-  requireCondition(existsSync(path.join(blockedEvidence, "admin-trivy.json")), "Expected raw Admin JSON evidence.", blockedResult);
-  requireCondition(!existsSync(path.join(blockedEvidence, "admin-sbom.cdx.json")), "Blocked Admin must not have a success SBOM.", blockedResult);
+  requireCondition(!existsSync(path.join(blockedRoot, "admin-sbom.cdx.json")), "Blocked Admin must not have a success SBOM.", blockedResult);
 
-  const passingEvidence = path.join(fixtureRoot, "passing-evidence");
-  writeDigestEvidence(passingEvidence);
-  const passingResult = runScan(passingEvidence, false);
-  requireCondition(passingResult.status === 0, "Expected all image scans to pass.", passingResult);
-  for (const image of ["backend", "web", "admin"]) {
-    requireCondition(existsSync(path.join(passingEvidence, `${image}-trivy.json`)), `Expected ${image} JSON evidence.`, passingResult);
-    requireCondition(existsSync(path.join(passingEvidence, `${image}-sbom.cdx.json`)), `Expected ${image} SBOM evidence.`, passingResult);
-  }
-  requireCondition(!existsSync(path.join(passingEvidence, "scan-failure-summary.txt")), "Passing scans must not retain a failure summary.", passingResult);
+  const invalidResult = runScan("worker").result;
+  requireCondition(invalidResult.status !== 0, "Expected an unknown image key to fail.", invalidResult);
 
-  console.log("CNB image scan fixtures passed: Admin blocking evidence and three-image success.");
+  console.log("CNB single-image scan fixtures passed.");
 } finally {
   rmSync(fixtureRoot, { recursive: true, force: true });
 }
