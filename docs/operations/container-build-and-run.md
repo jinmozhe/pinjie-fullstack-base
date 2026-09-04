@@ -2,7 +2,7 @@
 
 ## 1. 适用范围
 
-本文说明三个应用镜像的本地构建检查、阶段 C 初始化工具和生产 Compose 接线。真实镜像发布、生产部署和回滚仍需分别授权。
+本文说明三个应用镜像的本地构建检查、阶段 C 初始化工具和生产 Compose 接线。操作人员执行现行 GitHub、CNB、TCR、1Panel 发布链路时，从[GitHub 到 1Panel 端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)开始；真实镜像发布、生产部署和回滚仍需分别授权。
 
 ## 2. 构建前提
 
@@ -95,7 +95,7 @@ WEB_PUBLIC_ORIGIN=https://www.example.com
 ENVIRONMENT=production
 DATABASE_URL=postgresql+asyncpg://pinjie_fullstack_app:<URL编码后的生产密钥>@postgresql:5432/pinjie_fullstack_prod
 REDIS_MODE=required
-REDIS_URL=redis://pinjie_fullstack:<URL编码后的生产密钥>@redis:6379/0
+REDIS_URL=redis://default:<URL编码后的生产密钥>@redis:6379/1
 RELEASE_VERSION=<完整Commit SHA或发布版本>
 TRUSTED_HOSTS=["api.example.com","admin.example.com","www.example.com"]
 WEB_ORIGINS=["https://www.example.com"]
@@ -121,7 +121,7 @@ SETTINGS_MEDIA_BASE_URL=/static/settings
 
 当前人工生产部署使用 CNB 发布清单中的 TCR 完整 digest。GitHub `Deploy Production` 工作流仍校验并部署 GHCR，必须保持 `PRODUCTION_DEPLOYMENT_ENABLED=false`；将该工作流改造为 TCR 端到端自动部署需要独立计划和授权。
 
-PostgreSQL 与 Redis 由 1Panel 作为服务器级共享服务管理，不属于项目 Compose。Backend 和请求日志消费者同时加入项目默认网络与外部 `1panel-network`，通过 `postgresql:5432` 和 `redis:6379` 连接；Web 与 Admin 只在项目默认网络，不能直接访问数据服务。每个项目必须使用独立 PostgreSQL 数据库与角色、Redis ACL 用户与 Key 前缀。
+PostgreSQL 与 Redis 由 1Panel 作为服务器级共享服务管理，不属于项目 Compose。Backend 和请求日志消费者同时加入项目默认网络与外部 `1panel-network`，通过 `postgresql:5432` 和 `redis:6379` 连接；Web 与 Admin 只在项目默认网络，不能直接访问数据服务。每个项目必须使用独立 PostgreSQL 数据库与角色。当前生产 Redis 使用 `default` 用户和已分配的独立逻辑库 `/1`；该编号只隔离正常业务 Key，不构成权限边界。更高隔离要求使用独立 ACL 用户或独立 Redis 实例。
 
 Backend 的 `backend_uploads` 命名卷挂载到 `/app/storage`，Compose 固定 `UPLOAD_LOCAL_ROOT=/app/storage/uploads` 与 `SETTINGS_MEDIA_ROOT=/app/storage/settings-media`。镜像内的 UID `10001` 必须能写入该卷；统一资产与配置媒体使用独立目录和私有补偿区，静态路由只暴露各自公开根。生产备份必须同时覆盖 PostgreSQL 和完整 `backend_uploads` 卷，并记录同一备份窗口。
 

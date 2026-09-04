@@ -2,7 +2,7 @@
 
 ## 1. 适用范围
 
-本手册适用于母版及派生项目的镜像发布、生产部署和应用回滚。当前阶段只建立流程，任何真实发布、部署和回滚都需要用户分别授权。每个 GitHub Actions 工作流的触发条件、步骤和失败定位见[GitHub Actions 工作流说明](github-actions-workflows.md)。
+本手册适用于母版及派生项目的镜像发布、生产部署和应用回滚。任何真实发布、部署和回滚都需要用户分别授权。操作人员的完整界面和命令顺序见[GitHub 到 1Panel 端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)，每个 GitHub Actions 工作流的机制和失败定位见[GitHub Actions 工作流说明](github-actions-workflows.md)。
 
 ## 2. 职责分离
 
@@ -51,31 +51,31 @@ GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为�
 
 ## 5. 生产部署
 
-使用独立的 `Deploy Production` 工作流，输入三张镜像共同对应的完整 Commit SHA，以及 Backend、Web 和 Admin 的完整 `sha256:<64位十六进制>` digest。
+当前生产通过 1Panel 人工从 TCR 拉取固定 digest 并更新编排。仓库中的 `Deploy Production` 仍核对旧 GHCR 镜像源，必须保持 `PRODUCTION_DEPLOYMENT_ENABLED=false`，不能用于当前 TCR 生产链路。
 
 部署前：
 
-1. GitHub `production` Environment 必须配置所需评审者和受限分支。
-2. 当前人工 TCR 部署阶段必须保持 `PRODUCTION_DEPLOYMENT_ENABLED=false`。只有独立授权执行 GitHub 自动部署，且工作流镜像源与目标生产路径一致后，才设置 `PRODUCTION_DEPLOYMENT_ENABLED=true`、绝对路径 `DEPLOY_PATH` 和部署所需 SSH Secret。
+1. 取得每个受影响端的 `pinjie-cnb-tcr-image-v1` 清单，核对 Commit SHA、CNB Build ID 和完整 TCR `image.reference`。
+2. 记录三个运行端当前 digest 和上一组已验证 digest。
 3. 确认部署目录的 `apps/backend/.env` 已配置共享 PostgreSQL、Redis 连接及其他生产运行变量且未进入仓库，根 `.env` 只保存 Compose 镜像引用和 Web 公开 Origin。
-4. 当前部署工作流仍从 GHCR 解析 `sha-<commit>` 标签，并确认三个 manifest digest 与输入完全一致。迁移到 TCR 时必须在独立生产部署授权下改为核对 CNB 发布清单和三个 TCR digest，当前 CNB 发布实现不会自动触发部署。
-5. 确认当前数据库 Revision、目标 Revision 和备份恢复点。
-6. 确认服务器 `compose.prod.yml` 与目标 Commit 中的文件哈希一致。
-7. 验证 `compose.prod.yml` 解析结果只包含固定 digest。
+4. 确认当前数据库 Revision、目标 Revision 和备份恢复点。
+5. 确认服务器 `compose.prod.yml` 与目标 Commit 中的文件一致。
+6. 验证 `compose.prod.yml` 展开结果只包含固定 digest。
+7. 在 1Panel 镜像页使用生产只读 TCR 账号拉取每个目标 digest。
 
 部署时：
 
-1. 使用并发锁保证同一环境只有一个部署或回滚。
-2. 通过临时镜像变量文件完成配置校验、固定 digest 拉取和应用切换。
-3. 应用等待成功后，逐个确认运行容器记录的镜像引用与批准 digest 完全一致。
-4. 版本一致后原子替换根 `.env`，并写入 `.deployment-version` 保存 Commit SHA 与 Compose 哈希。
-5. 观察 Startup、Readiness 和关键冒烟结果。
+1. 保证同一环境同一时间只有一个发布或回滚操作。
+2. 只更新受影响端的根 `.env` 镜像变量，并同步到 1Panel 编排环境变量页面。
+3. 首次部署或包含迁移时，先完成备份，再执行 Alembic 和权限同步。
+4. 保存或更新 1Panel 编排，等待 Backend 健康后再确认 Web 和 Admin。
+5. 逐个确认运行容器记录的镜像引用与批准 digest 完全一致。
 6. 达到停止条件时立即中止后续步骤，不自动选择其他版本。
 
 部署后：
 
 1. 查询实际运行容器 digest，并与输入逐一比较。
-2. 记录完整 Commit SHA、三个镜像 digest、数据库 Revision、执行者、时间和验证结果。
+2. 分别记录三个端的 Commit SHA、CNB Build ID、镜像 digest、数据库 Revision、执行者、时间和验证结果。
 3. 在观察窗口检查错误率、关键延迟和日志异常。
 4. 未完成真实核验时不能标记部署成功。
 

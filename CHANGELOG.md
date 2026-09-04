@@ -6,9 +6,10 @@
 
 ### Added
 
+- 增加面向人工操作人员的 GitHub Actions、CNB、TCR、1Panel 端到端发布手册，统一 `strict` 与 `fast` 选择、三端构建核对、单镜像证据、固定 digest 拉取、首次初始化、日常更新、健康检查、停止条件、发布记录和回滚步骤；现有专题文档收敛为工作流机制、账号权限、容器、生产基础设施和回滚决策入口。
 - 为 GitHub `Handoff Source to CNB` 增加默认 `strict`、可显式选择 `fast` 的双验证模式：严格模式完整核对同 SHA Full Validation Artifact，快速模式要求单行原因并记录 Commit、操作者和未执行完整验证的事实；四个轻量 Push 工作流、默认分支、应用状态、模块边界以及 CNB/TCR 供应链门禁在两种模式下继续强制执行。
 - 将 CNB 三镜像统一发布拆为 `backend-image`、`web-image` 和 `admin-image` 三条按真实 Docker 输入触发的独立 Pipeline：每端使用独立锁、Registry 缓存、扫描、SBOM、provenance、OCI 来源标签和 `pinjie-cnb-tcr-image-v1` 证据；`SOURCE_DATE_EPOCH` 使用 Git committer time，并增加仅在 `main` 可见的受控三端全量构建入口，生产继续通过 1Panel 按完整 digest 人工更新。
-- 将生产 Compose 改为复用 1Panel 管理的共享 PostgreSQL 18.4 与 Redis 8.10.0：应用侧移除项目内数据库、缓存服务和数据卷，Backend 与可选日志消费者通过外部 `1panel-network` 访问共享实例，Web 与 Admin 保持网络隔离；同步根环境变量职责、生产配置门禁、部署工作流保护、独立数据库与角色、Redis ACL 与 Key 前缀、备份恢复和迁移回滚边界，生产数据迁移仍需独立授权。
+- 将生产 Compose 改为复用 1Panel 管理的共享 PostgreSQL 18.4 与 Redis 8.10.0：应用侧移除项目内数据库、缓存服务和数据卷，Backend 与可选日志消费者通过外部 `1panel-network` 访问共享实例，Web 与 Admin 保持网络隔离；生产 PostgreSQL 使用独立数据库与角色，当前 Redis 使用 `default` 用户和独立逻辑库 `/1`，并明确逻辑库不提供权限隔离；同步环境变量、配置门禁、备份恢复和迁移回滚边界。
 - 增加腾讯云 TCR 个人版 CAM 最小权限操作手册：区分 CNB `tcr-publisher` 与生产服务器 `tcr-puller`，提供三个指定私有仓库的只读 JSON、个人版凭证初始化、服务器 Docker 登录、正反向权限验收、轮换、禁用、泄露响应和常见错误处理，并明确企业版服务级账号不适用于当前个人版链路。
 - 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run，默认严格模式同时核验同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。
 - 完成连续不同 Commit 的 CNB 到 TCR 真实发布验证：三张 Run 唯一候选镜像及其 SBOM、provenance 和 TCR digest 复核通过，Trivy High/Critical 门禁通过，最终 SHA 标签、`pinjie-cnb-tcr-release-v1` 清单和十份附件均写后校验成功；固定 epoch 缓存复验将完整发布从 14 分 19 秒降至 1 分 29 秒，生产部署未触发。

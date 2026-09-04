@@ -86,6 +86,7 @@
 | [codex-windows-config-acl-governance.md](operations/codex-windows-config-acl-governance.md) | Codex Windows `config.toml`、默认联网、Schannel、GitHub CLI Keyring、`elevated + Custom`、ACL 诊断、验证、最小修复和回滚标准 |
 | [uv使用指南.md](operations/uv使用指南.md) | uv 原理、纯 uv 环境方案、常用命令和 conda 对比 |
 | [pnpm使用指南.md](operations/pnpm使用指南.md) | pnpm 存储机制、workspace 共享包、Markdown 检查等常用命令和 npm 对比 |
+| [github-cnb-tcr-1panel-release-runbook.md](operations/github-cnb-tcr-1panel-release-runbook.md) | 操作人员从 GitHub Actions 经 CNB、TCR 到 1Panel 完成首次部署、日常更新、验证和回滚的端到端手册 |
 | [github-actions-workflows.md](operations/github-actions-workflows.md) | GitHub Actions 自动 CI、安全扫描、人工镜像发布和生产部署的逐工作流说明与排障入口 |
 | [release-and-rollback.md](operations/release-and-rollback.md) | CI、镜像发布、生产部署和按固定 digest 回滚的操作边界 |
 | [container-build-and-run.md](operations/container-build-and-run.md) | 三个应用镜像构建、迁移与权限初始化、请求日志 Profile、生产 Compose 和健康验证 |
