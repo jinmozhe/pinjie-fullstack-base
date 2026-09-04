@@ -27,9 +27,12 @@ flowchart TD
     C --> D["rebase 自动合并"]
     D --> E["main Push"]
     E --> G["同一 Commit SHA 的 4 个 Push 工作流"]
-    G --> F["人工授权 CI - Full Validation"]
+    G --> V{"选择源码交接验证模式"}
+    V -->|strict| F["人工授权 CI - Full Validation"]
     F --> N["同一 SHA 的完整验证 Artifact"]
     N --> H["人工授权 Handoff Source to CNB"]
+    V -->|fast| R["填写原因并记录未执行完整验证"]
+    R --> H
     H --> I["固定 SHA 快进交接到 CNB main"]
     I --> J["CNB 按路径构建、扫描并发布受影响端"]
     J --> M["每端独立发布证据和 TCR digest"]
@@ -41,7 +44,7 @@ flowchart TD
 
 1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发轻量静态、契约、治理与安全检查，不运行应用测试或前端生产构建，不发布镜像，不接触生产服务器。
 2. 完整验证只允许人工按需触发，不随 Push、Pull Request 或定时任务自动运行；它对输入 Commit SHA 执行 pytest、Vitest、production build 和 Chromium Playwright，并在全部成功后生成 30 天保留的 Artifact。
-3. 源码交接必须人工触发，并且只接受同时通过四个自动 Push 工作流和人工完整验证证据校验的完整 Commit SHA；CNB 只在受控 `main` Push 后构建并发布镜像。
+3. 源码交接必须人工触发，默认 `strict` 要求四个自动 Push 工作流和同 SHA 完整验证证据；显式 `fast` 仍要求四个自动 Push 工作流，并记录未执行完整验证的原因。CNB 只在受控 `main` Push 后构建并发布镜像。
 4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
 
 ## 3. 触发条件总表
@@ -58,7 +61,7 @@ flowchart TD
 
 四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行轻量门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤，也不自动运行 Backend pytest、前端 Vitest、前端 production build 或 Playwright。
 
-`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA。普通开发和 Git 交付不自动运行它；需要发布镜像时，同一 SHA 的成功完整验证 Artifact 是 `Handoff Source to CNB` 的前置证据。
+`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA。普通开发和 Git 交付不自动运行它；`Handoff Source to CNB` 的 `strict` 模式要求同一 SHA 的成功 Artifact，`fast` 模式会明确记录该验证未执行或未作为门禁。
 
 `Security` 的定时表达式是 `23 3 * * 1`，即每周一 `03:23 UTC`。在中国标准时间下对应每周一 `11:23`。
 
@@ -120,10 +123,10 @@ GitHub 收到目标为 `main` 的 Pull Request 更新或 `main` 新提交后，�
 - 该 Commit SHA 的整体检查状态会出现失败。
 - GitHub 可能按个人通知设置发送 Actions 失败邮件。
 - 其他已经开始的工作流通常继续运行。
-- `Handoff Source to CNB` 会拒绝使用该 Commit SHA，因为它要求四个自动 Push 工作流和同 SHA 完整验证 Artifact 都有成功证据。
+- `Handoff Source to CNB` 会拒绝使用该 Commit SHA，因为两种模式都要求四个自动 Push 工作流成功；`strict` 还要求同 SHA 完整验证 Artifact。
 - 不会自动回退本地代码，也不会自动修改远程分支。
 
-人工完整验证失败或 Artifact 缺失、过期时，该 Commit SHA 不能进入镜像发布。修复代码后应对新的 Commit SHA 重新运行；仅因 Artifact 过期时，可以在默认分支上对同一 SHA 重新人工触发完整验证。
+人工完整验证失败或 Artifact 缺失、过期时，该 Commit SHA 不能通过 `strict` 模式。修复代码后应对新的 Commit SHA 重新运行；仅因 Artifact 过期时，可以在默认分支上对同一 SHA 重新人工触发完整验证。只有操作人员完成风险判断并明确接受未运行 pytest、Vitest、production build 和 Playwright 的风险时，才能改用有原因记录的 `fast` 模式。
 
 ## 5. CI - Governance
 
@@ -370,7 +373,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 
 ### 11.1 作用和使用场景
 
-`Handoff Source to CNB` 校验一个已经通过四个自动门禁和同 SHA 人工完整验证的 Commit SHA，然后把该提交以非强制、只能快进的方式交接到 CNB `main`。GitHub Runner 不构建或上传生产镜像层；CNB 接收 Push 后通过根目录 `.cnb.yml` 按真实构建输入选择 Backend、Web 和 Admin Pipeline，完成单镜像扫描和证据生成后只发布到腾讯云 TCR 个人版。
+`Handoff Source to CNB` 校验一个已经通过四个自动门禁的 Commit SHA，按人工选择执行 `strict` 或 `fast` 验证模式，然后把该提交以非强制、只能快进的方式交接到 CNB `main`。GitHub Runner 不构建或上传生产镜像层；CNB 接收 Push 后通过根目录 `.cnb.yml` 按真实构建输入选择 Backend、Web 和 Admin Pipeline，完成单镜像扫描和证据生成后只发布到腾讯云 TCR 个人版。
 
 典型使用场景：
 
@@ -378,7 +381,7 @@ Pull Request 检查用于合并前评审。`main` push 检查用于验证已经�
 - 在腾讯侧生成可追溯生产镜像，减少跨境镜像层上传。
 - 为后续部署和回滚保留经过扫描和证明的 TCR digest。
 
-GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取得独立的源码交接和镜像发布授权，并输入完整 40 位小写 Commit SHA。GitHub Run 成功只证明源码交接完成；镜像发布结果以随后触发的 CNB Pipeline 为准。
+GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取得独立的源码交接和镜像发布授权，输入完整 40 位小写 Commit SHA，并选择验证模式。`strict` 是默认值；`fast` 只用于已人工确认的低风险变化，必须填写不含密钥或敏感数据的单行原因。GitHub Run 成功只证明源码交接完成；镜像发布结果以随后触发的 CNB Pipeline 为准。
 
 ### 11.2 Validate immutable input
 
@@ -393,13 +396,15 @@ GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取�
    - `CI - Backend`
    - `CI - Frontend`
    - `Security`
-6. GitHub Actions 必须存在名称为 `full-validation-<完整 SHA>` 且未过期的 Artifact。
-7. Artifact 所属 Run 必须由默认分支通过 `workflow_dispatch` 启动，工作流路径为 `.github/workflows/ci-e2e.yml`，结论为成功。
-8. Artifact 内容中的 Commit SHA、Workflow Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 字段必须全部匹配。
-9. Backend、Web 和 Admin 状态必须全部为 `ready`。
-10. 模块边界必须再次通过。
+6. `validation_mode` 只能为默认的 `strict` 或显式选择的 `fast`。
+7. `strict` 要求 GitHub Actions 存在名称为 `full-validation-<完整 SHA>` 且未过期的 Artifact。
+8. `strict` 要求 Artifact 所属 Run 由默认分支通过 `workflow_dispatch` 启动，工作流路径为 `.github/workflows/ci-e2e.yml`，结论为成功。
+9. `strict` 要求 Artifact 内容中的 Commit SHA、Workflow Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 字段全部匹配。
+10. `fast` 要求 `fast_mode_reason` 为非空单行文本且不超过 200 个字符，并在 Summary 中记录操作者、Commit、模式、跳过事实和原因。
+11. Backend、Web 和 Admin 状态必须全部为 `ready`。
+12. 模块边界必须再次通过。
 
-任何一项缺少时，工作流在向 CNB 写入前停止。四个 Push Run 继续只代表轻量门禁和安全检查，重型验证由同 SHA Artifact 证明；CNB 中的 Docker build 只负责生成制品，不能替代验证证据。
+任何适用项缺少时，工作流在向 CNB 写入前停止。四个 Push Run 继续只代表轻量门禁和安全检查；`strict` 的重型验证由同 SHA Artifact 证明，`fast` 明确表示未取得该证明。CNB 中的 Docker build 只负责生成制品，不能替代 pytest、Vitest 或 Playwright。
 
 ### 11.3 GitHub 源码交接
 
@@ -563,8 +568,9 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 ```text
 选择 main 上的完整 Commit SHA
 -> 确认该 SHA 的 4 个 Push 工作流全部成功
--> 取得重型验证授权并人工触发 CI - Full Validation
--> 确认同一 SHA 的完整验证 Run 和 Artifact 成功
+-> 选择 strict 或 fast 验证模式
+-> strict：取得重型验证授权并确认同一 SHA 的 Full Validation Run 和 Artifact 成功
+-> fast：确认属于低风险改动并填写单行原因，接受未执行完整验证的风险
 -> 取得镜像发布授权
 -> 人工触发 Handoff Source to CNB
 -> 等待 GitHub validate 和 handoff 成功
@@ -609,7 +615,7 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 | Frontend quality 失败 | Web 或 Admin Job | lint、类型、测试、构建、生成 Client 漂移 |
 | Full Validation 失败 | 第一条失败的 pytest、Vitest、build、Backend 启动或 Playwright 步骤 | 迁移、测试、覆盖率、构建、服务启动、浏览器流程或跨栈契约问题 |
 | Security 失败 | 具体扫描 Job | 密钥、依赖漏洞、源码风险或扫描器运行错误 |
-| Publish validate 失败 | Validate immutable input | SHA 格式、默认分支、四个 Push Run、完整验证 Artifact 或应用状态不满足 |
+| Publish validate 失败 | Validate immutable input | SHA 格式、验证模式、快速原因、默认分支、四个 Push Run、严格模式 Artifact 或应用状态不满足 |
 | GitHub handoff 失败 | Fast-forward CNB main | CNB Environment 配置、Token 权限、网络、远端漂移或非快进更新 |
 | CNB 构建或扫描失败 | CNB 对应 Stage | Dockerfile、TCR 凭证、Registry 缓存、容器漏洞、SBOM 或 provenance 问题 |
 | CNB finalize 失败 | Publish immutable SHA tags | digest 证据缺失、TCR 标签冲突或写后复核失败 |
@@ -631,14 +637,15 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 
 - 仓库治理和模块边界检查。
 - Backend 和 Frontend 质量检查。
-- 同一 Commit SHA 的 pytest、Vitest、production build 和 Chromium Playwright 完整验证 Artifact。
+- 严格源码交接模式下，同一 Commit SHA 的 pytest、Vitest、production build 和 Chromium Playwright 完整验证 Artifact。
+- 快速源码交接模式下，明确的人工选择、原因和未执行完整验证记录。
 - 密钥、依赖漏洞和源码静态安全检查。
 - 镜像漏洞扫描、SBOM 和构建来源证明。
 - 固定 Commit SHA 和镜像 digest 的生产追溯。
 
 具体工具未来可以通过已确认计划替换，但不能直接删除能力或静默跳过。任何门禁调整都应同步工作流配置、安全策略、本文、发布手册和相关计划。
 
-本地重型验证继续按风险和用户授权执行，不形成镜像发布证据。GitHub 完整验证保持人工触发，不进入自动 CI；需要发布镜像时，其同 SHA 成功 Artifact 属于发布门禁，但不会自动授权或触发发布。
+本地重型验证继续按风险和用户授权执行，不形成镜像发布证据。GitHub 完整验证保持人工触发，不进入自动 CI；`strict` 源码交接把同 SHA 成功 Artifact 作为发布门禁，`fast` 源码交接必须明确记录未执行该验证。两种模式都不会自动授权或触发生产部署。
 
 ## 16. 操作检查清单
 
@@ -667,7 +674,8 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 - [ ] 已取得独立镜像发布授权。
 - [ ] 使用完整 40 位 Commit SHA。
 - [ ] 四个 Push 工作流都有同一 SHA 的成功记录。
-- [ ] 已人工完成同一 SHA 的完整验证，Artifact 未过期且 Run 成功。
+- [ ] 已选择验证模式；默认使用 `strict`。
+- [ ] `strict` 已确认同一 SHA 的完整验证 Artifact 未过期且 Run 成功；`fast` 已确认改动低风险、填写单行原因并接受未执行完整验证的风险。
 - [ ] 三个应用状态均为 `ready`。
 
 ### 部署生产前

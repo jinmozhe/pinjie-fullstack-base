@@ -6,10 +6,11 @@
 
 ### Added
 
+- 为 GitHub `Handoff Source to CNB` 增加默认 `strict`、可显式选择 `fast` 的双验证模式：严格模式完整核对同 SHA Full Validation Artifact，快速模式要求单行原因并记录 Commit、操作者和未执行完整验证的事实；四个轻量 Push 工作流、默认分支、应用状态、模块边界以及 CNB/TCR 供应链门禁在两种模式下继续强制执行。
 - 将 CNB 三镜像统一发布拆为 `backend-image`、`web-image` 和 `admin-image` 三条按真实 Docker 输入触发的独立 Pipeline：每端使用独立锁、Registry 缓存、扫描、SBOM、provenance、OCI 来源标签和 `pinjie-cnb-tcr-image-v1` 证据；`SOURCE_DATE_EPOCH` 使用 Git committer time，并增加仅在 `main` 可见的受控三端全量构建入口，生产继续通过 1Panel 按完整 digest 人工更新。
 - 将生产 Compose 改为复用 1Panel 管理的共享 PostgreSQL 18.4 与 Redis 8.10.0：应用侧移除项目内数据库、缓存服务和数据卷，Backend 与可选日志消费者通过外部 `1panel-network` 访问共享实例，Web 与 Admin 保持网络隔离；同步根环境变量职责、生产配置门禁、部署工作流保护、独立数据库与角色、Redis ACL 与 Key 前缀、备份恢复和迁移回滚边界，生产数据迁移仍需独立授权。
 - 增加腾讯云 TCR 个人版 CAM 最小权限操作手册：区分 CNB `tcr-publisher` 与生产服务器 `tcr-puller`，提供三个指定私有仓库的只读 JSON、个人版凭证初始化、服务器 Docker 登录、正反向权限验收、轮换、禁用、泄露响应和常见错误处理，并明确企业版服务级账号不适用于当前个人版链路。
-- 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run 与同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。
+- 增加 GitHub 到 CNB 的固定 SHA 源码交接和 CNB 到 TCR 的单仓发布链路：GitHub 继续核验四项 Push Run，默认严格模式同时核验同 SHA Full Validation Artifact，只以非强制快进方式更新 CNB `main`；CNB 使用固定 digest 工具镜像构建三端镜像、复用 TCR Registry 缓存、执行 Trivy、CycloneDX SBOM、BuildKit provenance、SHA 标签冲突保护、写后 digest 复核和结构化发布证据，不再由 GitHub Runner 上传生产镜像层。
 - 完成连续不同 Commit 的 CNB 到 TCR 真实发布验证：三张 Run 唯一候选镜像及其 SBOM、provenance 和 TCR digest 复核通过，Trivy High/Critical 门禁通过，最终 SHA 标签、`pinjie-cnb-tcr-release-v1` 清单和十份附件均写后校验成功；固定 epoch 缓存复验将完整发布从 14 分 19 秒降至 1 分 29 秒，生产部署未触发。
 - 为三端镜像发布增加 GHCR 与腾讯云 TCR 个人版双仓输出：同一次 BuildKit 构建按相同内容 digest 推送两个 Registry，发布矩阵在扫描前分别核验候选 digest，最终阶段同时执行 SHA 标签冲突检查、创建和写后复核；TCR 凭证仅来自受保护的 `image-publishing` Environment，现有生产部署继续使用 GHCR，待地域和独立只读身份确认后再切换运行镜像源。
 - 建立同 Commit SHA 的完整验证与镜像发布证据门禁：人工 `CI - Full Validation` 在默认分支上校验目标 SHA，依次运行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright，全部成功后上传 30 天保留的不可变 Artifact；`Publish Images` 通过 GitHub Actions API 核验成功 Run、Artifact 有效期、Commit SHA、Run ID 和完整验证集合，缺失或不一致时在镜像构建前失败关闭。
@@ -74,7 +75,7 @@
 - 修复 Admin Alpine 运行镜像只升级手工包清单导致新可修复漏洞遗漏的问题，构建时升级当前仓库中的全部已安装包；CNB Trivy 阻断现在输出精简漏洞表格，并在失败阶段保存原始扫描、digest、metadata 和摘要附件，同时继续保持 High、Critical 门禁 Fail Closed。
 - 修复 CNB 跨 Commit Registry 缓存失配：`SOURCE_DATE_EPOCH` 从每个 Git Commit 的提交时间改为固定 Unix epoch `0`，避免未变化的 COPY 和依赖层因文件元数据时间不同而重新构建；复验确认 Backend `uv sync`、Web/Admin `pnpm install`、应用复制和 production build 层全部命中，候选构建和缓存写回从 13.2 分钟降至 57.4 秒，完整 Commit SHA 继续由 BuildKit provenance 和结构化发布清单追溯。
 - 修复 Web 与 Admin 生产运行镜像被基础层可修复漏洞阻断发布的问题：Web runtime 升级 Alpine OpenSSL 并移除 standalone 服务不需要的全局 npm，Admin runtime 只升级 Trivy 命中的 c-ares、curl、OpenSSL、libexpat、libxml2 和 nghttp2 包；保留 Node/Nginx 运行方式、非 Root 用户、健康检查、Trivy High/Critical Fail Closed、SBOM 和构建来源证明。
-- 修复 Backend 生产镜像被基础系统与运行时工具中的可修复 High 漏洞阻断发布的问题：builder 与 runtime 同步更新到官方 Python 3.14.7 slim-trixie Linux amd64 固定摘要，runtime 精确安装修复后的 OpenSSL 包并移除应用运行不需要的全局 pip 及其 vendored 代码；继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和同 SHA 完整验证要求。
+- 修复 Backend 生产镜像被基础系统与运行时工具中的可修复 High 漏洞阻断发布的问题：builder 与 runtime 同步更新到官方 Python 3.14.7 slim-trixie Linux amd64 固定摘要，runtime 精确安装修复后的 OpenSSL 包并移除应用运行不需要的全局 pip 及其 vendored 代码；继续保留 Trivy High/Critical Fail Closed、SBOM、构建来源证明和当前源码交接验证模式要求。
 - 修复首次远端完整验证中测试 Origin 配置错配的问题：Runner 同时允许真实 E2E 使用的 `127.0.0.1` 与 Backend 既有 API 测试使用的 `localhost`，避免 pytest 请求在业务断言前被 CSRF Origin 校验拒绝。
 - 修复 Backend uv 工具版本和锁文件元数据可能漂移的问题：项目通过 `required-version` 固定 uv `0.11.32`，Backend、完整验证和 Security 工作流显式安装同一版本，并用该版本重建和验证 `uv.lock`；同时补齐根 README 遗漏的 Backend、Admin 和 Web 实际能力目录。
 - 修复 Admin 系统设置页站点 LOGO 预览随原图比例变化的问题，预览区域固定为正方形并保持图片完整适配；同时补齐站点资料、LOGO、注册策略、revision 冲突、权限与失败重试组件测试。

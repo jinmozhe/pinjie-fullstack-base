@@ -18,7 +18,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 ## 3. 发布前检查
 
 1. 确认目标 Commit SHA 为完整 40 位十六进制值且存在于受保护分支。
-2. 确认适用轻量 CI 全部通过，并为同一 Commit SHA 人工完成完整验证，生成仍在保留期内的 GitHub Artifact；没有关键 `skipped`、过期豁免或未解释告警。
+2. 确认适用轻量 CI 全部通过，并选择源码交接验证模式。默认 `strict` 要求同一 Commit SHA 的完整验证 Artifact 仍在保留期内；`fast` 只用于已评估的低风险改动，必须记录原因并明确接受 pytest、Vitest、production build 和 Playwright 未验证的风险。
 3. 确认 OpenAPI、生成客户端、迁移和文档不存在未提交漂移。
 4. 确认安全扫描、依赖审查和容器扫描满足当前门禁。
 5. 确认数据库迁移的前向、回滚或恢复策略已经评审。
@@ -32,10 +32,10 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 
 镜像发布分为 GitHub 源码交接和 CNB 构建发布两段，两段继续使用同一完整 Commit SHA：
 
-1. 人工触发 GitHub `Handoff Source to CNB`，输入完整 40 位 Commit SHA。
+1. 人工触发 GitHub `Handoff Source to CNB`，输入完整 40 位 Commit SHA，默认选择 `strict`；只有已评估的低风险改动才选择 `fast` 并填写不含敏感信息的单行原因。
 2. GitHub 确认工作流从默认分支启动，检出指定提交并核对 `git rev-parse HEAD`。
 3. GitHub 确认指定提交属于默认分支历史，且同一 SHA 的 Governance、Backend、Frontend 和 Security 四个 Push Run 全部成功。
-4. GitHub 下载未过期的 `full-validation-<完整提交>` Artifact，核对 Full Validation Run、Commit SHA、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段。
+4. `strict` 模式下载未过期的 `full-validation-<完整提交>` Artifact，核对 Full Validation Run、Commit SHA、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段；`fast` 模式跳过该项，但在 Workflow Summary 中记录 Commit、操作者、模式、原因和未执行完整验证的事实。
 5. GitHub 使用受 `cnb-source-handoff` Environment 保护的最小权限 Token，把批准提交以非强制、只能快进的方式更新到 CNB `main`；CNB 已有提交不是目标 SHA 的祖先时停止。
 6. CNB `main` Push 自动触发 `.cnb.yml`，再次核对仓库、分支、工作区 `HEAD` 和 `CNB_COMMIT` 完全一致，并按 Docker 构建输入选择受影响的应用 Pipeline。
 7. 每条受影响 Pipeline 使用固定 digest 的构建环境和 Trivy，只构建一个固定应用，通过该仓库的 TCR Registry 缓存加速二次构建，并以 `candidate-<CNB Build ID>` 唯一候选标签推送到 TCR。
@@ -47,7 +47,7 @@ GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为�
 
 首次运行、变更文件超过 CNB 的 300 文件统计上限、Git 对比不可用或影响范围存疑时，在 CNB `main` 分支详情页人工触发“三端全量镜像构建”。该操作属于独立镜像发布授权，不能由源码交接成功自动替代。
 
-候选镜像因基础镜像中的可修复 High 或 Critical 漏洞失败时，先核对固定基础镜像摘要和上游修复版本。需要更新摘要时必须形成新提交，重新取得轻量 Push 工作流和同 SHA 完整验证证据，再重新发布；禁止移动既有 Tag、覆盖既有不可变标签、跳过扫描或把失败候选 digest 用于部署。
+候选镜像因基础镜像中的可修复 High 或 Critical 漏洞失败时，先核对固定基础镜像摘要和上游修复版本。需要更新摘要时必须形成新提交，重新取得轻量 Push 工作流，并按重新选择的 `strict` 或 `fast` 模式完成源码交接；禁止移动既有 Tag、覆盖既有不可变标签、跳过扫描或把失败候选 digest 用于部署。
 
 ## 5. 生产部署
 

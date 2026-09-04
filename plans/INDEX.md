@@ -17,6 +17,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-09-04_GitHub源码交接双验证模式计划.md` | 实施中 | 不适用 | Deployment、Documentation | 为 GitHub 到 CNB 源码交接增加默认严格、可显式快速的 Full Validation 双模式和审计记录 |
 | `plans/2026-09-04_CNB三端独立镜像构建与发布证据改造计划.md` | 实施中 | 不适用 | Deployment、Documentation | 将 CNB 三镜像统一发布拆为按真实构建输入触发的三端独立构建、单镜像证据和 TCR 不可变发布 |
 | `plans/2026-09-02_Admin镜像漏洞门禁与CNB失败证据修复计划.md` | 已结束 | 已完成；Admin 镜像漏洞阻断、CNB 失败证据、三镜像扫描、SBOM、provenance、TCR 不可变标签和发布附件均通过真实验证，生产部署未触发 | Admin、Deployment、Documentation | 修复 Admin 运行镜像漏洞阻断，并为 CNB 扫描失败增加精简日志和可下载原始证据 |
 | `plans/2026-09-02_共享PostgreSQL与Redis生产编排改造计划.md` | 已结束 | 已完成；生产应用编排已切换为 1Panel 共享 PostgreSQL 与 Redis，外部网络、服务隔离、配置门禁、部署保护和运维边界已同步，生产迁移未执行 | Backend、Database、Deployment、Documentation | 将生产应用编排切换为 1Panel 共享 PostgreSQL 与 Redis，并建立网络、隔离、门禁、迁移和回滚边界 |

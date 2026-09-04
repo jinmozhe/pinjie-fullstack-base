@@ -1,11 +1,25 @@
 name: Handoff Source to CNB
 
+run-name: CNB handoff ${{ inputs.commit_sha }} (${{ inputs.validation_mode }})
+
 on:
   workflow_dispatch:
     inputs:
       commit_sha:
         description: Full 40-character commit SHA to hand off to CNB
         required: true
+        type: string
+      validation_mode:
+        description: Validation mode; strict requires Full Validation evidence
+        required: true
+        default: strict
+        type: choice
+        options:
+          - strict
+          - fast
+      fast_mode_reason:
+        description: Required in fast mode; one line, no secrets or sensitive data
+        required: false
         type: string
 
 permissions:
@@ -25,6 +39,7 @@ jobs:
       contents: read
     outputs:
       commit_sha: ${{ steps.input.outputs.commit_sha }}
+      validation_mode: ${{ steps.release-mode.outputs.validation_mode }}
     steps:
       - name: Validate commit SHA
         id: input
@@ -37,6 +52,38 @@ jobs:
             exit 1
           fi
           echo "commit_sha=$COMMIT_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Validate release mode
+        id: release-mode
+        shell: bash
+        env:
+          FAST_MODE_REASON: ${{ inputs.fast_mode_reason }}
+          VALIDATION_MODE: ${{ inputs.validation_mode }}
+        run: |
+          case "$VALIDATION_MODE" in
+            strict|fast) ;;
+            *)
+              echo "validation_mode must be strict or fast."
+              exit 1
+              ;;
+          esac
+
+          if [[ "$VALIDATION_MODE" == "fast" ]]; then
+            if [[ -z "${FAST_MODE_REASON//[[:space:]]/}" ]]; then
+              echo "fast_mode_reason is required in fast mode."
+              exit 1
+            fi
+            if [[ "$FAST_MODE_REASON" == *$'\n'* || "$FAST_MODE_REASON" == *$'\r'* ]]; then
+              echo "fast_mode_reason must contain one line."
+              exit 1
+            fi
+            if (( ${#FAST_MODE_REASON} > 200 )); then
+              echo "fast_mode_reason must not exceed 200 characters."
+              exit 1
+            fi
+          fi
+
+          echo "validation_mode=$VALIDATION_MODE" >> "$GITHUB_OUTPUT"
 
       - name: Require workflow from default branch
         shell: bash
@@ -80,6 +127,7 @@ jobs:
 
       - name: Require successful full validation evidence
         id: full-validation
+        if: ${{ steps.release-mode.outputs.validation_mode == 'strict' }}
         shell: bash
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
@@ -142,6 +190,30 @@ jobs:
           echo "No trustworthy full validation evidence matches $EXPECTED_SHA."
           exit 1
 
+      - name: Record validation decision
+        shell: bash
+        env:
+          EXPECTED_SHA: ${{ steps.input.outputs.commit_sha }}
+          FAST_MODE_REASON: ${{ inputs.fast_mode_reason }}
+          VALIDATION_MODE: ${{ steps.release-mode.outputs.validation_mode }}
+          VALIDATION_RUN_ID: ${{ steps.full-validation.outputs.validation_run_id }}
+        run: |
+          {
+            echo "### CNB source handoff validation"
+            echo
+            echo "- Commit: \`$EXPECTED_SHA\`"
+            echo "- Actor: \`$GITHUB_ACTOR\`"
+            echo "- Validation mode: \`$VALIDATION_MODE\`"
+            if [[ "$VALIDATION_MODE" == "strict" ]]; then
+              echo "- Full Validation Artifact: verified"
+              echo "- Full Validation Run ID: \`$VALIDATION_RUN_ID\`"
+            else
+              printf -v escaped_reason '%q' "$FAST_MODE_REASON"
+              echo "- Full Validation Artifact: not required by explicit fast mode"
+              echo "- Fast mode reason: \`$escaped_reason\`"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Require complete application state
         id: state
         shell: pwsh
@@ -198,6 +270,7 @@ jobs:
           CNB_RELEASE_BRANCH: ${{ vars.CNB_RELEASE_BRANCH }}
           CNB_REPOSITORY_URL: ${{ vars.CNB_REPOSITORY_URL }}
           EXPECTED_SHA: ${{ needs.validate.outputs.commit_sha }}
+          VALIDATION_MODE: ${{ needs.validate.outputs.validation_mode }}
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
@@ -235,6 +308,7 @@ jobs:
 
           {
             echo "Approved commit: $EXPECTED_SHA"
+            echo "Validation mode: $VALIDATION_MODE"
             echo "CNB repository: $CNB_REPOSITORY_URL"
             echo "CNB branch: $CNB_RELEASE_BRANCH"
             echo "CNB build logs: $CNB_REPOSITORY_URL/-/build/logs"
