@@ -93,7 +93,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - 关键跨栈测试连接真实 Backend 和独立 `_test` PostgreSQL，不使用 MSW 替代本项目 API。不可控第三方服务在边界处使用可审计替身。
 - 每个测试拥有独立浏览器上下文和可准确归属的测试数据，禁止依赖其他测试的执行顺序、Cookie、存储或数据库残留。
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
-- Playwright 不由日常开发、`$git-sync`、Push、Pull Request 或定时任务自动运行。需要本地标准 Chromium E2E 时由用户明确授权；需要干净 Ubuntu 环境时由用户人工触发 GitHub 完整验证。Firefox 与 WebKit 也只在用户明确要求或派生项目验收计划明确授权时执行。单独的本地浏览器结果不能满足镜像发布门禁；GitHub 完整验证只有在 pytest、Vitest、production build 和 Chromium Playwright 全部成功并生成同 SHA Artifact 后，才形成发布可核验的重型验证证据。
+- Playwright 不由日常开发、`$git-sync`、Push、Pull Request 或定时任务自动运行。需要本地标准 Chromium E2E 时由用户明确授权；需要干净 Ubuntu 环境时由用户人工触发 GitHub 完整验证。Firefox 与 WebKit 也只在用户明确要求或派生项目验收计划明确授权时执行。单独的本地浏览器结果不能满足严格源码交接门禁；GitHub 完整验证只有在 pytest、Vitest、production build 和 Chromium Playwright 全部成功并生成同 SHA Artifact 后，才形成发布可核验的重型验证证据。快速源码交接模式明确表示未取得该证据，不能表述为完整验证通过。
 - CI 失败保留首个失败重试的 Trace、必要截图和 HTML Report。重试只用于采集诊断信息，初次失败仍按不稳定测试处理，禁止依靠重试把套件标记为健康。
 - 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
 
@@ -131,7 +131,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 一项实现通过默认轻量门禁、完成计划内文档同步并如实记录未执行项后，可以提交和完成 Git 交付。只有用户明确授权对应重型验证且实际通过时，才能宣称测试、构建或完整跨栈验收通过。Backend pytest 保持 90% 覆盖率阈值，Admin 与 Web 的 Vitest 保持语句、分支、函数和行覆盖率 80% 阈值；这些阈值只在对应测试获授权并实际运行时生效。
 
-镜像发布属于更严格的跨系统交付边界。候选 Commit SHA 除四个自动轻量 Push 工作流外，还必须存在由默认分支人工触发、成功完成且未过期的完整验证 Artifact；Artifact 中的 Commit SHA、Workflow Run 和验证集合必须与发布输入一致。本地测试结果、人工填写的布尔值和普通文本说明不能替代该证据。
+镜像发布属于独立的跨系统交付边界。候选 Commit SHA 必须通过四个自动轻量 Push 工作流，并由操作人员显式选择源码交接验证模式。默认 `strict` 要求存在由默认分支人工触发、成功完成且未过期的完整验证 Artifact；Artifact 中的 Commit SHA、Workflow Run 和验证集合必须与发布输入一致，本地测试结果或普通文本说明不能替代。`fast` 只适用于已评估的低风险改动，必须填写原因并留下未执行完整验证的审计记录；它允许继续构建制品，但不产生重型验证通过的结论。
 
 前端覆盖率必须纳入承担 Cookie、CSRF、Refresh、权限启动和 BFF 转发的高风险入口。当前 Admin 统计 `src/features/**`、`src/lib/api/**`、`src/access.ts` 与 `src/app.tsx`；Web 统计 `src/features/**`、`src/lib/api/**` 与 BFF Route Handler。不得通过只统计页面组件排除传输和认证生命周期代码来满足 80% 门禁。
 
