@@ -2,7 +2,7 @@
 
 ## 1. 适用范围
 
-本手册适用于使用 1Panel、OpenResty 和 `compose.prod.yml` 运行母版派生项目的单机生产环境。该部署等级提供固定镜像、健康检查、持久卷、备份恢复和受控回滚，不提供多机高可用、跨故障域容灾或零停机数据库迁移。
+本手册适用于使用 1Panel、OpenResty 和 `compose.prod.yml` 运行母版派生项目的单机生产环境。操作人员从 GitHub Actions 开始执行完整发布时，先阅读[GitHub 到 1Panel 端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)。本文继续负责 1Panel 基础设施、生产配置、迁移、OpenResty、备份和恢复细节。
 
 生产部署、迁移、恢复、回滚、Tag 和 Release 分别需要明确授权。母版只提供可执行基线，派生项目必须补充域名、RPO、RTO、容量、告警和责任人。
 
@@ -14,7 +14,7 @@
 - 三张应用镜像使用完整 `@sha256:` digest，禁止使用 `latest`、分支标签或缺失版本回退。
 - 生产服务器使用独立 `tcr-puller` CAM 子用户登录 TCR 个人版，只允许拉取指定三个仓库；账号创建、三仓只读 JSON、凭证初始化和权限验收见[腾讯云 CAM 子账号与 TCR 个人版最小权限操作手册](tencent-tcr-personal-cam-accounts.md)。
 - 1Panel 已管理 PostgreSQL 18.4 与 Redis 8.10.0 共享实例，并把二者接入外部网络 `1panel-network`；宿主机端口只允许绑定环回地址。
-- 共享 PostgreSQL 为每个项目配置独立数据库、登录角色和密码；共享 Redis 为每个项目配置独立 ACL 用户、密码与 Key 前缀。
+- 共享 PostgreSQL 为每个项目配置独立数据库、登录角色和密码；共享 Redis 至少启用密码，并为各项目分配独立逻辑库编号。隔离要求更高时配置独立 ACL 用户或独立实例。
 - 部署目录、真实 `.env`、备份和数据库凭据仅允许受控运维账号访问。
 
 生产目录至少包含：
@@ -55,7 +55,7 @@ docker compose --env-file .env -f compose.prod.yml config --quiet
 - Backend `backend_uploads` 命名卷挂载到 `/app/storage`，统一资产根为 `/app/storage/uploads`，配置媒体根为 `/app/storage/settings-media`。
 - Backend 和 request-log-consumer 显式设置 `LOG_FILE_ENABLED=false`。
 - Backend 和 request-log-consumer 同时接入项目默认网络与外部 `1panel-network`；Web 和 Admin 不接入基础设施网络。
-- `DATABASE_URL` 使用共享服务名 `postgresql`、项目数据库和项目角色，`REDIS_URL` 使用共享服务名 `redis` 和项目 ACL 用户。
+- `DATABASE_URL` 使用共享服务名 `postgresql`、项目数据库和项目角色。当前 `REDIS_URL` 使用共享服务名 `redis`、`default` 用户和独立逻辑库 `/1`；逻辑库编号不能当作权限隔离。
 - `ENVIRONMENT=production`，Cookie、Trusted Host、CORS、代理 CIDR 和四个认证密钥满足生产约束。
 
 CNB 每个应用会生成独立的 `pinjie-cnb-tcr-image-v1` 附件。部署单端更新时，只把根 `.env` 中该端镜像变量替换为附件中的完整 digest，保留另外两端的现有 digest。1Panel 点击“更新编排”可能重算全部服务配置；需要严格只重建目标端时，在同一 Compose 目录执行 `docker compose --env-file .env -f compose.prod.yml up -d --no-deps --wait <backend|web|admin>`。更新后记录三个运行端各自的 Commit、digest、CNB Build ID、证据附件和部署时间。
@@ -64,14 +64,14 @@ CNB 每个应用会生成独立的 `pinjie-cnb-tcr-image-v1` 附件。部署单�
 
 ## 4. 备份与迁移
 
-发布前记录当前完整 Commit SHA、三张运行镜像 digest、Alembic revision 和备份标识。目标 PostgreSQL 数据库必须由项目角色拥有，该角色禁止拥有超级用户、创建数据库和创建角色权限，并设置与实例容量相符的连接上限。Redis ACL 用户只能访问当前 `PROJECT_NAME` 与 `ENVIRONMENT` 生成的 Key 前缀，禁止管理、全局清理和全局枚举命令。
+发布前记录当前完整 Commit SHA、三张运行镜像 digest、Alembic revision 和备份标识。目标 PostgreSQL 数据库必须由项目角色拥有，该角色禁止拥有超级用户、创建数据库和创建角色权限，并设置与实例容量相符的连接上限。当前 Redis `default` 用户加逻辑库 `/1` 只提供 Key 命名空间隔离，应用本身不会根据 `PROJECT_NAME` 或 `ENVIRONMENT` 自动增加统一 Key 前缀。多个可信项目共用该模式时必须登记唯一库编号并禁止 `FLUSHALL` 等全局操作；需要命令和 Key 权限隔离时使用独立 ACL 用户或独立 Redis 实例。
 
 从项目专属 PostgreSQL 与 Redis 迁移到共享实例时，按以下顺序操作：
 
 1. 核对源、目标数据库身份，确认目标为空或已取得覆盖恢复专项授权。
 2. 分别验证共享实例备份和源项目数据库一致性备份，记录文件大小与 SHA-256。
 3. 创建项目 PostgreSQL 角色，将目标数据库所有权和恢复对象归属设置为该角色。
-4. 创建并持久化 Redis ACL 用户，使用第二个终端验证新用户能够访问项目 Key 且管理命令被拒绝。
+4. 为目标项目登记独立 Redis 逻辑库编号并验证密码连接；采用 ACL 方案时还要持久化独立用户，并验证项目 Key 可访问且管理命令被拒绝。
 5. 停止 Backend、Web、Admin 和请求日志消费者，冻结写入后制作最终数据库备份。
 6. 恢复到共享 PostgreSQL，核对 Alembic revision、表清单、权限目录、管理员和不泄露数据的业务摘要。
 7. 更新 `apps/backend/.env` 中的两个连接串，启动应用并执行完整健康与登录检查。

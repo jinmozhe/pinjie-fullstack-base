@@ -4,7 +4,7 @@
 
 本文说明仓库中每个 GitHub Actions 工作流的触发条件、执行步骤、作用、使用场景、失败含义和流程边界。
 
-本文负责解释“GitHub 收到提交后会运行什么”以及“人工发布和部署会执行什么”。实际发布、部署和回滚操作仍以[发布与回滚手册](release-and-rollback.md)为准，不在本文重复维护生产操作决策。
+本文负责解释“GitHub 收到提交后会运行什么”以及各工作流内部机制。操作人员从 GitHub 点击运行到 1Panel 完成更新的实际顺序以[GitHub 到 1Panel 端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)为准，发布和回滚决策以[发布与回滚手册](release-and-rollback.md)为准。
 
 工作流配置是执行事实的最终来源：
 
@@ -468,6 +468,8 @@ GitHub 验证 Job 只读取 Actions 和仓库内容。`handoff` Job 仅获得仓
 
 ## 12. Deploy Production
 
+本节记录仓库中保留的旧 GHCR 自动部署工作流。当前生产链路使用 CNB、TCR 和 1Panel 人工更新，该工作流必须保持禁用。现行操作步骤见[GitHub 到 1Panel 端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)。
+
 ### 12.1 作用和使用场景
 
 `Deploy Production` 将已经发布并验证的三个镜像 digest 部署到生产服务器。它不重新构建源码，也不自动选择最新镜像。
@@ -599,7 +601,7 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 -> 选择上一组已验证 digest
 -> 核对数据库兼容性和恢复点
 -> 取得回滚授权
--> 使用 Deploy Production 输入旧 Commit SHA 和旧 digest
+-> 在 1Panel 编排环境变量中恢复目标端旧完整 digest
 -> 完成部署后验证和事故记录
 ```
 

@@ -35,7 +35,7 @@ Anaconda 或 Miniconda 不属于本项目的前置依赖。日常后端命令统
 │   ├── admin.yourdomain.com → 127.0.0.1:3001
 │   └── www.yourdomain.com   → 127.0.0.1:3000
 ├── 共享 PostgreSQL 18.4：每项目独立数据库、角色和密码
-├── 共享 Redis 8.10.0：每项目独立 ACL 用户、密码和 Key 前缀
+├── 共享 Redis 8.10.0：每项目独立逻辑库编号；高隔离场景使用独立 ACL 用户
 └── 项目 Compose：backend、web、admin 和可选日志消费者
 ```
 
