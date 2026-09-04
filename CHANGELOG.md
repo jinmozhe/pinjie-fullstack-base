@@ -73,6 +73,7 @@
 ### Fixed
 
 - 修复 CNB 变更路由夹具使用动态正则触发 Semgrep ReDoS 阻断的问题，改用固定路由模式匹配并增加通配符不得跨目录的负向夹具；同时将 `fast-uri` 固定到修复 4 个 High 漏洞的 `3.1.6`。
+- 修复 1Panel Web 编排预拉取无法识别应用镜像 `${VAR:?提示}` 表达式的问题：四个应用服务改用基础变量插值，继续由生产门禁核对准确变量名和完整不可变 digest；补充错误变量接线负向夹具，以及面板任务状态与实际容器状态不一致时的健康核验步骤。
 - 修复 Admin Alpine 运行镜像只升级手工包清单导致新可修复漏洞遗漏的问题，构建时升级当前仓库中的全部已安装包；CNB Trivy 阻断现在输出精简漏洞表格，并在失败阶段保存原始扫描、digest、metadata 和摘要附件，同时继续保持 High、Critical 门禁 Fail Closed。
 - 修复 CNB 跨 Commit Registry 缓存失配：`SOURCE_DATE_EPOCH` 从每个 Git Commit 的提交时间改为固定 Unix epoch `0`，避免未变化的 COPY 和依赖层因文件元数据时间不同而重新构建；复验确认 Backend `uv sync`、Web/Admin `pnpm install`、应用复制和 production build 层全部命中，候选构建和缓存写回从 13.2 分钟降至 57.4 秒，完整 Commit SHA 继续由 BuildKit provenance 和结构化发布清单追溯。
 - 修复 Web 与 Admin 生产运行镜像被基础层可修复漏洞阻断发布的问题：Web runtime 升级 Alpine OpenSSL 并移除 standalone 服务不需要的全局 npm，Admin runtime 只升级 Trivy 命中的 c-ares、curl、OpenSSL、libexpat、libxml2 和 nghttp2 包；保留 Node/Nginx 运行方式、非 Root 用户、健康检查、Trivy High/Critical Fail Closed、SBOM 和构建来源证明。

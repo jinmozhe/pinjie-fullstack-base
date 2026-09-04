@@ -45,6 +45,10 @@ pnpm check:governance
 docker compose --env-file .env -f compose.prod.yml config --quiet
 ```
 
+通过 1Panel Web 编辑器维护系统创建的编排时，把根 `.env` 中的 `BACKEND_IMAGE`、`WEB_IMAGE`、`ADMIN_IMAGE` 和 `WEB_PUBLIC_ORIGIN` 同步到编排的“环境变量”页。应用镜像字段使用基础插值 `${BACKEND_IMAGE}`、`${WEB_IMAGE}` 和 `${ADMIN_IMAGE}`，避免 1Panel 镜像预拉取把带 `:?` 提示的 Compose 必填表达式误判为镜像名称。镜像变量缺失或不是完整 `@sha256:` 引用时必须停止更新，不得改用 `latest`、分支标签或其他可变引用。命令行部署继续显式传入 `--env-file .env`。
+
+1Panel 显示更新失败但容器已经创建时，先以 `docker compose ps`、三个健康端点、脱敏后的容器环境目标和实际镜像 digest 判断运行状态。禁止只根据面板任务状态宣称部署成功，也不得在未核对存储卷前删除整个编排。
+
 检查项：
 
 - `BACKEND_IMAGE`、`WEB_IMAGE`、`ADMIN_IMAGE` 均为批准的完整 digest。

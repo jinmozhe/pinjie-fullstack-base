@@ -51,23 +51,23 @@ function Invoke-Guard {
 $validCompose = @'
 services:
   backend:
-    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
+    image: ${BACKEND_IMAGE}
     environment:
       LOG_FILE_ENABLED: "false"
     networks:
       - default
       - infrastructure
   request-log-consumer:
-    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be a complete immutable image digest}
+    image: ${BACKEND_IMAGE}
     environment:
       LOG_FILE_ENABLED: "false"
     networks:
       - default
       - infrastructure
   web:
-    image: ${WEB_IMAGE:?WEB_IMAGE must be a complete immutable image digest}
+    image: ${WEB_IMAGE}
   admin:
-    image: ${ADMIN_IMAGE:?ADMIN_IMAGE must be a complete immutable image digest}
+    image: ${ADMIN_IMAGE}
 networks:
   infrastructure:
     name: 1panel-network
@@ -126,12 +126,9 @@ try {
         throw "Expected missing production file-log overrides to fail."
     }
 
-    Write-Compose -Content $validCompose.Replace(
-        '${WEB_IMAGE:?WEB_IMAGE must be a complete immutable image digest}',
-        '${WEB_IMAGE}'
-    )
+    Write-Compose -Content $validCompose.Replace('${WEB_IMAGE}', '${ADMIN_IMAGE}')
     if ((Invoke-Guard).ExitCode -eq 0) {
-        throw "Expected a non-required application image variable to fail."
+        throw "Expected an incorrect application image variable to fail."
     }
 
     $previousBackendImage = [Environment]::GetEnvironmentVariable("BACKEND_IMAGE")
