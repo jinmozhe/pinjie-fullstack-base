@@ -90,7 +90,7 @@
 | [github-cnb-tcr-1panel-release-runbook.md](operations/github-cnb-tcr-1panel-release-runbook.md) | 操作人员从 GitHub Actions 经 CNB、TCR 到 1Panel 完成首次部署、日常更新、验证和回滚的端到端手册 |
 | [github-actions-workflows.md](operations/github-actions-workflows.md) | GitHub Actions 自动 CI、安全扫描、人工镜像发布和生产部署的逐工作流说明与排障入口 |
 | [release-and-rollback.md](operations/release-and-rollback.md) | CI、镜像发布、生产部署和按固定 digest 回滚的操作边界 |
-| [candidate-image-validation.md](operations/candidate-image-validation.md) | 手动三端候选镜像验收、部署组合、1Panel 变量预检与只读 TCR 保留计划 |
+| [candidate-image-validation.md](operations/candidate-image-validation.md) | 当前流程不使用的候选镜像验收工具状态与保留边界，人工部署转至发布手册 |
 | [container-build-and-run.md](operations/container-build-and-run.md) | 三个应用镜像构建、迁移与权限初始化、请求日志 Profile、生产 Compose 和健康验证 |
 | [tencent-tcr-personal-cam-accounts.md](operations/tencent-tcr-personal-cam-accounts.md) | 腾讯云 TCR 个人版发布与生产拉取身份隔离、CAM 三仓最小权限、凭证初始化、服务器登录、验证、轮换和排障步骤 |
 | [1panel-production-runbook.md](operations/1panel-production-runbook.md) | 1Panel 单机生产配置、迁移、OpenResty、日志、备份、恢复和回滚步骤 |

@@ -8,7 +8,7 @@
 
 Admin/Web Dockerfile 的依赖层只复制根清单、锁文件、pnpm 配置与钩子、三个共享包的 package.json 和补丁；完整共享包源码在依赖安装后复制。新增工作区包或安装期钩子时必须复核这一输入边界，禁止漏掉安装必需文件。Registry 缓存与 Git committer time 策略保持现状，缓存收益以实际新 Run 计时为准。
 
-已授权源码 E2E 需要 Docker：`pnpm test:e2e` 使用 Web standalone 和固定 Nginx 镜像托管 Admin dist，不再启动 Admin dev。最终生产镜像验收与部署清单操作见[候选镜像验收与部署预检](candidate-image-validation.md)。
+已授权源码 E2E 需要 Docker：`pnpm test:e2e` 使用 Web standalone 和固定 Nginx 镜像托管 Admin dist，不再启动 Admin dev。当前生产镜像由人工核对 CNB/TCR 证据后通过 1Panel 部署，操作见[端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)，不要求额外运行候选镜像验收。
 
 - 构建主机使用 Linux x86_64 或 Docker Desktop Linux 容器模式。
 - Backend 使用标准 CPython 3.14，当前构建与运行阶段固定官方 `python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`，工具来源固定 `uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c`，镜像内只安装 `uv.lock` 的运行依赖。

@@ -13,11 +13,17 @@ GitHub Actions
 
 这条链路只在 CNB 构建生产镜像。GitHub 负责验证和源码交接，TCR 保存镜像，1Panel 只拉取已经发布的固定镜像 digest 并运行容器。当前 GitHub `Deploy Production` 工作流仍面向旧 GHCR 路径，必须保持禁用，不参与本文流程。
 
-CNB 发布成功后，还需手动运行 `Validate Candidate Images` 验证最终三端组合，取得 `deployment-composition.json` 和 `images.env`，完成 1Panel 变量预检后再进入生产授权。请求生成、首次启用、凭据配置与命令以[候选镜像验收与部署预检](candidate-image-validation.md)为准。晋级沿用验收 digest，不重新构建；源码交接 `fast` 模式也不跳过该部署验收。
+当前采用单维护者、1Panel 人工部署流程：CNB 发布成功后，人工核对受影响端的发布清单、源码 SHA、扫描证据与 TCR digest，记录当前和回滚版本，再同步服务器根 `.env` 与 1Panel 编排环境变量，保存编排并完成上线检查。部署沿用核验的固定 digest，不重新构建镜像。
+
+当前流程不使用 `Validate Candidate Images`，无需创建 `candidate-image-validation` Environment、配置其只读 Secrets、生成请求 JSON 或运行部署组合预检。源码交接的 `strict` / `fast` 含义保持不变；停止使用该操作不代表最终 TCR 镜像已通过独立 E2E。
 
 工作流内部机制见[GitHub Actions 工作流说明](github-actions-workflows.md)，账号和权限见[腾讯云 CAM 子账号与 TCR 个人版最小权限操作手册](tencent-tcr-personal-cam-accounts.md)，生产基础设施细节见[1Panel 单机生产运行手册](1panel-production-runbook.md)，异常回退规则见[发布与回滚手册](release-and-rollback.md)。
 
 ## 2. 发布前准备
+
+先判断是否需要发布：仅文档、计划或 AI 规则变化且不影响构建输入与运行配置时，完成 Git 交付即可，无需 Full Validation、源码交接、CNB 构建或更新容器。生产允许继续使用较早的已验证镜像，不要求镜像 SHA 随每次文档提交推进。源码、依赖、Dockerfile、共享契约、迁移或生产运行配置变化时，按实际影响确定构建、部署和验证范围；服务器配置变更可能只需更新配置并重建对应容器。
+
+Git Commit SHA 用于追溯源码，TCR `sha-<Commit SHA>` 标签用于查找镜像；1Panel 的镜像变量必须填写完整的 `仓库@sha256:<digest>`。不能直接用源码 SHA、候选标签或 `latest` 代替镜像 digest。
 
 开始前准备以下信息：
 
