@@ -130,12 +130,21 @@ GitHub Handoff 成功只代表 CNB 收到源码。此时镜像可能仍在构建
 1. `Validate immutable release context`
 2. `Build and push run-unique candidate`
 3. `Scan candidate and generate SBOM`
-4. `Publish immutable SHA tag`
-5. `Generate and validate image release evidence`
-6. `Save image release evidence`
-7. `Remove temporary registry credentials`
+4. `Enforce structured vulnerability gate`
+5. `Publish immutable SHA tag`
+6. `Generate and validate image release evidence`
+7. `Save image release evidence`
+8. `Remove temporary registry credentials`
 
-只修改单端时，允许只出现该端 Pipeline。根依赖、共享包、发布脚本或多端代码发生变化时会出现多个 Pipeline。先根据变更范围确认预期触发集合，再判断是否完整。
+CNB 普通 `main` Push 的 `ifModify` 比较本次推送前后的提交差异。一次 Handoff 可以交接多次 GitHub 提交，必须检查 CNB 原有 SHA 到目标 SHA 的累计变化，不能只检查目标提交相对其父提交的变化。`strict` / `fast` 决定源码交接的验证证据，实际构建哪些应用由 [.cnb.yml](../../.cnb.yml) 的路径规则决定。平台比较方式见 [CNB ifModify 官方说明](https://docs.cnb.cool/en/build/grammar.html#pipeline-ifmodify)。
+
+从 Handoff 的 `Fast-forward CNB main` 日志确认推送前后 SHA，再在具有这两个提交的本地仓库中检查差异；以下占位值需替换为实际完整 SHA：
+
+```powershell
+git diff --name-only <CNB推送前SHA> <本次目标SHA>
+```
+
+累计变化仅命中单端构建路径时，允许只出现该端 Pipeline。根依赖、共享包、发布脚本或多端代码发生变化时，按各端路径规则触发对应 Pipeline；其中 `.cnb.yml` 或共用扫描脚本变化会命中三端。先根据累计变更范围确认预期触发集合，再判断是否完整。三端均有新镜像不代表服务器必须同时替换三端，部署范围还需按第 12 节核对实际生产版本。
 
 以下情况需要在 CNB `main` 分支详情页点击“三端全量镜像构建”：
 
@@ -176,7 +185,21 @@ ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-web@sha256:<64位�
 ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-admin@sha256:<64位摘要>
 ```
 
-TCR 中的 `sha-<完整 Commit SHA>` 用于查找和追溯，`candidate-<Build ID>` 用于单次构建，`buildcache-main` 用于缓存。三者都不能替代生产使用的完整 digest。
+### 8.1 TCR 三类标签和时间
+
+每个应用仓库都使用以下标签。同一次成功发布通常可见两个应用镜像标签和一份构建缓存，不能按列表行数认定应用构建了三个版本。
+
+| 标签 | 作用 | 生产使用方式 |
+| --- | --- | --- |
+| `sha-<完整 Commit SHA>` | 发布门禁通过后创建的正式源码版本标签 | 用于查找镜像，部署使用清单中的完整 `仓库@sha256:<digest>` |
+| `candidate-<CNB Build ID>` | 本次构建先推送的候选镜像，供扫描和来源核验 | 不使用该标签部署，失败候选不得上线 |
+| `buildcache-main` | 供后续构建读取和更新的 Registry 缓存 | 不属于生产应用镜像，不用于部署 |
+
+发布顺序是“构建并推送候选镜像，同时更新缓存 → 扫描和证据门禁 → 创建正式 SHA 标签”。正式标签引用通过核验的同一候选 digest，不重新构建应用；发布脚本会再次核对正式标签的完整 digest。因此同次成功发布的 `candidate-*` 与 `sha-*` 应指向相同镜像内容，缓存拥有独立用途和摘要。控制台截断显示的摘要前缀不能代替完整 digest 核对。
+
+候选标签较早推送，正式标签在门禁通过后创建，时间通常更晚；`buildcache-main` 会被后续构建更新，其创建时间可以早于本次发布，修改时间反映后续写入。TCR 列表时间、镜像内 OCI 创建时间和服务器容器启动时间属于不同记录，不能仅凭“最新修改时间”判断线上版本。
+
+CNB 的 `candidate-*` 标签是现有构建发布步骤，与当前不使用的 GitHub `Validate Candidate Images` 工作流分别承担不同职责。停止使用该工作流不取消 CNB 候选推送、扫描或正式标签发布。
 
 ## 9. 在 1Panel 纯拉取镜像
 
@@ -261,6 +284,10 @@ sudo docker compose --env-file .env -f compose.prod.yml run --rm backend python 
 ## 12. 日常版本更新
 
 日常更新不需要删除旧编排、项目默认网络或 `backend_uploads` 存储卷。
+
+部署范围以每个应用当前实际运行的 digest 及其对应源码 SHA 为基线，分别比较到本次目标版本，并检查依赖、构建配置、公开契约和数据库兼容性。CNB 上一次接收源码的版本不一定等于服务器当前版本，TCR 已生成新镜像也不代表服务器已更新。
+
+例如，目标相对上一源码提交仅修改 Admin 的 `nginx.conf` 时，只有确认 Backend/Web 当前运行版本已包含此前所需修改，且无新的跨端影响，才能只更新 Admin。若服务器仍使用更早版本，累计变化还包含 Backend/Web 修复，要交付这些修复就需更新对应应用；不能依据最后一次提交判断它们无需部署。无法追溯某端的生产 SHA 时，先从原发布清单、部署记录或镜像 OCI revision 补齐基线。
 
 1. 记录三个端当前运行的完整 digest，作为回滚基线。
 2. 在 1Panel 镜像页拉取本次受影响端的新 digest。
