@@ -14,7 +14,7 @@
 | CI - Backend | [ci-backend.yml](../../.github/workflows/ci-backend.yml) |
 | CI - Frontend | [ci-frontend.yml](../../.github/workflows/ci-frontend.yml) |
 | CI - Full Validation | [ci-e2e.yml](../../.github/workflows/ci-e2e.yml) |
-| Validate Candidate Images | [validate-candidate-images.yml](../../.github/workflows/validate-candidate-images.yml) |
+| Validate Candidate Images（当前流程不使用） | [validate-candidate-images.yml](../../.github/workflows/validate-candidate-images.yml) |
 | Security | [security.yml](../../.github/workflows/security.yml) |
 | Handoff Source to CNB | [publish-images.yml](../../.github/workflows/publish-images.yml) |
 | Deploy Production | [deploy-production.yml](../../.github/workflows/deploy-production.yml) |
@@ -37,10 +37,10 @@ flowchart TD
     H --> I["固定 SHA 快进交接到 CNB main"]
     I --> J["CNB 按路径构建、扫描并发布受影响端"]
     J --> M["每端独立发布证据和 TCR digest"]
-    M --> Q["人工授权三端固定 digest 镜像验收"]
-    Q --> P["部署组合与 1Panel 变量预检"]
-    P --> K["人工授权生产部署"]
+    M --> Q["人工核对 CNB/TCR 证据并记录回滚 digest"]
+    Q --> K["人工授权生产部署并同步 1Panel 变量"]
     K --> L["1Panel 按固定 digest 更新目标端"]
+    L --> O["核对运行版本、健康与关键业务"]
 ```
 
 流程坚持四项边界：
@@ -48,7 +48,7 @@ flowchart TD
 1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发轻量静态、契约、治理与安全检查，不运行应用测试或前端生产构建，不发布镜像，不接触生产服务器。
 2. 完整验证只允许人工按需触发，不随 Push、Pull Request 或定时任务自动运行；它对输入 Commit SHA 执行 pytest、Vitest、production build 和 Chromium Playwright，并在全部成功后生成 30 天保留的 Artifact。
 3. 源码交接必须人工触发，默认 `strict` 要求四个自动 Push 工作流和同 SHA 完整验证证据；显式 `fast` 仍要求四个自动 Push 工作流，并记录未执行完整验证的原因。CNB 只在受控 `main` Push 后构建并发布镜像。
-4. 生产部署必须再次人工触发，并固定三个已经验证的镜像 digest。
+4. 生产部署由维护者在 1Panel 人工执行，固定三个已经核验的镜像 digest；当前流程不使用候选镜像验收工作流。纯文档且无运行影响的提交完成 Git 交付即可，不需要继续源码交接和部署。
 
 ## 3. 触发条件总表
 
@@ -58,7 +58,7 @@ flowchart TD
 | CI - Backend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
 | CI - Frontend | 仅 `main` | 仅目标为 `main` | 否 | 否 |
 | CI - Full Validation | 否 | 否 | 否 | 是 |
-| Validate Candidate Images | 否 | 否 | 否 | 是 |
+| Validate Candidate Images（当前流程不使用） | 否 | 否 | 否 | 配置仍支持，当前不运行 |
 | Security | 仅 `main` | 仅目标为 `main` | 每周一次 | 否 |
 | Handoff Source to CNB | 否 | 否 | 否 | 是 |
 | Deploy Production | 否 | 否 | 否 | 是 |
@@ -281,9 +281,9 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 
 该工作流会下载浏览器、启动数据库和 Redis，并运行三端重型测试与两个前端构建，耗时和资源占用较高，因此只能在用户明确授权后人工触发。任一步失败都不会上传成功证据；Artifact 过期后必须重新运行完整验证，不能通过修改输入或文本说明绕过。
 
-### 8.4 候选生产镜像专项验证
+### 8.4 候选生产镜像工具状态
 
-`Validate Candidate Images` 是独立的手动流程，读取 CNB 三端发布清单和可信 Handoff Run，拉取既有 TCR digest 并在独立数据库与应用容器中执行现有 E2E，不重建镜像。成功输出 90 天保留的部署组合和镜像变量，失败只输出脱敏诊断。所需 Environment、只读 TCR 凭据、请求生成、部署预检与保留策略统一见[候选镜像验收与部署预检](candidate-image-validation.md)。
+`Validate Candidate Images` 的工作流配置和脚本仍保留，但已退出当前单维护者、1Panel 人工部署流程。无需为发布创建其 Environment、配置只读 Secrets、生成请求 JSON 或部署组合，也不执行自动变量预检。工具边界见[候选镜像验收工具状态](candidate-image-validation.md)，实际更新按[端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)执行。
 
 Handoff 使用 `cnb-source-handoff-main` 统一串行组，避免两个不同 SHA 同时推进同一 CNB 分支；GitHub concurrency 不承诺 FIFO，尚在等待的运行可能被更新的等待项替换，操作人员应核对最终 Run 状态。交接成功后保存模式、快速模式理由、Full Validation Run、目标 SHA 和 attempt 的结构化 Artifact。
 
