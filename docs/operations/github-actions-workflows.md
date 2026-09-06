@@ -340,7 +340,7 @@ Semgrep 检查仓库自己编写的 Python、JavaScript、TypeScript、Shell、Y
 当前配置：
 
 ```text
-semgrep scan --config p/default --error --strict --metrics off
+semgrep scan --config p/default --error --strict --metrics off --verbose
 ```
 
 参数含义：
@@ -349,6 +349,7 @@ semgrep scan --config p/default --error --strict --metrics off
 - `--error`：发现规则命中时返回失败退出码。
 - `--strict`：规则、解析警告和内部错误同样失败关闭。
 - `--metrics off`：关闭使用指标上报。
+- `--verbose`：在日志中显示解析警告的位置和规则，避免只有失败退出码而无法定位。
 
 CI 固定安装 Semgrep CE `1.173.0`，不配置 Semgrep Token，不创建云端项目，也不上传源码或扫描结果。
 
