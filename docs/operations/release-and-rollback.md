@@ -43,7 +43,9 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 9. 单端候选通过后检查该仓库的 `sha-<完整提交>` 标签；标签指向不同 digest 时立即失败，无冲突时创建标签并执行写后复核。
 10. 每条 Pipeline 生成 `pinjie-cnb-tcr-image-v1` 单镜像清单，保存应用键、Build ID、Build URL、Git Commit 时间、完整 Commit SHA、TCR digest、扫描、SBOM、provenance 和 OCI 标签，并连同该端原始证据作为构建附件保留。
 
-GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为镜像发布成功。`candidate-<CNB Build ID>` 标签只用于本次构建、扫描和证据核对，禁止部署。单端变化时，该端 Pipeline 与清单通过即可进入该端部署授权。多端变化时必须等待预期 Pipeline 全部成功并核对相同 Commit SHA；任一预期端失败、缺失或错误跳过时部署停止。生产始终使用完整 digest，不依赖候选标签或 SHA 标签不可变假设。
+GitHub 源码交接成功只说明 CNB 已接收批准提交，不能表述为镜像发布成功。`candidate-<CNB Build ID>` 标签只用于本次构建、扫描和证据核对，禁止部署。单端变化时，可以独立发布该端，但进入部署授权前必须使用其他端既有已验证 digest 运行三端组合验收；多端变化时必须等待预期 Pipeline 全部成功并核对相同 Commit SHA。任一预期端失败、缺失或错误跳过时部署停止。生产始终使用完整 digest，组合验收与晋级不重新构建镜像。
+
+手动镜像验收、`pinjie-deployment-composition-v1`、可信交接模式、1Panel 变量预检和 TCR 非破坏性保留计划的执行入口见[候选镜像验收与部署预检](candidate-image-validation.md)。新版严格源码门禁使用 `pinjie-full-validation-v2`；CNB 扫描保留完整包与漏洞 JSON，通过离线转换生成表格和 CycloneDX，再以结构化检查阻断已有修复的 High/Critical。未修复漏洞继续出现在完整报告中，不能表述为没有任何已知高危漏洞。
 
 首次运行、变更文件超过 CNB 的 300 文件统计上限、Git 对比不可用或影响范围存疑时，在 CNB `main` 分支详情页人工触发“三端全量镜像构建”。该操作属于独立镜像发布授权，不能由源码交接成功自动替代。
 

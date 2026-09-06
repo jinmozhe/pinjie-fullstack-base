@@ -13,6 +13,8 @@ GitHub Actions
 
 这条链路只在 CNB 构建生产镜像。GitHub 负责验证和源码交接，TCR 保存镜像，1Panel 只拉取已经发布的固定镜像 digest 并运行容器。当前 GitHub `Deploy Production` 工作流仍面向旧 GHCR 路径，必须保持禁用，不参与本文流程。
 
+CNB 发布成功后，还需手动运行 `Validate Candidate Images` 验证最终三端组合，取得 `deployment-composition.json` 和 `images.env`，完成 1Panel 变量预检后再进入生产授权。请求生成、首次启用、凭据配置与命令以[候选镜像验收与部署预检](candidate-image-validation.md)为准。晋级沿用验收 digest，不重新构建；源码交接 `fast` 模式也不跳过该部署验收。
+
 工作流内部机制见[GitHub Actions 工作流说明](github-actions-workflows.md)，账号和权限见[腾讯云 CAM 子账号与 TCR 个人版最小权限操作手册](tencent-tcr-personal-cam-accounts.md)，生产基础设施细节见[1Panel 单机生产运行手册](1panel-production-runbook.md)，异常回退规则见[发布与回滚手册](release-and-rollback.md)。
 
 ## 2. 发布前准备
@@ -74,13 +76,14 @@ GitHub Actions
 4. 分支选择 `main`。
 5. `commit_sha` 填写第 3 节取得的完整 40 位 SHA。
 6. 点击确认运行。
-7. 打开新 Run，等待 `Tests, builds, and browser E2E` 完成。
+7. 打开新 Run，等待并行的 Backend pytest、Admin/Web 验证构建和最终 `Production browser E2E and aggregate evidence` 全部完成。
 
 成功结果应满足：
 
 - Run 顶部结论为成功。
 - Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright 均成功。
 - Artifact 中存在 `full-validation-<完整 SHA>`，保留期为 30 天。
+- 清单 schema 为 `pinjie-full-validation-v2`，Admin 验证运行 Nginx dist，Web 验证运行 standalone，旧 v1 不能替代。
 
 任一步失败时停止发布。修复代码后会产生新的 Commit SHA，必须从第 3 节重新开始，不能继续使用旧 SHA 的 Artifact。
 
