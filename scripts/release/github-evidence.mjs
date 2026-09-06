@@ -4,8 +4,16 @@ import { resolve } from "node:path";
 import { idPattern, repository, requireCondition, validateHandoff } from "./composition.mjs";
 
 export function run(command, args, options = {}) {
-  const result = spawnSync(command, args, { encoding: "utf8", timeout: 120_000, maxBuffer: 16 * 1024 * 1024,
-    shell: false, windowsHide: true, ...options });
+  const spawnOptions = { encoding: "utf8", timeout: 120_000, maxBuffer: 16 * 1024 * 1024,
+    ...options, shell: false, windowsHide: true };
+  let result;
+  switch (command) {
+    case "git": result = spawnSync("git", args, spawnOptions); break;
+    case "gh": result = spawnSync("gh", args, spawnOptions); break;
+    case "docker": result = spawnSync("docker", args, spawnOptions); break;
+    case process.execPath: result = spawnSync(process.execPath, args, spawnOptions); break;
+    default: throw new Error("Unsupported release subprocess.");
+  }
   requireCondition(!result.error && result.status === 0, `${command} failed (${result.status ?? "launch error"}).`);
   return result.stdout?.trim() ?? "";
 }

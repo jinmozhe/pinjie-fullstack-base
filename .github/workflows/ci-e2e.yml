@@ -65,8 +65,12 @@ jobs:
           node-version: "24"
           cache: pnpm
       - run: node scripts/ci/run-timed.mjs install pnpm install --frozen-lockfile
-      - run: node scripts/ci/run-timed.mjs unit pnpm --filter @pinjie/${{ matrix.app }} test
-      - run: node scripts/ci/run-timed.mjs build pnpm --filter @pinjie/${{ matrix.app }} build
+      - run: node scripts/ci/run-timed.mjs unit pnpm --filter "@pinjie/$APP" test
+        env:
+          APP: ${{ matrix.app }}
+      - run: node scripts/ci/run-timed.mjs build pnpm --filter "@pinjie/$APP" build
+        env:
+          APP: ${{ matrix.app }}
       - name: Package production output
         env:
           APP: ${{ matrix.app }}

@@ -1,12 +1,30 @@
 import assert from "node:assert/strict";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import childProcess, { spawnSync } from "node:child_process";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import YAML from "yaml";
 import { filterScan } from "./cnb-check-scan-evidence.mjs";
 import { apps, hash, imageVariables, validateComposition, validateHandoff, validateRequest } from "../release/composition.mjs";
 import { deploymentVariables, retentionPlan } from "../release/release-tools.mjs";
+import { run } from "../release/github-evidence.mjs";
+
+const originalSpawnSync = childProcess.spawnSync;
+try {
+  childProcess.spawnSync = (_command, _args, options) => {
+    assert.equal(options.shell, false);
+    assert.equal(options.windowsHide, true);
+    assert.equal(options.timeout, 1234);
+    return { status: 0, stdout: "fixture" };
+  };
+  syncBuiltinESMExports();
+  assert.equal(run("git", ["status"], { shell: true, windowsHide: false, timeout: 1234 }), "fixture");
+  assert.throws(() => run("unsupported-command", []), /Unsupported release subprocess/u);
+} finally {
+  childProcess.spawnSync = originalSpawnSync;
+  syncBuiltinESMExports();
+}
 
 const sha = "a".repeat(40);
 const source = { commit_sha: sha, commit_epoch: 1788652800, commit_time: "2026-09-06T00:00:00Z" };
