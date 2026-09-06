@@ -6,6 +6,7 @@
 
 ### Added
 
+- 增加手动生产镜像组合验收、可信交接证据、固定 digest 部署清单、1Panel 变量预检与只读 TCR 保留计划；Full Validation 改为并行三端检查后验证 Admin Nginx dist 与 Web standalone，成功证据升级 v2，并保留脱敏诊断；CNB main 交接串行，Docker 依赖层缩小输入，Trivy 改为一次完整扫描后转换和结构化门禁。本次完成本地实现，真实云构建、镜像 E2E 与生产部署未执行。
 - 增加面向人工操作人员的 GitHub Actions、CNB、TCR、1Panel 端到端发布手册，统一 `strict` 与 `fast` 选择、三端构建核对、单镜像证据、固定 digest 拉取、首次初始化、日常更新、健康检查、停止条件、发布记录和回滚步骤；现有专题文档收敛为工作流机制、账号权限、容器、生产基础设施和回滚决策入口。
 - 为 GitHub `Handoff Source to CNB` 增加默认 `strict`、可显式选择 `fast` 的双验证模式：严格模式完整核对同 SHA Full Validation Artifact，快速模式要求单行原因并记录 Commit、操作者和未执行完整验证的事实；四个轻量 Push 工作流、默认分支、应用状态、模块边界以及 CNB/TCR 供应链门禁在两种模式下继续强制执行。
 - 将 CNB 三镜像统一发布拆为 `backend-image`、`web-image` 和 `admin-image` 三条按真实 Docker 输入触发的独立 Pipeline：每端使用独立锁、Registry 缓存、扫描、SBOM、provenance、OCI 来源标签和 `pinjie-cnb-tcr-image-v1` 证据；`SOURCE_DATE_EPOCH` 使用 Git committer time，并增加仅在 `main` 可见的受控三端全量构建入口，生产继续通过 1Panel 按完整 digest 人工更新。
@@ -73,6 +74,7 @@
 
 ### Fixed
 
+- 修复事务内管理员权限重查复用旧 ORM 状态、两端将业务凭据错误误判为会话失效以及刷新故障被原 401 掩盖的问题；Web SSR 会话恢复增加非认证故障提示与手动重试，管理员站内头像保存与资产删除共用行锁并校验有效引用。
 - 修复 CNB 变更路由夹具使用动态正则触发 Semgrep ReDoS 阻断的问题，改用固定路由模式匹配并增加通配符不得跨目录的负向夹具；同时将 `fast-uri` 固定到修复 4 个 High 漏洞的 `3.1.6`。
 - 修复 1Panel Web 编排预拉取无法识别应用镜像 `${VAR:?提示}` 表达式的问题：四个应用服务改用基础变量插值，继续由生产门禁核对准确变量名和完整不可变 digest；补充错误变量接线负向夹具，以及面板任务状态与实际容器状态不一致时的健康核验步骤。
 - 修复 Admin Alpine 运行镜像只升级手工包清单导致新可修复漏洞遗漏的问题，构建时升级当前仓库中的全部已安装包；CNB Trivy 阻断现在输出精简漏洞表格，并在失败阶段保存原始扫描、digest、metadata 和摘要附件，同时继续保持 High、Critical 门禁 Fail Closed。
@@ -120,6 +122,7 @@
 
 ### Changed
 
+- 优化 AI 执行规则：局部低风险修改不强制新建计划，已有授权不因计划登记或任务续接重复确认，检查失败先修复范围内问题，检查点提交不阻塞实现；同步开发指南、按影响维护索引和真实完成条件，保留重型验证、Git 及生产动作授权边界，并消除 Admin 既有二次确认规则的歧义。
 - 派生项目计划基线规则调整为母版永久保留全部计划，独立业务仓库可在派生初始化阶段由用户人工一次性清理母版继承计划并重建索引；AI 仍不得删除、移动或重命名计划，派生项目必须同时记录母版不可变 Tag 和完整 Commit SHA，初始化结束后恢复计划永久保护。
 - 将根目录 `PROJECT_INDEX.md` 精简为项目身份、当前阶段、活动计划和权威入口；新增 `plans/INDEX.md` 作为全部实施计划的唯一永久登记，`plans/README.md` 继续只维护计划规则和生命周期。
 - 全项目索引迁移到根目录 `PROJECT_INDEX.md` 并作为唯一当前事实与任务导航入口；项目规则、README、PRD、ADR、架构、运维和全部既有计划中的旧名称与路径已同步更新，`.agents/` 继续只保留 Antigravity 规则桥接文件。

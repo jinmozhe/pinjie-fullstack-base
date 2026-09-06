@@ -17,6 +17,9 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-09-06_构建验证与镜像交付链路优化计划.md` | 已结束 | 已完成；本地实现、脚本夹具、轻量门禁和文档同步通过，真实云端验证未执行 | Backend、Admin、Web、Deployment、Documentation | 生产产物验证、并行缓存、单次扫描、镜像组合验收与部署预检 |
+| `plans/2026-09-06_权限会话与头像一致性修复计划.md` | 已结束 | 已完成；四项修复、回归用例和文档同步已完成，轻量门禁通过，重型验证按策略未执行 | Backend、Admin、Web、Documentation | 修复权限重查、会话错误分类与刷新故障传播、管理员头像引用一致性 |
+| `plans/2026-09-06_Agent规则与Skills执行边界优化计划.md` | 已结束 | 已完成；项目与个人规则已优化，9 个个人 Skills 已安装，静态审阅与轻量治理检查通过 | Documentation、Developer Workflow、个人 Skills | 优化自主性、澄清、授权复用和完成条件，消除重复确认及任务范围膨胀 |
 | `plans/2026-09-05_派生项目计划基线重建规则计划.md` | 已结束 | 已完成；母版与派生项目计划保护边界、人工初始化例外和 Tag 与完整 SHA 追溯要求已同步并通过治理门禁 | Documentation、Developer Workflow | 允许独立派生业务仓库在初始化阶段由用户人工清理母版继承计划并重建计划基线 |
 | `plans/2026-09-05_GitHub到1Panel端到端人工发布手册计划.md` | 已结束 | 已完成；现有发布专题文档已同步真实流程，新增从 GitHub Actions 经 CNB、TCR 到 1Panel 的人工端到端操作手册 | Deployment、Documentation | 同步真实发布状态并建立从 GitHub Actions 经 CNB、TCR 到 1Panel 的人工端到端操作手册 |
 | `plans/2026-09-04_GitHub源码交接双验证模式计划.md` | 已结束 | 已完成；双验证模式已进入 main，严格模式已完成真实 Full Validation Artifact 校验和 CNB 源码交接，快速模式未执行真实发布验证 | Deployment、Documentation | 为 GitHub 到 CNB 源码交接增加默认严格、可显式快速的 Full Validation 双模式和审计记录 |

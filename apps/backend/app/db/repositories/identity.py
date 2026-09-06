@@ -109,7 +109,8 @@ class AdminRepository:
     async def get(self, admin_id: uuid.UUID, *, for_update: bool = False) -> Admin | None:
         statement = select(Admin).where(Admin.id == admin_id).options(self._with_permissions())
         if for_update:
-            statement = statement.with_for_update()
+            # Authentication may already have loaded this identity before a concurrent permission change.
+            statement = statement.with_for_update().execution_options(populate_existing=True)
         return (await self.session.execute(statement)).scalar_one_or_none()
 
     async def get_many(self, admin_ids: list[uuid.UUID], *, for_update: bool = False) -> list[Admin]:

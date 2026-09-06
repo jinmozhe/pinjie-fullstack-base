@@ -39,6 +39,7 @@ function runScan(imageKey, blocked = false) {
   const evidenceRoot = path.join(fixtureRoot, ".cnb", "evidence", imageKey);
   rmSync(evidenceRoot, { recursive: true, force: true });
   mkdirSync(evidenceRoot, { recursive: true });
+  writeFileSync(path.join(fixtureRoot, "trivy-calls.txt"), "", "utf8");
   writeFileSync(path.join(evidenceRoot, `${imageKey}-digest.txt`), `${digest}\n`, "utf8");
   const environment = [
     `PATH="${shellPath(mockBin)}:$PATH"`,
@@ -74,6 +75,7 @@ try {
     mockTrivy,
     `#!/bin/sh
 set -eu
+printf '%s\\n' "$1" >> trivy-calls.txt
 format=""
 output=""
 while [ "$#" -gt 0 ]; do
@@ -117,8 +119,9 @@ esac
   for (const imageKey of ["backend", "web", "admin"]) {
     const { evidenceRoot, result } = runScan(imageKey);
     requireCondition(result.status === 0, `Expected ${imageKey} scan to pass.`, result);
-    requireCondition(existsSync(path.join(evidenceRoot, `${imageKey}-trivy.json`)), `Expected ${imageKey} JSON evidence.`, result);
+    requireCondition(existsSync(path.join(evidenceRoot, `${imageKey}-trivy-full.json`)), `Expected ${imageKey} complete JSON evidence.`, result);
     requireCondition(existsSync(path.join(evidenceRoot, `${imageKey}-sbom.cdx.json`)), `Expected ${imageKey} SBOM evidence.`, result);
+    requireCondition(readFileSync(path.join(fixtureRoot, "trivy-calls.txt"), "utf8").trim() === "image\nconvert\nconvert", "Expected one image scan and two offline conversions.", result);
   }
 
   const { evidenceRoot: blockedRoot, result: blockedResult } = runScan("admin", true);

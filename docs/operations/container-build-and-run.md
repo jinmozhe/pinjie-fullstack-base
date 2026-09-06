@@ -6,6 +6,10 @@
 
 ## 2. 构建前提
 
+Admin/Web Dockerfile 的依赖层只复制根清单、锁文件、pnpm 配置与钩子、三个共享包的 package.json 和补丁；完整共享包源码在依赖安装后复制。新增工作区包或安装期钩子时必须复核这一输入边界，禁止漏掉安装必需文件。Registry 缓存与 Git committer time 策略保持现状，缓存收益以实际新 Run 计时为准。
+
+已授权源码 E2E 需要 Docker：`pnpm test:e2e` 使用 Web standalone 和固定 Nginx 镜像托管 Admin dist，不再启动 Admin dev。最终生产镜像验收与部署清单操作见[候选镜像验收与部署预检](candidate-image-validation.md)。
+
 - 构建主机使用 Linux x86_64 或 Docker Desktop Linux 容器模式。
 - Backend 使用标准 CPython 3.14，当前构建与运行阶段固定官方 `python:3.14.7-slim-trixie@sha256:ce40764625a4ff50df3548277632e7f96c4e77fe75fa848aae9885476e7df5a4`，工具来源固定 `uv:0.11.32@sha256:df4cae8f3a96d175e2e5f992e597550000edbe78fdc2594d5cd8de1a217f504c`，镜像内只安装 `uv.lock` 的运行依赖。
 - Web 与 Admin 构建阶段及 Web 运行阶段固定 `node:24-alpine@sha256:d32cdf619f63fe0471182d08996dd516c6275bb5fd31ae06e55a570bd9e1ad43`，Admin 运行阶段固定 `nginx:1.29-alpine@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de`，并在构建时升级当前 Alpine 仓库能够修复的全部已安装包。
