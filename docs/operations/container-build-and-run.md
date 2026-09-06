@@ -174,7 +174,7 @@ docker compose --env-file .env -f compose.prod.yml --profile request-logs up -d 
 - 运行容器的镜像引用与批准的完整 digest 一致。
 - Web 与 Admin 使用同域 `/api/v1`，认证响应没有 Token 字段，生产 Cookie 包含 `HttpOnly`、`Secure` 和 `SameSite=Lax`。
 - 权限目录 `--check` 无漂移；启用请求元数据时消费者能够消费 Redis Stream 并落库。
-- 使用 Web 或 Admin 已认证会话上传测试头像，确认资产元数据落库、`/static/uploads/` 可读取、响应包含 `nosniff`，并确认容器重启后文件仍存在。
+- 使用 Web 或 Admin 已认证会话上传测试头像，确认资产元数据落库、`/static/uploads/` 可读取、响应包含单个 `X-Content-Type-Options: nosniff`，并确认容器重启后文件仍存在。Admin Nginx 隐藏上游的 `Permissions-Policy`、`Referrer-Policy`、`X-Content-Type-Options` 和 `X-Frame-Options`，统一通过 `add_header ... always` 输出，避免代理响应出现重复值；后端直连仍输出自身安全头。
 
 定期保留清理先执行 dry-run，核对数量并取得数据删除授权后再增加 `--apply`：
 
