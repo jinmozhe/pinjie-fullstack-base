@@ -1,6 +1,7 @@
 import type { AdminCreateIn, AdminRead, AdminUpdateIn } from "@pinjie/api-client";
 import {
   CheckCircleOutlined,
+  DeleteOutlined,
   EditOutlined,
   EllipsisOutlined,
   KeyOutlined,
@@ -31,10 +32,11 @@ import {
   message,
 } from "antd";
 import type { MenuProps } from "antd";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { AdminAvatar } from "@/components/AdminAvatar";
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
+import { StandardConfirmModal } from "@/components/StandardConfirmModal";
 import { StatusToggleTag } from "@/components/StatusToggleTag";
 import { AvatarUploader } from "@/components/Uploader";
 import { canAccess, useCurrentAdmin } from "@/features/auth";
@@ -49,6 +51,9 @@ export function AdminsPage() {
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
   const [editTarget, setEditTarget] = useState<AdminRead | null>(null);
+  const [removingAvatar, setRemovingAvatar] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const editSubmittingRef = useRef(false);
   const [roleTarget, setRoleTarget] = useState<AdminRead | null>(null);
   const [passwordTarget, setPasswordTarget] = useState<AdminRead | null>(null);
   const [sessionTarget, setSessionTarget] = useState<AdminRead | null>(null);
@@ -150,6 +155,8 @@ export function AdminsPage() {
   });
 
   const closeEdit = () => {
+    if (editSubmittingRef.current || uploadingAvatar) return;
+    setRemovingAvatar(false);
     setEditTarget(null);
     editForm.resetFields();
     edit.reset();
@@ -442,19 +449,35 @@ export function AdminsPage() {
         </Form>
       </Modal>
 
-      <Drawer open={Boolean(editTarget)} title={editTarget ? `编辑管理员：${editTarget.username}` : "编辑管理员"} size={480} destroyOnHidden onClose={closeEdit} extra={<Space><Button onClick={closeEdit}>取消</Button><Button type="primary" loading={edit.isPending} onClick={() => editForm.submit()}>保存</Button></Space>}>
+      <Drawer open={Boolean(editTarget)} title={editTarget ? `编辑管理员：${editTarget.username}` : "编辑管理员"} size={480} destroyOnHidden closable={!edit.isPending && !uploadingAvatar} maskClosable={!edit.isPending && !uploadingAvatar} keyboard={!edit.isPending && !uploadingAvatar} onClose={closeEdit} extra={<Space><Button disabled={edit.isPending || uploadingAvatar} onClick={closeEdit}>取消</Button><Button type="primary" disabled={removingAvatar || uploadingAvatar} loading={edit.isPending} onClick={() => editForm.submit()}>保存</Button></Space>}>
         {edit.isError && <Alert type="error" showIcon title={errorMessage(edit.error)} style={{ marginBottom: 16 }} />}
-        <Form<AdminUpdateIn> form={editForm} layout="vertical" onFinish={(values) => edit.mutate(values)}>
+        <Form<AdminUpdateIn> form={editForm} layout="vertical" disabled={edit.isPending || removingAvatar} onFinish={(values) => {
+          if (editSubmittingRef.current || removingAvatar || uploadingAvatar) return;
+          editSubmittingRef.current = true;
+          edit.mutate(values, { onSettled: () => { editSubmittingRef.current = false; } });
+        }}>
           <Form.Item label="头像">
             <Space orientation="vertical" size={4}>
-              <Form.Item name="avatar" noStyle><AvatarUploader disabled={edit.isPending} /></Form.Item>
-              {editAvatar ? <Button type="link" size="small" danger disabled={edit.isPending} onClick={() => editForm.setFieldValue("avatar", null)}>移除头像</Button> : null}
+              <Form.Item name="avatar" noStyle><AvatarUploader disabled={edit.isPending || removingAvatar} onUploadingChange={setUploadingAvatar} /></Form.Item>
+              {editAvatar ? <Button type="link" size="small" danger icon={<DeleteOutlined />} disabled={edit.isPending || removingAvatar || uploadingAvatar} onClick={() => setRemovingAvatar(true)}>移除头像</Button> : null}
             </Space>
           </Form.Item>
           <Form.Item label="登录账号"><Input value={editTarget?.username} disabled prefix={<UserOutlined />} /></Form.Item>
           <Form.Item label="显示名称" name="display_name" rules={[{ max: 100, message: "显示名称最多 100 个字符" }]}><Input maxLength={100} placeholder="请输入显示名称" /></Form.Item>
         </Form>
       </Drawer>
+
+      <StandardConfirmModal
+        open={removingAvatar && Boolean(editTarget)}
+        title={`确认移除管理员“${editTarget?.username ?? ""}”的头像`}
+        description="确认后将清空编辑表单中的头像，保存管理员资料后生效。原图片资产仍保留，其他资料不受影响。"
+        loading={edit.isPending}
+        onCancel={() => setRemovingAvatar(false)}
+        onConfirm={async () => {
+          editForm.setFieldValue("avatar", null);
+          setRemovingAvatar(false);
+        }}
+      />
 
       <Modal open={Boolean(passwordTarget)} title={passwordTarget ? `重置密码：${passwordTarget.username}` : "重置密码"} okText="确定" confirmLoading={resetPasswordMutation.isPending} destroyOnHidden onCancel={() => { setPasswordTarget(null); passwordForm.resetFields(); }} onOk={() => passwordForm.submit()}>
         {resetPasswordMutation.isError && <Alert type="error" showIcon title={errorMessage(resetPasswordMutation.error)} />}

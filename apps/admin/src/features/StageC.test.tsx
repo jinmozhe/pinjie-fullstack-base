@@ -173,13 +173,49 @@ describe("stage C admin workspace", () => {
     expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /批量删除/ }));
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("填写删除原因（可选）")).toBeInTheDocument();
+    expect(within(dialog).getByText("确认将 1 名用户移入回收站")).toBeInTheDocument();
     expect(within(dialog).getByLabelText("删除原因")).toBeInTheDocument();
-    await user.click(within(dialog).getByRole("button", { name: "移入回收站" }));
+    expect(bulkPayload).toBeUndefined();
+    await user.click(within(dialog).getByRole("button", { name: /取\s*消/ }));
+    expect(bulkPayload).toBeUndefined();
+    expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /批量删除/ }));
+    await confirmWarning(user, "确认将 1 名用户移入回收站");
 
     await waitFor(() =>
       expect(bulkPayload).toEqual({ user_ids: ["01900000-0000-7000-8000-000000000002"], deletion_reason: null }),
     );
+  }, 60_000);
+
+  it.each(["single", "bulk"])("retains %s user deletion targets and reason on failure", async (mode) => {
+    const user = userEvent.setup();
+    let attempts = 0;
+    let bulkPayload: unknown;
+    server.use(
+      http.delete("http://localhost:3000/api/v1/admin/users/batch", async ({ request }) => {
+        attempts += 1;
+        bulkPayload = await request.json();
+        return attempts === 1
+          ? HttpResponse.json({ code: "USER_STATE_CONFLICT", message: "用户状态已变更", request_id: "test-request" }, { status: 409 })
+          : HttpResponse.json({ code: "OK", message: "操作成功", data: { completed_count: 1, target_ids: ["01900000-0000-7000-8000-000000000002"] }, request_id: "test-request" });
+      }),
+    );
+    renderPage(<UsersPage />);
+    await screen.findByText("Browser User");
+    if (mode === "bulk") await user.click(screen.getByRole("checkbox", { name: /Select row/ }));
+    await user.click(screen.getByRole("button", { name: mode === "bulk" ? /批量删除/ : /删\s*除/ }));
+    const dialog = await screen.findByRole("dialog");
+    const reason = within(dialog).getByLabelText("删除原因");
+    await user.type(reason, "重复账户");
+    expect(bulkPayload).toBeUndefined();
+    await user.click(within(dialog).getByRole("button", { name: /确\s*定/ }));
+    expect(await within(dialog).findByText("用户状态已变更")).toBeVisible();
+    expect(reason).toHaveValue("重复账户");
+    if (mode === "bulk") expect(screen.getByText("已选择 1 项")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: /确\s*定/ }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(bulkPayload).toEqual({ user_ids: ["01900000-0000-7000-8000-000000000002"], deletion_reason: "重复账户" });
+    if (mode === "bulk") expect(screen.queryByText("已选择 1 项")).not.toBeInTheDocument();
   }, 60_000);
 
   it("loads the recycle bin and sends one atomic bulk restore request", async () => {
@@ -280,6 +316,13 @@ describe("stage C admin workspace", () => {
     await user.clear(displayName);
     await user.type(displayName, "Updated Admin");
     await user.click(screen.getByRole("button", { name: "移除头像" }));
+    const confirmation = await screen.findByRole("dialog", { name: "确认移除管理员“other-admin”的头像" });
+    expect(updatePayload).toBeUndefined();
+    await user.click(within(confirmation).getByRole("button", { name: /取\s*消/ }));
+    expect(screen.getByRole("button", { name: "移除头像" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "移除头像" }));
+    await confirmWarning(user, "确认移除管理员“other-admin”的头像");
+    expect(updatePayload).toBeUndefined();
     await user.click(screen.getByRole("button", { name: /保\s*存/ }));
 
     await waitFor(() => expect(updatePayload).toEqual({ avatar: null, display_name: "Updated Admin" }));
