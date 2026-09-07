@@ -6,6 +6,7 @@
 
 ### Added
 
+- 增加 Admin `ProTable` 列表开发规则：工具栏左侧通过 `headerTitle` 显示“XX列表”，右侧统一提供刷新、密度、列设置和全屏；搜索、筛选与重置按需实现，预计数据较多且需求不明确时开发前向用户确认。本次仅更新规则与接入说明，未批量改造现有页面。
 - 增加手动生产镜像组合验收、可信交接证据、固定 digest 部署清单、1Panel 变量预检与只读 TCR 保留计划；Full Validation 改为并行三端检查后验证 Admin Nginx dist 与 Web standalone，成功证据升级 v2，并保留脱敏诊断；CNB main 交接串行，Docker 依赖层缩小输入，Trivy 改为一次完整扫描后转换和结构化门禁。本次完成本地实现，真实云构建、镜像 E2E 与生产部署未执行。
 - 增加面向人工操作人员的 GitHub Actions、CNB、TCR、1Panel 端到端发布手册，统一 `strict` 与 `fast` 选择、三端构建核对、单镜像证据、固定 digest 拉取、首次初始化、日常更新、健康检查、停止条件、发布记录和回滚步骤；现有专题文档收敛为工作流机制、账号权限、容器、生产基础设施和回滚决策入口。
 - 为 GitHub `Handoff Source to CNB` 增加默认 `strict`、可显式选择 `fast` 的双验证模式：严格模式完整核对同 SHA Full Validation Artifact，快速模式要求单行原因并记录 Commit、操作者和未执行完整验证的事实；四个轻量 Push 工作流、默认分支、应用状态、模块边界以及 CNB/TCR 供应链门禁在两种模式下继续强制执行。
