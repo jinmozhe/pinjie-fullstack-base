@@ -29,6 +29,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
+import { StandardConfirmModal } from "@/components/StandardConfirmModal";
 import { canAccess, useCurrentAdmin } from "@/features/auth";
 import { adminApi } from "@/lib/api/admin";
 import { ApiError, errorMessage } from "@/lib/api/http";
@@ -76,6 +77,7 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
   const queryClient = useQueryClient();
   const [dirty, setDirty] = useState(false);
   const [hydratedRevision, setHydratedRevision] = useState<number>();
+  const [removeLogoRevision, setRemoveLogoRevision] = useState<number | null>(null);
   const [conflict, setConflict] = useState(false);
   const query = useQuery({ queryKey: SITE_QUERY_KEY, queryFn: adminApi.siteSetting });
 
@@ -132,10 +134,7 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
   });
 
   const deleteLogo = useMutation({
-    mutationFn: () => {
-      if (!query.data) throw new Error("站点设置尚未加载");
-      return adminApi.deleteSiteLogo(query.data.revision);
-    },
+    mutationFn: (revision: number) => adminApi.deleteSiteLogo(revision),
     onSuccess: (data) => {
       queryClient.setQueryData(SITE_QUERY_KEY, data);
       setConflict(false);
@@ -143,7 +142,6 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
     },
     onError: (error) => {
       if (isRevisionConflict(error)) setConflict(true);
-      else message.error(errorMessage(error));
     },
   });
 
@@ -165,7 +163,7 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
     return Upload.LIST_IGNORE;
   };
 
-  const pending = save.isPending || uploadLogo.isPending || deleteLogo.isPending;
+  const pending = save.isPending || uploadLogo.isPending || deleteLogo.isPending || removeLogoRevision !== null;
 
   return (
     <>
@@ -198,7 +196,7 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
                   showUploadList={false}
                   disabled={!canUpdate || pending || conflict}
                 >
-                  <Button icon={<CloudUploadOutlined />} loading={uploadLogo.isPending} disabled={!canUpdate || conflict}>
+                  <Button icon={<CloudUploadOutlined />} loading={uploadLogo.isPending} disabled={!canUpdate || pending || conflict}>
                     上传 LOGO
                   </Button>
                 </Upload>
@@ -207,8 +205,8 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
                     danger
                     icon={<DeleteOutlined />}
                     loading={deleteLogo.isPending}
-                    disabled={!canUpdate || conflict}
-                    onClick={() => deleteLogo.mutate()}
+                    disabled={!canUpdate || pending || conflict}
+                    onClick={() => setRemoveLogoRevision(query.data.revision)}
                   >
                     移除
                   </Button>
@@ -281,6 +279,19 @@ function SiteSettingsTab({ canUpdate }: { canUpdate: boolean }) {
           </Form>
         </div>
       ) : null}
+      <StandardConfirmModal
+        open={removeLogoRevision !== null}
+        title="确认移除站点 LOGO"
+        description="确认后将立即移除当前站点 LOGO，Web 公共站点将不再展示该图片。如需恢复，需要重新上传。其他站点资料保持不变。"
+        loading={deleteLogo.isPending}
+        onCancel={() => setRemoveLogoRevision(null)}
+        onConfirm={async () => {
+          if (removeLogoRevision === null) throw new Error("请选择要移除的站点 LOGO");
+          if (conflict) throw new Error("设置已变更，请取消后加载最新配置，再重新确认移除");
+          await deleteLogo.mutateAsync(removeLogoRevision);
+          setRemoveLogoRevision(null);
+        }}
+      />
     </>
   );
 }

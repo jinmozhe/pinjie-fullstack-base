@@ -17,7 +17,7 @@
 2. `@umijs/max` 替换 Vite 和独立 React Router 应用入口，采用 Umi 配置式路由、`src/app.tsx`、initialState、Access、Locale、React Query 和 ProLayout。项目保留 `src/lib/api/http.ts` 作为唯一安全传输层，Umi Request 不作为并行请求客户端。
 3. Ant Design、ProComponents、Icons、React、Umi Max 及官方插件在 `apps/admin/package.json` 中分别显式声明，由根 `pnpm-lock.yaml` 锁定，不能把 `ant-design-pro` 仓库当作单一 npm 全家桶依赖。
 4. Admin 继续使用根 `openapi.json` 和 `@pinjie/api-client` 唯一生成链。官方 OpenAPI 插件只有在不产生第二套 DTO、SDK 或契约副本时才可使用。
-5. Browser Cookie Profile、HttpOnly、CSRF、单飞 Refresh、RBAC、服务端最终授权和审计链保持不变。物理硬删除统一使用标准警告弹窗，管理操作不使用密码二次确认。官方示例 Token、localStorage、Mock 和简单角色判断不进入生产实现。
+5. Browser Cookie Profile、HttpOnly、CSRF、单飞 Refresh、RBAC、服务端最终授权和审计链保持不变。删除与移除统一使用标准警告弹窗，范围与提交保护遵守 [Admin 工程实施标准](../architecture/admin-engineering-standard.md)，管理操作不使用密码二次确认。官方示例 Token、localStorage、Mock 和简单角色判断不进入生产实现。
 6. pnpm Monorepo、Feature 边界、3001 端口、Nginx 同域代理、非 Root 容器、MSW、Playwright、axe、80% 覆盖率和 Fail Closed 门禁继续生效。
 7. 官方模板的演示页面、远程素材、GA、演示 API、Chatbot、图表地图和其他未使用依赖不进入母版。
 

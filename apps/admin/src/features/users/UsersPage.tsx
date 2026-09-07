@@ -16,6 +16,7 @@ import { Alert, Button, Checkbox, Drawer, Flex, Form, Input, Modal, Pagination, 
 import { useState } from "react";
 
 import { PageFrame, QueryState, formatTime } from "@/components/PageFrame";
+import { StandardConfirmModal } from "@/components/StandardConfirmModal";
 import { StatusToggleTag } from "@/components/StatusToggleTag";
 import { canAccess, useCurrentAdmin } from "@/features/auth";
 import { adminApi } from "@/lib/api/admin";
@@ -459,30 +460,29 @@ export function UsersPage() {
         </Form>
       </Modal>
 
-      <Modal
+      <StandardConfirmModal
         open={Boolean(deleteTargets)}
-        title="填写删除原因（可选）"
-        okText="移入回收站"
-        confirmLoading={batchDeleteMutation.isPending}
+        title={`确认将 ${deleteTargets?.length ?? 0} 名用户移入回收站`}
+        description="确认后所选账户将被停用，现有登录会话将被撤销。用户资料保留，可在回收站恢复，恢复后仍为停用状态。"
+        loading={batchDeleteMutation.isPending}
         onCancel={() => { setDeleteTargets(null); deleteReasonForm.resetFields(); }}
-        onOk={() => deleteReasonForm.submit()}
+        onConfirm={async () => {
+          const targets = deleteTargets;
+          if (!targets?.length) throw new Error("请选择要移入回收站的用户");
+          const { deletion_reason } = await deleteReasonForm.validateFields();
+          await batchDeleteMutation.mutateAsync({ userIds: targets, deletionReason: deletion_reason?.trim() || null });
+        }}
       >
         <Form
           form={deleteReasonForm}
           layout="vertical"
-          onFinish={({ deletion_reason }) => {
-            const targets = deleteTargets;
-            if (!targets) return;
-            void batchDeleteMutation
-              .mutateAsync({ userIds: targets, deletionReason: deletion_reason?.trim() || null })
-              .catch((error: unknown) => message.error(errorMessage(error)));
-          }}
+          disabled={batchDeleteMutation.isPending}
         >
           <Form.Item label="删除原因" name="deletion_reason" extra="可留空，最多 100 个字符">
             <Input.TextArea maxLength={100} showCount autoFocus />
           </Form.Item>
         </Form>
-      </Modal>
+      </StandardConfirmModal>
 
       <Drawer open={Boolean(selected)} styles={{ wrapper: { width: 560 } }} title={selected ? `${selected.username} 的会话` : "用户会话"} onClose={() => { setSelected(null); setSessionPage(1); }} extra={selected && canAccess(current, "users:sessions:revoke") ? <Button danger loading={revokeSessionsMutation.isPending} onClick={() => revokeSessionsMutation.mutate(selected.id)}>撤销全部</Button> : null}>
         <QueryState loading={sessions.isLoading} error={sessions.isError ? errorMessage(sessions.error) : undefined} empty={sessions.data?.items.length === 0} onRetry={() => void sessions.refetch()} />
