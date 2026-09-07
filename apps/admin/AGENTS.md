@@ -26,6 +26,8 @@
 ## UI 与交互
 
 - 优先使用 Ant Design 和 ProComponents 的现有组件、表单、表格、反馈和主题能力，避免重复实现基础控件；`ProTable`、`ModalForm` 和 `DrawerForm` 适用于标准场景，但不强制用于复杂工作流、特殊交互或有明确性能约束的页面。
+- 所有 `ProTable` 列表页面（含只读日志）必须在表格上方工具栏左侧通过 `headerTitle` 显示“XX列表”（XX 为数据名称），右侧显示并启用刷新、密度、列设置、全屏四个内建图标按钮。刷新接入当前 Query 并保留分页与查询条件；接入示例见 `docs/architecture/admin-engineering-standard.md`。
+- 搜索、筛选和重置按需实现；预计数据较多且需求不明确时，开发前向用户确认是否需要及具体条件。保留已有查询能力。
 - 操作按钮使用 Ant Design 图标并提供明确文本或 Tooltip；危险操作必须有清晰文案和错误反馈，删除与移除类操作按本节统一二次确认。
 - 页面状态至少覆盖加载、空数据、失败、无权限和成功反馈。表格与表单需处理窄屏、长文本和溢出。
 - 所有使用 Ant Design `Table` 或 `ProTable` 的表格，表头和单元格统一设置 `white-space: nowrap`；优先通过 `onHeaderCell`、`onCell` 或 Admin 公共表格样式实现，避免空数据或列宽自适应时出现表头、内容换行。长文本通过列宽、Tooltip 或其他明确的溢出处理解决。
