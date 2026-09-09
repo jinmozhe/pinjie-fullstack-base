@@ -66,4 +66,4 @@
 - 当前 Admin 只允许 Umi 默认 Webpack 构建链。移除 Vite 4 的精确 pnpm Hook、两个 Umi 补丁和依赖自检门禁必须同时保留；升级 Umi 或重新启用 Vite bundler 前必须创建专项计划，提供上游兼容证据，并在用户明确授权后执行计划内全量回归。
 - 母版只接收跨业务复用且有明确需求的外围能力。图表、富文本、Excel 和其他具体业务依赖默认由派生仓库按真实需求引入，不以“业务依赖自由升级”为准入理由。
 
-详细目录、请求、组件选择和依赖分层见 `docs/architecture/admin-engineering-standard.md`。
+布局、列宽、筛选、开关等规则见 `docs/architecture/admin-engineering-standard.md`。
