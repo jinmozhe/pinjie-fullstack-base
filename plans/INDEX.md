@@ -17,7 +17,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
-| `plans/2026-09-09_前端依赖安全门禁修复计划.md` | 实施中 | 不适用 | Admin、Web、Documentation | 修复 Next.js、sharp、js-yaml 与 SVGO 导致的线上安全门禁阻断 |
+| `plans/2026-09-09_前端依赖安全门禁修复计划.md` | 已结束 | 已完成；四项依赖补丁、两端轻量验证与线上 13 项必需检查通过，重型验证和生产发布部署未执行 | Admin、Web、Documentation | 修复 Next.js、sharp、js-yaml 与 SVGO 导致的线上安全门禁阻断 |
 | `plans/2026-09-08_GitSync规则与Antigravity同步计划.md` | 已结束 | 已完成；全局技能与母版规则同步，技能及轻量治理检查通过，实际 Git 交付未执行 | Documentation、个人 Skills | 同步 GitSync 全仓授权、三次失败中止及 Security 仅线上规则到母版和 Antigravity |
 | `plans/2026-09-07_Admin删除与移除二次确认计划.md` | 已结束 | 已完成；轻量门禁通过，重型验证未执行 | Admin、Documentation | 统一单条与批量删除、回收站和移除确认，补齐防重及失败反馈 |
 | `plans/2026-09-06_构建验证与镜像交付链路优化计划.md` | 已结束 | 已完成；修复后完整验证与严格交接成功，当前部署文档收敛为 1Panel 人工核验更新，文档与治理门禁通过 | Backend、Admin、Web、Deployment、Documentation | 生产产物验证、并行缓存、单次扫描及 1Panel 人工部署文档收敛 |
