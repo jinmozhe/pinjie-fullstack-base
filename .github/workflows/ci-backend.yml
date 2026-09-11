@@ -139,10 +139,22 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: git fetch --no-tags --depth=1 origin "$BASE_REF"
 
+      - name: Install Node.js for exception validation
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Validate and generate controlled OpenAPI exceptions
+        shell: bash
+        run: |
+          mkdir -p temp
+          node scripts/ci/check-openapi-exceptions.mjs --output temp/oasdiff-ignore.txt
+
       - name: Reject breaking OpenAPI changes
         uses: oasdiff/oasdiff-action/breaking@033c15c845bef10f148afb0fa781bf1b2a7fe1bf # v0.1.12
         with:
           base: origin/${{ github.base_ref }}:openapi.json
           revision: HEAD:openapi.json
           fail-on: ERR
+          err-ignore: temp/oasdiff-ignore.txt
           review: false

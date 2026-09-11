@@ -157,6 +157,8 @@ Governance 检查仓库结构、文本质量和架构边界，防止代码本身
 | Install pnpm and Node.js | 安装固定 pnpm 11.17.0 和 Node.js 24 | 下载失败、缓存或运行环境异常 |
 | Install locked dependencies | 按锁文件安装依赖 | 锁文件漂移、供应链策略拒绝依赖 |
 | Lint Markdown | 运行全仓库 Markdown 格式检查 | 标题、列表、表格或链接格式违规 |
+| Validate controlled OpenAPI exceptions | 校验例外范围、关联计划、证据字段与 UTC 期限 | 过期、无计划登记、缺少迁移或回滚记录 |
+| Verify OpenAPI exception guards | 验证例外校验正反例及 Backend 工作流接线 | 校验失效、误放行或门禁被跳过 |
 
 ### 5.3 结果含义
 
@@ -206,9 +208,59 @@ Job 不启动测试服务容器，全部步骤应在没有 PostgreSQL、Redis �
 
 ### 6.4 Pull Request 专属检查
 
-`OpenAPI breaking changes` Job 只在 Pull Request 运行。它比较 PR 与目标分支的 `openapi.json`，使用 `oasdiff` 拒绝未处理的破坏性接口变化。
+`OpenAPI breaking changes` Job 只在 Pull Request 运行。它比较目标分支 `origin/${{ github.base_ref }}:openapi.json` 与当前检出结果 `HEAD:openapi.json`，使用 `oasdiff` 拒绝未登记的破坏性接口变化。Pull Request 默认检出的是合并引用。
 
 普通 push 不运行该 Job，因为 push 事件没有 PR 的目标分支上下文。
+
+### 6.5 受控 OpenAPI 例外
+
+根目录 `.oasdiff-exceptions.json` 是唯一例外登记来源，初始为 `schemaVersion: 1` 和空 `exceptions` 数组。Backend PR 先运行 Node 校验，再生成 `temp/oasdiff-ignore.txt`，以 `err-ignore` 传给现有 Action；`fail-on: ERR`、`review: false`、契约重新导出与生成漂移检查继续保留。生成文件位于容器 Action 能访问的工作区，通过现有 `/temp/` 规则排除入库，禁止手工维护第二份清单。
+
+`CI - Governance` 在目标为 `main` 的 PR 和 `main` push 校验登记及治理夹具。到期当日 `00:00 UTC` 起，下一次检查必须失败；没有新增定时任务。单次例外最长 30 天，批准日期不得晚于当前 UTC 日期。延期必须重新取得用户确认、更新原计划中的审批和迁移记录，再更新批准日期与到期日期，不得只改时间躲避清理。
+
+#### 登记步骤
+
+1. 保留未忽略的 oasdiff 报告，确认变化确实是本次授权目标，逐项识别 Backend、Admin、Web、生成客户端、外部消费者、旧浏览器与数据库影响。
+2. 在同一全栈计划记录明确批准依据、消费者迁移证据、发布顺序、回滚条件和例外清理安排。类型检查通过仅证明当前源码的类型关系；仍在线的旧客户端与独立部署的应用需要迁移安排，必要时按 ADR 0007 使用受控兼容窗口。
+3. 在计划对应证据段落旁添加独占一行的标记 `<!-- oasdiff-exception: 例外id -->`。每个标记唯一，原计划必须在 `plans/INDEX.md` 唯一登记。计划结束后可以短暂保留尚未到期的例外，但结束状态不会延长有效期。
+4. 向 `.oasdiff-exceptions.json` 的 `exceptions` 数组添加下表规定的对象，每条只对应一个方法、路径和完整错误描述。全部字段必填，均为无首尾空白的单行字符串，每项最多 4096 字符；未知字段、重复 ID 和忽略大小写后重复的规则会失败。
+5. 运行 `pnpm check:openapi-exceptions` 与 `pnpm check:openapi-exceptions:guards`，提交 PR 由 Code Owner 审查实际批准和迁移证据。校验只能确认字段、日期、计划引用与标记存在，不能代替人工审批或证明已完成生产迁移。
+6. 变更合并、目标分支契约包含新行为后，尽快通过后续 PR 删除对应登记；清理后继续保留原计划和审批证据。例外清理与兼容代码删除是两项独立工作，兼容窗口仍遵守 ADR 0007。
+
+| 字段 | 填写规则 |
+| --- | --- |
+| `id` | 3 至 80 位小写字母、数字和连字符，以字母开头；对应计划标记 |
+| `plan` | 仓库相对路径，如 `plans/YYYY-MM-DD_主题计划.md`，禁止越界和失效引用 |
+| `owner` | 实际负责清理的 GitHub 用户，如 `@maintainer` |
+| `approvedOn` / `expiresOn` | 实际批准日期与到期日期，严格使用 `YYYY-MM-DD`；到期日期不包含在有效期内 |
+| `reason` | 本次变化必要性及批准依据摘要，详细批准记录进入原计划 |
+| `migration` | 受影响消费者及适配验证证据摘要或原计划具体章节，明确旧浏览器及外部调用方影响 |
+| `rollout` | 发布顺序及切换条件摘要或原计划具体章节 |
+| `rollback` | 回滚触发条件、数据与客户端兼容边界摘要或原计划具体章节 |
+| `cleanup` | 合并后清理时机、责任和证据位置 |
+| `method` | 大写 OpenAPI HTTP 方法，如 `GET`，禁止通配 |
+| `path` | 原始完整接口路径，保留 `{参数名}`，禁止通配、正则和查询串 |
+| `message` | oasdiff 英文报告的完整错误描述，包含字段路径、状态码、类型等实际诊断内容及反引号；不附加其他诊断、方法路径、注释或源文件位置 |
+
+#### 匹配语义与边界
+
+固定 Action `v0.1.12` 的 Dockerfile 使用 oasdiff `v1.28.0`。虽然 Action 输入说明称其为正则，当前[原生匹配源码](https://github.com/oasdiff/oasdiff/blob/v1.28.0/checker/api_change.go)实际要求接口路径相等，忽略行包含方法与路径及完整错误文本，比较时转换为小写。[文件读取源码](https://github.com/oasdiff/oasdiff/blob/v1.28.0/checker/ignore.go)逐行处理且不专门跳过注释，因此元数据和说明只保存在 JSON 与计划中；传给 oasdiff 的文件只包含校验生成的行。
+
+生成行的格式为 `METHOD /完整路径 完整错误描述`。空登记生成只有一个换行的文件，不放行任何错误。禁止用 `.*`、规则类别开关、`warn-ignore` 或 `continue-on-error` 代替精确登记。当前机制只开放接口级例外，不开放组件级忽略语句。
+
+工具原生大小写折叠与完整文本包含匹配仍有局限：大小写不同的路径或字段不能依靠本机制区分；同一方法路径下可能被完整描述同时匹配的变化必须一起审查，禁止在一条记录拼接多项错误。尚未登记的其他错误继续由 oasdiff 阻断。升级 Action 或底层 CLI 时必须复核实际错误文本、空清单与匹配语义，不得假定格式不变。
+
+本地只校验登记时运行 `pnpm check:openapi-exceptions`，不写文件；排查原生匹配时，可在新建临时目录中运行以下生成命令，再将输出路径传给同版本 oasdiff 的 `--err-ignore`。输出文件必须不存在，校验失败不会生成文件，已有文件也不会被覆盖。不要传入真实契约或其他资产作为输出路径。
+
+```powershell
+node scripts/ci/check-openapi-exceptions.mjs --output 临时目录/oasdiff-ignore.txt
+```
+
+治理夹具验证元数据、生成安全和 CI 接线，不代表 GitHub Docker Action 已真实运行。需要原生契约辅助核验时，从官方 Release 获取并校验与 Action 相同的 CLI 版本，使用以下命令额外覆盖 OpenAPI 3.1 可空变更、精确放行，以及其他字段、相近路径、方法和状态码仍被拒绝的情况。该选项不会自动下载工具，也不接入日常 CI；应用测试、生产构建、浏览器与数据库验证继续遵守独立授权规则。
+
+```powershell
+pnpm check:openapi-exceptions:guards --oasdiff 临时目录/oasdiff.exe
+```
 
 ## 7. CI - Frontend
 

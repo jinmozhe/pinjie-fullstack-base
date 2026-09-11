@@ -51,3 +51,9 @@ jobs:
 
       - name: Lint Markdown
         run: pnpm lint:md
+
+      - name: Validate controlled OpenAPI exceptions
+        run: pnpm check:openapi-exceptions
+
+      - name: Verify OpenAPI exception guards
+        run: pnpm check:openapi-exceptions:guards
