@@ -17,6 +17,7 @@
 
 | 路径 | 状态 | 结果 | 影响范围 | 用途 |
 | --- | --- | --- | --- | --- |
+| `plans/2026-09-11_Markdown工具依赖安全修复计划.md` | 实施中 | 不适用 | 根开发依赖、治理与文档 | 修复 smol-toml 高危漏洞导致的线上 Node 审计阻断 |
 | `plans/2026-09-11_OpenAPI受控变更门禁计划.md` | 已结束 | 已完成；轻量门禁、42 项治理夹具和 12 项原生契约辅助核验通过，远端 CI 未执行 | Backend CI、治理与文档 | 建立有期限、有迁移证据的精确契约例外机制 |
 | `plans/2026-09-09_前端依赖安全门禁修复计划.md` | 已结束 | 已完成；四项依赖补丁、两端轻量验证与线上 13 项必需检查通过，重型验证和生产发布部署未执行 | Admin、Web、Documentation | 修复 Next.js、sharp、js-yaml 与 SVGO 导致的线上安全门禁阻断 |
 | `plans/2026-09-08_GitSync规则与Antigravity同步计划.md` | 已结束 | 已完成；全局技能与母版规则同步，技能及轻量治理检查通过，实际 Git 交付未执行 | Documentation、个人 Skills | 同步 GitSync 全仓授权、三次失败中止及 Security 仅线上规则到母版和 Antigravity |
