@@ -19,3 +19,6 @@
 /apps/web/ @jinmozhe
 /packages/api-client/ @jinmozhe
 /openapi.json @jinmozhe
+/.oasdiff-exceptions.json @jinmozhe
+/scripts/ci/check-openapi-exceptions.mjs @jinmozhe
+/scripts/ci/test-openapi-exceptions.mjs @jinmozhe
