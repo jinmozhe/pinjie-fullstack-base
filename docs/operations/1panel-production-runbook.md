@@ -31,6 +31,10 @@
 
 环境变量职责和最低配置见[环境变量分层与 Backend 本地运行手册](environment-variables-and-backend-local-run.md)。真实秘密不得写入仓库、命令日志、工单或聊天记录。
 
+### 登录与发布结果的独立核验
+
+本机 Docker 或 CNB 的登录成功不会为生产服务器提供凭据。1Panel 的 Registry 配置与服务器命令行实际使用的 Docker 配置分别确认，不能假定 SSH 用户、root 和面板自动共享登录态。先用目标只读身份按完整 digest 拉取，再验证编排、实际运行 digest、健康端点和业务访问；镜像存在、拉取成功、部署健康是不同检查点。先前有效凭据可以继续使用，无需每次发布退出重登；鉴权错误按[TCR 账号手册](tencent-tcr-personal-cam-accounts.md#12-常见问题和处理顺序)分流。
+
 ## 3. 配置检查
 
 在发布候选代码上先运行：

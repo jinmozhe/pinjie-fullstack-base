@@ -51,6 +51,29 @@ Git Commit SHA 用于追溯源码，TCR `sha-<Commit SHA>` 标签用于查找镜
 
 根 `.env` 保存 Compose 使用的三张镜像引用和 Web 公开 Origin。`apps/backend/.env` 保存 Backend 运行配置。真实密码、Token 和完整连接串不得进入 Git、GitHub 日志、CNB 日志或操作记录。
 
+### 2.1 平台连接配置与核验入口
+
+发布前逐条确认以下连接。浏览器、本机 Docker、CNB 构建环境和服务器分别持有认证状态，任何一处登录成功都不会替其他环境登录。
+
+| 连接 | 凭据和配置归属 | 核验方式 |
+| --- | --- | --- |
+| GitHub → CNB 源码 | GitHub `cnb-source-handoff` Environment 的 `CNB_PUSH_TOKEN`；变量 `CNB_REPOSITORY_URL=https://cnb.cool/pjwl/pinjie-fullstack-base`、`CNB_PUSH_USERNAME=cnb`、`CNB_RELEASE_BRANCH=main` | Handoff 成功，并核对 CNB main 的完整 SHA |
+| GitHub → CNB 状态查询 | 同一 Environment Token，母版仓库范围内 `repo-cnb-history:r`、`repo-cnb-trigger:r` | `Inspect CNB Release` 返回该 SHA 的构建和逐端状态 |
+| CNB → TCR | 共享密钥文件中的 `TCR_PUBLISH_USERNAME`、`TCR_PUBLISH_PASSWORD`、Registry 和 namespace | 目标仓库候选镜像推送成功，随后扫描及正式标签成功 |
+| 1Panel → TCR | 面板 Registry 配置或实际执行 Docker 的服务器用户所持 `tcr-puller` 凭据 | 按固定 digest 拉取成功，随后独立检查编排与健康 |
+| 本机 → TCR，可选 | 当前 Windows 用户 Docker 凭据中的只读身份 | 镜像清单查询成功，取得完整 digest 和 OCI revision |
+
+当前 TCR 发布凭据由 CNB 使用，不要求在 GitHub 创建 `image-publishing` Environment。以工作流实际的 `environment:`、`secrets` 和 `vars` 引用为准；Environment 中的同名 Secret 可能覆盖仓库级值，更新时要核对实际读取位置。
+
+本机 Docker 只是可选的私有镜像核验入口。能够结合 CNB 发布证据，在已认证的 TCR 控制台或服务器核对完整镜像引用和 digest 时，无需为发布在开发电脑安装或登录 Docker。选择本机核验时先查询，成功便复用现有登录态；仅在鉴权失败或需要切换身份时处理登录，操作见[TCR 账号手册](tencent-tcr-personal-cam-accounts.md#104-可选的-windows-本机镜像核验)。
+
+### 2.2 派生项目与共享凭据检查
+
+1. 对照 GitHub 仓库、CNB 源仓库、CNB 密钥文件、TCR namespace 和三个实际镜像仓库名，禁止沿用母版镜像名却误向派生仓库推送。
+2. Token 的源码读写与构建查询权限分别检查，能推送 Git 不代表能查询 CNB 构建。需要更新值时，修改 `cnb-source-handoff` 中的 `CNB_PUSH_TOKEN`；不将 Token 存进明文 Variables。
+3. 密钥导入核对 `allow_slugs`、`allow_branches` 和 `allow_events`。母版与派生项目分别放行准确仓库；普通 `push` 与人工 `web_trigger_full_release` 是两个事件，详见[构建手册](container-build-and-run.md#4-cnb-构建与-tcr-发布)。
+4. TCR 登录通过后继续验证实际仓库授权。共享命名空间的账号复用按[TCR 权限设计](tencent-tcr-personal-cam-accounts.md#7-权限策略设计)评估；保留其他使用方的有效授权，不覆盖共享策略或无条件重置密码。
+
 ## 3. 确认目标 Commit SHA
 
 在 GitHub 仓库中执行：
@@ -158,6 +181,10 @@ git diff --name-only <CNB推送前SHA> <本次目标SHA>
 
 任一预期端失败时停止部署。查看该端第一条失败 Stage 和 `image-failure-evidence.tar.gz`，修复后生成新 Commit 并重新走完整流程。不能把成功的另外两端与失败端的旧镜像拼成一次未经评估的跨端发布。
 
+构建记录中的 `skipped` 只有在确认该端构建输入未变化且已有有效发布版本时才可接受。Backend 独立修复后，Web/Admin 可保留各自已验证的旧 SHA；共享依赖、公开契约或跨端行为变化时，全部受影响端继续按同一目标版本验证。不得仅凭三个 SHA 不同要求无意义重建，也不得把未检查的旧端当作已验证。
+
+无法操作 CNB 页面时，可在 GitHub 手动运行 `Inspect CNB Release` 查询准确源码 SHA，使用步骤见[Actions 说明](github-actions-workflows.md#只读-cnb-发布诊断)。它不会触发构建；查询绿色仅代表读取完成，仍须核对预期端、阶段、证据和 TCR digest。
+
 ## 8. 取得 TCR 完整镜像 digest
 
 每个成功 Pipeline 会提供 `image-release-evidence.tar.gz`。下载并解压后读取对应文件：
@@ -187,17 +214,17 @@ ccr.ccs.tencentyun.com/pinjie-fullstack-base/pinjie-fullstack-admin@sha256:<64�
 
 ### 8.1 TCR 三类标签和时间
 
-每个应用仓库都使用以下标签。同一次成功发布通常可见两个应用镜像标签和一份构建缓存，不能按列表行数认定应用构建了三个版本。
+当前每次成功发布通常新增候选和正式两个标签，失败构建可能只留下候选标签；历史缓存标签也可能仍存在。列表行数不代表不同镜像内容的数量。
 
 | 标签 | 作用 | 生产使用方式 |
 | --- | --- | --- |
 | `sha-<完整 Commit SHA>` | 发布门禁通过后创建的正式源码版本标签 | 用于查找镜像，部署使用清单中的完整 `仓库@sha256:<digest>` |
 | `candidate-<CNB Build ID>` | 本次构建先推送的候选镜像，供扫描和来源核验 | 不使用该标签部署，失败候选不得上线 |
-| `buildcache-main` | 供后续构建读取和更新的 Registry 缓存 | 不属于生产应用镜像，不用于部署 |
+| `buildcache-main` | 历史 Registry 缓存，当前发布脚本不读取或更新 | 不用于部署，也无需为发布创建或清理 |
 
-发布顺序是“构建并推送候选镜像，同时更新缓存 → 扫描和证据门禁 → 创建正式 SHA 标签”。正式标签引用通过核验的同一候选 digest，不重新构建应用；发布脚本会再次核对正式标签的完整 digest。因此同次成功发布的 `candidate-*` 与 `sha-*` 应指向相同镜像内容，缓存拥有独立用途和摘要。控制台截断显示的摘要前缀不能代替完整 digest 核对。
+发布顺序是“构建并推送候选镜像 → 扫描和证据门禁 → 创建正式 SHA 标签”。正式标签引用通过核验的同一候选 digest，不重新构建应用；发布脚本会再次核对正式标签的完整 digest。因此同次成功发布的 `candidate-*` 与 `sha-*` 应指向相同镜像内容，缓存拥有独立用途和摘要。控制台截断显示的摘要前缀不能代替完整 digest 核对。
 
-候选标签较早推送，正式标签在门禁通过后创建，时间通常更晚；`buildcache-main` 会被后续构建更新，其创建时间可以早于本次发布，修改时间反映后续写入。TCR 列表时间、镜像内 OCI 创建时间和服务器容器启动时间属于不同记录，不能仅凭“最新修改时间”判断线上版本。
+候选标签较早推送，正式标签在门禁通过后创建，时间通常更晚；历史 `buildcache-main` 的时间不代表当前发布进度。TCR 列表时间、镜像内 OCI 创建时间和服务器容器启动时间属于不同记录，不能仅凭“最新修改时间”判断线上版本。
 
 CNB 的 `candidate-*` 标签是现有构建发布步骤，与当前不使用的 GitHub `Validate Candidate Images` 工作流分别承担不同职责。停止使用该工作流不取消 CNB 候选推送、扫描或正式标签发布。
 
@@ -373,6 +400,23 @@ ok
 - 实际运行 digest 与批准值不一致。
 
 禁止通过改用 `latest`、覆盖既有 SHA Tag、跳过扫描、删除健康检查、清理共享数据库容器或执行 `docker compose down -v` 继续上线。
+
+### 15.1 按第一个失败步骤定位
+
+| 首个错误或现象 | 首先核对 | 不能据此判断 |
+| --- | --- | --- |
+| Handoff 失败 | 同 SHA 的验证证据、Environment、Token、目标仓库和非快进差异 | 不能直接归为 TCR 问题 |
+| CNB API 401/403 | Token 有效期、私有仓库范围及两项构建读取权限 | 查询失败不等于构建失败 |
+| 密钥导入失败 | 文件地址及仓库、分支、事件白名单 | 不要先改 TCR 密码 |
+| Registry unauthorized/denied | 实际执行环境的身份、固定密码、Registry 和目标仓库权限 | 登录成功或仓库存在不证明有 Push 权限 |
+| cache 导入/导出失败 | CNB 实际 SHA 的脚本是否仍启用远程缓存 | 不要把所有镜像导出错误当作缓存错误 |
+| 结构化漏洞门禁失败 | 本端扫描中的包、CVE、安装版本及修复版本 | 未构建另一端不会触发本端漏洞门禁 |
+| 只有 candidate 标签 | 扫描、正式标签和发布证据阶段 | 有候选镜像不代表正式发布成功 |
+| Pipeline skipped | 推送前后累计差异、事件及预期应用集合 | 不能直接判断失败或全端验证成功 |
+| TCR 标签 not found | 本端发布 SHA、仓库名、身份权限及正式标签步骤 | 不要自动改用 candidate 或 latest |
+| 拉取成功但容器不健康 | 编排变量、网络、数据库、Redis、代理与健康端点 | TCR 存在镜像不证明生产可用 |
+
+每次重试前记录应用、失败阶段、目标 SHA、CNB Build ID 和实际改动。网络中断或写入结果未知时先查询现状；凭据或确定的门禁失败未处理前不机械重跑。若日志仍显示已删除的缓存参数，先对照 GitHub SHA、CNB main SHA 和该 Build 的源码 SHA，再判断修复是否真正交接。远程缓存处理以[构建手册](container-build-and-run.md#tcr-远程构建缓存与排障边界)为准。
 
 ## 16. 发布记录模板
 

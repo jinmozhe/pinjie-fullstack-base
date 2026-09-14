@@ -128,7 +128,6 @@ login_tcr() {
 
 build_candidate() {
   local actual
-  local cache_ref
   local candidate_ref
   local commit_epoch
   local commit_time
@@ -148,7 +147,6 @@ build_candidate() {
 
   image_ref="$TCR_REGISTRY/$TCR_NAMESPACE/$IMAGE_NAME"
   candidate_ref="$image_ref:$(candidate_tag)"
-  cache_ref="$image_ref:buildcache-main"
   metadata_file="$EVIDENCE_ROOT/$IMAGE_KEY-metadata.json"
   image_index_file="$EVIDENCE_ROOT/$IMAGE_KEY-index.json"
   image_config_file="$EVIDENCE_ROOT/$IMAGE_KEY-image.json"
@@ -168,27 +166,33 @@ build_candidate() {
     --label "org.opencontainers.image.revision=$CNB_COMMIT" \
     --label "org.opencontainers.image.created=$commit_time" \
     --label "org.opencontainers.image.source=$EXPECTED_SOURCE_REPOSITORY" \
-    --cache-from "type=registry,ref=$cache_ref" \
-    --cache-to "type=registry,ref=$cache_ref,mode=max" \
     --output "type=image,name=$candidate_ref,push=true,name-canonical=true" \
     --metadata-file "$metadata_file" \
     .
 
-  digest="$(jq -er '."containerimage.digest"' "$metadata_file")"
-  [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+  digest="$(jq -er '."containerimage.digest"' "$metadata_file")" ||
+    fail_validation "Build metadata does not contain containerimage.digest."
+  [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] ||
+    fail_validation "Build metadata digest has an invalid format."
   actual="$(docker buildx imagetools inspect "$candidate_ref" |
-    awk '$1 == "Digest:" { print $2; exit }')"
-  [[ "$actual" == "$digest" ]]
+    awk '$1 == "Digest:" && !seen { print $2; seen=1 }')" ||
+    fail_validation "Candidate registry inspection failed for $candidate_ref."
+  [[ "$actual" == "$digest" ]] ||
+    fail_validation "Candidate digest mismatch: metadata=$digest registry=$actual."
   jq -e \
     '(."buildx.build.provenance".buildType | type == "string" and length > 0)' \
-    "$metadata_file" >/dev/null
+    "$metadata_file" >/dev/null ||
+    fail_validation "Build metadata is missing provenance buildType."
 
-  docker buildx imagetools inspect "$image_ref@$digest" --raw > "$image_index_file"
+  docker buildx imagetools inspect "$image_ref@$digest" --raw > "$image_index_file" ||
+    fail_validation "Registry manifest inspection failed for digest $digest."
   jq -e \
     '(.manifests | type == "array") and (.manifests | any(.annotations["vnd.docker.reference.type"] == "attestation-manifest"))' \
-    "$image_index_file" >/dev/null
+    "$image_index_file" >/dev/null ||
+    fail_validation "Registry manifest is missing an attestation manifest."
   docker buildx imagetools inspect "$image_ref@$digest" \
-    --format '{{json .Image}}' > "$image_config_file"
+    --format '{{json .Image}}' > "$image_config_file" ||
+    fail_validation "Registry image config inspection failed for digest $digest."
   jq -e \
     --arg revision "$CNB_COMMIT" \
     --arg created "$commit_time" \
@@ -196,7 +200,8 @@ build_candidate() {
     '.config.Labels["org.opencontainers.image.revision"] == $revision and
      .config.Labels["org.opencontainers.image.created"] == $created and
      .config.Labels["org.opencontainers.image.source"] == $source' \
-    "$image_config_file" >/dev/null
+    "$image_config_file" >/dev/null ||
+    fail_validation "Registry image labels do not match the requested source commit."
   printf '%s\n' "$digest" > "$EVIDENCE_ROOT/$IMAGE_KEY-digest.txt"
 }
 
