@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -58,21 +58,14 @@ assert.match(queryStringPatch, /require\('\.\/decode-uri-component\.cjs'\)/);
 assert.match(queryStringPatch, /new file mode 100644/);
 assert.match(queryStringPatch, /module\.exports = function decodeUriComponent/);
 
-const pnpmStoreEntries = await readdir(resolve(root, "node_modules", ".pnpm"));
-let patchedQueryStringEntry;
-for (const entry of pnpmStoreEntries.filter(candidate => candidate.startsWith("query-string@6.14.1_patch_"))) {
-  const installedIndexPath = resolve(root, "node_modules", ".pnpm", entry, "node_modules", "query-string", "index.js");
-  const installedIndex = await readFile(installedIndexPath, "utf8").catch(() => "");
-  const decoderPath = resolve(root, "node_modules", ".pnpm", entry, "node_modules", "query-string", "decode-uri-component.cjs");
-  const decoderSource = await readFile(decoderPath, "utf8").catch(() => "");
-  if (installedIndex.includes("require('./decode-uri-component.cjs')") && decoderSource.includes("module.exports = function decodeUriComponent")) {
-    patchedQueryStringEntry = entry;
-    break;
-  }
-}
-assert.ok(patchedQueryStringEntry, "Patched query-string package is missing from node_modules");
-const queryStringRequire = createRequire(resolve(root, "node_modules", ".pnpm", patchedQueryStringEntry, "node_modules", "query-string", "package.json"));
-const queryString = queryStringRequire("./index.js");
+const adminRequire = createRequire(resolve(root, "apps", "admin", "package.json"));
+const maxRequire = createRequire(adminRequire.resolve("@umijs/max/package.json"));
+const umiRequire = createRequire(maxRequire.resolve("umi/package.json"));
+const presetUmiRequire = createRequire(umiRequire.resolve("@umijs/preset-umi/package.json"));
+const historyRequire = createRequire(presetUmiRequire.resolve("@umijs/history/package.json"));
+const queryStringPath = historyRequire.resolve("query-string");
+assert.match(queryStringPath, /query-string@6\.14\.1_patch_/);
+const queryString = historyRequire("query-string");
 const parsedQuery = queryString.parse("name=%E4%B8%AD%E6%96%87&bad=%E0%A4%A");
 assert.equal(parsedQuery.name, "中文");
 assert.equal(parsedQuery.bad, "%E0%A4%A");
