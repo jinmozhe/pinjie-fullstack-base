@@ -11,6 +11,10 @@ trustPolicyExclude:
   # Umi Max 4.7.x currently resolves this transitive Redux adapter without provenance metadata.
   - "react-redux@8.1.3"
 overrides:
+  "query-string@6.14.1>decode-uri-component": 0.5.0
+  "qs@>=2.2.5 <6.16.0": 6.16.0
+  "hono@<4.13.5": 4.13.5
+  "colord@<2.9.4": 2.9.4
   "markdownlint-cli2@0.23.2>smol-toml": 1.7.1
   fast-uri: 3.1.6
   path-to-regexp: 8.4.2
@@ -36,3 +40,4 @@ allowBuilds:
 patchedDependencies:
   '@umijs/bundler-webpack@4.7.5': patches/@umijs__bundler-webpack@4.7.5.patch
   '@umijs/preset-umi@4.7.5': patches/@umijs__preset-umi@4.7.5.patch
+  query-string@6.14.1: patches/query-string@6.14.1.patch

@@ -74,7 +74,7 @@ Admin 与 Web 统一采用以下测试栈：
 
 Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测试基础设施。只有现有栈无法可靠覆盖且有明确风险证据时，才通过后续计划评估引入，禁止为同一层级长期维护两套等价测试框架。
 
-上述依赖已写入 Admin、Web 和根工作区的 `package.json` 与 `pnpm-lock.yaml`。当前版本以锁文件为准；升级后的单元、构建和 E2E 验证需要用户明确授权，未执行时必须记录风险。
+上述依赖已写入 Admin、Web 和根工作区的 `package.json` 与 `pnpm-lock.yaml`。当前两端的 Vitest 与 `@vitest/coverage-v8` 均固定为 4.1.11；升级后的单元、构建和 E2E 验证需要用户明确授权，未执行时必须记录风险。
 
 ### 6.2 单元与组件测试
 

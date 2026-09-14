@@ -82,6 +82,7 @@ flowchart TD
   `#4`、`#7` 与 `elliptic` 告警 `#5` 因当前没有受 Umi 支持的安全升级路径，已使用
   `tolerable_risk` 记录依赖链、不可达性证据、负责人和 2026-09-21 复核日期；这三条属于
   限时风险接受，不属于漏洞修复。完成时 GitHub Dependabot 为 0 Open、7 Closed。
+- `2026-09-14` 的 10 条 Moderate 告警通过锁定 `decode-uri-component` 0.5.0、`qs` 6.16.0、`hono` 4.13.5、`colord` 2.9.4 及两端 Vitest 4.1.11 修复；query-string 6.14.1 通过受控 CommonJS 补丁消费同步安全解码器。源码交付后仍以 Dependabot 重扫结果确认远端告警关闭。
 - Actions 只允许 GitHub-owned Actions、仓库所有者 `jinmozhe` 下的 Actions，以及仓库现有
   工作流使用的 11 条明确第三方匹配规则；`sha_pinning_required=true`，所有 Action 必须固定
   完整 Commit SHA。
