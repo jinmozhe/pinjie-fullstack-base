@@ -6,7 +6,7 @@
 
 ## 2. 构建前提
 
-Admin/Web Dockerfile 的依赖层只复制根清单、锁文件、pnpm 配置与钩子、三个共享包的 package.json 和补丁；完整共享包源码在依赖安装后复制。新增工作区包或安装期钩子时必须复核这一输入边界，禁止漏掉安装必需文件。Registry 缓存与 Git committer time 策略保持现状，缓存收益以实际新 Run 计时为准。
+Admin/Web Dockerfile 的依赖层只复制根清单、锁文件、pnpm 配置与钩子、三个共享包的 package.json 和补丁；完整共享包源码在依赖安装后复制。新增工作区包或安装期钩子时必须复核这一输入边界，禁止漏掉安装必需文件。Git committer time 策略保持现状；当前禁用 TCR 远程 Registry 缓存，具体边界见第 4 节。
 
 已授权源码 E2E 需要 Docker：`pnpm test:e2e` 使用 Web standalone 和固定 Nginx 镜像托管 Admin dist，不再启动 Admin dev。当前生产镜像由人工核对 CNB/TCR 证据后通过 1Panel 部署，操作见[端到端人工发布手册](github-cnb-tcr-1panel-release-runbook.md)，不要求额外运行候选镜像验收。
 
@@ -65,13 +65,32 @@ allow_branches:
   - "main"
 ```
 
-`.cnb.yml` 为 Backend、Web 和 Admin 声明三条按路径触发的独立 Pipeline。每张镜像按以下顺序处理：CNB 默认 Buildx `docker` 驱动从该应用的 TCR `buildcache-main` 读取缓存，从 Git Commit 计算 `SOURCE_DATE_EPOCH` 并写入 OCI `revision`、`created` 与 `source` 标签，生成最大级别 provenance 和 SBOM attestation，以 `candidate-<CNB Build ID>` 唯一候选标签推送内容，从 metadata 读取 digest 并核对候选标签和 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。该端通过后创建 `sha-<完整 Commit SHA>` 标签，并保存 `pinjie-cnb-tcr-image-v1` 单镜像清单和原始证据附件。扫描失败时，CNB 日志会输出镜像引用、包名、CVE、已安装版本和修复版本，并将当前原始 JSON、digest、metadata 与精简摘要打包为失败附件；失败候选仍禁止部署。
+`.cnb.yml` 为 Backend、Web 和 Admin 声明三条按路径触发的独立 Pipeline。每张镜像按以下顺序处理：CNB 默认 Buildx `docker` 驱动从 Git Commit 计算 `SOURCE_DATE_EPOCH` 并写入 OCI `revision`、`created` 与 `source` 标签，生成最大级别 provenance 和 SBOM attestation，以 `candidate-<CNB Build ID>` 唯一候选标签推送内容，从 metadata 读取 digest 并核对候选标签和 attestation manifest，再由固定 digest 的 Trivy 对精确候选 digest 执行 High 与 Critical 阻断并生成 CycloneDX JSON SBOM。该端通过后创建 `sha-<完整 Commit SHA>` 标签，并保存 `pinjie-cnb-tcr-image-v1` 单镜像清单和原始证据附件。扫描失败时，CNB 日志会输出镜像引用、包名、CVE、已安装版本和修复版本，并将当前原始 JSON、digest、metadata 与精简摘要打包为失败附件；失败候选仍禁止部署。
 
 路径无法可靠判断、首次运行或一次变更超过 CNB 的 300 文件统计上限时，在 `main` 分支详情页使用 `.cnb/web_trigger.yml` 提供的“三端全量镜像构建”按钮。该人工入口复用三个固定应用 Pipeline。CNB 密钥仓库的 `allow_events` 必须同时允许 `push` 和准确事件名 `web_trigger_full_release`，否则人工全量构建会在导入 TCR 凭据时失败。
 
 `buildcache-main` 是可变构建缓存，`candidate-<CNB Build ID>` 是单次运行候选，两者都不能作为部署来源。生产只使用发布清单中的完整 `ccr.ccs.tencentyun.com/pinjie-fullstack-base/<镜像>@sha256:<digest>` 引用。
 
+### TCR 远程构建缓存与排障边界
+
+当前发布脚本不配置 Registry 类型的 `--cache-from` 和 `--cache-to`，不读取或更新 `buildcache-main`。保留这一配置，无需每次发布手工关闭缓存，也无需为了发布创建或清理缓存标签。此限制只针对 TCR 远程构建缓存，不要求禁用 BuildKit 本身可用的缓存，也不影响 `.cnb.yml` 中的 Trivy 缓存。
+
+远程缓存用于复用构建中间结果，与最终应用镜像分别导入、导出。同一条 Buildx 命令包含缓存导出时，即使候选镜像已经推送，缓存导出失败仍可能导致命令失败，使后续扫描和正式标签发布无法执行。[Docker Registry 缓存官方文档](https://docs.docker.com/build/cache/backends/registry/)列出的缓存导出 `ignore-error` 默认值为 `false`，并对默认 `docker` 驱动使用该缓存的条件作出说明。不要据此直接认定本项目曾经发生驱动不兼容；定位具体底层原因仍需对应运行的完整错误证据。
+
+出现构建导出失败时按以下顺序处理：
+
+1. 保存目标源码 SHA、CNB Build ID、首个失败步骤和错误上下文，区分 `exporting cache`、候选镜像 `pushing`、Registry 鉴权及漏洞门禁错误。
+2. 核对该次 CNB 源码中的 `scripts/ci/cnb-publish-images.sh`。仍包含 TCR Registry 缓存参数时，先确认是否交接了旧版本或重新引入了缓存配置；按已授权流程交接经过验证的修复版本，再构建受影响端。
+3. 当前脚本已无远程缓存参数时，不再把导出错误笼统归为缓存问题。镜像推送鉴权失败继续检查 CNB 发布凭据和 TCR 目标仓库权限；网络、存储和运行取消按各自实际错误处理。
+4. 保留候选推送、扫描、漏洞门禁、正式标签和发布证据检查。禁止用整体忽略退出码、跳过扫描或直接部署候选标签恢复发布。
+
+禁用远程缓存可能增加重复构建时间和下载量，不降低镜像发布的验证要求。当前没有足够运行样本估算原故障频率，也没有证据把所有缓存异常归因于 TCR 服务。未来确需重新启用时，单独验证实际 CNB 驱动与存储配置、TCR 缓存格式和权限、冷启动与已有缓存场景，以及缓存失败对正式发布的影响；不得直接恢复旧参数。
+
 CNB 发布身份和生产服务器拉取身份必须分离。`tcr-publisher` 只保存在 CNB 密钥仓库；生产服务器使用只允许拉取指定三个仓库的 `tcr-puller`。完整 CAM JSON、账号创建、凭证初始化、服务器登录和轮换步骤见[腾讯云 CAM 子账号与 TCR 个人版最小权限操作手册](tencent-tcr-personal-cam-accounts.md)。
+
+### Backend 系统包更新与镜像扫描
+
+Backend runtime 在固定基础镜像上执行 `apt-get update`、`apt-get upgrade --yes`，再安装既有显式版本包。此步骤更新系统仓库可修复的已安装包，不修改 Python 锁文件或自动替换基础镜像。固定基础镜像 digest 不保证未来永远没有漏洞，每次发布仍须扫描最终候选 digest。包仓库变化可能让同源码重建得到不同内容；正式 SHA 标签冲突时继续失败，禁止覆盖或绕过扫描，按新源码版本重新走批准的发布流程。
 
 ## 5. 生产 Compose 配置
 

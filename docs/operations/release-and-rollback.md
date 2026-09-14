@@ -38,7 +38,7 @@ CI 通过不自动授权镜像发布，镜像发布完成不自动授权生产�
 4. `strict` 模式下载未过期的 `full-validation-<完整提交>` Artifact，核对 Full Validation Run、Commit SHA、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 证据字段；`fast` 模式跳过该项，但在 Workflow Summary 中记录 Commit、操作者、模式、原因和未执行完整验证的事实。
 5. GitHub 使用受 `cnb-source-handoff` Environment 保护的最小权限 Token，把批准提交以非强制、只能快进的方式更新到 CNB `main`；CNB 已有提交不是目标 SHA 的祖先时停止。
 6. CNB `main` Push 自动触发 `.cnb.yml`，再次核对仓库、分支、工作区 `HEAD` 和 `CNB_COMMIT` 完全一致，并按 Docker 构建输入选择受影响的应用 Pipeline。
-7. 每条受影响 Pipeline 使用固定 digest 的构建环境和 Trivy，只构建一个固定应用，通过该仓库的 TCR Registry 缓存加速二次构建，并以 `candidate-<CNB Build ID>` 唯一候选标签推送到 TCR。
+7. 每条受影响 Pipeline 使用固定 digest 的构建环境和 Trivy，只构建一个固定应用，不读取或更新 TCR 远程 Registry 缓存，以 `candidate-<CNB Build ID>` 唯一候选标签推送到 TCR。
 8. 每条 Pipeline 对自己的候选 digest 执行 High、Critical 且已有修复的漏洞阻断，生成 CycloneDX JSON SBOM，验证 BuildKit 最大级别 provenance、TCR attestation manifest 和 OCI 来源标签。
 9. 单端候选通过后检查该仓库的 `sha-<完整提交>` 标签；标签指向不同 digest 时立即失败，无冲突时创建标签并执行写后复核。
 10. 每条 Pipeline 生成 `pinjie-cnb-tcr-image-v1` 单镜像清单，保存应用键、Build ID、Build URL、Git Commit 时间、完整 Commit SHA、TCR digest、扫描、SBOM、provenance 和 OCI 标签，并连同该端原始证据作为构建附件保留。

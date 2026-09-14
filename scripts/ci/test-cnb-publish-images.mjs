@@ -39,6 +39,7 @@ function runPublish({
   evidenceRoot = `.cnb/evidence/${imageKey}`,
   epoch = commitEpoch,
   targetDigest = "",
+  buildScenario = "",
 }) {
   const environment = [
     `PATH="${shellPath(mockBin)}:$PATH"`,
@@ -55,6 +56,7 @@ function runPublish({
     `IMAGE_KEY=${imageKey}`,
     `RELEASE_PIPELINE=${imageKey}-image`,
     `MOCK_COMMIT_EPOCH=${epoch}`,
+    `MOCK_BUILD_SCENARIO=${buildScenario}`,
     `MOCK_TARGET_DIGEST=${targetDigest}`,
     `MOCK_STATE_FILE="${shellPath(path.join(fixtureRoot, "created-tag"))}"`,
     `MOCK_EXPECTED_DIGEST=${digest}`,
@@ -102,7 +104,22 @@ if [ "$1" = "login" ]; then
   cat >/dev/null
 elif [ "$1" = "buildx" ] && [ "$2" = "version" ]; then
   printf 'buildx fixture\\n'
+elif [ "$1" = "buildx" ] && [ "$2" = "build" ]; then
+  printf '%s\\n' "$@" > build-args.txt
+  case " $* " in *--cache-from*|*--cache-to*) exit 90 ;; esac
+  if [ "$MOCK_BUILD_SCENARIO" = "build-failure" ]; then exit 42; fi
+  : > build-finished
 elif [ "$1" = "buildx" ] && [ "$2" = "imagetools" ] && [ "$3" = "inspect" ]; then
+  if [ -n "$MOCK_BUILD_SCENARIO" ]; then
+    [ -f build-finished ] || exit 1
+    [ "$MOCK_BUILD_SCENARIO" != "registry-failure" ] || exit 1
+    if [ "$MOCK_BUILD_SCENARIO" = "digest-mismatch" ]; then
+      printf 'Digest: sha256:wrong\\n'
+    else
+      printf 'Digest: %s\\n' "$MOCK_EXPECTED_DIGEST"
+    fi
+    exit 0
+  fi
   if [ "$MOCK_TARGET_DIGEST" = "missing" ] && [ ! -f "$MOCK_STATE_FILE" ]; then
     exit 1
   fi
@@ -119,7 +136,17 @@ fi
 `,
     "utf8",
   );
-  writeFileSync(path.join(mockBin, "jq"), "#!/bin/sh\nexit 0\n", "utf8");
+  writeFileSync(path.join(mockBin, "jq"), `#!/bin/sh
+set -eu
+if [ "$1" = "-er" ]; then
+  [ "$MOCK_BUILD_SCENARIO" != "missing-metadata" ] || exit 1
+  printf '%s\\n' "$MOCK_EXPECTED_DIGEST"
+fi
+case "$*" in
+  *attestation-manifest*) [ "$MOCK_BUILD_SCENARIO" != "attestation-failure" ] || exit 1 ;;
+  *org.opencontainers.image.revision*) [ "$MOCK_BUILD_SCENARIO" != "labels-failure" ] || exit 1 ;;
+esac
+`, "utf8");
   for (const command of ["git", "docker", "jq"]) {
     chmodSync(path.join(mockBin, command), 0o755);
   }
@@ -131,6 +158,28 @@ fi
     requireCondition(existsSync(path.join(evidenceRoot, "source-commit-epoch.txt")), "Commit epoch evidence is missing.", result);
     requireCondition(readFileSync(path.join(evidenceRoot, "source-commit-epoch.txt"), "utf8").trim() === commitEpoch, "Commit epoch is incorrect.", result);
     requireCondition(readFileSync(path.join(evidenceRoot, "source-commit-time.txt"), "utf8").trim() === "2026-08-31T01:00:00Z", "Commit UTC time is incorrect.", result);
+  }
+
+  mkdirSync(path.join(fixtureRoot, "apps", "backend"), { recursive: true });
+  writeFileSync(path.join(fixtureRoot, "apps", "backend", "Dockerfile"), "FROM fixture\n");
+  for (const [scenario, reason] of [
+    ["success", ""], ["build-failure", ""],
+    ["missing-metadata", "does not contain containerimage.digest"],
+    ["registry-failure", "Candidate registry inspection failed"],
+    ["digest-mismatch", "Candidate digest mismatch"],
+    ["attestation-failure", "missing an attestation"],
+    ["labels-failure", "labels do not match"],
+  ]) {
+    const evidence = path.join(fixtureRoot, ".cnb", "evidence", "backend", "backend-digest.txt");
+    rmSync(path.join(fixtureRoot, "build-finished"), { force: true });
+    rmSync(evidence, { force: true });
+    const result = runPublish({ imageKey: "backend", action: "build", buildScenario: scenario });
+    requireCondition(scenario === "success" ? result.status === 0 : result.status !== 0, scenario, result);
+    requireCondition(scenario === "success" ? existsSync(evidence) : !existsSync(evidence), "Digest evidence must follow successful validation", result);
+    if (reason) requireCondition(result.stdout.includes(reason), "Missing actionable failure reason", result);
+    const args = readFileSync(path.join(fixtureRoot, "build-args.txt"), "utf8");
+    requireCondition(!args.includes("--cache-from") && !args.includes("--cache-to"), "Registry cache must remain disabled");
+    requireCondition(args.includes("--provenance=mode=max") && args.includes("--sbom=true") && args.includes("push=true"), "Required publish outputs are missing");
   }
 
   const unknownResult = runPublish({ imageKey: "worker" });

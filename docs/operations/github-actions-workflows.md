@@ -488,7 +488,7 @@ GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取�
 
 CNB `.cnb.yml` 声明三个具名 `main.push` Pipeline，并提供受控的 `main.web_trigger_full_release` 人工全量入口。每条 Pipeline 使用 4 核 Linux AMD64 社区构建节点、固定 digest 的构建环境、独立 Docker 配置目录和按应用划分的 TCR 发布锁。CNB 密钥仓库文件只允许 `pjwl/pinjie-fullstack-base` 的 `main` Push 与 `web_trigger_full_release` 引用，并提供 TCR Registry 登录所需参数。
 
-三条 Pipeline 可以并行运行，每条只处理一个固定应用，并使用该应用自己的 TCR Registry 缓存：
+三条 Pipeline 可以并行运行，每条只处理一个固定应用，当前不读取或更新 TCR 远程 Registry 缓存：
 
 | 应用 | Dockerfile | TCR 镜像名 |
 | --- | --- | --- |
@@ -500,7 +500,7 @@ CNB `.cnb.yml` 声明三个具名 `main.push` Pipeline，并提供受控的 `mai
 
 1. 以仓库根目录为上下文，使用固定 `IMAGE_KEY` 映射的 Dockerfile 构建 `linux/amd64` 镜像，拒绝未知应用键和任意路径输入。
 2. 从 `CNB_COMMIT` 读取 Git committer time，设置 `SOURCE_DATE_EPOCH`，并写入 OCI `revision`、`created` 与 `source` 标签；同一 Commit 重建保持相同创建时间。该时间会随 Commit 变化，跨 Commit 的部分 COPY 层可能重新构建。
-3. 从 `buildcache-main` 读取并写回 Registry 缓存；缓存标签明确属于可变构建缓存，不可用于部署。
+3. 构建参数不包含 Registry 类型的 `--cache-from` 和 `--cache-to`；历史 `buildcache-main` 不参与当前发布，也不可用于部署。
 4. 使用 CNB 默认 Buildx `docker` 驱动向 TCR 推送 `candidate-<CNB Build ID>` 唯一候选标签；构建前要求该标签不存在，避免覆盖其他运行的候选内容。
 5. 从 Buildx metadata 读取输出 digest，依次核对候选标签 digest 和按 digest 查询的 TCR OCI index；index 必须包含 attestation manifest，metadata 中的 provenance 和输出 digest 必须匹配。
 6. 使用固定 digest 的 Trivy 扫描候选镜像；High、Critical 且已有修复的漏洞使发布失败。失败时在日志输出镜像引用、包名、CVE、已安装版本和修复版本，并保存包含原始 JSON、digest、metadata 和精简摘要的失败附件。
@@ -648,7 +648,7 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 -> 等待 GitHub validate 和 handoff 成功
 -> 根据路径契约确认预期受影响端
 -> 等待预期 CNB Pipeline 各自完成构建、扫描、Finalize 和证据附件
--> 核对多端证据使用同一 SHA，并保存每个目标端的 TCR digest
+-> 同一跨端变更的受影响端核对证据 SHA 一致，未变化端可保留已验证版本；保存每端 TCR digest
 ```
 
 ### 13.4 生产部署
@@ -677,6 +677,18 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 
 应用回滚不重新构建旧代码。数据库降级或恢复属于独立高风险操作，需要专项授权。
 
+### 只读 CNB 发布诊断
+
+`Inspect CNB Release` 对应 `.github/workflows/inspect-cnb-release.yml`，只通过 `workflow_dispatch` 人工运行。在母版 GitHub Actions 选择该工作流，分支选择默认分支，在 `commit_sha` 填写需要查询的完整 40 位源码 SHA。
+
+工作流复用 `cnb-source-handoff` Environment 的 `CNB_PUSH_TOKEN` 与 `CNB_REPOSITORY_URL`；Token 在 `pjwl/pinjie-fullstack-base` 需要 `repo-cnb-history:r`、`repo-cnb-trigger:r`，并保留原源码交接能力。若出现环境审批，按已有维护者流程处理。该入口不需要 TCR 密码，不创建构建，也不修改仓库和凭据。
+
+执行脚本 `scripts/ci/inspect-cnb-release.mjs` 只访问固定 CNB API 目标，使用 GET，拒绝重定向，限制分页和请求时间。报告包含 SHA、Build ID、事件及逐端阶段状态；失败日志仅输出固定错误分类，分类是排查线索，详细根因继续回 CNB 对应阶段核实。响应未知、身份不符或查询失败时非零退出，不输出原始响应体或凭据。
+
+查询 Run 绿色只代表查询完成。报告里的 `error`、`skipped` 和缺失端仍须按实际变化核对；还要确认单端发布证据、TCR 完整 digest 及后续服务器状态。错误类型及处理顺序集中维护在[端到端发布手册](github-cnb-tcr-1panel-release-runbook.md#151-按第一个失败步骤定位)。
+
+`pnpm check:cnb-release` 执行发布上下文、标签冲突、扫描证据和只读诊断的离线回归，并由 Governance CI 调用。离线夹具不代表真实 CNB 权限、TCR 推送或最终镜像漏洞扫描通过。诊断接口依据：[CNB OpenAPI](https://api.cnb.cool/)。
+
 ## 14. 常见失败定位
 
 | 现象 | 查看位置 | 常见原因 |
@@ -689,7 +701,7 @@ Pull Request 是所有日常变更的唯一默认分支入口。检查失败时�
 | Security 失败 | 具体扫描 Job | 密钥、依赖漏洞、源码风险或扫描器运行错误 |
 | Publish validate 失败 | Validate immutable input | SHA 格式、验证模式、快速原因、默认分支、四个 Push Run、严格模式 Artifact 或应用状态不满足 |
 | GitHub handoff 失败 | Fast-forward CNB main | CNB Environment 配置、Token 权限、网络、远端漂移或非快进更新 |
-| CNB 构建或扫描失败 | CNB 对应 Stage | Dockerfile、TCR 凭证、Registry 缓存、容器漏洞、SBOM 或 provenance 问题 |
+| CNB 构建或扫描失败 | CNB 对应 Stage | Dockerfile、TCR 凭证、旧源码缓存配置、容器漏洞、SBOM 或 provenance 问题 |
 | CNB finalize 失败 | Publish immutable SHA tags | digest 证据缺失、TCR 标签冲突或写后复核失败 |
 | CNB evidence 失败 | Generate and validate release evidence | Build ID、Commit SHA、镜像引用、扫描、SBOM 或 provenance 字段错配 |
 | Deploy 验证失败 | Validate 或 Verify 步骤 | 输入格式、环境开关、路径、标签与 digest 不一致 |

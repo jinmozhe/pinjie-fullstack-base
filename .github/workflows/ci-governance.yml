@@ -49,6 +49,9 @@ jobs:
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify CNB release and diagnostic guards
+        run: pnpm check:cnb-release
+
       - name: Lint Markdown
         run: pnpm lint:md
 

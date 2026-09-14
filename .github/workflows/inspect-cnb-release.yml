@@ -1,0 +1,49 @@
+name: Inspect CNB Release
+
+run-name: Inspect CNB release ${{ inputs.commit_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: Full 40-character source commit SHA to inspect
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Read CNB pipeline status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: cnb-source-handoff
+    steps:
+      - name: Require default branch and fixed source repository
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          CNB_REPOSITORY_URL: ${{ vars.CNB_REPOSITORY_URL }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = "jinmozhe/pinjie-fullstack-base"
+          test "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH"
+          test "$CNB_REPOSITORY_URL" = "https://cnb.cool/pjwl/pinjie-fullstack-base"
+          [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Checkout trusted default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
+      - name: Query builds and pipeline stages
+        env:
+          COMMIT_SHA: ${{ inputs.commit_sha }}
+          CNB_PUSH_TOKEN: ${{ secrets.CNB_PUSH_TOKEN }}
+        run: node scripts/ci/inspect-cnb-release.mjs
