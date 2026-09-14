@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import YAML from "yaml";
-import { inspectRelease } from "./inspect-cnb-release.mjs";
+import { inspectRelease, renderReleaseSummary } from "./inspect-cnb-release.mjs";
+
+const hostileReports = [{ stage: '</pre><script>alert("fixture")</script>',
+  markdown: "```\n# injected heading\n~~~\n[link](https://example.com)", entities: "&lt;tag&gt;" }];
+const summaryLines = renderReleaseSummary(hostileReports).trimEnd().split("\n");
+assert(summaryLines[0].includes("does not verify release success"));
+assert.equal(summaryLines[1], "");
+assert(summaryLines.slice(2).every(line => line.startsWith("    ")), "Remote data must remain entirely inside indented code");
+assert.deepEqual(JSON.parse(summaryLines.slice(2).map(line => line.slice(4)).join("\n")), hostileReports, "Literal summary must preserve the complete report");
 
 const sha = "a".repeat(40);
 const token = "fixture-private-token";

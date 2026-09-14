@@ -110,6 +110,12 @@ export async function inspectRelease({ sha, token, fetchImpl = fetch }) {
   return reports;
 }
 
+export function renderReleaseSummary(reports) {
+  // GFM indented code keeps remote HTML and Markdown literal without HTML sanitization.
+  const codeBlock = JSON.stringify(reports, null, 2).split('\n').map(line => '    ' + line).join('\n');
+  return 'CNB status query completed. This does not verify release success or TCR image existence.\n\n' + codeBlock + '\n';
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const reports = await inspectRelease({ sha: process.env.COMMIT_SHA, token: process.env.CNB_PUSH_TOKEN });
@@ -117,9 +123,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     // All console lines have a prefix so remote fields cannot become workflow commands.
     console.log(output.split('\n').map(line => 'CNB: ' + line).join('\n'));
     if (process.env.GITHUB_STEP_SUMMARY) {
-      appendFileSync(process.env.GITHUB_STEP_SUMMARY,
-        'CNB status query completed. This does not verify release success or TCR image existence.\n\n<pre>' +
-        output.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;') + '</pre>\n');
+      appendFileSync(process.env.GITHUB_STEP_SUMMARY, renderReleaseSummary(reports));
     }
   } catch (error) {
     // Do not forward response bodies, request objects, or chained fetch errors.
