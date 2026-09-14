@@ -123,7 +123,7 @@
 - 根目录 `openapi.json` 是后端导出的唯一 OpenAPI 契约，禁止手工修改。
 - `packages/api-client/src/` 由根契约生成，禁止手工修改。契约变化后按"后端实现、导出 `openapi.json`、运行 `pnpm generate-api`、前端适配"的顺序同步。
 - Backend 进入 `ready` 后，CI 必须重新导出 OpenAPI、重新生成客户端并检查无 Git 差异。Breaking Change 必须在同一全栈计划中完成消费者迁移或建立受控迁移窗口。
-- 全仓库只维护根目录 `pnpm-lock.yaml`。Python 锁文件归 `apps/backend/uv.lock`，两套依赖不得混用。
+- Node 用 pnpm-lock.yaml，Python 用 apps/backend/uv.lock。补丁须锁、frozen、实际解析；禁按 .pnpm 缓存判断或全量清理。
 - 依赖安装脚本采用显式白名单。新增需要构建脚本的依赖前必须评审来源与必要性，并更新根 `pnpm-workspace.yaml` 的 `allowBuilds`；禁止无范围放行全部安装脚本。
 
 ## Git 提交与追溯
