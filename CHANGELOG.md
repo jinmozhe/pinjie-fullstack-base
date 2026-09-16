@@ -6,6 +6,7 @@
 
 ### Added
 
+- 手动 `CI - Full Validation` 增加默认 full、可选 smoke：smoke 跳过 Admin/Web Vitest 和 coverage，保留 Backend pytest、生产构建、四项目入口页面基线和桌面 Stage C；full v2 与 smoke v1 证据隔离，模式及 strict 拒绝 smoke 的 Guard 接入本地与 CI。Handoff 保持 strict/fast，fast 不主动核验 smoke；Admin 并发和候选镜像工作流保持原配置，真实 full/smoke 与发布部署未执行。
 - 回馈派生项目的发布可靠性修复：停用当前 CNB/TCR 个人版远程构建缓存读写，补齐候选证据校验错误提示；新增固定母版仓库的手动只读 CNB 诊断及离线回归门禁。Backend runtime 增加系统包升级，保留固定基础镜像与正式发布扫描要求；真实母版镜像扫描与生产部署未执行。
 - 统一 GitHub、CNB、TCR、1Panel 凭据归属、可选本机镜像核验、派生项目权限范围、独立发布与逐阶段排障规范，纠正仍要求写入远程缓存的旧说明。
 

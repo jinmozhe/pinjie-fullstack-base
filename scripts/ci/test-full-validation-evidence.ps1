@@ -66,6 +66,9 @@ try {
 
     Assert-GuardRejects -Scenario "wrong commit SHA" -Content $validEvidence.Replace($expectedSha, "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
     Assert-GuardRejects -Scenario "legacy development-server evidence" -Content $validEvidence.Replace("pinjie-full-validation-v2", "pinjie-full-validation-v1")
+    Assert-GuardRejects -Scenario "smoke evidence renamed to the full filename" -Content $validEvidence.Replace("pinjie-full-validation-v2", "pinjie-smoke-validation-v1")
+    Assert-GuardRejects -Scenario "smoke browser scope with a forged full schema" -Content $validEvidence.Replace("browser=playwright-chromium", "browser=playwright-chromium-smoke")
+    Assert-GuardRejects -Scenario "missing frontend tests with a forged full schema" -Content $validEvidence.Replace("admin=vitest,production-build,nginx-dist", "admin=production-build,nginx-dist")
     Assert-GuardRejects -Scenario "wrong workflow run" -Content $validEvidence.Replace($expectedRunId, "123456789")
     Assert-GuardRejects -Scenario "missing validation field" -Content $validEvidence.Replace("backend=pytest`n", "")
     Assert-GuardRejects -Scenario "duplicate validation field" -Content ($validEvidence + "backend=pytest`n")

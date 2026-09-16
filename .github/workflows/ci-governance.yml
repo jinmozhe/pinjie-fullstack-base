@@ -52,6 +52,16 @@ jobs:
       - name: Verify CNB release and diagnostic guards
         run: pnpm check:cnb-release
 
+      - name: Verify full and smoke validation modes
+        run: pnpm check:validation-mode
+
+      - name: Verify strict evidence rejection cases
+        shell: pwsh
+        run: ./scripts/ci/test-full-validation-evidence.ps1
+
+      - name: Verify unchanged CNB handoff modes
+        run: node scripts/ci/test-cnb-handoff-validation-mode.mjs
+
       - name: Lint Markdown
         run: pnpm lint:md
 

@@ -90,31 +90,50 @@ Git Commit SHA 用于追溯源码，TCR `sha-<Commit SHA>` 标签用于查找镜
 
 | 模式 | Full Validation | 使用条件 |
 | --- | --- | --- |
-| `strict` | 必须先成功运行 | 数据库、迁移、认证授权、权限、公开 API、共享包、依赖、Dockerfile、发布脚本、跨端功能和正式版本 |
-| `fast` | 跳过 Full Validation Artifact | 已人工确认影响很小，并接受 pytest、Vitest、production build 和 Playwright 未验证的风险 |
+| `strict` | 必须先成功运行 full | 数据库、迁移、认证授权、权限、公开 API、共享包、依赖、Dockerfile、发布脚本、跨端功能和正式版本 |
+| `fast` | 不要求 full 或 smoke Artifact | 已人工确认影响很小，并接受实际未覆盖的验证风险；可先 smoke 再交接 |
 
 不确定影响范围时使用 `strict`。`fast` 仍然要求同一 SHA 的四个轻量 Push Run 全部成功，也不会跳过 CNB 的镜像构建、Trivy、SBOM、provenance 和 digest 复核。
 
-## 5. strict 模式运行 Full Validation
+`CI - Full Validation` 的 full/smoke 决定验证范围，`Handoff Source to CNB` 的 strict/fast 决定交接证据要求。两者独立选择、分别手动触发；smoke 成功不会自动交接，也不能满足 strict。fast 当前不主动核验 smoke Artifact，选择先 smoke 的操作人员应自行核对同一 SHA、Run 成功及跳过范围，并在发布记录中保存 Run。
 
-选择 `fast` 时跳到下一节。选择 `strict` 时在 GitHub 执行：
+| 使用场景 | 链路 | Admin Vitest |
+| --- | --- | --- |
+| 日常开发、不发布 | 轻量门禁与 Git 交付后结束 | 不运行 |
+| 极小修改、需要发布并接受剩余风险 | 四个 Push Run → Handoff fast → CNB → TCR → 人工部署 | 不要求 |
+| 低风险修改、先检查构建和关键流程 | 四个 Push Run → smoke 成功 → Handoff fast → CNB → TCR → 人工部署 | smoke 跳过 |
+| 高风险修改或完整验收 | 四个 Push Run → full 成功 → Handoff strict → CNB → TCR → 人工部署 | 执行 |
+
+CNB 按交接前后的累计变更选择受影响应用构建镜像，Handoff 成功、镜像发布成功和生产部署成功分别核对。GitHub 验证构建用于 E2E，CNB 仍需生成最终镜像；full 或 smoke 均不能证明最终 TCR 镜像组合已经通过 E2E。
+
+## 5. 选择 full 或 smoke 验证
+
+strict 必须选择 full；fast 可直接跳到下一节，也可先运行 smoke 获得生产构建和关键流程反馈。两种验证都属于重型操作，需要独立授权或用户人工触发。在 GitHub 执行：
 
 1. 打开仓库的 `Actions` 页面。
 2. 在左侧选择 `CI - Full Validation`。
 3. 点击 `Run workflow`。
 4. 分支选择 `main`。
 5. `commit_sha` 填写第 3 节取得的完整 40 位 SHA。
-6. 点击确认运行。
-7. 打开新 Run，等待并行的 Backend pytest、Admin/Web 验证构建和最终 `Production browser E2E and aggregate evidence` 全部完成。
+6. `validation_mode` 默认 full；需要跳过前端 Vitest 时显式选择 smoke。
+7. 点击确认运行。
+8. 打开新 Run，核对名称中的模式和 SHA，等待并行的 Backend pytest、Admin/Web 验证构建和最终 `Production browser E2E and aggregate evidence` 全部完成。
 
-成功结果应满足：
+full 成功结果应满足：
 
 - Run 顶部结论为成功。
 - Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium Playwright 均成功。
 - Artifact 中存在 `full-validation-<完整 SHA>`，保留期为 30 天。
 - 清单 schema 为 `pinjie-full-validation-v2`，Admin 验证运行 Nginx dist，Web 验证运行 standalone，旧 v1 不能替代。
 
-任一步失败时停止发布。修复代码后会产生新的 Commit SHA，必须从第 3 节重新开始，不能继续使用旧 SHA 的 Artifact。
+smoke 成功结果应满足：
+
+- Run 顶部结论为成功，Admin/Web Vitest 和 coverage 明确记录为跳过。
+- Backend pytest、两端 production build、四项目入口页面质量及 Web/Admin 桌面 Stage C 成功；移动端 Stage C 不在范围内。
+- Artifact 为 `smoke-validation-<完整 SHA>`，schema 为 `pinjie-smoke-validation-v1`，保留 14 天；前端测试字段为 skipped，浏览器范围为 `all-quality-pages,desktop-stage-c`。
+- 继续交接时选择 fast 并填写原因。smoke 不提供完整覆盖率或移动端登录后业务验收，也不能代替 strict 所需的 full 证据。
+
+任一必需步骤失败时停止本次发布，不能自动降级为 fast 绕过失败。修复代码后会产生新的 Commit SHA，必须从第 3 节重新开始，不能继续使用旧 SHA 的 Artifact。完整模式与缩减模式的逐项范围见[工作流验证模式说明](github-actions-workflows.md#81-作用和使用场景)。
 
 ## 6. GitHub 交接源码到 CNB
 
@@ -133,7 +152,7 @@ Git Commit SHA 用于追溯源码，TCR `sha-<Commit SHA>` 标签用于查找镜
 GitHub Run 中应依次看到：
 
 1. `Validate immutable input` 成功，表示 SHA、四个 Push Run、验证模式、应用状态和模块边界满足要求。
-2. `strict` 模式成功核对同一 SHA 的 Full Validation Artifact；`fast` 模式在 Summary 中记录跳过事实和原因。
+2. `strict` 模式成功核对同一 SHA 的 full Artifact；`fast` 模式在 Summary 中记录完整证据未作为门禁的事实和原因，不核验 smoke。
 3. `Fast-forward CNB main` 成功，表示批准的 SHA 已通过非强制快进方式写入 CNB `main`。
 
 GitHub Handoff 成功只代表 CNB 收到源码。此时镜像可能仍在构建，不能开始生产更新。
@@ -427,7 +446,8 @@ ok
 执行人：
 GitHub Commit SHA：
 验证模式：strict / fast
-Full Validation Run：成功 Run ID / fast 未执行
+Full Validation Run：full 成功 Run ID / 未执行 / 未作为交接门禁
+Smoke Validation Run：成功 Run ID / 未执行；范围与跳过项
 Backend：Commit、CNB Build ID、完整 digest、是否部署
 Web：Commit、CNB Build ID、完整 digest、是否部署
 Admin：Commit、CNB Build ID、完整 digest、是否部署
