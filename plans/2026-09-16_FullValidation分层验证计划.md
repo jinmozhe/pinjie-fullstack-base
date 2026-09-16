@@ -2,8 +2,8 @@
 
 ## 1. 当前状态和结果
 
-- 状态：实施中
-- 结果：不适用
+- 状态：已结束
+- 结果：已完成；full/smoke 编排、证据隔离和文档已实现，轻量门禁通过，代码已提交并推送功能分支；真实重型验证与发布部署未执行
 
 ## 2. 关联需求
 
@@ -90,7 +90,7 @@ full 保留 `pinjie-full-validation-v2` 与 `full-validation-<SHA>`；smoke 使�
 - [x] Admin/Web lint 与 typecheck。
 - [x] Backend Ruff、格式、Mypy、导入边界、源码编译、应用导入和 OpenAPI 导出；59 个路径，根契约与 API Client 无差异。
 - [x] 差异、文本、秘密和提交范围核对；辅助文本卫生检查 0 错误、0 警告。
-- [ ] 本地提交、推送及远端 SHA 核对。
+- [x] 本地提交、推送及远端 SHA 核对，功能分支为 `codex/full-validation-smoke`。
 - 未执行：Vitest、pytest、生产构建、E2E、测试数据库迁移、真实 GitHub full/smoke 和发布部署。
 
 ## 13. 待确认问题
@@ -109,9 +109,10 @@ full 保留 `pinjie-full-validation-v2` 与 `full-validation-<SHA>`；smoke 使�
 - 已验证非法输入拒绝、默认/full/smoke 范围、实际 smoke 清单被 strict 拒绝、伪装文件名和字段被拒绝；Guard 已接入根命令及 CI Governance。
 - 测试策略、工作流、发布手册和 Changelog 已同步四条操作链路，明确 smoke 后仍需人工选择 fast，fast 不主动核验 smoke。
 - 首轮文档治理发现活动计划登记格式不符合既有表格约束，已修正并通过完整复验。
+- 实现已提交并推送 `origin/codex/full-validation-smoke`，实际查询远端分支确认与本地一致。未创建 PR 或合并 main；普通提交 SHA 由 Git 历史和交付回复追溯。
 - Guard 临时夹具自行清理，未启动应用服务或浏览器。自动审批策略拒绝验证缓存清理命令，本次新建的 Backend Mypy、Ruff 缓存及一个字节码文件保留在忽略目录，不进入提交；原有缓存保留。
 
 ## 16. 剩余问题
 
-- 轻量验证完成，Git 提交和功能分支推送正在收尾。
+- 本轮实现、轻量验证、提交和功能分支推送已完成；PR 创建、Code Owner 评审和 main 合并不在本轮授权范围。
 - 真实 full/smoke 运行、耗时和跨栈效果未验证，不作为本轮完成前提；合入 main 后需另行人工触发。
