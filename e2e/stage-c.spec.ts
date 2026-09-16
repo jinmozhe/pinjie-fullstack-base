@@ -17,6 +17,13 @@ const avatarPng = Buffer.from(
 );
 
 test.describe("stage C cross-stack journeys", () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(
+      process.env.E2E_PROFILE === "smoke" && !testInfo.project.name.endsWith("-desktop"),
+      "Smoke mode keeps Stage C journeys on desktop; mobile quality checks run in system-status.spec.ts",
+    );
+  });
+
   test("Web registers a user, manages the account, and signs out without exposing tokens", async ({ page }) => {
     test.skip(!test.info().project.name.startsWith("web"), "Web journey runs in Web projects");
     const username = uniqueUsername("web", test.info().project.name);

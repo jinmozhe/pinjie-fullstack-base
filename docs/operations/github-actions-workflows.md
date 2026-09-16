@@ -29,10 +29,12 @@ flowchart TD
     D --> E["main Push"]
     E --> G["同一 Commit SHA 的 4 个 Push 工作流"]
     G --> V{"选择源码交接验证模式"}
-    V -->|strict| F["人工授权 CI - Full Validation"]
+    V -->|strict| F["人工授权 CI - Full Validation，选择 full"]
     F --> N["同一 SHA 的完整验证 Artifact"]
     N --> H["人工授权 Handoff Source to CNB"]
-    V -->|fast| R["填写原因并记录未执行完整验证"]
+    V -->|fast| R["填写原因并记录未取得或未使用完整证据"]
+    V -->|"先检查再 fast"| S["人工选择 smoke，检查成功及同一 SHA"]
+    S --> R
     R --> H
     H --> I["固定 SHA 快进交接到 CNB main"]
     I --> J["CNB 按路径构建、扫描并发布受影响端"]
@@ -46,8 +48,8 @@ flowchart TD
 流程坚持四项边界：
 
 1. 功能分支 push 不运行整套检查；目标为 `main` 的 Pull Request 和 `main` push 触发轻量静态、契约、治理与安全检查，不运行应用测试或前端生产构建，不发布镜像，不接触生产服务器。
-2. 完整验证只允许人工按需触发，不随 Push、Pull Request 或定时任务自动运行；它对输入 Commit SHA 执行 pytest、Vitest、production build 和 Chromium Playwright，并在全部成功后生成 30 天保留的 Artifact。
-3. 源码交接必须人工触发，默认 `strict` 要求四个自动 Push 工作流和同 SHA 完整验证证据；显式 `fast` 仍要求四个自动 Push 工作流，并记录未执行完整验证的原因。CNB 只在受控 `main` Push 后构建并发布镜像。
+2. 手动验证支持默认 full 和显式 smoke，不随 Push、Pull Request 或定时任务自动运行。full 执行 pytest、Vitest、production build 和四项目完整 Chromium E2E；smoke 跳过前端 Vitest，并将 Stage C 限于桌面端，保留生产构建和四项目入口页面基线。两种模式分别生成完整和 smoke 证据。
+3. 源码交接必须人工触发，默认 `strict` 要求四个自动 Push 工作流和同 SHA full 证据；显式 `fast` 仍要求四个自动 Push 工作流，并记录未取得或未使用完整证据的原因。fast 不要求也不主动核验 smoke。CNB 只在受控 `main` Push 后构建并发布镜像。
 4. 生产部署由维护者在 1Panel 人工执行，固定三个已经核验的镜像 digest；当前流程不使用候选镜像验收工作流。纯文档且无运行影响的提交完成 Git 交付即可，不需要继续源码交接和部署。
 
 ## 3. 触发条件总表
@@ -65,7 +67,7 @@ flowchart TD
 
 四个自动工作流统一限制为目标为 `main` 的 Pull Request 和 push 到 `main`。功能分支 push 不再重复运行整套检查；PR 在合并前运行轻量门禁，合并后的 `main` push 再为精确 Commit SHA 生成镜像发布所需的四项成功记录。当前未配置路径过滤，也不自动运行 Backend pytest、前端 Vitest、前端 production build 或 Playwright。
 
-`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA。普通开发和 Git 交付不自动运行它；`Handoff Source to CNB` 的 `strict` 模式要求同一 SHA 的成功 Artifact，`fast` 模式会明确记录该验证未执行或未作为门禁。
+`CI - Full Validation` 只支持从 GitHub Actions 页面人工触发，必须从默认分支选择工作流并输入属于默认分支历史的完整 40 位 Commit SHA，`validation_mode` 选择默认 full 或显式 smoke。普通开发和 Git 交付不自动运行它；`Handoff Source to CNB` 的 `validation_mode` 独立选择 strict 或 fast：strict 要求同一 SHA 的成功 full Artifact，fast 记录完整验证未执行或未作为门禁。smoke 成功不会自动触发 Handoff。
 
 `Security` 的定时表达式是 `23 3 * * 1`，即每周一 `03:23 UTC`。在中国标准时间下对应每周一 `11:23`。
 
@@ -131,7 +133,7 @@ GitHub 收到目标为 `main` 的 Pull Request 更新或 `main` 新提交后，�
 - `Handoff Source to CNB` 会拒绝使用该 Commit SHA，因为两种模式都要求四个自动 Push 工作流成功；`strict` 还要求同 SHA 完整验证 Artifact。
 - 不会自动回退本地代码，也不会自动修改远程分支。
 
-人工完整验证失败或 Artifact 缺失、过期时，该 Commit SHA 不能通过 `strict` 模式。修复代码后应对新的 Commit SHA 重新运行；仅因 Artifact 过期时，可以在默认分支上对同一 SHA 重新人工触发完整验证。只有操作人员完成风险判断并明确接受未运行 pytest、Vitest、production build 和 Playwright 的风险时，才能改用有原因记录的 `fast` 模式。
+人工 full 验证失败或完整 Artifact 缺失、过期时，该 Commit SHA 不能通过 `strict` 模式。修复代码后应对新的 Commit SHA 重新运行；仅因 Artifact 过期时，可以在默认分支上对同一 SHA 重新人工触发 full。只有操作人员确认属于低风险变化、接受实际未覆盖项并填写原因时，才能使用 fast；不能自动把失败的 full 或 smoke 降级为 fast 放行。
 
 ## 5. CI - Governance
 
@@ -304,7 +306,20 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 
 ### 8.1 作用和使用场景
 
-完整验证只支持 `workflow_dispatch` 人工触发。操作人员必须从默认分支启动工作流并输入待验证的完整 Commit SHA；工作流会确认 SHA 属于默认分支历史，然后在 Ubuntu Runner 中执行 Backend pytest、Admin/Web Vitest、两端 production build 和 Chromium 跨栈 E2E。
+该工作流只支持 `workflow_dispatch` 人工触发。操作人员必须从默认分支启动工作流并输入待验证的完整 Commit SHA，选择 full 或 smoke；非法模式直接失败，source Job 将合法模式传递到后续 Job，运行名称和并发组均区分模式。
+
+| 范围 | full（默认） | smoke |
+| --- | --- | --- |
+| Backend pytest、测试数据库迁移 | 执行 | 执行 |
+| Admin/Web Vitest 与 80% coverage 门槛 | 执行 | 跳过并记录 |
+| Admin/Web production build | 执行 | 执行 |
+| 四项目 system-status 入口页面质量 | 执行 | 执行 |
+| Web/Admin 桌面 Stage C | 执行 | 执行 |
+| Web/Admin 移动 Stage C | 执行 | 跳过并记录范围原因 |
+| Artifact | `full-validation-<SHA>`，v2，30 天 | `smoke-validation-<SHA>`，独立 v1，14 天 |
+| strict 交接 | 可以作为证据 | 不可以 |
+
+smoke 用于需要生产构建及关键跨栈反馈的低风险修改，不等于日常轻量门禁。移动端只保留 Web 首页和 Admin 登录页基线，不代表登录后的移动端业务已验收。默认 full 保留完整验证强度，Admin Vitest 继续使用既有 threads 单 worker 配置。
 
 完整验证环境同时允许 `127.0.0.1` 与 `localhost` 两组 Web/Admin 测试 Origin。真实服务和 Playwright 使用 `127.0.0.1`，Backend 既有 API 测试夹具使用 `localhost`；两组仅用于隔离 Runner 的本机回环地址，不能扩展为通配 Origin。
 
@@ -318,21 +333,23 @@ Web 和 Admin 当前均为 `ready`，两个质量 Job 可以并行执行。
 - 页面路由、表单、权限导航和浏览器运行错误。
 - 多个应用分别构建成功，但组合运行失败。
 
-本地重型命令和线上完整验证都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异，或准备镜像发布证据时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的结果。它不参与 Pull Request 或 Push 门禁，也不会自动触发镜像发布；成功 Artifact 只作为后续独立授权的 `Handoff Source to CNB` 输入证据。
+本地重型命令和线上 full/smoke 都只在用户明确授权时运行。需要排除 Windows、本机缓存或本地服务差异，或准备镜像发布证据时，可以由用户人工触发该工作流获得干净 Ubuntu 环境的结果。它不参与 Pull Request 或 Push 门禁，也不会自动触发源码交接、镜像发布或部署；只有 full Artifact 能作为后续独立授权的 strict 交接证据。smoke 成功后可人工选择 fast，fast 不主动核验 smoke Artifact。
 
 ### 8.2 执行步骤
 
-1. 校验输入 SHA 格式、工作流分支、检出结果和默认分支祖先关系。
+1. 校验 full/smoke 输入、SHA 格式、工作流分支、检出结果和默认分支祖先关系。
 2. Backend Job 启动独立 PostgreSQL 18.4、Redis 8.10.0，使用固定 uv `0.11.32` 与 CPython 3.14 同步依赖、迁移并执行 90% 覆盖率门禁的 pytest。
-3. 与 Backend 并行的 Admin、Web 矩阵 Job 各自安装固定 pnpm 11.17.0、Node.js 24 和锁定依赖，执行 80% 覆盖率门禁的 Vitest，再构建并上传生产产物。
+3. 与 Backend 并行的 Admin、Web 矩阵 Job 各自安装固定 pnpm 11.17.0、Node.js 24 和锁定依赖。full 执行 80% 覆盖率门禁的 Vitest，smoke 记录跳过；两种模式均构建并上传生产产物。
 4. 三端成功后，E2E Job 在自己的独立数据库中准备权限、注册设置和管理员，启动 Uvicorn，并下载同一 Run 的前端产物。
-5. 安装 Chromium，执行 `pnpm test:e2e`。Web 运行 standalone，Admin 用固定 Nginx 镜像挂载 dist 和生产 nginx.conf，端口已占用时拒绝复用未知服务。
-6. 全部成功后上传 `full-validation-<完整 SHA>`，内容为 `pinjie-full-validation-v2`，保留 30 天；旧 v1 不再作为修正后的生产产物证明。
+5. 安装 Chromium，将已校验模式作为 `E2E_PROFILE` 传入 `pnpm test:e2e`，非法 profile 直接失败。Web 运行 standalone，Admin 用固定 Nginx 镜像挂载 dist 和生产 nginx.conf，端口已占用时拒绝复用未知服务。full 运行完整四项目；smoke 保留全部入口页面检查，在 Stage C 中只运行桌面端旅程。
+6. 必需 Job 和 E2E 成功后按模式写入并上传证据。full 保持 `pinjie-full-validation-v2` 原有字段；smoke 使用 `pinjie-smoke-validation-v1`，记录 `frontend_unit_tests=skipped`、`browser=playwright-chromium-smoke` 和 `e2e_scope=all-quality-pages,desktop-stage-c`。证据生成和上传均限制在成功状态及匹配模式，不交叉上传。
 7. 成功或失败均保留可用的阶段耗时、退出码与脱敏浏览器结果 14 天。前端传递产物保留 3 天，CI 不上传会话、Trace、Video、HTML 或原始服务日志。
 
 ### 8.3 资源特征
 
-该工作流会下载浏览器、启动数据库和 Redis，并运行三端重型测试与两个前端构建，耗时和资源占用较高，因此只能在用户明确授权后人工触发。任一步失败都不会上传成功证据；Artifact 过期后必须重新运行完整验证，不能通过修改输入或文本说明绕过。
+两种模式都会下载浏览器、启动数据库和 Redis，并运行 Backend pytest 与两个前端构建；smoke 仍是重型验证，只减少前端测试与移动端 Stage C 成本。完整通过不能仅由阶段耗时或静态 Guard 推断，实际效果需以授权运行的结果为准。必需步骤失败不会上传成功证据；strict 所需 Artifact 过期后必须重新运行 full，不能用 smoke 或文本说明绕过。
+
+`pnpm check:validation-mode` 通过解析工作流、执行真实输入校验和证据写入脚本、隔离检查 E2E 配置与用例范围来防止模式漂移；不启动 Playwright、浏览器、应用或数据库。根 `check:guards` 和 CI Governance 均接入该检查，CI 同时运行 strict 证据反例及既有 Handoff 模式 Guard。
 
 ### 8.4 候选生产镜像工具状态
 
@@ -469,11 +486,11 @@ GitHub 工作流只支持 `workflow_dispatch` 人工触发。执行前必须取�
 7. `strict` 要求 GitHub Actions 存在名称为 `full-validation-<完整 SHA>` 且未过期的 Artifact。
 8. `strict` 要求 Artifact 所属 Run 由默认分支通过 `workflow_dispatch` 启动，工作流路径为 `.github/workflows/ci-e2e.yml`，结论为成功。
 9. `strict` 要求 Artifact 内容中的 Commit SHA、Workflow Run ID、pytest、Vitest、production build、Chromium Playwright、PostgreSQL 和 Redis 字段全部匹配。
-10. `fast` 要求 `fast_mode_reason` 为非空单行文本且不超过 200 个字符，并在 Summary 中记录操作者、Commit、模式、跳过事实和原因。
+10. `fast` 要求 `fast_mode_reason` 为非空单行文本且不超过 200 个字符，并在 Summary 中记录操作者、Commit、模式、完整证据未作为门禁的事实和原因；它不要求也不主动核验 smoke Artifact。
 11. Backend、Web 和 Admin 状态必须全部为 `ready`。
 12. 模块边界必须再次通过。
 
-任何适用项缺少时，工作流在向 CNB 写入前停止。四个 Push Run 继续只代表轻量门禁和安全检查；`strict` 的重型验证由同 SHA Artifact 证明，`fast` 明确表示未取得该证明。CNB 中的 Docker build 只负责生成制品，不能替代 pytest、Vitest 或 Playwright。
+任何适用项缺少时，工作流在向 CNB 写入前停止。四个 Push Run 继续只代表轻量门禁和安全检查；`strict` 的重型验证由同 SHA full Artifact 证明，`fast` 明确表示未取得或未使用该证明。CNB 中的 Docker build 只负责生成制品，不能替代 pytest、Vitest 或 Playwright。
 
 ### 11.3 GitHub 源码交接
 
@@ -723,14 +740,14 @@ GitHub 平台不强制仓库使用这些具体工具。当前项目规则和发�
 - 仓库治理和模块边界检查。
 - Backend 和 Frontend 质量检查。
 - 严格源码交接模式下，同一 Commit SHA 的 pytest、Vitest、production build 和 Chromium Playwright 完整验证 Artifact。
-- 快速源码交接模式下，明确的人工选择、原因和未执行完整验证记录。
+- 快速源码交接模式下，明确的人工选择、原因和完整验证未执行或未作为门禁的记录。
 - 密钥、依赖漏洞和源码静态安全检查。
 - 镜像漏洞扫描、SBOM 和构建来源证明。
 - 固定 Commit SHA 和镜像 digest 的生产追溯。
 
 具体工具未来可以通过已确认计划替换，但不能直接删除能力或静默跳过。任何门禁调整都应同步工作流配置、安全策略、本文、发布手册和相关计划。
 
-本地重型验证继续按风险和用户授权执行，不形成镜像发布证据。GitHub 完整验证保持人工触发，不进入自动 CI；`strict` 源码交接把同 SHA 成功 Artifact 作为发布门禁，`fast` 源码交接必须明确记录未执行该验证。两种模式都不会自动授权或触发生产部署。
+本地重型验证继续按风险和用户授权执行，不形成镜像发布证据。GitHub full/smoke 保持人工触发，不进入自动 CI；strict 交接只接受同 SHA 成功 full Artifact，fast 记录完整证据未作为门禁的事实，也不主动核验 smoke。两种模式都不会自动授权或触发生产部署。
 
 ## 16. 操作检查清单
 

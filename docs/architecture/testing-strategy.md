@@ -95,7 +95,9 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 - Locator 优先使用 `getByRole()`、`getByLabel()` 和其他用户可见契约；断言使用 Playwright 自动等待能力，禁止固定时长 `sleep` 和无限重试。
 - Playwright 不由日常开发、`$git-sync`、Push、Pull Request 或定时任务自动运行。需要本地标准 Chromium E2E 时由用户明确授权；需要干净 Ubuntu 环境时由用户人工触发 GitHub 完整验证。Firefox 与 WebKit 也只在用户明确要求或派生项目验收计划明确授权时执行。单独的本地浏览器结果不能满足严格源码交接门禁；GitHub 完整验证只有在 pytest、Vitest、production build 和 Chromium Playwright 全部成功并生成同 SHA Artifact 后，才形成发布可核验的重型验证证据。快速源码交接模式明确表示未取得该证据，不能表述为完整验证通过。
 - CI 失败只上传白名单阶段耗时、退出状态和浏览器文件位置、项目、状态、重试结果，不上传 Cookie、HAR、Trace、Video、HTML 或截图。CI 禁用 Trace/Video，`failOnFlakyTests` 阻断重试后才成功的套件；本地已授权专项复现可保留现有诊断能力，但敏感报告不得进入 Git 或发布附件。
-- 手动 Full Validation 并行执行 Backend pytest 和 Admin/Web Vitest、生产构建，最后消费同一 Run 的产物执行 Web standalone、Admin 生产 Nginx dist E2E，并输出 v2 成功证据。当前单维护者、1Panel 人工部署不要求再运行候选镜像 E2E，使用 CNB/TCR 来源、digest 与扫描核验及部署后健康和关键业务检查，步骤见[端到端人工发布手册](../operations/github-cnb-tcr-1panel-release-runbook.md)。Full Validation 验证的构建产物与最终 TCR 镜像仍有边界，人工核验不能表述为最终镜像组合已通过自动 E2E。
+- 手动 `CI - Full Validation` 支持默认 `full` 和显式 `smoke`。full 并行执行 Backend pytest 和 Admin/Web Vitest、生产构建，最后消费同一 Run 的产物执行 Web standalone、Admin 生产 Nginx dist E2E，并输出 v2 成功证据。smoke 跳过 Admin/Web Vitest 和 coverage，继续执行 Backend pytest、两端生产构建、四个 Chromium 项目的入口页面质量检查及桌面 Stage C；移动端 Stage C 不在 smoke 范围内。`E2E_PROFILE` 未设置时默认 full，非法值直接失败。两种模式均为人工授权的重型验证，不进入日常自动门禁。
+- smoke 入口页面基线覆盖 Web 首页、Admin 登录页的可用性、横向溢出、键盘焦点、axe、Token 持久化及 Console error 检查；不代表移动端登录后的账户、管理、上传或权限流程已验收。认证授权、移动端业务交互等高风险修改使用 full。smoke 仅生成独立 `pinjie-smoke-validation-v1`，记录前端测试跳过及 `all-quality-pages,desktop-stage-c` 范围，不能满足 strict 交接；完整模式继续使用 `pinjie-full-validation-v2`。
+- 当前单维护者、1Panel 人工部署不要求再运行候选镜像 E2E，使用 CNB/TCR 来源、digest 与扫描核验及部署后健康和关键业务检查，步骤见[端到端人工发布手册](../operations/github-cnb-tcr-1panel-release-runbook.md)。两种验证模式消费的构建产物与最终 TCR 镜像仍有边界，不能表述为最终镜像组合已通过自动 E2E。
 - 视觉回归只覆盖少量稳定且高价值的页面或组件状态，固定操作系统、浏览器、字体和视口；普通布局断言优先使用语义和尺寸检查。
 
 ### 6.4 UI 与可访问性验收
@@ -124,7 +126,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 ## 8. 跳过和不稳定测试
 
 - 已明确授权的测试和已配置的轻量自动门禁不得因缺少依赖而静默跳过。
-- `skip`、`xfail` 和隔离测试必须包含原因、负责人和清理日期。
+- 临时 `skip`、`xfail` 和隔离测试必须包含原因、负责人和清理日期。按明确的应用项目或 full/smoke 验证范围排除的用例须注明范围原因，并记录为跳过，不能计为通过；这种长期范围选择不属于临时测试债务。
 - 不稳定测试先定位原因，不能通过无限重试掩盖。
 - CI Summary 必须区分通过、失败、跳过和未适用。
 
@@ -132,7 +134,7 @@ Jest、Cypress、Storybook 和 Vitest Browser Mode 不属于阶段 B 默认测�
 
 一项实现通过默认轻量门禁、完成计划内文档同步并如实记录未执行项后，可以提交和完成 Git 交付。只有用户明确授权对应重型验证且实际通过时，才能宣称测试、构建或完整跨栈验收通过。Backend pytest 保持 90% 覆盖率阈值，Admin 与 Web 的 Vitest 保持语句、分支、函数和行覆盖率 80% 阈值；这些阈值只在对应测试获授权并实际运行时生效。
 
-镜像发布属于独立的跨系统交付边界。候选 Commit SHA 必须通过四个自动轻量 Push 工作流，并由操作人员显式选择源码交接验证模式。默认 `strict` 要求存在由默认分支人工触发、成功完成且未过期的完整验证 Artifact；Artifact 中的 Commit SHA、Workflow Run 和验证集合必须与发布输入一致，本地测试结果或普通文本说明不能替代。`fast` 只适用于已评估的低风险改动，必须填写原因并留下未执行完整验证的审计记录；它允许继续构建制品，但不产生重型验证通过的结论。
+镜像发布属于独立的跨系统交付边界。候选 Commit SHA 必须通过四个自动轻量 Push 工作流，并由操作人员显式选择源码交接验证模式。默认 `strict` 要求存在由默认分支人工触发、成功完成且未过期的 full Artifact；Artifact 中的 Commit SHA、Workflow Run 和验证集合必须与发布输入一致，本地测试结果、smoke 或普通文本说明不能替代。`fast` 只适用于已评估的低风险改动，必须填写原因并记录未取得或未使用完整验证证据的事实；它允许继续构建制品，但不产生完整重型验证通过的结论。操作人员可以先对同一 SHA 运行 smoke，再独立触发 fast；fast 不主动核验 smoke Artifact，也不要求先运行 smoke。具体选择和执行链路以[端到端人工发布手册](../operations/github-cnb-tcr-1panel-release-runbook.md)为准。
 
 前端覆盖率必须纳入承担 Cookie、CSRF、Refresh、权限启动和 BFF 转发的高风险入口。当前 Admin 统计 `src/features/**`、`src/lib/api/**`、`src/access.ts` 与 `src/app.tsx`；Web 统计 `src/features/**`、`src/lib/api/**` 与 BFF Route Handler。不得通过只统计页面组件排除传输和认证生命周期代码来满足 80% 门禁。
 
