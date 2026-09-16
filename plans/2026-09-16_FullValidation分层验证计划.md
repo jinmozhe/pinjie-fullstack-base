@@ -27,7 +27,7 @@
 - 不调整 Admin worker、覆盖率阈值、业务断言、公开 API、数据库结构或依赖。
 - 不修改 Handoff 的 strict/fast 规则、候选镜像工作流、CNB 构建或生产部署。
 - 不执行 Vitest、pytest、production build、Playwright、浏览器自动化或测试数据库迁移。
-- 不触发 workflow_dispatch、镜像发布、部署、Tag、Release、PR 创建或合并。
+- 不触发 workflow_dispatch、镜像发布、部署、Tag 或 Release。后续显式 git-sync 授权覆盖 PR 创建、合并与 main 同步。
 
 ## 6. 现状分析
 
@@ -100,6 +100,7 @@ full 保留 `pinjie-full-validation-v2` 与 `full-validation-<SHA>`；smoke 使�
 ## 14. 用户确认记录
 
 - 2026-09-16：用户确认此前讨论的分层验证方案，要求开始实现并完成后直接提交推送；未授权 PR 创建、合并和发布部署，也未点名重型验证。
+- 2026-09-16：用户后续显式执行 git-sync，授权本仓库全部待交付内容的 PR、rebase 合并、分支清理及 main 同步；重型验证和发布部署继续不在授权范围。
 
 ## 15. 实施结果
 
@@ -110,9 +111,9 @@ full 保留 `pinjie-full-validation-v2` 与 `full-validation-<SHA>`；smoke 使�
 - 测试策略、工作流、发布手册和 Changelog 已同步四条操作链路，明确 smoke 后仍需人工选择 fast，fast 不主动核验 smoke。
 - 首轮文档治理发现活动计划登记格式不符合既有表格约束，已修正并通过完整复验。
 - 实现已提交并推送 `origin/codex/full-validation-smoke`，实际查询远端分支确认与本地一致。未创建 PR 或合并 main；普通提交 SHA 由 Git 历史和交付回复追溯。
-- Guard 临时夹具自行清理，未启动应用服务或浏览器。自动审批策略拒绝验证缓存清理命令，本次新建的 Backend Mypy、Ruff 缓存及一个字节码文件保留在忽略目录，不进入提交；原有缓存保留。
+- Guard 临时夹具自行清理，未启动应用服务或浏览器。递归缓存清理命令被平台拒绝后，已通过逐个核对文件、删除明确文件及空目录完成本次新建 Backend Mypy、Ruff 缓存和一个字节码文件的清理；原有缓存及 Codex 对话、配置和应用数据保留。
 
 ## 16. 剩余问题
 
-- 本轮实现、轻量验证、提交和功能分支推送已完成；PR 创建、Code Owner 评审和 main 合并不在本轮授权范围。
+- 本计划实现、轻量验证和功能分支推送已完成；后续 git-sync 按追加授权完成 PR、必需检查、合并与同步，实际 Git 交付结果由 PR、Git 历史和交付回复追溯，不重复登记普通提交 SHA。
 - 真实 full/smoke 运行、耗时和跨栈效果未验证，不作为本轮完成前提；合入 main 后需另行人工触发。
